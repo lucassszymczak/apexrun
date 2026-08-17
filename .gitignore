@@ -1,0 +1,42 @@
+# Dependências
+node_modules/
+
+# Build
+dist/
+dist-ssr/
+*.local
+*.tsbuildinfo
+
+# Variáveis de ambiente — NUNCA commitar chaves
+.env
+.env.*
+!.env.example
+
+# Supabase (artefatos locais da CLI)
+supabase/.branches/
+supabase/.temp/
+.supabase/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Editores / SO
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Arquivos de atividade de teste (podem ser grandes / pessoais)
+*.fit
+*.tcx
+*.gpx
+!tests/fixtures/**

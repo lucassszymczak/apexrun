@@ -1,0 +1,15 @@
+# Configuração do projeto Supabase (usada pela Supabase CLI).
+# Docs: https://supabase.com/docs/guides/cli/config
+project_id = "apexrun"
+
+[db]
+# Versão do Postgres usada localmente pelo `supabase start`.
+major_version = 15
+
+[db.migrations]
+schema_paths = []
+
+[auth]
+# App pessoal: e-mail/senha basta. OAuth do Strava é feito na camada da app,
+# não no Auth do Supabase.
+enable_signup = false
