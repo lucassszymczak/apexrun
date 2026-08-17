@@ -1,15 +1,19 @@
-// Shell mínimo do app. As telas reais (upload/conferência, diário, dashboards)
-// chegam nos passos 2–5 do plano de construção.
+import { UploadAnalyzer } from '@/features/ingest/UploadAnalyzer';
+
 export default function App() {
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center p-8">
-      <div className="max-w-md text-center space-y-3">
-        <h1 className="text-2xl font-semibold">Apex Performance</h1>
-        <p className="text-slate-400">
-          Setup do projeto concluído. Próximos passos: upload/parsing de
-          .FIT/.TCX/.GPX, camada de conferência e dashboards.
-        </p>
-      </div>
+    <div className="min-h-screen bg-slate-950 text-slate-100">
+      <header className="border-b border-slate-800">
+        <div className="mx-auto max-w-5xl px-6 py-4">
+          <h1 className="text-xl font-semibold">Apex Performance</h1>
+          <p className="text-sm text-slate-500">
+            Conferência de treinos · upload e análise de arquivo (.FIT/.TCX/.GPX)
+          </p>
+        </div>
+      </header>
+      <main className="mx-auto max-w-5xl px-6 py-8">
+        <UploadAnalyzer />
+      </main>
     </div>
   );
 }

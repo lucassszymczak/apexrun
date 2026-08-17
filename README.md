@@ -9,18 +9,39 @@ dashboards de performance.
 - **Parsing de atividades:** `.FIT` / `.TCX` / `.GPX` (fonte de verdade das
   métricas por km — não dependemos só do JSON da API)
 
-> **Status:** Passo 1 concluído (setup + schema + seed do atleta). Os passos
-> 2–5 (parsing, conferência, OAuth Strava, dashboards) vêm a seguir.
+> **Status:** Passos 1–2 concluídos (setup + schema + seed; motor de ingestão
+> parse→splits→conferência com UI de upload). Os passos 3–5 vêm a seguir.
 
 ---
 
 ## Ordem de construção
 
-1. ✅ **Setup do projeto + schema Supabase + migrations** ← você está aqui
-2. ⬜ Upload e parsing de `.FIT/.TCX/.GPX` → gerar splits + `quality_report`
-3. ⬜ Camada de conferência com UI de revisão (aprovar/rejeitar/anotar)
+1. ✅ **Setup do projeto + schema Supabase + migrations**
+2. ✅ **Upload e parsing de `.FIT/.TCX/.GPX` → splits + `quality_report`** ← aqui
+3. ⬜ Camada de conferência com UI de revisão (aprovar/rejeitar/anotar) + persistência
 4. ⬜ OAuth Strava + ingestão via API como fonte alternativa
 5. ⬜ Dashboards e gráficos comparativos
+
+### Motor de ingestão (Passo 2)
+
+Núcleo determinístico e runtime-agnóstico em `src/core/` (roda no browser para
+preview e, depois, numa Edge Function para persistir):
+
+- `parse/` — parsers `.FIT` (fit-file-parser), `.GPX` e `.TCX` → streams
+  normalizados.
+- `metrics/gap.ts` — GAP (Grade Adjusted Pace) via polinômio de Minetti (2002),
+  com fonte documentada no código.
+- `metrics/splits.ts` — splits por km (corte interpolado a cada 1000m; último km
+  parcial sinalizado, nunca misturado).
+- `metrics/aggregate.ts` — métricas agregadas + cardiac drift (1ª vs 2ª metade
+  a pace estável).
+- `quality/checks.ts` — camada de conferência: GPS gaps, pausas/auto-pause, FC
+  ausente/travada/spike, distância divergente, elevação ruidosa, splits
+  incompletos. Nunca conserta em silêncio — só reporta.
+
+Rodar os testes do motor: `npm test` (Vitest, dados sintéticos). A UI de upload
+(`src/features/ingest/`) analisa o arquivo 100% no navegador e mostra splits +
+relatório de conferência (persistência entra no Passo 3).
 
 ---
 
