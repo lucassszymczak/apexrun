@@ -108,28 +108,88 @@ where not exists (
 );
 
 -- =============================================================================
--- ATIVIDADES HISTÓRICAS (15 sessões) — PENDENTE do arquivo de contexto.
+-- ATIVIDADES HISTÓRICAS (15 sessões) — diário completo até 16/08 (seção 6).
 -- -----------------------------------------------------------------------------
--- As 15 sessões do diário estão na "seção 6" de `contexto-treinador.md`, que
--- ainda não foi fornecido a esta sessão. Para NÃO inventar dados, o seed das
--- atividades fica pendente. Quando o arquivo chegar, cada sessão vira:
+-- Regras acordadas (dados históricos, NÃO passam pela camada de conferência):
+--   * source = 'manual', quality_status = 'ok' (já validados manualmente).
+--   * SEM splits por km: o diário só cita drift em faixas de km, nunca uma
+--     tabela de parciais (pace/FC/elevação por km). Para não inventar, todas
+--     ficam sem splits e com quality_report."splits_indisponiveis" = true.
+--     O drift e o GAP médio citados no arquivo são preservados no
+--     quality_report (não recalculados).
+--   * duracao_s fica NULL: não há duração medida no diário e derivá-la do pace
+--     arredondado seria precisão inventada.
+--   * data usa 00:00 no fuso -03 (Guarapuava/BR): só a DATA foi registrada, não
+--     a hora. Casas de FC/RPE dadas como faixa (ex: "2-3", "80-124") viram NULL
+--     no campo numérico e o texto original vai para obs.
 --
---   insert into public.activities (
---     athlete_id, source, data, tipo, distancia_m, duracao_s, pace_medio,
---     fc_media, fc_max, rpe, dor_flag, obs, quality_status, quality_report
---   ) values (
---     'a0000000-0000-4000-8000-000000000001',
---     'manual',            -- histórico validado manualmente
---     '2026-08-15 06:00',  -- data
---     'longao',            -- tipo
---     ...,                 -- distancia_m, duracao_s, pace_medio, fc_media, fc_max, rpe, dor_flag, obs
---     'ok',                -- histórico entra direto como OK (NÃO passa pela conferência)
---     '{"origem": "seed_historico", "splits_indisponiveis": true}'::jsonb
---   );
+-- As 15 sessões = as 18 linhas do diário menos os 3 dias SEM atividade
+-- (09/08 dor/sem treino, 14/08 e 16/08 descanso). Os 8 treinos de corrida
+-- somam ~68 km, batendo com o total do arquivo.
 --
--- Regras acordadas para o histórico:
---   * source = 'manual', quality_status = 'ok' (dados já validados).
---   * NÃO rodar a camada de conferência (não temos streams brutos).
---   * Splits por km só onde o arquivo cita parciais; nos demais, sem splits e
---     quality_report marca {"splits_indisponiveis": true}.
+-- Nota: o arquivo diz "13/15 sem dor (2 exceções)" contando 08/08 + o dia de
+-- dor 09/08; como 09/08 não é uma sessão de treino, aqui só 08/08 fica com
+-- dor_flag = true entre as 15.
+-- -----------------------------------------------------------------------------
+insert into public.activities (
+  athlete_id, source, data, tipo, distancia_m, pace_medio,
+  fc_media, fc_max, rpe, dor_flag, dor_desc, obs, quality_status, quality_report
+)
+select
+  'a0000000-0000-4000-8000-000000000001',
+  'manual',
+  v.data::timestamptz,
+  v.tipo,
+  v.distancia_m,
+  v.pace_medio,
+  v.fc_media,
+  v.fc_max,
+  v.rpe,
+  v.dor_flag,
+  v.dor_desc,
+  v.obs,
+  'ok',
+  v.quality_report::jsonb
+from (values
+  -- data (-03)                 | tipo            | dist_m        | pace_s/km   | fcm      | fcx | rpe      | dor   | dor_desc                                             | obs
+  ('2026-07-27 00:00:00-03', 'mobilidade',    null::numeric, null::numeric, null::int, 124,  null::int, false, null::text,                                            'Mobilidade. Início do plano. FC 80-124 (faixa; sem média registrada).',
+    '{"origem":"seed_historico","splits_indisponiveis":true}'),
+  ('2026-07-28 00:00:00-03', 'rodagem',       5390,          514,           156,       176,  5,         false, null,                                                  'Rodagem teste (1º pós-retomada). Pace 8:34 bruto c/ caminhada.',
+    '{"origem":"seed_historico","splits_indisponiveis":true}'),
+  ('2026-07-29 00:00:00-03', 'fortalecimento',null,          null,          null,      null, null,      false, null,                                                  'Fortalecimento. Falha muscular no final (estímulo adequado).',
+    '{"origem":"seed_historico","splits_indisponiveis":true}'),
+  ('2026-07-30 00:00:00-03', 'rodagem',       6000,          472,           163,       180,  5,         false, null,                                                  'Rodagem. 192m de subida.',
+    '{"origem":"seed_historico","splits_indisponiveis":true}'),
+  ('2026-08-02 00:00:00-03', 'longao',        9160,          438,           163,       185,  5,         false, null,                                                  'Longão 1 (reagendado). 9,16km inclui +750m de aquec/desaquec além dos 8,41km cronometrados. Drift 152→171bpm nos splits.',
+    '{"origem":"seed_historico","splits_indisponiveis":true,"drift_reportado":{"fc_inicio":152,"fc_fim":171,"escopo":"splits"}}'),
+  ('2026-08-03 00:00:00-03', 'bike',          null,          null,          106,       113,  null,      false, null,                                                  'Bike (substituindo regenerativo). RPE 2-3.',
+    '{"origem":"seed_historico","splits_indisponiveis":true}'),
+  ('2026-08-04 00:00:00-03', 'qualidade',     5050,          477,           151,       177,  7,         false, null,                                                  'Fartlek leve. Fade nos tiros (5:43→6:49).',
+    '{"origem":"seed_historico","splits_indisponiveis":true}'),
+  ('2026-08-05 00:00:00-03', 'fortalecimento',null,          null,          112,       149,  3,         false, null,                                                  'Fortalecimento.',
+    '{"origem":"seed_historico","splits_indisponiveis":true}'),
+  ('2026-08-06 00:00:00-03', 'rodagem',       7010,          459,           165,       177,  4,         false, null,                                                  'Rodagem. Gatilho da 1ª revisão de FC máx (→193bpm).',
+    '{"origem":"seed_historico","splits_indisponiveis":true}'),
+  ('2026-08-08 00:00:00-03', 'longao',        12010,         497,           173,       195,  7,         true,  'Dor plantar bilateral (retroativa ao Longão 2; noturna, exigiu anti-inflamatório).', 'Longão 2. GAP 8:14. Drift km9-12: 174→186bpm; gatilho da 2ª revisão de FC máx (→198bpm).',
+    '{"origem":"seed_historico","splits_indisponiveis":true,"gap_medio_s_km":494,"drift_reportado":{"km_inicio":9,"km_fim":12,"fc_inicio":174,"fc_fim":186}}'),
+  ('2026-08-10 00:00:00-03', 'bike',          null,          null,          117,       126,  null,      false, null,                                                  'Bike (substituindo regenerativo). RPE 2-3.',
+    '{"origem":"seed_historico","splits_indisponiveis":true}'),
+  ('2026-08-11 00:00:00-03', 'bike',          null,          null,          116,       126,  null,      false, null,                                                  'Bike (substituindo rodagem; frio). RPE 3-4.',
+    '{"origem":"seed_historico","splits_indisponiveis":true}'),
+  ('2026-08-12 00:00:00-03', 'rodagem',       6010,          456,           165,       182,  5,         false, null,                                                  'Rodagem leve (teste de tolerância pós-dor plantar) — aprovado sem dor. GAP ~7:27. Joelho esq.: desconforto transitório, sem recorrência.',
+    '{"origem":"seed_historico","splits_indisponiveis":true,"gap_medio_s_km":447}'),
+  ('2026-08-13 00:00:00-03', 'fortalecimento',null,          null,          null,      null, null,      false, null,                                                  'Fortalecimento (substituindo subida; subida da semana cancelada por precaução).',
+    '{"origem":"seed_historico","splits_indisponiveis":true}'),
+  ('2026-08-15 00:00:00-03', 'longao',        17000,         465,           166,       190,  6,         false, null,                                                  'Longão 3 (pico). GAP ~7:33. PR 10 milhas 2026; drift km7-10: 164→174bpm; TE 5.0 (Garmin).',
+    '{"origem":"seed_historico","splits_indisponiveis":true,"gap_medio_s_km":453,"drift_reportado":{"km_inicio":7,"km_fim":10,"fc_inicio":164,"fc_fim":174}}')
+) as v(data, tipo, distancia_m, pace_medio, fc_media, fc_max, rpe, dor_flag, dor_desc, obs, quality_report)
+-- Idempotência: só insere se ainda não houver atividades de seed para o atleta.
+where not exists (
+  select 1 from public.activities
+  where athlete_id = 'a0000000-0000-4000-8000-000000000001'
+    and quality_report->>'origem' = 'seed_historico'
+);
+
+-- =============================================================================
+-- Fim da migration 0004.
 -- =============================================================================
