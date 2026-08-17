@@ -54,7 +54,7 @@ relatório de conferência (persistência entra no Passo 3).
 
 ---
 
-## Setup rápido
+## Setup rápido (projeto Supabase hospedado)
 
 ```bash
 # 1. Instalar dependências
@@ -62,20 +62,31 @@ npm install
 
 # 2. Configurar variáveis de ambiente
 cp .env.example .env
-#   edite .env e cole suas chaves (ver seções abaixo)
+#   edite .env e cole VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY
+#   (Supabase → Project Settings → API)
 
-# 3. Subir o banco local + aplicar TODAS as migrations (schema + seed)
-npm run db:start      # supabase start
-#   (a Supabase CLI aplica supabase/migrations/* automaticamente)
+# 3. Aplicar as migrations (schema + seed) no seu projeto hospedado
+npm run db:login                          # abre o browser p/ autenticar a CLI
+npm run db:link -- --project-ref <REF>    # <REF> = subdomínio da Project URL
+npm run db:push                           # aplica supabase/migrations/* (pede a senha do banco)
 
-# 4. Rodar o frontend
+# 4. Criar o seu usuário (dispara o seed do atleta)
+#   Painel → Authentication → Users → Add user (email + senha, auto-confirm).
+#   Um trigger reivindica o perfil do atleta do seed automaticamente.
+
+# 5. Rodar o frontend e entrar com esse email/senha
 npm run dev           # http://localhost:5173
 ```
 
-Para recriar o banco do zero (reaplica migrations + seed):
+> `<REF>` é o identificador do projeto: em `https://abcd1234.supabase.co`, o REF
+> é `abcd1234`. Você também pode rodar os comandos direto: `npx supabase link
+> --project-ref <REF>` e `npx supabase db push`.
+
+### Alternativa: banco local (precisa de Docker)
 
 ```bash
-npm run db:reset
+npm run db:start      # sobe Postgres local + aplica migrations
+npm run db:reset      # recria do zero (reaplica migrations + seed)
 ```
 
 ---
