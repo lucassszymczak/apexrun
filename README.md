@@ -9,18 +9,32 @@ dashboards de performance.
 - **Parsing de atividades:** `.FIT` / `.TCX` / `.GPX` (fonte de verdade das
   métricas por km — não dependemos só do JSON da API)
 
-> **Status:** Passos 1–2 concluídos (setup + schema + seed; motor de ingestão
-> parse→splits→conferência com UI de upload). Os passos 3–5 vêm a seguir.
+> **Status:** Passos 1–3 concluídos (setup + schema + seed; motor de ingestão;
+> UI de revisão aprovar/rejeitar/anotar com persistência no Supabase). Os passos
+> 4–5 vêm a seguir.
 
 ---
 
 ## Ordem de construção
 
 1. ✅ **Setup do projeto + schema Supabase + migrations**
-2. ✅ **Upload e parsing de `.FIT/.TCX/.GPX` → splits + `quality_report`** ← aqui
-3. ⬜ Camada de conferência com UI de revisão (aprovar/rejeitar/anotar) + persistência
+2. ✅ **Upload e parsing de `.FIT/.TCX/.GPX` → splits + `quality_report`**
+3. ✅ **Camada de conferência com UI de revisão + persistência** ← aqui
 4. ⬜ OAuth Strava + ingestão via API como fonte alternativa
 5. ⬜ Dashboards e gráficos comparativos
+
+### Revisão e persistência (Passo 3)
+
+Fluxo: upload → o motor analisa → **você revisa** (métricas + splits + achados da
+conferência), **anota** (data, tipo, RPE, dor, obs) e **aprova ou rejeita**.
+Nada é gravado antes da sua confirmação (regra do treinador).
+
+- Aprovar → grava `activities` + `splits` + `data_issues` com o veredito
+  automático (`ok`/`warning`) e `confirmed_at` (oficial).
+- Rejeitar → grava marcado como `rejected` (não oficial), para não reprocessar.
+- Persistência direto do browser autenticado, **sob RLS** (`src/features/ingest/
+  persist.ts`). A lista "Últimos treinos registrados" mostra o histórico do seed
+  + o que você acabou de aprovar.
 
 ### Motor de ingestão (Passo 2)
 

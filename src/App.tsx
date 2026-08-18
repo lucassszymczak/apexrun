@@ -1,6 +1,8 @@
+import { useState } from 'react';
 import { AuthProvider, useAuth } from '@/features/auth/AuthProvider';
 import { LoginScreen } from '@/features/auth/LoginScreen';
 import { UploadAnalyzer } from '@/features/ingest/UploadAnalyzer';
+import { RecentActivities } from '@/features/diary/RecentActivities';
 
 export default function App() {
   return (
@@ -28,6 +30,7 @@ function Gate() {
 
 function AppShell() {
   const { user, signOut } = useAuth();
+  const [reloadKey, setReloadKey] = useState(0);
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100">
       <header className="border-b border-slate-800">
@@ -50,7 +53,8 @@ function AppShell() {
         </div>
       </header>
       <main className="mx-auto max-w-5xl px-6 py-8">
-        <UploadAnalyzer />
+        <UploadAnalyzer onSaved={() => setReloadKey((k) => k + 1)} />
+        <RecentActivities reloadKey={reloadKey} />
       </main>
     </div>
   );
