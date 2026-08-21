@@ -24,7 +24,14 @@ create extension if not exists pgcrypto;
 -- Fonte da atividade. A arquitetura de ingestão é plugável: para adicionar a
 -- Garmin Health API no futuro basta:
 --   ALTER TYPE activity_source ADD VALUE 'garmin';
-create type activity_source as enum ('strava', 'fit_upload', 'manual');
+-- Idempotente (não há CREATE TYPE IF NOT EXISTS): só cria se ainda não existir.
+do '
+begin
+  if not exists (select 1 from pg_type where typname = ''activity_source'') then
+    create type activity_source as enum (''strava'', ''fit_upload'', ''manual'');
+  end if;
+end
+';
 
 -- Veredito determinístico da camada de conferência.
 --   pending  -> extraído do arquivo/API, ainda NÃO revisado pelo usuário.
@@ -34,10 +41,22 @@ create type activity_source as enum ('strava', 'fit_upload', 'manual');
 -- Observação: 'pending' é uma EXTENSÃO da enum da spec (ok|warning|rejected).
 -- Ele representa o estado "extraído mas aguardando confirmação do treinador",
 -- que é central para a regra de conferência antes de persistir como oficial.
-create type quality_status as enum ('pending', 'ok', 'warning', 'rejected');
+do '
+begin
+  if not exists (select 1 from pg_type where typname = ''quality_status'') then
+    create type quality_status as enum (''pending'', ''ok'', ''warning'', ''rejected'');
+  end if;
+end
+';
 
 -- Severidade de um problema detectado na conferência.
-create type issue_severity as enum ('info', 'warning', 'error');
+do '
+begin
+  if not exists (select 1 from pg_type where typname = ''issue_severity'') then
+    create type issue_severity as enum (''info'', ''warning'', ''error'');
+  end if;
+end
+';
 
 -- -----------------------------------------------------------------------------
 -- Função utilitária: mantém updated_at sempre atualizado em UPDATEs.
@@ -58,7 +77,7 @@ end;
 -- Tabela: athletes
 -- Perfil do atleta (1 por usuário do Supabase Auth neste app pessoal).
 -- -----------------------------------------------------------------------------
-create table public.athletes (
+create table if not exists public.athletes (
   id                uuid primary key default gen_random_uuid(),
 
   -- Liga o atleta ao usuário autenticado (Supabase Auth). Base do RLS.
@@ -102,6 +121,7 @@ create table public.athletes (
   updated_at        timestamptz not null default now()
 );
 
+drop trigger if exists trg_athletes_updated_at on public.athletes;
 create trigger trg_athletes_updated_at
   before update on public.athletes
   for each row execute function public.set_updated_at();
@@ -114,7 +134,7 @@ create trigger trg_athletes_updated_at
 -- Ficam numa tabela própria (em vez de um jsonb no atleta) para o dashboard
 -- listar/filtrar facilmente e para podermos referenciar atividades específicas.
 -- -----------------------------------------------------------------------------
-create table public.athlete_notes (
+create table if not exists public.athlete_notes (
   id                uuid primary key default gen_random_uuid(),
   athlete_id        uuid not null references public.athletes (id) on delete cascade,
 
@@ -130,7 +150,7 @@ create table public.athlete_notes (
   created_at        timestamptz not null default now()
 );
 
-create index idx_athlete_notes_athlete
+create index if not exists idx_athlete_notes_athlete
   on public.athlete_notes (athlete_id);
 
 -- -----------------------------------------------------------------------------
@@ -138,7 +158,7 @@ create index idx_athlete_notes_athlete
 -- Uma sessão de treino. Guarda tanto metadados (API) quanto métricas derivadas
 -- do arquivo de atividade (.FIT/.TCX/.GPX), mais o relatório de conferência.
 -- -----------------------------------------------------------------------------
-create table public.activities (
+create table if not exists public.activities (
   id                uuid primary key default gen_random_uuid(),
   athlete_id        uuid not null references public.athletes (id) on delete cascade,
 
@@ -183,18 +203,19 @@ create table public.activities (
 
 -- Evita duplicar a mesma atividade externa ao repuxar da API.
 -- (Índice único parcial: só vale quando external_id existe.)
-create unique index uq_activities_source_external
+create unique index if not exists uq_activities_source_external
   on public.activities (source, external_id)
   where external_id is not null;
 
 -- Consulta mais comum: treinos de um atleta em ordem cronológica reversa.
-create index idx_activities_athlete_data
+create index if not exists idx_activities_athlete_data
   on public.activities (athlete_id, data desc);
 
 -- Filtro por status de conferência (fila de revisão).
-create index idx_activities_quality_status
+create index if not exists idx_activities_quality_status
   on public.activities (quality_status);
 
+drop trigger if exists trg_activities_updated_at on public.activities;
 create trigger trg_activities_updated_at
   before update on public.activities
   for each row execute function public.set_updated_at();
@@ -205,7 +226,7 @@ create trigger trg_activities_updated_at
 -- O último km costuma ser parcial: ele é SINALIZADO (parcial = true), nunca
 -- misturado com os kms completos.
 -- -----------------------------------------------------------------------------
-create table public.splits (
+create table if not exists public.splits (
   id                uuid primary key default gen_random_uuid(),
   activity_id       uuid not null references public.activities (id) on delete cascade,
 
@@ -230,7 +251,7 @@ create table public.splits (
   unique (activity_id, km_index)
 );
 
-create index idx_splits_activity
+create index if not exists idx_splits_activity
   on public.splits (activity_id, km_index);
 
 -- -----------------------------------------------------------------------------
@@ -238,7 +259,7 @@ create index idx_splits_activity
 -- Problemas detectados na conferência (um registro por achado). Permite listar,
 -- anotar e marcar como resolvido sem sobrescrever o quality_report agregado.
 -- -----------------------------------------------------------------------------
-create table public.data_issues (
+create table if not exists public.data_issues (
   id                uuid primary key default gen_random_uuid(),
   activity_id       uuid not null references public.activities (id) on delete cascade,
 
@@ -254,10 +275,10 @@ create table public.data_issues (
   created_at        timestamptz not null default now()
 );
 
-create index idx_data_issues_activity
+create index if not exists idx_data_issues_activity
   on public.data_issues (activity_id);
 
-create index idx_data_issues_abertos
+create index if not exists idx_data_issues_abertos
   on public.data_issues (activity_id)
   where resolvido = false;
 

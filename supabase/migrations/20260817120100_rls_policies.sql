@@ -8,6 +8,9 @@
 --   auth.users ──< athletes ──< activities ──< splits
 --                                          └──< data_issues
 -- Tudo é escopado por athletes.user_id = auth.uid().
+--
+-- Idempotente: cada policy tem um DROP ... IF EXISTS antes do CREATE, então
+-- este arquivo pode ser rodado mais de uma vez (setup via SQL Editor).
 -- =============================================================================
 
 -- -----------------------------------------------------------------------------
@@ -15,19 +18,23 @@
 -- -----------------------------------------------------------------------------
 alter table public.athletes enable row level security;
 
+drop policy if exists "athletes: dono lê" on public.athletes;
 create policy "athletes: dono lê"
   on public.athletes for select
   using (user_id = (select auth.uid()));
 
+drop policy if exists "athletes: dono insere" on public.athletes;
 create policy "athletes: dono insere"
   on public.athletes for insert
   with check (user_id = (select auth.uid()));
 
+drop policy if exists "athletes: dono atualiza" on public.athletes;
 create policy "athletes: dono atualiza"
   on public.athletes for update
   using (user_id = (select auth.uid()))
   with check (user_id = (select auth.uid()));
 
+drop policy if exists "athletes: dono remove" on public.athletes;
 create policy "athletes: dono remove"
   on public.athletes for delete
   using (user_id = (select auth.uid()));
@@ -37,6 +44,7 @@ create policy "athletes: dono remove"
 -- -----------------------------------------------------------------------------
 alter table public.activities enable row level security;
 
+drop policy if exists "activities: dono lê" on public.activities;
 create policy "activities: dono lê"
   on public.activities for select
   using (
@@ -45,6 +53,7 @@ create policy "activities: dono lê"
     )
   );
 
+drop policy if exists "activities: dono insere" on public.activities;
 create policy "activities: dono insere"
   on public.activities for insert
   with check (
@@ -53,6 +62,7 @@ create policy "activities: dono insere"
     )
   );
 
+drop policy if exists "activities: dono atualiza" on public.activities;
 create policy "activities: dono atualiza"
   on public.activities for update
   using (
@@ -66,6 +76,7 @@ create policy "activities: dono atualiza"
     )
   );
 
+drop policy if exists "activities: dono remove" on public.activities;
 create policy "activities: dono remove"
   on public.activities for delete
   using (
@@ -79,6 +90,7 @@ create policy "activities: dono remove"
 -- -----------------------------------------------------------------------------
 alter table public.splits enable row level security;
 
+drop policy if exists "splits: dono lê" on public.splits;
 create policy "splits: dono lê"
   on public.splits for select
   using (
@@ -90,6 +102,7 @@ create policy "splits: dono lê"
     )
   );
 
+drop policy if exists "splits: dono escreve" on public.splits;
 create policy "splits: dono escreve"
   on public.splits for all
   using (
@@ -114,6 +127,7 @@ create policy "splits: dono escreve"
 -- -----------------------------------------------------------------------------
 alter table public.data_issues enable row level security;
 
+drop policy if exists "data_issues: dono lê" on public.data_issues;
 create policy "data_issues: dono lê"
   on public.data_issues for select
   using (
@@ -125,6 +139,7 @@ create policy "data_issues: dono lê"
     )
   );
 
+drop policy if exists "data_issues: dono escreve" on public.data_issues;
 create policy "data_issues: dono escreve"
   on public.data_issues for all
   using (
@@ -149,6 +164,7 @@ create policy "data_issues: dono escreve"
 -- -----------------------------------------------------------------------------
 alter table public.athlete_notes enable row level security;
 
+drop policy if exists "athlete_notes: dono lê" on public.athlete_notes;
 create policy "athlete_notes: dono lê"
   on public.athlete_notes for select
   using (
@@ -157,6 +173,7 @@ create policy "athlete_notes: dono lê"
     )
   );
 
+drop policy if exists "athlete_notes: dono escreve" on public.athlete_notes;
 create policy "athlete_notes: dono escreve"
   on public.athlete_notes for all
   using (

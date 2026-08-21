@@ -33,6 +33,7 @@ begin
 end;
 ';
 
+drop trigger if exists on_auth_user_created_claim_athlete on auth.users;
 create trigger on_auth_user_created_claim_athlete
   after insert on auth.users
   for each row execute function public.claim_unassigned_athlete();
