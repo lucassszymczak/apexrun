@@ -9,9 +9,8 @@ dashboards de performance.
 - **Parsing de atividades:** `.FIT` / `.TCX` / `.GPX` (fonte de verdade das
   métricas por km — não dependemos só do JSON da API)
 
-> **Status:** Passos 1–3 concluídos (setup + schema + seed; motor de ingestão;
-> UI de revisão aprovar/rejeitar/anotar com persistência no Supabase). Os passos
-> 4–5 vêm a seguir.
+> **Status:** Passos 1–3 e 5 concluídos (setup + schema + seed; motor de
+> ingestão; UI de revisão + persistência; dashboards). Falta o Passo 4 (Strava).
 
 ---
 
@@ -19,9 +18,25 @@ dashboards de performance.
 
 1. ✅ **Setup do projeto + schema Supabase + migrations**
 2. ✅ **Upload e parsing de `.FIT/.TCX/.GPX` → splits + `quality_report`**
-3. ✅ **Camada de conferência com UI de revisão + persistência** ← aqui
+3. ✅ **Camada de conferência com UI de revisão + persistência**
 4. ⬜ OAuth Strava + ingestão via API como fonte alternativa
-5. ⬜ Dashboards e gráficos comparativos
+5. ✅ **Dashboards e gráficos comparativos** ← aqui
+
+### Dashboards (Passo 5)
+
+`src/features/dashboard/` — lê dados JÁ persistidos (não recalcula splits no front):
+
+- **Diário filtrável** (tipo / status / dor) — funciona com o histórico do seed.
+- **Tendência semanal** — pace médio, FC média e eficiência (pace/FC) por semana,
+  em *small multiples* (nunca eixo duplo).
+- **Comparativo por km** — longões entre si e qualidade entre si, sobrepostos, com
+  o treino mais recente em destaque e os antigos em opacidade menor (automático).
+  Preenche conforme você registra `.FIT` marcados como longão/qualidade.
+- **Tempo nas zonas de FC** — a partir dos streams (FC por segundo) dos treinos
+  registrados por arquivo, usando as zonas do atleta.
+
+Transformações puras e testadas em `transform.ts`; em desenvolvimento há um
+preview dos gráficos em `http://localhost:5173/#preview` (dados de exemplo).
 
 ### Revisão e persistência (Passo 3)
 
