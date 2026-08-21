@@ -52,15 +52,17 @@ create type issue_severity as enum ('info', 'warning', 'error');
 -- -----------------------------------------------------------------------------
 -- Função utilitária: mantém updated_at sempre atualizado em UPDATEs.
 -- -----------------------------------------------------------------------------
+-- Corpo entre aspas simples (em vez de dollar-quoting) para ser robusto a
+-- copiar/colar no SQL Editor. O corpo não tem aspas simples, então é seguro.
 create or replace function public.set_updated_at()
 returns trigger
 language plpgsql
-as $$
+as '
 begin
   new.updated_at = now();
   return new;
 end;
-$$;
+';
 
 -- -----------------------------------------------------------------------------
 -- Tabela: athletes
@@ -471,7 +473,7 @@ returns trigger
 language plpgsql
 security definer
 set search_path = public
-as $$
+as '
 begin
   update public.athletes
      set user_id = new.id
@@ -484,7 +486,7 @@ begin
    );
   return new;
 end;
-$$;
+';
 
 create trigger on_auth_user_created_claim_athlete
   after insert on auth.users

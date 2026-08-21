@@ -18,7 +18,7 @@ returns trigger
 language plpgsql
 security definer
 set search_path = public
-as $$
+as '
 begin
   update public.athletes
      set user_id = new.id
@@ -31,7 +31,7 @@ begin
    );
   return new;
 end;
-$$;
+';
 
 create trigger on_auth_user_created_claim_athlete
   after insert on auth.users
