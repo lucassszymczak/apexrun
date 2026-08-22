@@ -34,7 +34,7 @@ export interface PersistArgs {
 export async function persistIngest(
   client: SupabaseClient,
   { parsed, result, input, official }: PersistArgs,
-): Promise<string> {
+): Promise<{ id: string; replaced: number }> {
   // Atleta do usuário logado (o RLS já devolve só o dele).
   const { data: athlete, error: athErr } = await client
     .from('athletes')
@@ -122,5 +122,29 @@ export async function persistIngest(
     throw childErr;
   }
 
-  return activityId;
+  // Substitui o histórico: ao aprovar um arquivo, remove o(s) treino(s) do seed
+  // (source='manual') na MESMA data, para o registro rico (com splits) tomar o
+  // lugar do resumo e não duplicar. Só quando aprovado como oficial.
+  let replaced = 0;
+  if (official) {
+    try {
+      const d = new Date(input.data);
+      const dayStart = new Date(d.getFullYear(), d.getMonth(), d.getDate()).toISOString();
+      const dayEnd = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1).toISOString();
+      const { data: removed } = await client
+        .from('activities')
+        .delete()
+        .eq('athlete_id', athlete.id)
+        .eq('source', 'manual')
+        .gte('data', dayStart)
+        .lt('data', dayEnd)
+        .neq('id', activityId)
+        .select('id');
+      replaced = removed?.length ?? 0;
+    } catch {
+      // best-effort: se a substituição falhar, o registro novo já está salvo.
+    }
+  }
+
+  return { id: activityId, replaced };
 }

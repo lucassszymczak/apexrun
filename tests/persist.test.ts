@@ -28,7 +28,20 @@ function makeFake(captured: Record<string, unknown>) {
           return insertBuilder(table, rows);
         },
         delete() {
-          return { eq: async () => ({ error: null }) };
+          const rec: { table: string; filters: [string, string, unknown][] } = {
+            table,
+            filters: [],
+          };
+          (captured.deletes ??= []).push(rec);
+          const chain: Record<string, unknown> = {
+            eq(k: string, v: unknown) { rec.filters.push(['eq', k, v]); return chain; },
+            neq(k: string, v: unknown) { rec.filters.push(['neq', k, v]); return chain; },
+            gte(k: string, v: unknown) { rec.filters.push(['gte', k, v]); return chain; },
+            lt(k: string, v: unknown) { rec.filters.push(['lt', k, v]); return chain; },
+            select() { return { data: [], error: null }; },
+            then(resolve: (v: { error: null }) => void) { resolve({ error: null }); },
+          };
+          return chain;
         },
       };
     },
@@ -78,10 +91,16 @@ const input = {
 describe('persistIngest — mapeamento', () => {
   it('aprovar → activity oficial + splits + issues corretos', async () => {
     const captured: Record<string, any> = {};
-    const id = await persistIngest(makeFake(captured), {
+    const { id } = await persistIngest(makeFake(captured), {
       parsed, result, input, official: true,
     });
     expect(id).toBe('act-1');
+
+    // Substituição do histórico: apaga manual da mesma data.
+    const replaceDel = (captured.deletes ?? []).find(
+      (d: any) => d.table === 'activities' && d.filters.some((f: any[]) => f[1] === 'source' && f[2] === 'manual'),
+    );
+    expect(replaceDel).toBeTruthy();
 
     const act = captured.activities;
     expect(act.athlete_id).toBe('ath-1');
@@ -102,6 +121,11 @@ describe('persistIngest — mapeamento', () => {
     const captured: Record<string, any> = {};
     await persistIngest(makeFake(captured), { parsed, result, input, official: false });
     expect(captured.activities.quality_status).toBe('rejected');
+    // Rejeitar NÃO substitui histórico.
+    const manualDel = (captured.deletes ?? []).find(
+      (d: any) => d.filters.some((f: any[]) => f[1] === 'source' && f[2] === 'manual'),
+    );
+    expect(manualDel).toBeFalsy();
     expect(captured.activities.confirmed_at).toBeNull();
   });
 });

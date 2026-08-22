@@ -29,7 +29,7 @@ type Save =
   | { status: 'idle' }
   | { status: 'saving' }
   | { status: 'error'; message: string }
-  | { status: 'saved'; official: boolean };
+  | { status: 'saved'; official: boolean; replaced: number };
 
 export function ReviewForm({
   filename,
@@ -73,8 +73,8 @@ export function ReviewForm({
     }
     setSave({ status: 'saving' });
     try {
-      await persistIngest(supabase, { parsed, result, input, official });
-      setSave({ status: 'saved', official });
+      const { replaced } = await persistIngest(supabase, { parsed, result, input, official });
+      setSave({ status: 'saved', official, replaced });
       onSaved?.();
     } catch (err) {
       setSave({
@@ -92,6 +92,11 @@ export function ReviewForm({
             ? 'Atividade registrada como oficial.'
             : 'Atividade guardada como rejeitada (não oficial).'}
         </p>
+        {save.replaced > 0 && (
+          <p className="text-sm text-emerald-200/80">
+            Substituiu {save.replaced} treino(s) do histórico na mesma data.
+          </p>
+        )}
         <button
           onClick={onReset}
           className="rounded-lg bg-slate-800 px-3 py-1.5 text-sm text-slate-200 hover:bg-slate-700"
