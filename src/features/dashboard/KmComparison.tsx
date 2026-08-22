@@ -1,7 +1,9 @@
 // Comparativo automático por km: sobrepõe treinos do mesmo tipo (longões entre
-// si; qualidade entre si), uma linha por treino. Mais antigo com opacidade menor,
-// mais recente em destaque. Hue único (emerald) + rampa de opacidade = série
-// distinguível por recência, sem seleção manual. Lê splits já persistidos.
+// si; qualidade entre si; e "outros treinos com parciais"), uma linha por treino.
+// Mais antigo com opacidade menor, mais recente em destaque. Hue único (emerald)
+// + rampa de opacidade = série distinguível por recência, sem seleção manual.
+// Lê splits já persistidos. Treinos SEM parciais por km (ex: histórico do seed)
+// não podem ser plotados aqui — são contados num aviso transparente.
 
 import {
   CartesianGrid,
@@ -13,9 +15,20 @@ import {
   YAxis,
 } from 'recharts';
 import { CHART } from './chartTheme';
-import { kmSeries, toWideByKm, type DashActivity, type DashSplit, type KmSeries } from './transform';
+import {
+  countWithoutSplits,
+  kmSeries,
+  toWideByKm,
+  type DashActivity,
+  type DashSplit,
+  type KmSeries,
+} from './transform';
 import { formatPace } from '@/lib/format';
 import { Empty, Section, tooltipStyle } from './WeeklyTrend';
+
+const isLongao = (a: DashActivity) => a.tipo === 'longao';
+const isQualidade = (a: DashActivity) => a.tipo === 'qualidade';
+const isOutro = (a: DashActivity) => a.tipo !== 'longao' && a.tipo !== 'qualidade';
 
 export function KmComparison({
   activities,
@@ -24,24 +37,38 @@ export function KmComparison({
   activities: DashActivity[];
   splitsByActivity: Map<string, DashSplit[]>;
 }) {
-  const longoes = kmSeries(activities, splitsByActivity, 'longao');
-  const qualidade = kmSeries(activities, splitsByActivity, 'qualidade');
+  const longoes = kmSeries(activities, splitsByActivity, isLongao);
+  const qualidade = kmSeries(activities, splitsByActivity, isQualidade);
+  const outros = kmSeries(activities, splitsByActivity, isOutro);
 
-  if (longoes.length === 0 && qualidade.length === 0) {
-    return (
-      <Section title="Comparativo por km">
-        <Empty>
-          Ainda sem splits por km. Estes gráficos preenchem automaticamente quando você
-          registrar treinos (.FIT) marcados como <b>longão</b> ou <b>qualidade</b>.
-        </Empty>
-      </Section>
-    );
-  }
+  // Treinos que existem no diário mas não têm parciais por km → não plotáveis.
+  const semParciais = countWithoutSplits(activities, splitsByActivity, () => true);
+  const longSem = countWithoutSplits(activities, splitsByActivity, isLongao);
+
+  const nada = longoes.length === 0 && qualidade.length === 0 && outros.length === 0;
 
   return (
     <Section title="Comparativo por km">
-      {longoes.length > 0 && <Category title="Longões" series={longoes} />}
-      {qualidade.length > 0 && <Category title="Treinos de qualidade" series={qualidade} />}
+      {semParciais > 0 && (
+        <p className="text-xs text-slate-500 -mt-1">
+          {semParciais} treino(s) sem parciais por km não entram aqui
+          {longSem > 0 ? ` (incluindo ${longSem} longão(ões) do histórico)` : ''}. Para
+          compará-los, registre o arquivo <b>.FIT</b> deles na aba Conferência.
+        </p>
+      )}
+
+      {nada ? (
+        <Empty>
+          Ainda sem nenhum treino com parciais por km. Estes gráficos preenchem quando você
+          registrar um arquivo <b>.FIT</b> (ex: um longão) na aba Conferência.
+        </Empty>
+      ) : (
+        <div className="space-y-4">
+          {longoes.length > 0 && <Category title="Longões" series={longoes} />}
+          {qualidade.length > 0 && <Category title="Treinos de qualidade" series={qualidade} />}
+          {outros.length > 0 && <Category title="Outros treinos (com parciais)" series={outros} />}
+        </div>
+      )}
     </Section>
   );
 }
@@ -49,8 +76,10 @@ export function KmComparison({
 function Category({ title, series }: { title: string; series: KmSeries[] }) {
   return (
     <div className="rounded-lg border border-slate-800 bg-slate-900/40 p-3 space-y-3">
-      <div className="flex items-center justify-between">
-        <span className="text-sm font-medium text-slate-200">{title}</span>
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <span className="text-sm font-medium text-slate-200">
+          {title} <span className="text-slate-500">· {series.length}</span>
+        </span>
         <LegendDates series={series} />
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -98,6 +127,7 @@ function KmChart({
               tickLine={false}
               axisLine={false}
               width={44}
+              allowDecimals={metric === 'fc' ? false : true}
               domain={['auto', 'auto']}
               tickFormatter={(v) => (metric === 'pace' ? formatPace(v) : String(v))}
             />
@@ -135,8 +165,7 @@ function KmChart({
 }
 
 function LegendDates({ series }: { series: KmSeries[] }) {
-  // Mais recentes primeiro na legenda.
-  const ordered = [...series].reverse();
+  const ordered = [...series].reverse(); // mais recentes primeiro
   return (
     <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
       {ordered.map((s) => (

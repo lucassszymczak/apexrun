@@ -37,6 +37,15 @@ describe('weeklyTrend', () => {
     const rows = weeklyTrend([act({ pace_medio: null, fc_media: null })]);
     expect(rows).toHaveLength(0);
   });
+
+  it('exclui cross-training (bike/força): só entra quem tem pace', () => {
+    const rows = weeklyTrend([
+      act({ id: 'run', data: '2026-08-10', tipo: 'rodagem', pace_medio: 450, fc_media: 165 }),
+      act({ id: 'bike', data: '2026-08-10', tipo: 'bike', pace_medio: null, fc_media: 110 }),
+    ]);
+    expect(rows).toHaveLength(1);
+    expect(rows[0].fc).toBe(165); // 110 do bike NÃO polui a média
+  });
 });
 
 describe('kmSeries + toWideByKm', () => {
@@ -55,7 +64,7 @@ describe('kmSeries + toWideByKm', () => {
   ]);
 
   it('só longões com splits, ordenados, opacidade por recência', () => {
-    const s = kmSeries(acts, map, 'longao');
+    const s = kmSeries(acts, map, (a) => a.tipo === 'longao');
     expect(s.map((x) => x.activityId)).toEqual(['A', 'B']); // ordenado por data
     expect(s[0].opacity).toBeLessThan(1); // antigo
     expect(s[1].opacity).toBe(1); // recente em destaque
@@ -64,7 +73,7 @@ describe('kmSeries + toWideByKm', () => {
   });
 
   it('toWideByKm monta uma coluna por treino', () => {
-    const s = kmSeries(acts, map, 'longao');
+    const s = kmSeries(acts, map, (a) => a.tipo === 'longao');
     const { rows, keys } = toWideByKm(s, 'pace');
     expect(keys).toEqual(['A', 'B']);
     expect(rows).toHaveLength(2); // km 1 e 2

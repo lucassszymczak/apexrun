@@ -75,7 +75,9 @@ function ddmm(d: Date): string {
 export function weeklyTrend(activities: DashActivity[]): WeekPoint[] {
   const buckets = new Map<string, { start: Date; paces: number[]; fcs: number[] }>();
   for (const a of activities) {
-    if (a.pace_medio == null && a.fc_media == null) continue; // sem métrica de corrida
+    // Só CORRIDAS (têm pace). Exclui bike/força/mobilidade, que não têm pace e
+    // cuja FC (mais baixa) distorceria a média de FC da semana.
+    if (a.pace_medio == null) continue;
     const mon = mondayOf(a.data);
     const key = mon.toISOString().slice(0, 10);
     let b = buckets.get(key);
@@ -118,13 +120,24 @@ export interface KmSeries {
   points: { km: number; pace: number | null; fc: number | null }[];
 }
 
+/** Conta atividades que casam com `match` mas NÃO têm splits (não plotáveis). */
+export function countWithoutSplits(
+  activities: DashActivity[],
+  splitsByActivity: Map<string, DashSplit[]>,
+  match: (a: DashActivity) => boolean,
+): number {
+  return activities.filter(
+    (a) => match(a) && (splitsByActivity.get(a.id)?.length ?? 0) === 0,
+  ).length;
+}
+
 export function kmSeries(
   activities: DashActivity[],
   splitsByActivity: Map<string, DashSplit[]>,
-  tipo: string,
+  match: (a: DashActivity) => boolean,
 ): KmSeries[] {
   const withSplits = activities
-    .filter((a) => a.tipo === tipo && (splitsByActivity.get(a.id)?.length ?? 0) > 0)
+    .filter((a) => match(a) && (splitsByActivity.get(a.id)?.length ?? 0) > 0)
     .sort((a, b) => new Date(a.data).getTime() - new Date(b.data).getTime());
 
   const n = withSplits.length;
