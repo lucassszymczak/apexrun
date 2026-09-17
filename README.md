@@ -14,17 +14,28 @@ dashboards de performance.
 
 ---
 
-## `analise/` — página de análise por entrada manual (sem backend)
+## `analise/` — página de análise autônoma (sem backend)
 
-Página **HTML autônoma** (`analise/index.html`) para quem quer **digitar os
-treinos** em vez de subir `.FIT` e rodar o Supabase. Abra o arquivo no navegador
-(duplo-clique) — não precisa de build, servidor nem login. Todos os dados ficam
-no `localStorage` do próprio navegador; há **exportar/importar JSON** para backup.
+Página **HTML autônoma** (`analise/index.html`) onde o atleta **registra os
+treinos** — importando um `.FIT` ou digitando — e recebe a análise conforme o
+Livro de Fórmulas. Abra o arquivo no navegador (duplo-clique) ou pelo GitHub
+Pages — não precisa de build, servidor nem login. Os dados ficam no
+`localStorage` do navegador; há **exportar/importar JSON** para backup.
+
+**Publicada no GitHub Pages** junto do app: uma vez na `main`, fica em
+`https://<usuario>.github.io/apexrun/analise/` (o `postbuild` copia a página
+para dentro do `dist/` do Vite — ver `scripts/copy-analise.mjs`).
 
 Implementa o **Livro de Fórmulas Apex** direto no front, com o visual
 *Run Performance // HEAT* (tema claro/escuro):
 
-- **Registro de treino:** data, tipo, distância, duração, FC média/máx, cadência,
+- **Importar `.FIT`:** leia o arquivo do relógio e todos os campos entram
+  sozinhos — distância, tempo, FC média/máx, cadência (já ×2), ganho/perda de
+  elevação, temperatura e **splits por km com FC e Δelevação**. Abre um modal de
+  revisão (você confere/ajusta e adiciona RPE/subjetivo) antes de salvar. O
+  leitor `.FIT` é o `@garmin/fitsdk`, carregado sob demanda via CDN
+  (`cdn.jsdelivr.net`); tudo roda no navegador, nada sobe para servidor.
+- **Registro manual:** data, tipo, distância, duração, FC média/máx, cadência,
   ganho/perda de elevação, RPE, temperatura, sono, dor, e **splits por km**
   (`tempo, FC, Δelev`) opcionais.
 - **KPIs calculados** (fiéis ao livro): GAP (Minetti assimétrico km a km),
@@ -40,9 +51,15 @@ Implementa o **Livro de Fórmulas Apex** direto no front, com o visual
 - Vem **semeada com os dados reais do baseline** (5K de 07/09, calibração
   Floripa, Meia de 29/08) para já abrir com o painel montado.
 
-O motor de KPIs (`analise/index.html`, seção "MOTOR DE KPIs") é validado por
-testes unitários (26 casos) contra os números documentados no dashboard.
-Complementa — não substitui — o pipeline de ingestão de `.FIT` acima.
+O motor de KPIs e a leitura de `.FIT` têm módulos de referência espelhados,
+validados por testes standalone (a página embute a mesma lógica):
+
+```bash
+node analise/kpi.test.mjs   # 26 casos — GAP, EF, TRIMP, CTL/ATL, A:C, Riegel…
+node analise/fit.test.mjs   # 22 casos — encode→decode→map (@garmin/fitsdk) + KPIs
+```
+
+Complementa — não substitui — o pipeline de ingestão de `.FIT` do app React acima.
 
 ---
 

@@ -243,6 +243,7 @@ svg.chart{width:100%;height:auto;display:block;overflow:visible}
     <button class="icon-btn" id="exportBtn" title="Exportar dados (JSON)">⭳</button>
     <button class="icon-btn" id="importBtn" title="Importar dados (JSON)">⭱</button>
     <input type="file" id="importFile" accept="application/json" hidden />
+    <input type="file" id="fitFile" accept=".fit,.FIT" hidden />
   </div>
   <nav class="tabs" id="tabs">
     <button data-tab="painel" class="active">📊 Painel</button>
@@ -258,7 +259,7 @@ svg.chart{width:100%;height:auto;display:block;overflow:visible}
 <!-- Modal treino -->
 <div class="modal-bg" id="modalBg">
   <div class="modal">
-    <div class="modal-h"><h2 id="modalTitle">Novo treino</h2><button class="icon-btn" id="modalClose">✕</button></div>
+    <div class="modal-h"><h2 id="modalTitle">Novo treino</h2><button class="btn ghost sm" id="modalFit" title="Preencher a partir de um arquivo .FIT">⬆ .FIT</button><button class="icon-btn" id="modalClose">✕</button></div>
     <div class="modal-b">
       <div class="grid g-3">
         <div class="field"><label>Data</label><input type="date" id="f_date"></div>
@@ -424,6 +425,124 @@ function readiness(c){
   s=Math.round(clamp(s,0,100));
   var band=s>=90?"Peak Ready":s>=80?"Ready":s>=70?"Moderate":s>=60?"Caution":"Recovery";
   return{score:s,band:band};
+}
+
+/* ============================================================================
+   LEITURA DE .FIT (Garmin) NO NAVEGADOR — @garmin/fitsdk via CDN
+   Mapeia record/session messages para o modelo de treino. Espelha o módulo
+   testável analise/fit-ingest.mjs (48 testes incluindo GAP/EF/decoupling).
+============================================================================ */
+var _fitSdk=null;
+function loadFitSdk(){
+  if(_fitSdk)return _fitSdk;
+  _fitSdk=import("https://cdn.jsdelivr.net/npm/@garmin/fitsdk@21/+esm").catch(function(e){_fitSdk=null;throw e;});
+  return _fitSdk;
+}
+function fitNum(x){return typeof x==="number"&&isFinite(x)?x:null;}
+function fitISODate(d){if(!(d instanceof Date)||isNaN(d))return null;return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");}
+function fitCadence(rpm){if(rpm==null)return null;return rpm<130?Math.round(rpm*2):Math.round(rpm);}
+function fitNormRecords(rec){
+  return (rec||[]).map(function(r){return{
+    t:r.timestamp instanceof Date?r.timestamp.getTime()/1000:fitNum(r.timestamp),
+    dist:fitNum(r.distance),
+    speed:fitNum(r.enhancedSpeed)!=null?fitNum(r.enhancedSpeed):fitNum(r.speed),
+    hr:fitNum(r.heartRate),
+    alt:fitNum(r.enhancedAltitude)!=null?fitNum(r.enhancedAltitude):fitNum(r.altitude),
+    cad:fitNum(r.cadence)!=null?fitNum(r.cadence)+(fitNum(r.fractionalCadence)||0):null,
+    temp:fitNum(r.temperature)
+  };}).filter(function(r){return r.t!=null;}).sort(function(a,b){return a.t-b.t;});
+}
+function fitInterpAlt(records,target){
+  for(var i=1;i<records.length;i++){var a=records[i-1],b=records[i];if(a.dist==null||b.dist==null)continue;
+    if(b.dist>=target&&a.dist<=target){var span=b.dist-a.dist,f=span>0?(target-a.dist)/span:0;var va=a.alt,vb=b.alt;if(va==null||vb==null)return vb!=null?vb:va;return va+(vb-va)*f;}}
+  return null;
+}
+function fitInterpTime(records,target){
+  for(var i=1;i<records.length;i++){var a=records[i-1],b=records[i];if(a.dist==null||b.dist==null)continue;
+    if(b.dist>=target&&a.dist<=target){var span=b.dist-a.dist,f=span>0?(target-a.dist)/span:0;return a.t+(b.t-a.t)*f;}}
+  return null;
+}
+function fitBuildSplits(records){
+  if(records.length<8)return null;
+  var totalDist=records[records.length-1].dist;
+  if(!totalDist||totalDist<1200)return null;
+  var nKm=Math.floor(totalDist/1000),splits=[],prevT=records[0].t;
+  var prevAlt=fitInterpAlt(records,0);if(prevAlt==null)prevAlt=records[0].alt;
+  for(var k=1;k<=nKm;k++){
+    var target=k*1000,tAt=fitInterpTime(records,target),altAt=fitInterpAlt(records,target);
+    if(tAt==null)break;
+    var seg=records.filter(function(r){return r.dist!=null&&r.dist>=(k-1)*1000&&r.dist<target&&r.hr!=null;});
+    var hrAvg=seg.length?Math.round(seg.reduce(function(s,r){return s+r.hr;},0)/seg.length):null;
+    var elev=altAt!=null&&prevAlt!=null?Math.round((altAt-prevAlt)*10)/10:null;
+    splits.push({distKm:1,timeSec:Math.round(tAt-prevT),hrAvg:hrAvg,elevDeltaM:elev});
+    prevT=tAt;prevAlt=altAt;
+  }
+  var rest=totalDist-nKm*1000;
+  if(rest>150){
+    var tEnd=records[records.length-1].t;
+    var seg2=records.filter(function(r){return r.dist!=null&&r.dist>=nKm*1000&&r.hr!=null;});
+    var hr2=seg2.length?Math.round(seg2.reduce(function(s,r){return s+r.hr;},0)/seg2.length):null;
+    var altEnd=records[records.length-1].alt;
+    var elev2=altEnd!=null&&prevAlt!=null?Math.round((altEnd-prevAlt)*10)/10:null;
+    splits.push({distKm:Math.round(rest/10)/100,timeSec:Math.round(tEnd-prevT),hrAvg:hr2,elevDeltaM:elev2});
+  }
+  return splits.length?splits:null;
+}
+function fitAscentDescent(records){
+  var up=0,down=0,last=null;
+  for(var i=0;i<records.length;i++){var r=records[i];if(r.alt==null)continue;if(last!=null){var d=r.alt-last;if(d>0.2)up+=d;else if(d<-0.2)down+=-d;}last=r.alt;}
+  return{up:Math.round(up),down:Math.round(down)};
+}
+function fitMessagesToWorkout(messages){
+  var records=fitNormRecords(messages.recordMesgs);
+  if(!records.length)throw new Error("Arquivo .FIT sem registros de trajeto (record messages).");
+  var session=(messages.sessionMesgs&&messages.sessionMesgs[0])||{};
+  var sport=(session.sport||"").toString().toLowerCase();
+  var startDate=session.startTime instanceof Date?session.startTime:(typeof records[0].t==="number"?new Date(records[0].t*1000):null);
+  var lastDist=records[records.length-1].dist;
+  var distKm=(fitNum(session.totalDistance)!=null?session.totalDistance:lastDist)/1000;
+  var durationSec=Math.round(fitNum(session.totalTimerTime)!=null?session.totalTimerTime:(fitNum(session.totalElapsedTime)!=null?session.totalElapsedTime:(records[records.length-1].t-records[0].t)));
+  var hrs=records.map(function(r){return r.hr;}).filter(function(x){return x!=null;});
+  var hrAvg=fitNum(session.avgHeartRate)!=null?session.avgHeartRate:(hrs.length?Math.round(hrs.reduce(function(a,b){return a+b;},0)/hrs.length):null);
+  var hrMax=fitNum(session.maxHeartRate)!=null?session.maxHeartRate:(hrs.length?Math.max.apply(null,hrs):null);
+  var cads=records.map(function(r){return r.cad;}).filter(function(x){return x!=null;});
+  var rawCad=fitNum(session.avgCadence)!=null?session.avgCadence:(cads.length?cads.reduce(function(a,b){return a+b;},0)/cads.length:null);
+  var stream=fitAscentDescent(records);
+  var gainM=fitNum(session.totalAscent)!=null?Math.round(session.totalAscent):(stream.up||null);
+  var lossM=fitNum(session.totalDescent)!=null?Math.round(session.totalDescent):(stream.down||null);
+  var temps=records.map(function(r){return r.temp;}).filter(function(x){return x!=null;});
+  var temp=temps.length?Math.round(temps.reduce(function(a,b){return a+b;},0)/temps.length):null;
+  return{
+    date:fitISODate(startDate)||new Date().toISOString().slice(0,10),
+    type:"facil",
+    distKm:Math.round(distKm*100)/100,
+    durationSec:durationSec,
+    hrAvg:hrAvg||null,hrMax:hrMax||null,
+    cadence:fitCadence(rawCad)||null,
+    gainM:gainM,lossM:lossM,temp:temp,
+    splits:fitBuildSplits(records),
+    sport:session.sport||null
+  };
+}
+function handleFitFile(file){
+  if(!file)return;
+  toast("Lendo "+file.name+"…");
+  file.arrayBuffer().then(function(buf){
+    return loadFitSdk().then(function(SDK){
+      var bytes=new Uint8Array(buf);
+      var stream=SDK.Stream.fromByteArray(bytes);
+      if(!SDK.Decoder.isFIT(stream))throw new Error("Não parece um arquivo .FIT válido.");
+      var decoder=new SDK.Decoder(stream);
+      var res=decoder.read();
+      var w=fitMessagesToWorkout(res.messages);
+      openModal(null,w);
+      var extra=(w.splits?w.splits.length+" splits · ":"")+(w.sport?w.sport:"");
+      toast("Treino lido do .FIT — confira e salve"+(extra?" ("+extra+")":""));
+    });
+  }).catch(function(err){
+    console.error(err);
+    alert("Não foi possível ler o .FIT.\n\n"+(err&&err.message?err.message:err)+"\n\nSe for a primeira vez, confira a conexão (o leitor é carregado da internet). Você ainda pode inserir os dados manualmente.");
+  });
 }
 
 /* ============================================================================
@@ -860,14 +979,15 @@ function zoneBadge(z){var m={"sweet spot":"hi","baixa":"lo","atenção":"mid","r
 function bandBadge(b){var m={"bom":"hi","excelente":"hi","abaixo":"mid","superior":"hi"};return '<span class="badge '+(m[b]||"lo")+'">'+b+'</span>';}
 function tsbState(t){if(t==null)return"—";if(t>5)return"fresco (bom para teste/prova)";if(t>=-10)return"equilibrado";if(t>=-30)return"em treino pesado (normal na construção)";return"muito carregado";}
 function typeLabel(t){return{facil:"Fácil",longão:"Longão",tempo:"Tempo",limiar:"Limiar",intervalado:"Intervalado",regenerativo:"Regenerativo",teste:"Teste",prova:"Prova"}[t]||t;}
-function emptyState(){var e=el("div","empty");e.innerHTML='<div class="big">🏃</div><b>Nenhum treino ainda.</b><br>Vá em <b>Treinos</b> e registre sua primeira corrida — o painel se monta sozinho.';return e;}
+function emptyState(){var e=el("div","empty");e.innerHTML='<div class="big">🏃</div><b>Nenhum treino ainda.</b><br>Importe um <b>.FIT</b> do relógio ou registre manualmente em <b>Treinos</b> — o painel se monta sozinho.';return e;}
 
 /* -------- TREINOS -------- */
 function renderTreinos(v){
   var head=el("div");head.style.cssText="display:flex;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap";
   head.innerHTML='<div><h2 style="font-size:20px">Treinos</h2><div class="sub">'+state.workouts.length+' registrado(s). Toque em um para editar.</div></div>';
-  var addBtn=el("button","btn",'＋ Novo treino');addBtn.style.marginLeft="auto";addBtn.onclick=function(){openModal();};
-  head.appendChild(addBtn);
+  var fitBtn=el("button","btn ghost",'⬆ Importar .FIT');fitBtn.style.marginLeft="auto";fitBtn.title="Leia um arquivo .FIT do relógio — distância, FC, cadência, elevação e splits por km entram sozinhos.";fitBtn.onclick=function(){$("#fitFile").click();};
+  var addBtn=el("button","btn",'＋ Novo treino');addBtn.onclick=function(){openModal();};
+  head.appendChild(fitBtn);head.appendChild(addBtn);
   v.appendChild(head);
   if(!state.workouts.length){v.appendChild(emptyState());return;}
   var c=el("div","card");c.style.padding="0";c.style.overflow="auto";
@@ -894,7 +1014,7 @@ function renderTreinos(v){
     tb.appendChild(r);
   });
   t.appendChild(tb);c.appendChild(t);v.appendChild(c);
-  var note=el("div","mini-note");note.style.margin="12px 4px";note.innerHTML="GAP, EF, decoupling e TRIMP são calculados automaticamente conforme o Livro de Fórmulas. Splits e Δelevação por km elevam a confiança do GAP e liberam decoupling/pacing.";
+  var note=el("div","mini-note");note.style.margin="12px 4px";note.innerHTML="Dica: <b>Importar .FIT</b> preenche tudo sozinho (distância, FC, cadência, elevação e splits por km) — é só conferir e salvar. GAP, EF, decoupling e TRIMP seguem o Livro de Fórmulas; splits com FC e Δelevação por km elevam a confiança do GAP e liberam decoupling/pacing.";
   v.appendChild(note);
 }
 
@@ -1051,29 +1171,30 @@ function renderConfig(v){
    MODAL DE TREINO
 ============================================================================ */
 var editingId=null;
-function openModal(id){
+function openModal(id,prefill){
   editingId=id||null;
   var w=id?state.workouts.find(function(x){return x.id===id;}):null;
-  $("#modalTitle").textContent=w?"Editar treino":"Novo treino";
+  var s=w||prefill||null; // fonte dos valores
+  $("#modalTitle").textContent=w?"Editar treino":(prefill?"Revisar treino do .FIT":"Novo treino");
   $("#modalDelete").style.display=w?"inline-flex":"none";
-  $("#f_date").value=w?w.date:new Date().toISOString().slice(0,10);
-  $("#f_type").value=w?w.type:"facil";
-  $("#f_dist").value=w?w.distKm:"";
-  $("#f_dur").value=w?hms(w.durationSec):"";
-  $("#f_hr").value=w&&w.hrAvg?w.hrAvg:"";
-  $("#f_hrmax").value=w&&w.hrMax?w.hrMax:"";
-  $("#f_cad").value=w&&w.cadence?w.cadence:"";
-  $("#f_gain").value=w&&w.gainM!=null?w.gainM:"";
-  $("#f_loss").value=w&&w.lossM!=null?w.lossM:"";
-  $("#f_rpe").value=w&&w.rpe?w.rpe:"";
-  $("#f_temp").value=w&&w.temp!=null?w.temp:"";
-  $("#f_terrain").value=w&&w.terrain?w.terrain:"";
-  $("#f_sleep").value=w&&w.sleepH!=null?w.sleepH:"";
-  $("#f_sore").value=w&&w.soreness!=null?w.soreness:"";
-  $("#f_dec").value=w&&w.decouplingPct!=null?w.decouplingPct:"";
-  $("#f_notes").value=w&&w.notes?w.notes:"";
-  $("#f_pain").checked=w?!!w.pain:false;
-  $("#f_splits").value=w&&w.splits?w.splits.map(function(s){return[hms(s.timeSec),s.hrAvg||"",s.elevDeltaM!=null?s.elevDeltaM:""].filter(function(x,i){return i===0||x!=="";}).join(", ");}).join("\n"):"";
+  $("#f_date").value=s&&s.date?s.date:new Date().toISOString().slice(0,10);
+  $("#f_type").value=s&&s.type?s.type:"facil";
+  $("#f_dist").value=s&&s.distKm?s.distKm:"";
+  $("#f_dur").value=s&&s.durationSec?hms(s.durationSec):"";
+  $("#f_hr").value=s&&s.hrAvg?s.hrAvg:"";
+  $("#f_hrmax").value=s&&s.hrMax?s.hrMax:"";
+  $("#f_cad").value=s&&s.cadence?s.cadence:"";
+  $("#f_gain").value=s&&s.gainM!=null?s.gainM:"";
+  $("#f_loss").value=s&&s.lossM!=null?s.lossM:"";
+  $("#f_rpe").value=s&&s.rpe?s.rpe:"";
+  $("#f_temp").value=s&&s.temp!=null?s.temp:"";
+  $("#f_terrain").value=s&&s.terrain?s.terrain:"";
+  $("#f_sleep").value=s&&s.sleepH!=null?s.sleepH:"";
+  $("#f_sore").value=s&&s.soreness!=null?s.soreness:"";
+  $("#f_dec").value=s&&s.decouplingPct!=null?s.decouplingPct:"";
+  $("#f_notes").value=s&&s.notes?s.notes:"";
+  $("#f_pain").checked=s?!!s.pain:false;
+  $("#f_splits").value=s&&s.splits?s.splits.map(function(sp){return[hms(sp.timeSec),sp.hrAvg||"",sp.elevDeltaM!=null?sp.elevDeltaM:""].filter(function(x,i){return i===0||x!=="";}).join(", ");}).join("\n"):"";
   $("#modalBg").classList.add("show");
 }
 function closeModal(){$("#modalBg").classList.remove("show");editingId=null;}
@@ -1172,6 +1293,8 @@ function setActiveTab(){$("#tabs").querySelectorAll("button").forEach(function(b
   $("#exportBtn").onclick=exportData;
   $("#importBtn").onclick=function(){$("#importFile").click();};
   $("#importFile").onchange=function(e){if(e.target.files[0])importData(e.target.files[0]);e.target.value="";};
+  $("#fitFile").onchange=function(e){if(e.target.files[0])handleFitFile(e.target.files[0]);e.target.value="";};
+  $("#modalFit").onclick=function(){$("#fitFile").click();};
   $("#modalClose").onclick=closeModal;$("#modalCancel").onclick=closeModal;
   $("#modalSave").onclick=saveModal;$("#modalDelete").onclick=deleteWorkout;
   $("#modalBg").onclick=function(e){if(e.target===$("#modalBg"))closeModal();};
