@@ -1124,9 +1124,24 @@ function deleteWorkout(){if(!editingId)return;if(!confirm("Excluir este treino?"
    EXPORT / IMPORT / TEMA / TOAST
 ============================================================================ */
 function exportData(){
-  var blob=new Blob([JSON.stringify({athlete:state.athlete,workouts:state.workouts},null,2)],{type:"application/json"});
+  var payload=JSON.stringify({athlete:state.athlete,workouts:state.workouts},null,2);
+  var filename="apex-treinos-"+new Date().toISOString().slice(0,10)+".json";
+  // Dentro do visualizador de Artifact do claude.ai: usa a capability "downloads".
+  if(window.claude&&typeof window.claude.use==="function"){
+    Promise.resolve(window.claude.use("downloads")).then(function(dl){
+      if(!dl){blobDownload(filename,payload);return;}
+      dl.save({filename:filename,data:payload}).then(function(){toast("Backup exportado");})
+        .catch(function(err){if(!(err&&err.code==="declined"))blobDownload(filename,payload);});
+    }).catch(function(){blobDownload(filename,payload);});
+    return;
+  }
+  blobDownload(filename,payload); // arquivo local / GitHub Pages
+}
+function blobDownload(filename,payload){
+  var blob=new Blob([payload],{type:"application/json"});
   var url=URL.createObjectURL(blob);var a=document.createElement("a");
-  a.href=url;a.download="apex-treinos-"+new Date().toISOString().slice(0,10)+".json";a.click();URL.revokeObjectURL(url);
+  a.href=url;a.download=filename;a.click();URL.revokeObjectURL(url);
+  toast("Backup exportado");
 }
 function importData(file){
   var r=new FileReader();
