@@ -14,6 +14,38 @@ dashboards de performance.
 
 ---
 
+## `analise/` — página de análise por entrada manual (sem backend)
+
+Página **HTML autônoma** (`analise/index.html`) para quem quer **digitar os
+treinos** em vez de subir `.FIT` e rodar o Supabase. Abra o arquivo no navegador
+(duplo-clique) — não precisa de build, servidor nem login. Todos os dados ficam
+no `localStorage` do próprio navegador; há **exportar/importar JSON** para backup.
+
+Implementa o **Livro de Fórmulas Apex** direto no front, com o visual
+*Run Performance // HEAT* (tema claro/escuro):
+
+- **Registro de treino:** data, tipo, distância, duração, FC média/máx, cadência,
+  ganho/perda de elevação, RPE, temperatura, sono, dor, e **splits por km**
+  (`tempo, FC, Δelev`) opcionais.
+- **KPIs calculados** (fiéis ao livro): GAP (Minetti assimétrico km a km),
+  Efficiency Factor, Decoupling, Cadência, Velocidade-GAP, Custo cardíaco/km,
+  TRIMP, Carga semanal, **Fitness/Fatigue/Form (CTL·ATL·TSB)**, razão
+  aguda:crônica, aderência 80/20, Pacing Strategy, Pace Stability, Performance
+  Trend, **Race Prediction (Riegel)**, Athlete Performance Score, Running
+  Readiness, Consistency, VO₂máx e Athlete Profile — cada um com badge de
+  confiança, como no livro.
+- **Painel** (tiles + gráficos SVG de evolução: EF, decoupling, cadência,
+  GAP, carga, CTL/ATL), **Relatório semanal** (um card por semana), **referência
+  de KPIs** e **configuração do atleta** (FCrep, FCmáx, VO₂, metas).
+- Vem **semeada com os dados reais do baseline** (5K de 07/09, calibração
+  Floripa, Meia de 29/08) para já abrir com o painel montado.
+
+O motor de KPIs (`analise/index.html`, seção "MOTOR DE KPIs") é validado por
+testes unitários (26 casos) contra os números documentados no dashboard.
+Complementa — não substitui — o pipeline de ingestão de `.FIT` acima.
+
+---
+
 ## Ordem de construção
 
 1. ✅ **Setup do projeto + schema Supabase + migrations**
