@@ -1045,7 +1045,7 @@ function renderPainel(v){
   // ---- COACH INSIGHT ----
   v.appendChild(sectionTitle("Coach insight"));
   var ci=el("div","card");
-  ci.innerHTML='<h3>💬 Leitura da inteligência <span class="badge mid" style="margin-left:auto">média</span></h3><div class="insight" style="margin-top:8px">'+coachInsight(ws,a,{latestEF:latestEF,efDelta:efDelta,latestCad:latestCad,latestDec:latestDec,trend:trend,pol:pol,ac:ac})+'</div>';
+  ci.innerHTML='<h3>💬 Leitura da inteligência <span class="badge mid" style="margin-left:auto">média</span></h3><div class="insight" style="margin-top:8px">'+coachInsight(ws,a,{latestEF:latestEF,efDelta:efDelta,latestCad:latestCad,latestDec:latestDec,trend:trend,pol:pol,ac:ac,rd:rd,recov:recov,tsb:tsb,restTr:restTr,hrvTr:hrvTr,sleepLast:sleepLast,vo2Last:vo2Last,vo2Eff:vo2Eff,td:td,hillAgg:hillAgg,score:score})+'</div>';
   v.appendChild(ci);
 
   // ---- PROFILE + PREDICTION + RECORDS + TIMELINE ----
@@ -1055,10 +1055,18 @@ function renderPainel(v){
   prof.innerHTML='<h3>👤 Athlete Profile</h3>';
   var pl=el("div","pill-list");pl.style.marginTop="10px";
   var closerSess=ws.filter(function(w){var p=computePacing(w);return p&&(p.closer||p.label==="negative split");}).length;
+  // rótulos derivados dos dados
+  var nWeeks=cons?cons.weeks:1;var kmTot=ws.reduce(function(s,w){return s+(w.distKm||0);},0);var kmWk=nWeeks?kmTot/nWeeks:0;
+  var nivel=kmWk<15?"iniciante":kmWk<45?"intermediário":"avançado";
+  var decMean=(function(){var d=ws.map(computeDecoupling).filter(function(x){return x!=null;});return d.length?mean(d):null;})();
+  var ponto=(closerSess>=2||(decMean!=null&&decMean<3))?"resistência":(latestEF&&a.efBaseline&&latestEF>a.efBaseline*1.03?"economia":"em análise");
+  var focoMap={"Eficiência":"economia (EF)","Consistência":"consistência","Resist. fadiga":"resistência aeróbica","Volume":"volume gradual"};
+  var worst=null,wv=101;if(score&&score.parts)for(var kk in score.parts)if(score.parts[kk]<wv){wv=score.parts[kk];worst=kk;}
+  var foco=(rd&&rd.score<60)?"recuperar":(worst&&focoMap[worst])?focoMap[worst]:"base & economia";
   pl.innerHTML=[
-    '<span class="pill">Nível <b>intermediário</b></span>',
-    '<span class="pill">Ponto forte <b>resistência</b></span>',
-    '<span class="pill">Foco <b>base &amp; economia</b></span>',
+    '<span class="pill">Nível <b>'+nivel+'</b></span>',
+    '<span class="pill">Ponto forte <b>'+ponto+'</b></span>',
+    '<span class="pill">Foco <b>'+foco+'</b></span>',
     '<span class="pill">Estilo <b>'+(closerSess>=2?"closer (negative split)":"em análise")+'</b></span>',
     '<span class="pill">Tendência <b>'+(trend?trend.arrow:"→")+'</b></span>',
     '<span class="pill">Readiness <b>'+rd.score+'</b></span>',
@@ -1093,16 +1101,45 @@ function renderPainel(v){
 
 function coachInsight(ws,a,x){
   var parts=[];
+  // 1) perfil / baseline
   var baseline=ws.find(function(w){return w.type==="teste";});
   if(baseline){var p=computePacing(baseline);
     parts.push('<span class="lead">O baseline confirmou seu perfil.</span> '+baseline.distKm.toFixed(2)+' km a '+paceStr(baseline.durationSec/baseline.distKm)+'/km (GAP '+paceStr(computeGap(baseline).gapPace)+') com FC '+baseline.hrAvg+(p&&p.closer?', e o último km disparou '+Math.round(p.lastGainSec)+'s mais rápido — closer comprovado.':'.'));
   }
-  if(x.latestEF)parts.push(' Motor: EF fácil em <b>'+x.latestEF.toFixed(4)+'</b>'+(x.efDelta!=null?' ('+(x.efDelta>=0?'+':'')+x.efDelta.toFixed(1)+'% no bloco)':'')+' — meta é subir +'+a.efGainPct+'%.');
-  if(x.latestCad)parts.push(' Cadência em <b>'+x.latestCad+' spm</b> rumo a '+a.cadenceTarget+': a alavanca de maior retorno do ciclo.');
-  if(x.pol&&x.pol.easyPct<75)parts.push(' Atenção: só '+Math.round(x.pol.easyPct)+'% do tempo em zona fácil — o histórico de correr o fácil forte demais aparece aqui.');
-  if(x.ac&&(x.ac.zone==="atenção"||x.ac.zone==="risco"))parts.push(' A razão aguda:crônica está em <b>'+x.ac.ratio.toFixed(2)+'</b> ('+x.ac.zone+') — cuidado com o salto de carga.');
-  parts.push(' Foco da fase: economia (EF) e cadência para sustentar paces bons por mais tempo.');
+  // 2) motor: EF + decoupling
+  if(x.latestEF){var efTxt=' Motor: EF fácil em <b>'+x.latestEF.toFixed(4)+'</b>'+(x.efDelta!=null?' ('+(x.efDelta>=0?'+':'')+x.efDelta.toFixed(1)+'% no bloco)':'')+' — meta +'+a.efGainPct+'%.';
+    if(x.latestDec!=null)efTxt+=' Decoupling '+(x.latestDec<0?'negativo ('+x.latestDec.toFixed(1)+'%) — você fica mais eficiente no fim':x.latestDec.toFixed(1)+'%'+(x.latestDec>8?' (acima de 8% — investigar combustível/calor/pacing)':x.latestDec<7?' (base sólida)':''))+'.';
+    parts.push(efTxt);}
+  if(x.latestCad)parts.push(' Cadência em <b>'+x.latestCad+' spm</b> rumo a '+a.cadenceTarget+': a alavanca de maior retorno.');
+  // 3) recuperação (Apple Watch): readiness + recovery + sono/HRV/FC repouso
+  if(x.rd){var rec=[];
+    if(x.sleepLast)rec.push('sono '+x.sleepLast.value+'h'+(x.sleepLast.value<6.5?' (curto)':''));
+    if(x.hrvTr&&x.hrvTr.deltaPct!=null)rec.push('HRV '+(x.hrvTr.deltaPct>=0?'+':'')+x.hrvTr.deltaPct.toFixed(0)+'% vs base'+(x.hrvTr.deltaPct<-8?' (baixa)':''));
+    if(x.restTr&&x.restTr.deltaAbs!=null)rec.push('FC repouso '+(x.restTr.deltaAbs<=0?'↓ '+Math.abs(x.restTr.deltaAbs).toFixed(0)+' (bom)':'↑ '+x.restTr.deltaAbs.toFixed(0)));
+    var recWarn=(x.recov&&x.recov.label==="Needs Recovery")||(x.hrvTr&&x.hrvTr.deltaPct!=null&&x.hrvTr.deltaPct<-8)||(x.restTr&&x.restTr.deltaAbs>3);
+    parts.push(' Recuperação: <b>Readiness '+x.rd.score+' ('+x.rd.band+')</b>'+(x.recov?' · Recovery '+x.recov.label:'')+(rec.length?' — '+rec.join(', ')+'.':'.')+(recWarn?' <b>Os sinais pedem cautela: priorize um dia leve antes de qualidade.</b>':(x.rd.score>=80?' Verde para uma sessão de qualidade.':'')));
+  }
+  // 4) distribuição de intensidade / 80-20
+  if(x.pol){if(x.pol.easyPct<75)parts.push(' Distribuição: só <b>'+Math.round(x.pol.easyPct)+'% em zona fácil</b>'+(x.td?' (Z3 moderado em '+Math.round(x.td.pct.moderado)+'%)':'')+' — o histórico de correr o fácil forte demais aparece aqui; puxe o fácil para baixo.');
+    else parts.push(' Distribuição saudável: <b>'+Math.round(x.pol.easyPct)+'% fácil</b> — polarização no rumo certo.');}
+  // 5) carga: A:C + forma (TSB)
+  var carga=[];
+  if(x.ac)carga.push('A:C '+x.ac.ratio.toFixed(2)+' ('+x.ac.zone+')');
+  if(x.tsb!=null)carga.push('forma '+(x.tsb>0?'+':'')+x.tsb.toFixed(0)+' ('+tsbState(x.tsb)+')');
+  if(carga.length){var cargaWarn=x.ac&&(x.ac.zone==="atenção"||x.ac.zone==="risco");parts.push(' Carga: '+carga.join(' · ')+'.'+(cargaWarn?' <b>Salto de carga — segure a semana.</b>':''));}
+  // 6) subida
+  if(x.hillAgg)parts.push(' Subida: você sobe a <b>'+(x.hillAgg.effVsModel*100).toFixed(0)+'% do previsto</b> ('+x.hillAgg.totalClimbM+' m no ciclo) — '+(x.hillAgg.effVsModel>=1?'ponto forte no seu terreno':'espaço para ganhar força específica')+'.');
+  // 7) foco derivado do ponto mais fraco do score
+  parts.push(' '+focusLine(x,a));
   return parts.join("");
+}
+function focusLine(x,a){
+  if(x.rd&&x.rd.score<60)return '<b>Foco agora:</b> recuperar — sono e descarga antes de voltar à intensidade.';
+  if(x.pol&&x.pol.easyPct<75)return '<b>Foco:</b> correr o fácil de verdade (FC em Z1–Z2) para liberar a adaptação da base.';
+  if(x.score&&x.score.parts){var parts=x.score.parts,worst=null,wv=101;for(var k in parts)if(parts[k]<wv){wv=parts[k];worst=k;}
+    var map={"Eficiência":"economia (EF) e cadência","Consistência":"regularidade — completar as sessões da semana","Resist. fadiga":"resistência aeróbica (longões que desacoplam menos)","Volume":"volume gradual (subir ~10%/semana)"};
+    if(worst&&map[worst])return '<b>Foco da fase:</b> '+map[worst]+'.';}
+  return '<b>Foco da fase:</b> economia (EF) e cadência para sustentar paces bons por mais tempo.';
 }
 function bestAnchor(ws){
   var cands=ws.filter(function(w){return(w.type==="teste"||w.type==="prova")&&w.distKm&&w.durationSec;});
@@ -1227,22 +1264,40 @@ function renderRelatorio(v){
     if(maxHr)cards.appendChild(rcard("Coração",Math.round(mean(hrRun.map(function(w){return w.hrAvg;})))+" bpm","média · pico "+maxHr+" bpm"));
     var trimpTot=wk.map(function(w){return computeTrimp(w,a)||0;}).reduce(function(s,x){return s+x;},0);
     cards.appendChild(rcard("Carga (TRIMP)",Math.round(trimpTot)+"","dose fisiológica da semana"));
+    // recuperação da semana (Apple Watch)
+    var wkDaily=sortedDaily().filter(function(e){return isoWeekKey(e.date)===k;});
+    var sleepVals=wkDaily.map(function(e){return e.sleepH;}).filter(function(x){return x!=null;});
+    var restVals=wkDaily.map(function(e){return e.restingHR;}).filter(function(x){return x!=null;});
+    if(sleepVals.length||restVals.length)cards.appendChild(rcard("Recuperação",(sleepVals.length?mean(sleepVals).toFixed(1)+"h":"—"),"sono médio"+(restVals.length?" · FC repouso "+Math.round(mean(restVals))+" bpm":"")));
     box.appendChild(cards);
     // lição
     var lesson=el("div");lesson.style.cssText="padding:0 16px 16px";
-    lesson.innerHTML='<div class="rcard" style="background:var(--accent-soft);border-color:transparent"><div class="rl" style="color:var(--accent)">A lição &amp; a decisão</div><div class="insight" style="margin-top:6px">'+weeklyLesson(wk,a)+'</div></div>';
+    lesson.innerHTML='<div class="rcard" style="background:var(--accent-soft);border-color:transparent"><div class="rl" style="color:var(--accent)">A lição &amp; a decisão</div><div class="insight" style="margin-top:6px">'+weeklyLesson(wk,a,wkDaily)+'</div></div>';
     box.appendChild(lesson);
     v.appendChild(box);
   });
 }
 function rcard(l,val,desc){var e=el("div","rcard");e.innerHTML='<div class="rl">'+esc(l)+'</div><div class="rv">'+val+'</div><div class="rd">'+desc+'</div>';return e;}
-function weeklyLesson(wk,a){
+function weeklyLesson(wk,a,wkDaily){
   var hasPain=wk.some(function(w){return w.pain;});
   var hasTest=wk.some(function(w){return w.type==="teste"||w.type==="prova";});
   var closer=wk.some(function(w){var p=computePacing(w);return p&&p.closer;});
+  var pol=polarization(wk,a);
   var out=[];
   if(hasTest)out.push("Semana com marco de esforço — teste/prova registrado dá o ponto de referência do ciclo.");
   if(closer)out.push("Seu padrão de fechamento forte (closer) apareceu de novo — arma natural de prova.");
+  // recuperação da semana (Apple Watch)
+  if(wkDaily&&wkDaily.length){
+    var sleepVals=wkDaily.map(function(e){return e.sleepH;}).filter(function(x){return x!=null;});
+    var avgSleep=sleepVals.length?mean(sleepVals):null;
+    var rest=wkDaily.map(function(e){return e.restingHR;}).filter(function(x){return x!=null;});
+    var restUp=rest.length>=2&&rest[rest.length-1]>rest[0]+2;
+    if(avgSleep!=null&&avgSleep<6.5)out.push("<b>Sono médio de "+avgSleep.toFixed(1)+"h — abaixo do ideal;</b> a recuperação (e a adaptação) cobram isso. Proteja as noites antes das sessões-chave.");
+    else if(avgSleep!=null&&avgSleep>=7.5)out.push("Sono médio de "+avgSleep.toFixed(1)+"h sustentou bem a carga.");
+    if(restUp)out.push("<b>FC de repouso subindo na semana</b> — sinal de fadiga acumulada ou estresse; considere um dia leve.");
+  }
+  // distribuição (não vale para semana de teste/prova — esforço forte é esperado)
+  if(pol&&pol.easyPct<70&&!hasTest&&wk.length>1)out.push("Só "+Math.round(pol.easyPct)+"% do tempo em zona fácil — a semana pendeu para o forte demais; puxe o fácil para baixo.");
   if(hasPain)out.push("<b>Sinal de dor articular registrado — recuar cedo separa um recuo de dias de uma lesão de meses.</b> Priorize reforço estrutural e reavalie antes de voltar ao volume.");
   if(!out.length)out.push("Semana de construção: consistência &gt; pressa. Um corredor lesionado tem pace zero.");
   return out.join(" ");
