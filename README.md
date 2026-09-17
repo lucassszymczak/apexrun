@@ -32,9 +32,16 @@ Implementa o **Livro de Fórmulas Apex** direto no front, com o visual
 - **Importar `.FIT`:** leia o arquivo do relógio e todos os campos entram
   sozinhos — distância, tempo, FC média/máx, cadência (já ×2), ganho/perda de
   elevação, temperatura e **splits por km com FC e Δelevação**. Abre um modal de
-  revisão (você confere/ajusta e adiciona RPE/subjetivo) antes de salvar. O
-  leitor `.FIT` é o `@garmin/fitsdk`, carregado sob demanda via CDN
+  revisão com um bloco em destaque **"Percepção & recuperação"** para o que o
+  relógio não grava (**esforço/RPE 0–10, sono, dor**) antes de salvar. O leitor
+  `.FIT` é o `@garmin/fitsdk`, carregado sob demanda via CDN
   (`cdn.jsdelivr.net`); tudo roda no navegador, nada sobe para servidor.
+- **Aviso de duplicata:** ao salvar um treino numa data que já tem registro, a
+  página pergunta **substituir / manter os dois / cancelar** (evita contar o
+  mesmo treino duas vezes na carga, na A:C e nos recordes).
+- **Recálculo automático:** ao salvar/editar/excluir, o painel inteiro recomputa
+  a partir do histórico completo (nenhum KPI fica desatualizado) e persiste no
+  `localStorage`.
 - **Registro manual:** data, tipo, distância, duração, FC média/máx, cadência,
   ganho/perda de elevação, RPE, temperatura, sono, dor, e **splits por km**
   (`tempo, FC, Δelev`) opcionais.

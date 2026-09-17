@@ -174,6 +174,21 @@ textarea{resize:vertical;min-height:64px;font-family:var(--mono);font-size:12.5p
 .modal-h h2{font-size:16px;margin-right:auto}
 .modal-b{padding:18px}
 .modal-f{padding:14px 18px;border-top:1px solid var(--line);display:flex;gap:10px;justify-content:flex-end;align-items:center}
+.fit-banner{display:flex;gap:10px;align-items:flex-start;background:var(--accent-soft);border:1px solid color-mix(in srgb,var(--accent) 32%,transparent);border-radius:12px;padding:12px 14px;margin-bottom:14px;font-size:13px;line-height:1.45;color:var(--ink)}
+.fit-banner .bi{font-size:16px;line-height:1}
+.manual-block{margin-top:14px;background:var(--surface-2);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:12px;padding:14px}
+.manual-block h4{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink);font-weight:800;margin-bottom:10px}
+.manual-block h4 span{color:var(--muted);font-weight:600;text-transform:none;letter-spacing:0}
+.manual-block .pain-check{display:flex;align-items:center;gap:8px;margin-top:12px;font-size:13.5px;font-weight:600;color:var(--ink-2)}
+.manual-block.flash{animation:flashManual 1.3s ease}
+@keyframes flashManual{0%,100%{box-shadow:none}25%{box-shadow:0 0 0 3px var(--accent-soft)}}
+/* diálogo de escolha (duplicata) */
+.choice-bg{position:fixed;inset:0;background:rgba(10,8,6,.5);z-index:60;display:flex;align-items:center;justify-content:center;padding:20px}
+.choice-box{background:var(--surface);border:1px solid var(--line);border-radius:16px;max-width:460px;width:100%;padding:20px;box-shadow:var(--shadow)}
+.choice-box h3{font-size:16px;margin-bottom:8px}
+.choice-box p{font-size:14px;color:var(--ink-2);margin:0 0 16px;line-height:1.5}
+.choice-box p b{color:var(--ink)}
+.choice-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
 
 /* charts */
 .chart-wrap{position:relative}
@@ -261,6 +276,10 @@ svg.chart{width:100%;height:auto;display:block;overflow:visible}
   <div class="modal">
     <div class="modal-h"><h2 id="modalTitle">Novo treino</h2><button class="btn ghost sm" id="modalFit" title="Preencher a partir de um arquivo .FIT">⬆ .FIT</button><button class="icon-btn" id="modalClose">✕</button></div>
     <div class="modal-b">
+      <div class="fit-banner" id="fitBanner" style="display:none">
+        <span class="bi">⬆</span>
+        <div><b>Treino lido do .FIT.</b> Os dados do relógio já entraram (distância, FC, cadência, elevação e splits). Confirme o <b>Tipo</b> e preencha em <b>Percepção &amp; recuperação</b> o que o relógio não grava — <b>esforço (RPE), sono e dor</b>.</div>
+      </div>
       <div class="grid g-3">
         <div class="field"><label>Data</label><input type="date" id="f_date"></div>
         <div class="field"><label>Tipo</label><select id="f_type">
@@ -280,12 +299,18 @@ svg.chart{width:100%;height:auto;display:block;overflow:visible}
         <div class="field"><label>Cadência (spm)</label><input type="number" id="f_cad" inputmode="numeric" placeholder="168"></div>
         <div class="field"><label>Ganho elevação (m)</label><input type="number" id="f_gain" inputmode="numeric" placeholder="60"></div>
         <div class="field"><label>Perda elevação (m)</label><input type="number" id="f_loss" inputmode="numeric" placeholder="55"></div>
-        <div class="field"><label>RPE (1–10)</label><input type="number" id="f_rpe" min="1" max="10" inputmode="numeric" placeholder="4"></div>
         <div class="field"><label>Temperatura (°C)</label><input type="number" id="f_temp" inputmode="decimal" placeholder="18"></div>
         <div class="field"><label>Terreno</label><input type="text" id="f_terrain" placeholder="ondulado"></div>
-        <div class="field"><label>Sono na véspera (h)</label><input type="number" id="f_sleep" step="0.5" inputmode="decimal" placeholder="7.5"></div>
-        <div class="field"><label>Dor muscular (0–10)</label><input type="number" id="f_sore" min="0" max="10" inputmode="numeric" placeholder="1"></div>
         <div class="field"><label>Decoupling (%) <span class="hint">se você já tiver</span></label><input type="number" id="f_dec" step="0.1" inputmode="decimal" placeholder="ex.: 5.0"></div>
+      </div>
+      <div class="manual-block" id="manualBlock">
+        <h4>Percepção &amp; recuperação <span>— só você sabe; o relógio não grava</span></h4>
+        <div class="grid g-3">
+          <div class="field"><label>Esforço · RPE (0–10) <span class="hint">0 muito leve · 10 máximo</span></label><input type="number" id="f_rpe" min="0" max="10" inputmode="numeric" placeholder="ex.: 4"></div>
+          <div class="field"><label>Sono na véspera (h)</label><input type="number" id="f_sleep" step="0.5" inputmode="decimal" placeholder="7.5"></div>
+          <div class="field"><label>Dor muscular (0–10)</label><input type="number" id="f_sore" min="0" max="10" inputmode="numeric" placeholder="1"></div>
+        </div>
+        <label class="pain-check"><input type="checkbox" id="f_pain" style="width:auto"> Dor articular / suspeita de lesão (aciona alerta de recuo)</label>
       </div>
       <div class="grid g-2" style="margin-top:12px">
         <div class="field" style="grid-column:span 2">
@@ -294,9 +319,6 @@ svg.chart{width:100%;height:auto;display:block;overflow:visible}
         </div>
         <div class="field" style="grid-column:span 2"><label>Observações</label><input type="text" id="f_notes" placeholder="corpo aguentava, fôlego cansou"></div>
       </div>
-      <label style="display:flex;align-items:center;gap:8px;margin-top:12px;font-size:13.5px;font-weight:600;color:var(--ink-2)">
-        <input type="checkbox" id="f_pain" style="width:auto"> Dor articular / suspeita de lesão (aciona alerta de recuo)
-      </label>
     </div>
     <div class="modal-f">
       <button class="btn danger sm" id="modalDelete" style="margin-right:auto;display:none">Excluir</button>
@@ -535,7 +557,7 @@ function handleFitFile(file){
       var decoder=new SDK.Decoder(stream);
       var res=decoder.read();
       var w=fitMessagesToWorkout(res.messages);
-      openModal(null,w);
+      openModal(null,w,true);
       var extra=(w.splits?w.splits.length+" splits · ":"")+(w.sport?w.sport:"");
       toast("Treino lido do .FIT — confira e salve"+(extra?" ("+extra+")":""));
     });
@@ -1171,11 +1193,13 @@ function renderConfig(v){
    MODAL DE TREINO
 ============================================================================ */
 var editingId=null;
-function openModal(id,prefill){
+function openModal(id,prefill,fromFit){
   editingId=id||null;
   var w=id?state.workouts.find(function(x){return x.id===id;}):null;
   var s=w||prefill||null; // fonte dos valores
-  $("#modalTitle").textContent=w?"Editar treino":(prefill?"Revisar treino do .FIT":"Novo treino");
+  $("#modalTitle").textContent=w?"Editar treino":(fromFit?"Revisar treino do .FIT":"Novo treino");
+  $("#fitBanner").style.display=fromFit?"flex":"none";
+  var mb=$("#manualBlock");mb.classList.remove("flash");if(fromFit){void mb.offsetWidth;mb.classList.add("flash");}
   $("#modalDelete").style.display=w?"inline-flex":"none";
   $("#f_date").value=s&&s.date?s.date:new Date().toISOString().slice(0,10);
   $("#f_type").value=s&&s.type?s.type:"facil";
@@ -1226,7 +1250,7 @@ function saveModal(){
     cadence:+$("#f_cad").value||null,
     gainM:$("#f_gain").value!==""?+$("#f_gain").value:null,
     lossM:$("#f_loss").value!==""?+$("#f_loss").value:null,
-    rpe:+$("#f_rpe").value||null,temp:$("#f_temp").value!==""?+$("#f_temp").value:null,
+    rpe:$("#f_rpe").value!==""?+$("#f_rpe").value:null,temp:$("#f_temp").value!==""?+$("#f_temp").value:null,
     terrain:$("#f_terrain").value.trim()||null,
     sleepH:$("#f_sleep").value!==""?+$("#f_sleep").value:null,
     soreness:$("#f_sore").value!==""?+$("#f_sore").value:null,
@@ -1235,9 +1259,45 @@ function saveModal(){
     pain:$("#f_pain").checked,
     splits:splits||null
   };
-  if(editingId){var idx=state.workouts.findIndex(function(x){return x.id===editingId;});state.workouts[idx]=w;}
-  else state.workouts.push(w);
-  save();closeModal();toast(editingId?"Treino atualizado":"Treino registrado");currentTab="painel";setActiveTab();render();
+  if(editingId){
+    var idx=state.workouts.findIndex(function(x){return x.id===editingId;});state.workouts[idx]=w;
+    finalizeSave("Treino atualizado");return;
+  }
+  // aviso de duplicata: já existe treino na mesma data?
+  var dups=state.workouts.filter(function(x){return x.date===w.date;});
+  if(dups.length){
+    var match=dups.slice().sort(function(a,b){return Math.abs((a.distKm||0)-w.distKm)-Math.abs((b.distKm||0)-w.distKm);})[0];
+    var sameDist=match.distKm!=null&&Math.abs(match.distKm-w.distKm)/w.distKm<0.05;
+    var msg="Já existe um treino em <b>"+fmtDateFull(w.date)+"</b>"+
+      (match.distKm?" — "+match.distKm.toFixed(2)+" km · "+typeLabel(match.type):"")+
+      (sameDist?". <b>Parece ser o mesmo treino.</b>":". Foi uma segunda corrida no dia?")+" O que fazer?";
+    askChoice("Treino duplicado?",msg,[
+      {key:"replace",label:"Substituir",style:""},
+      {key:"keep",label:"Manter os dois",style:"ghost"},
+      {key:"cancel",label:"Cancelar",style:"ghost"}
+    ]).then(function(choice){
+      if(choice==="cancel")return; // mantém o modal aberto para ajustes
+      if(choice==="replace"){var i=state.workouts.findIndex(function(x){return x.id===match.id;});if(i>=0)state.workouts[i]=w;else state.workouts.push(w);finalizeSave("Treino substituído");}
+      else{state.workouts.push(w);finalizeSave("Treino registrado (2 no dia)");}
+    });
+    return;
+  }
+  state.workouts.push(w);
+  finalizeSave("Treino registrado");
+}
+function finalizeSave(msg){save();closeModal();toast(msg);currentTab="painel";setActiveTab();render();}
+function askChoice(title,message,choices){
+  return new Promise(function(resolve){
+    var bg=el("div","choice-bg");
+    var box=el("div","choice-box");
+    box.innerHTML='<h3>'+esc(title)+'</h3><p>'+message+'</p>';
+    var row=el("div","choice-actions");
+    var done=false;function pick(k){if(done)return;done=true;if(bg.parentNode)document.body.removeChild(bg);resolve(k);}
+    choices.forEach(function(c){var b=el("button","btn "+(c.style||"ghost")+" sm",esc(c.label));b.onclick=function(){pick(c.key);};row.appendChild(b);});
+    box.appendChild(row);bg.appendChild(box);
+    bg.onclick=function(e){if(e.target===bg)pick("cancel");};
+    document.body.appendChild(bg);
+  });
 }
 function deleteWorkout(){if(!editingId)return;if(!confirm("Excluir este treino?"))return;state.workouts=state.workouts.filter(function(x){return x.id!==editingId;});save();closeModal();toast("Treino excluído");render();}
 
