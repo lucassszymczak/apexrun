@@ -259,11 +259,13 @@ svg.chart{width:100%;height:auto;display:block;overflow:visible}
     <button class="icon-btn" id="importBtn" title="Importar dados (JSON)">⭱</button>
     <input type="file" id="importFile" accept="application/json" hidden />
     <input type="file" id="fitFile" accept=".fit,.FIT" hidden />
+    <input type="file" id="healthFile" accept=".xml" hidden />
   </div>
   <nav class="tabs" id="tabs">
     <button data-tab="painel" class="active">📊 Painel</button>
     <button data-tab="treinos">🏃 Treinos</button>
     <button data-tab="relatorio">🗒️ Relatório semanal</button>
+    <button data-tab="recuperacao">🌙 Recuperação</button>
     <button data-tab="kpis">📚 KPIs</button>
     <button data-tab="config">⚙️ Config</button>
   </nav>
@@ -390,7 +392,30 @@ function computeTrimp(w,a){
 }
 function computeHrCostKm(w){var g=computeGap(w);if(!g.gapSpeed||!w.hrAvg)return null;return w.hrAvg/g.gapSpeed;}
 function hrZone(hr,rep,max){if(!hr||!rep||!max||max<=rep)return null;var p=(hr-rep)/(max-rep);return p<0.59?1:p<0.74?2:p<0.84?3:p<0.88?4:5;}
-function polarization(ws,a){var easy=0,tot=0;ws.forEach(function(w){if(!w.hrAvg||!w.durationSec)return;var z=hrZone(w.hrAvg,a.fcRep,a.fcMax);if(z==null)return;tot+=w.durationSec;if(z<=2)easy+=w.durationSec;});if(!tot)return null;return{easyPct:(easy/tot)*100,totalSec:tot};}
+function zonesFromHist(hist,rep,max){if(!hist)return null;var z=[0,0,0,0,0];for(var bpm in hist){var zone=hrZone(+bpm,rep,max);if(zone)z[zone-1]+=hist[bpm];}return z;}
+function zoneSeconds(w,a){if(w.hrHist){var z=zonesFromHist(w.hrHist,a.fcRep,a.fcMax);if(z&&z.some(function(x){return x>0;}))return z;}if(w.hrAvg&&w.durationSec){var zn=hrZone(w.hrAvg,a.fcRep,a.fcMax);if(zn){var zz=[0,0,0,0,0];zz[zn-1]=w.durationSec;return zz;}}return null;}
+function polarization(ws,a){var zt=[0,0,0,0,0];ws.forEach(function(w){var z=zoneSeconds(w,a);if(z)for(var i=0;i<5;i++)zt[i]+=z[i];});var tot=zt.reduce(function(x,y){return x+y;},0);if(!tot)return null;return{easyPct:((zt[0]+zt[1])/tot)*100,totalSec:tot,zones:zt};}
+function trainingDistribution(ws,a){var pol=polarization(ws,a);if(!pol)return null;var z=pol.zones,t=pol.totalSec;return{zones:z,totalSec:t,bands:{facil:z[0]+z[1],moderado:z[2],forte:z[3]+z[4]},pct:{facil:(z[0]+z[1])/t*100,moderado:z[2]/t*100,forte:(z[3]+z[4])/t*100}};}
+function hillPerformance(w){
+  if(!w.splits||w.splits.length<3)return null;
+  var km=w.splits.filter(function(s){return s.elevDeltaM!=null&&s.timeSec>0;}).map(function(s){var dist=(s.distKm||1)*1000;return{grade:s.elevDeltaM/((s.distKm||1)*10),speed:dist/s.timeSec,hr:s.hrAvg,gain:s.elevDeltaM>0?s.elevDeltaM:0};});
+  if(!km.length)return null;
+  var flat=km.filter(function(k){return Math.abs(k.grade)<1;}),up=km.filter(function(k){return k.grade>=1.5;});
+  var flatSpeed=flat.length?median(flat.map(function(k){return k.speed;})):null;
+  var flatHr=flat.length?mean(flat.filter(function(k){return k.hr;}).map(function(k){return k.hr;})):null;
+  var gain=km.reduce(function(a2,k){return a2+k.gain;},0);
+  if(!up.length||!flatSpeed)return{climbKm:up.length,gainM:Math.round(gain),effVsModel:null,speedLossPctPerGrade:null,hrExtra:null};
+  var effs=up.map(function(k){return k.speed/(flatSpeed/gradeCostMult(k.grade));});
+  var lossPer=mean(up.map(function(k){return (flatSpeed-k.speed)/flatSpeed*100/k.grade;}));
+  var hrExtra=flatHr&&up.some(function(k){return k.hr;})?mean(up.filter(function(k){return k.hr;}).map(function(k){return k.hr;}))-flatHr:null;
+  return{climbKm:up.length,gainM:Math.round(gain),effVsModel:mean(effs),speedLossPctPerGrade:lossPer,hrExtra:hrExtra!=null?Math.round(hrExtra):null};
+}
+function hillAggregate(ws){var rows=ws.map(hillPerformance).filter(function(h){return h&&h.effVsModel!=null;});if(!rows.length)return null;return{sessions:rows.length,effVsModel:mean(rows.map(function(r){return r.effVsModel;})),speedLossPctPerGrade:mean(rows.map(function(r){return r.speedLossPctPerGrade;})),totalClimbM:ws.reduce(function(a2,w){var h=hillPerformance(w);return a2+(h?h.gainM:0);},0)};}
+function median(arr){if(!arr.length)return 0;var s=arr.slice().sort(function(x,y){return x-y;});var m=Math.floor(s.length/2);return s.length%2?s[m]:(s[m-1]+s[m])/2;}
+// ---- recuperação: diário (sono/FC repouso/HRV/VO2) ----
+function metricTrend(entries,key,refDate,baseDays){baseDays=baseDays||14;var rows=entries.filter(function(e){return e[key]!=null&&(!refDate||e.date<=refDate);}).sort(function(a,b){return a.date<b.date?1:-1;});if(!rows.length)return null;var latest=rows[0];var ref=refDate?new Date(refDate+"T00:00:00"):new Date(latest.date+"T00:00:00");var base=rows.slice(1).filter(function(e){var days=Math.round((ref-new Date(e.date+"T00:00:00"))/86400000);return days>=1&&days<=baseDays;});var baseline=base.length?median(base.map(function(e){return e[key];})):null;var deltaAbs=baseline!=null?latest[key]-baseline:null;var deltaPct=baseline?deltaAbs/baseline*100:null;return{latest:latest[key],date:latest.date,baseline:baseline,deltaAbs:deltaAbs,deltaPct:deltaPct};}
+function latestDaily(entries,key,refDate){var rows=entries.filter(function(e){return e[key]!=null&&(!refDate||e.date<=refDate);}).sort(function(a,b){return a.date<b.date?1:-1;});return rows.length?{value:rows[0][key],date:rows[0].date}:null;}
+function recoveryStatus(c){var s=100;if(c.restingDelta!=null)s-=clamp(c.restingDelta*5,-8,30);if(c.hrvDeltaPct!=null)s+=clamp(c.hrvDeltaPct*0.5,-25,12);if(c.sleepH!=null)s-=clamp((7.5-c.sleepH)*6,-6,24);if(c.tsb!=null&&c.tsb<-20)s-=clamp((-c.tsb-20)*0.6,0,15);s=Math.round(clamp(s,0,100));return{score:s,label:s>=75?"Good":s>=55?"Moderate":"Needs Recovery"};}
 function dailyLoads(ws,a){var m={};ws.forEach(function(w){var t=computeTrimp(w,a);if(t==null)return;m[w.date]=(m[w.date]||0)+t;});return m;}
 function fitnessSeries(ws,a){
   var loads=dailyLoads(ws,a),dates=Object.keys(loads).sort();
@@ -444,6 +469,8 @@ function readiness(c){
   if(c.sleepH!=null)s+=clamp((c.sleepH-7)*4,-12,8);
   if(c.soreness!=null)s-=c.soreness*2.5;
   if(c.pain)s-=25;
+  if(c.restingDelta!=null)s-=clamp(c.restingDelta*3,-6,18);
+  if(c.hrvDeltaPct!=null)s+=clamp(c.hrvDeltaPct*0.3,-12,8);
   s=Math.round(clamp(s,0,100));
   var band=s>=90?"Peak Ready":s>=80?"Ready":s>=70?"Moderate":s>=60?"Caution":"Recovery";
   return{score:s,band:band};
@@ -515,6 +542,17 @@ function fitAscentDescent(records){
   for(var i=0;i<records.length;i++){var r=records[i];if(r.alt==null)continue;if(last!=null){var d=r.alt-last;if(d>0.2)up+=d;else if(d<-0.2)down+=-d;}last=r.alt;}
   return{up:Math.round(up),down:Math.round(down)};
 }
+// histograma de FC (bpm -> segundos), para tempo real em zona
+function fitHrHist(records){
+  var hist={},any=false;
+  for(var i=0;i<records.length;i++){
+    var r=records[i];if(r.hr==null)continue;any=true;
+    var dt=i<records.length-1?records[i+1].t-r.t:1;
+    if(!(dt>0)||dt>10)dt=1;
+    var k=Math.round(r.hr);hist[k]=(hist[k]||0)+dt;
+  }
+  return any?hist:null;
+}
 function fitMessagesToWorkout(messages){
   var records=fitNormRecords(messages.recordMesgs);
   if(!records.length)throw new Error("Arquivo .FIT sem registros de trajeto (record messages).");
@@ -543,8 +581,55 @@ function fitMessagesToWorkout(messages){
     cadence:fitCadence(rawCad)||null,
     gainM:gainM,lossM:lossM,temp:temp,
     splits:fitBuildSplits(records),
+    hrHist:fitHrHist(records),
     sport:session.sport||null
   };
+}
+/* ============================================================================
+   LEITURA DO export.xml do APPLE SAÚDE — FC repouso, sono, HRV, VO₂máx
+============================================================================ */
+var HK_TYPES={resting:"HKQuantityTypeIdentifierRestingHeartRate",hrv:"HKQuantityTypeIdentifierHeartRateVariabilitySDNN",vo2:"HKQuantityTypeIdentifierVO2Max",sleep:"HKCategoryTypeIdentifierSleepAnalysis"};
+function appleDateMs(s){if(!s)return null;var iso=s.trim().replace(" ","T").replace(/\s*([+-]\d{2})(\d{2})$/,"$1:$2");var t=Date.parse(iso);return isNaN(t)?null:t;}
+function localDay(s){return s?s.slice(0,10):null;}
+function extractHealthRecords(text){
+  var out=[],wanted={};for(var k in HK_TYPES)wanted[HK_TYPES[k]]=1;
+  var recRe=/<Record\b([^>]*?)\/?>/g,m;
+  while((m=recRe.exec(text))!==null){
+    var attrs=m[1];var tm=attrs.match(/\btype="([^"]*)"/);if(!tm||!wanted[tm[1]])continue;
+    function g(k){var mm=attrs.match(new RegExp("\\b"+k+'="([^"]*)"'));return mm?mm[1]:undefined;}
+    out.push({type:tm[1],value:g("value"),startDate:g("startDate"),endDate:g("endDate")});
+  }
+  return out;
+}
+function aggregateDaily(records){
+  var acc={};function ensure(d){return acc[d]=acc[d]||{rest:[],hrv:[],vo2:null,vo2t:0,sleepMs:0};}
+  for(var i=0;i<records.length;i++){var r=records[i];
+    if(r.type===HK_TYPES.resting){var d=localDay(r.startDate),v=+r.value;if(d&&isFinite(v))ensure(d).rest.push(v);}
+    else if(r.type===HK_TYPES.hrv){var d2=localDay(r.startDate),v2=+r.value;if(d2&&isFinite(v2))ensure(d2).hrv.push(v2);}
+    else if(r.type===HK_TYPES.vo2){var d3=localDay(r.startDate),v3=+r.value,t3=appleDateMs(r.startDate)||0;if(d3&&isFinite(v3)){var a3=ensure(d3);if(t3>=a3.vo2t){a3.vo2=v3;a3.vo2t=t3;}}}
+    else if(r.type===HK_TYPES.sleep){if(!/Asleep/i.test(r.value||""))continue;var s=appleDateMs(r.startDate),e=appleDateMs(r.endDate),d4=localDay(r.endDate);if(d4&&s!=null&&e!=null&&e>s)ensure(d4).sleepMs+=e-s;}
+  }
+  return Object.keys(acc).sort().map(function(d){var a=acc[d],row={date:d};if(a.rest.length)row.restingHR=Math.round(median(a.rest));if(a.hrv.length)row.hrv=Math.round(median(a.hrv));if(a.vo2!=null)row.vo2=Math.round(a.vo2*10)/10;if(a.sleepMs>0)row.sleepH=Math.round(a.sleepMs/3600000*10)/10;return row;}).filter(function(r){return r.restingHR!=null||r.hrv!=null||r.vo2!=null||r.sleepH!=null;});
+}
+// lê o arquivo em pedaços (aguenta export.xml grande) e agrega
+function readHealthFile(file,onDone,onErr){
+  var CHUNK=4*1024*1024,offset=0,carry="",records=[];
+  var reader=new FileReader();
+  function step(){
+    if(offset>=file.size){onDone(aggregateDaily(records));return;}
+    var slice=file.slice(offset,offset+CHUNK);
+    reader.onload=function(){
+      var text=carry+reader.result;
+      var lastGt=text.lastIndexOf(">");
+      var head=lastGt>=0?text.slice(0,lastGt+1):text;
+      carry=lastGt>=0?text.slice(lastGt+1):"";
+      var recs=extractHealthRecords(head);for(var i=0;i<recs.length;i++)records.push(recs[i]);
+      offset+=CHUNK;setTimeout(step,0);
+    };
+    reader.onerror=function(){onErr&&onErr(reader.error||new Error("Falha ao ler o arquivo."));};
+    reader.readAsText(slice);
+  }
+  step();
 }
 function handleFitFile(file){
   if(!file)return;
@@ -593,13 +678,33 @@ function seedWorkouts(){
   ];
 }
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7);}
+function seedDaily(){
+  // dias de recuperação de exemplo (o que o Apple Watch mediria) — edite/importe os seus
+  return [
+    {date:"2026-09-03",restingHR:69,hrv:52,sleepH:6.8},
+    {date:"2026-09-04",restingHR:68,hrv:55,sleepH:7.4},
+    {date:"2026-09-05",restingHR:67,hrv:57,sleepH:7.1},
+    {date:"2026-09-06",restingHR:67,hrv:58,sleepH:7.6,vo2:39.4},
+    {date:"2026-09-07",restingHR:67,hrv:54,sleepH:6.9},
+    {date:"2026-09-08",restingHR:70,hrv:49,sleepH:6.2,note:"canela sensível"}
+  ];
+}
 var state=load();
 function load(){
-  try{var raw=localStorage.getItem(LS_KEY);if(raw){var p=JSON.parse(raw);return{athlete:Object.assign({},DEFAULT_ATHLETE,p.athlete||{}),workouts:p.workouts||[]};}}catch(e){}
-  return{athlete:Object.assign({},DEFAULT_ATHLETE),workouts:seedWorkouts(),seeded:true};
+  try{var raw=localStorage.getItem(LS_KEY);if(raw){var p=JSON.parse(raw);return{athlete:Object.assign({},DEFAULT_ATHLETE,p.athlete||{}),workouts:p.workouts||[],daily:p.daily||[]};}}catch(e){}
+  return{athlete:Object.assign({},DEFAULT_ATHLETE),workouts:seedWorkouts(),daily:seedDaily(),seeded:true};
 }
-function save(){try{localStorage.setItem(LS_KEY,JSON.stringify({athlete:state.athlete,workouts:state.workouts}));}catch(e){}}
+function save(){try{localStorage.setItem(LS_KEY,JSON.stringify({athlete:state.athlete,workouts:state.workouts,daily:state.daily}));}catch(e){}}
 function sortedWorkouts(){return state.workouts.slice().sort(function(a,b){return a.date<b.date?-1:a.date>b.date?1:0;});}
+function sortedDaily(){return (state.daily||[]).slice().sort(function(a,b){return a.date<b.date?-1:a.date>b.date?1:0;});}
+// mescla entradas diárias (do Saúde ou manuais) por data, sem perder campos
+function mergeDaily(rows){
+  state.daily=state.daily||[];
+  var byDate={};state.daily.forEach(function(e){byDate[e.date]=e;});
+  var added=0,updated=0;
+  rows.forEach(function(r){if(!r.date)return;if(byDate[r.date]){var e=byDate[r.date];["restingHR","hrv","vo2","sleepH","sleepQuality","mood","note"].forEach(function(k){if(r[k]!=null&&r[k]!=="")e[k]=r[k];});updated++;}else{byDate[r.date]=r;state.daily.push(r);added++;}});
+  return{added:added,updated:updated};
+}
 
 /* ============================================================================
    HELPERS DE UI
@@ -725,12 +830,18 @@ function render(){
   if(currentTab==="painel")renderPainel(v);
   else if(currentTab==="treinos")renderTreinos(v);
   else if(currentTab==="relatorio")renderRelatorio(v);
+  else if(currentTab==="recuperacao")renderRecuperacao(v);
   else if(currentTab==="kpis")renderKpis(v);
   else if(currentTab==="config")renderConfig(v);
   wireTooltips(v);
 }
 
 /* -------- PAINEL (dashboard) -------- */
+function zonesBar(td){
+  var colors=["var(--s3)","var(--s1)","var(--s4)","var(--s2)","var(--s8)"]; // Z1 aqua→Z5 vermelho (rampa de intensidade)
+  var bars=td.zones.map(function(sec,i){return{label:"Z"+(i+1),y:Math.round(sec/60),color:colors[i]};});
+  return barChart({bars:bars,yfmt:function(v){return v+"′";}});
+}
 function easyRuns(ws){return ws.filter(function(w){return(w.type==="facil"||w.type==="longão"||w.type==="regenerativo")&&w.hrAvg&&w.durationSec;});}
 function renderPainel(v){
   var a=state.athlete, ws=sortedWorkouts();
@@ -771,10 +882,23 @@ function renderPainel(v){
   var tsb=fit.length?fit[fit.length-1].tsb:null;
   var ctl=fit.length?fit[fit.length-1].ctl:null;
 
-  // score + readiness
+  // score + readiness + recuperação (diário: sono / FC repouso / HRV)
   var last=ws[ws.length-1];
+  var dailyArr=sortedDaily();
+  var lastDailyDate=dailyArr.length?dailyArr[dailyArr.length-1].date:null;
+  var refDate2=last.date;if(lastDailyDate&&lastDailyDate>refDate2)refDate2=lastDailyDate;
+  var restTr=metricTrend(dailyArr,"restingHR",refDate2);
+  var hrvTr=metricTrend(dailyArr,"hrv",refDate2);
+  var sleepLast=latestDaily(dailyArr,"sleepH",refDate2);
+  var vo2Last=latestDaily(dailyArr,"vo2");
+  var dctx={tsb:tsb,restingDelta:restTr?restTr.deltaAbs:null,hrvDeltaPct:hrvTr?hrvTr.deltaPct:null,sleepH:sleepLast?sleepLast.value:(last.sleepH!=null?last.sleepH:null)};
+  var recov=recoveryStatus(dctx);
+  var vo2Eff=vo2Last?vo2Last.value:a.vo2;
+  var fcRepEff=restTr?restTr.latest:a.fcRep;
+  var td=trainingDistribution(ws,a);
+  var hillAgg=hillAggregate(ws);
   var score=performanceScore({efTrendPct:trend?trend.deltaPct:0,decoupling:latestDec,adherencePct:cons?cons.adherencePct:null,weeklyKm:avgWeeklyKm,targetKm:a.weeklyTargetKm});
-  var rd=readiness({tsb:tsb,adherencePct:cons?cons.adherencePct:null,sleepH:last.sleepH,soreness:last.soreness,pain:last.pain});
+  var rd=readiness({tsb:tsb,adherencePct:cons?cons.adherencePct:null,sleepH:dctx.sleepH,soreness:last.soreness,pain:last.pain,restingDelta:dctx.restingDelta,hrvDeltaPct:dctx.hrvDeltaPct});
 
   // ---- alert banner ----
   if(a.alert){var b=el("div","banner warn");b.style.marginBottom="16px";b.innerHTML='<span class="bi">⚠</span><span>'+esc(a.alert)+'</span>';v.appendChild(b);}
@@ -786,7 +910,10 @@ function renderPainel(v){
   hero.appendChild(tile({lab:"★ Baseline 5K",ico:"",val:baseline5k?paceStr(baseline5k.durationSec/baseline5k.distKm):"—",unit:"/km",note:baseline5k?fmtDate(baseline5k.date)+" · marco zero · GAP "+paceStr(computeGap(baseline5k).gapPace):"registre um teste",conf:null}));
   hero.appendChild(tile({lab:"◈ EF fácil (base)",val:latestEF?latestEF.toFixed(4):"—",note:efDelta!=null?deltaHtml(efDelta)+" desde o 1º":"meta +"+a.efGainPct+"% no ciclo",conf:"alta"}));
   hero.appendChild(tile({lab:"⚡ Cadência",val:latestCad?latestCad:"—",unit:"spm",note:"meta ~"+a.cadenceTarget+(latestCad?" · faltam "+Math.max(0,a.cadenceTarget-latestCad):""),conf:"alta"}));
-  hero.appendChild(tile({lab:"♥ FC repouso",val:a.fcRep,unit:"bpm",note:"reserva "+(a.fcMax-a.fcRep)+" bpm"+(a.fcMaxProv?" · FCmáx prov.":""),conf:null}));
+  var fcRepNote=restTr&&restTr.baseline!=null
+    ?(restTr.deltaAbs<=0?'<span class="delta up">▼ '+Math.abs(restTr.deltaAbs).toFixed(0)+'</span> vs base':'<span class="delta down">▲ '+restTr.deltaAbs.toFixed(0)+'</span> vs base')+' · do Apple Watch'
+    :"reserva "+(a.fcMax-a.fcRep)+" bpm"+(a.fcMaxProv?" · FCmáx prov.":"");
+  hero.appendChild(tile({lab:"♥ FC repouso",val:fcRepEff,unit:"bpm",note:fcRepNote,conf:null}));
   v.appendChild(hero);
 
   // ---- MOTOR: EF + decoupling ----
@@ -848,27 +975,38 @@ function renderPainel(v){
   scoreCard.appendChild(sr);
   scoreCard.appendChild(hint("Média ponderada transparente: 30% eficiência · 25% consistência · 25% resistência à fadiga · 20% volume. Nunca decida treino só pelo score — abra os componentes."));
   intel.appendChild(scoreCard);
-  // readiness
+  // readiness (agora com sono/HRV/FC repouso)
   var rdCard=el("div","card");
   rdCard.innerHTML='<h3>⚡ Running Readiness</h3>';
   var rr=el("div","ring-wrap");rr.style.marginTop="12px";
   var rring=el("div","ring");rring.style.position="relative";rring.style.setProperty("--p",rd.score);rring.style.setProperty("--c",rd.score>=80?"var(--good)":rd.score>=70?"var(--warn)":"var(--crit)");rring.innerHTML='<b>'+rd.score+'</b>';
   rr.appendChild(rring);
-  var rt=el("div");rt.innerHTML='<div style="font-size:18px;font-weight:800">'+rd.band+'</div><div class="sub" style="margin-top:4px">prontidão para qualidade hoje</div>';
+  var drv=[];
+  if(dctx.sleepH!=null)drv.push("sono "+dctx.sleepH+"h");
+  if(hrvTr&&hrvTr.deltaPct!=null)drv.push("HRV "+(hrvTr.deltaPct>=0?"+":"")+hrvTr.deltaPct.toFixed(0)+"%");
+  if(restTr&&restTr.deltaAbs!=null)drv.push("FCrep "+(restTr.deltaAbs>=0?"+":"")+restTr.deltaAbs.toFixed(0)+"bpm");
+  var rt=el("div");rt.innerHTML='<div style="font-size:18px;font-weight:800">'+rd.band+'</div><div class="sub" style="margin-top:4px">prontidão para qualidade hoje</div>'+(drv.length?'<div class="sub" style="margin-top:6px;font-size:11.5px">'+drv.join(" · ")+'</div>':'');
   rr.appendChild(rt);rdCard.appendChild(rr);
   intel.appendChild(rdCard);
+  // recovery status (olha para trás)
+  var recCard=el("div","card tile");
+  var recCol=recov.score>=75?"var(--good)":recov.score>=55?"var(--warn)":"var(--crit)";
+  recCard.innerHTML='<div class="lab">🌙 Recovery Status</div><div class="val" style="font-size:22px">'+recov.label+'</div><div class="note">score '+recov.score+' · sono/FC repouso/HRV</div>';
+  var recm=el("div","meter");recm.innerHTML='<i style="width:'+recov.score+'%;background:'+recCol+'"></i>';recCard.appendChild(recm);
+  recCard.appendChild(hint(dailyArr.length?"Do diário/Apple Watch. Good / Moderate / Needs Recovery.":"Preencha o diário (aba Recuperação) para ativar."));
+  intel.appendChild(recCard);
+  v.appendChild(intel);
+
+  var intel2=el("div","grid g-4");
   // A:C
   var acCard=el("div","card tile");
   acCard.innerHTML='<div class="lab">▦ Razão aguda:crônica</div><div class="val">'+(ac?ac.ratio.toFixed(2):"—")+'</div>'+
     '<div class="note">'+(ac?zoneBadge(ac.zone):"acumula ~4 semanas")+'</div>';
   if(ac){var acm=el("div","meter");acm.innerHTML='<i style="width:'+clamp(ac.ratio/2*100,4,100)+'%;background:'+(ac.ratio<0.8?"var(--muted)":ac.ratio<=1.3?"var(--good)":ac.ratio<=1.5?"var(--warn)":"var(--crit)")+'"></i>';acCard.appendChild(acm);acCard.appendChild(hint("Sweet spot 0,8–1,3 = carga sustentável."));}
-  intel.appendChild(acCard);
-  v.appendChild(intel);
-
-  var intel2=el("div","grid g-4");
-  // 80/20
+  intel2.appendChild(acCard);
+  // 80/20 (tempo REAL em zona quando há .FIT)
   var polCard=el("div","card tile");
-  polCard.innerHTML='<div class="lab">◷ Aderência 80/20</div><div class="val">'+(pol?Math.round(pol.easyPct)+'<small>% fácil</small>':"—")+'</div><div class="note">alvo ~80% em Z1–Z2</div>';
+  polCard.innerHTML='<div class="lab">◷ Aderência 80/20</div><div class="val">'+(pol?Math.round(pol.easyPct)+'<small>% fácil</small>':"—")+'</div><div class="note">alvo ~80% em Z1–Z2 · tempo real em zona</div>';
   if(pol){var pm=el("div","meter");pm.innerHTML='<i style="width:'+Math.round(pol.easyPct)+'%;background:'+(pol.easyPct>=75?"var(--good)":"var(--warn)")+'"></i>';polCard.appendChild(pm);polCard.appendChild(hint(pol.easyPct<75?"Abaixo de 75% = treinando forte demais no volume.":"Boa distribuição polarizada."));}
   intel2.appendChild(polCard);
   // consistency
@@ -876,9 +1014,9 @@ function renderPainel(v){
   conCard.innerHTML='<div class="lab">✓ Consistência</div><div class="val">'+(cons?Math.round(cons.adherencePct)+'<small>%</small>':"—")+'</div><div class="note">'+(cons?cons.weeks+" semanas · "+cons.activeDays+" dias ativos":"—")+'</div>';
   conCard.appendChild(hint("Consistência &gt; heroísmo — maior preditor de evolução. Alvo ≥85%."));
   intel2.appendChild(conCard);
-  // VO2
-  var vo2Card=el("div","card tile");var vb=vo2Band(a.vo2);
-  vo2Card.innerHTML='<div class="lab">◉ VO₂máx</div><div class="val">'+(a.vo2||"—")+'<small> ml/kg</small></div><div class="note">'+(vb?bandBadge(vb)+" (homem 30–39)":"")+'</div>';
+  // VO2 (automático do Apple Watch quando há diário)
+  var vo2Card=el("div","card tile");var vb=vo2Band(vo2Eff);
+  vo2Card.innerHTML='<div class="lab">◉ VO₂máx</div><div class="val">'+(vo2Eff||"—")+'<small> ml/kg</small></div><div class="note">'+(vb?bandBadge(vb)+(vo2Last?" · Apple Watch "+fmtDate(vo2Last.date):" (homem 30–39)"):"")+'</div>';
   vo2Card.appendChild(hint("Bom 36–42 · excelente 43–52. É o tamanho do motor; o EF é o quanto você aproveita dele."));
   intel2.appendChild(vo2Card);
   // performance trend
@@ -887,6 +1025,22 @@ function renderPainel(v){
   trCard.appendChild(hint("Direção da forma: ↗ &gt;+2% · → estável · ↘ &lt;−2%."));
   intel2.appendChild(trCard);
   v.appendChild(intel2);
+
+  // ---- ZONAS DE FC & SUBIDA ----
+  v.appendChild(sectionTitle("Zonas de FC & subida"));
+  var zc=el("div","grid g-2");
+  var zCard=card("Distribuição por intensidade","alta");
+  if(td){zCard.appendChild(chartBox(zonesBar(td)));zCard.appendChild(hint("Tempo REAL em cada zona (do histograma de FC do .FIT). Fácil (Z1–Z2) <b>"+Math.round(td.pct.facil)+"%</b> · moderado (Z3) "+Math.round(td.pct.moderado)+"% · forte (Z4–Z5) "+Math.round(td.pct.forte)+"%. Base ideal: maioria fácil + uma fatia de qualidade."));}
+  else zCard.appendChild(el("div","empty",'<div class="big">🎯</div>Importe um .FIT para ver o tempo real em zona.'));
+  zc.appendChild(zCard);
+  var hCard=card("Desempenho em subida","baixa");
+  if(hillAgg){
+    hCard.innerHTML+='<div class="ring-wrap" style="margin-top:12px"><div><div style="font-size:28px;font-weight:800">'+(hillAgg.effVsModel*100).toFixed(0)+'<small style="font-size:14px;color:var(--ink-2)">% do modelo</small></div>'+
+      '<div class="sub" style="margin-top:4px">'+hillAgg.totalClimbM+' m de subida no ciclo · '+hillAgg.sessions+' sessão(ões) com rampa</div></div></div>';
+    hCard.appendChild(hint((hillAgg.effVsModel>=1?"Você sobe <b>melhor</b> que o previsto pelo Minetti":"Você perde um pouco mais que o previsto nas subidas")+" — perda média ~"+hillAgg.speedLossPctPerGrade.toFixed(1)+"% de velocidade por +1% de rampa. Menor perda + recuperar rápido no topo = força de subida melhorando."));
+  } else hCard.appendChild(el("div","empty",'<div class="big">⛰️</div>Registre corridas com subida (splits com Δelevação) para ativar.'));
+  zc.appendChild(hCard);
+  v.appendChild(zc);
 
   // ---- COACH INSIGHT ----
   v.appendChild(sectionTitle("Coach insight"));
@@ -1094,12 +1248,114 @@ function weeklyLesson(wk,a){
   return out.join(" ");
 }
 
+/* -------- RECUPERAÇÃO (sono, FC repouso, HRV, VO₂ — Apple Watch) -------- */
+function renderRecuperacao(v){
+  var a=state.athlete,daily=sortedDaily();
+  var head=el("div");head.innerHTML='<h2 style="font-size:20px">Recuperação</h2><div class="sub" style="margin-bottom:14px">O que o Apple Watch mede fora da corrida — sono, FC de repouso, HRV e VO₂máx — alimentando Readiness, Recovery Status e VO₂.</div>';
+  v.appendChild(head);
+
+  // como trazer os dados
+  var how=el("div","card");
+  how.innerHTML='<h3>📲 Trazer do Apple Saúde</h3><div class="sub" style="margin:8px 0 12px">Duas formas — use a que preferir. Nada sai do seu navegador.</div>';
+  var hrow=el("div");hrow.style.cssText="display:flex;gap:10px;flex-wrap:wrap;align-items:center";
+  var impBtn=el("button","btn",'⬆ Importar export.xml do Saúde');impBtn.onclick=function(){$("#healthFile").click();};
+  hrow.appendChild(impBtn);
+  var quick=el("span","sub");quick.innerHTML="ou preencha o dia manualmente abaixo (lendo no app Saúde/Watch).";
+  hrow.appendChild(quick);
+  how.appendChild(hrow);
+  how.appendChild(hint("No iPhone: app <b>Saúde</b> → foto de perfil → <b>Exportar todos os dados de saúde</b> → gera um <b>export.zip</b>. Descompacte e escolha o <b>export.xml</b> aqui. Extraio só FC de repouso, sono, HRV (SDNN) e VO₂máx; o resto é ignorado."));
+  v.appendChild(how);
+
+  // entrada rápida do dia
+  var form=el("div","card");form.style.marginTop="14px";
+  form.innerHTML='<h3>➕ Registrar um dia</h3>';
+  var g=el("div","grid g-3");g.style.marginTop="10px";
+  function f(id,label,hintTxt,ph,step){var d=el("div","field");d.innerHTML='<label>'+label+(hintTxt?' <span class="hint">'+hintTxt+'</span>':'')+'</label>';var i=el("input");i.id=id;i.type=id==="rec_date"?"date":"number";if(step)i.step=step;i.placeholder=ph||"";d.appendChild(i);return d;}
+  g.appendChild(f("rec_date","Data","","",null));
+  g.appendChild(f("rec_sleep","Sono (h)","","7.5","0.1"));
+  g.appendChild(f("rec_rest","FC repouso (bpm)","","54",null));
+  g.appendChild(f("rec_hrv","HRV · SDNN (ms)","","60",null));
+  g.appendChild(f("rec_vo2","VO₂máx (ml/kg)","","41","0.1"));
+  var moodField=el("div","field");moodField.innerHTML='<label>Ânimo (1–5) <span class="hint">opcional</span></label><input id="rec_mood" type="number" min="1" max="5" placeholder="4">';g.appendChild(moodField);
+  form.appendChild(g);
+  var saveDay=el("button","btn",'Salvar dia');saveDay.style.marginTop="14px";
+  saveDay.onclick=function(){
+    var d=$("#rec_date").value;if(!d){alert("Informe a data.");return;}
+    var row={date:d};
+    if($("#rec_sleep").value!=="")row.sleepH=+$("#rec_sleep").value;
+    if($("#rec_rest").value!=="")row.restingHR=+$("#rec_rest").value;
+    if($("#rec_hrv").value!=="")row.hrv=+$("#rec_hrv").value;
+    if($("#rec_vo2").value!=="")row.vo2=+$("#rec_vo2").value;
+    if($("#rec_mood").value!=="")row.mood=+$("#rec_mood").value;
+    mergeDaily([row]);save();toast("Dia salvo");render();
+  };
+  form.appendChild(saveDay);
+  v.appendChild(form);
+
+  if(!daily.length){v.appendChild(el("div","empty",'<div class="big">🌙</div>Nenhum dado de recuperação ainda. Importe o export.xml ou registre um dia.'));return;}
+
+  // resumo de hoje
+  var refDate=daily[daily.length-1].date;
+  var restTr=metricTrend(daily,"restingHR",refDate),hrvTr=metricTrend(daily,"hrv",refDate),sleepL=latestDaily(daily,"sleepH",refDate),vo2L=latestDaily(daily,"vo2");
+  var rec=recoveryStatus({restingDelta:restTr?restTr.deltaAbs:null,hrvDeltaPct:hrvTr?hrvTr.deltaPct:null,sleepH:sleepL?sleepL.value:null});
+  v.appendChild(sectionTitle("Estado atual ("+fmtDateFull(refDate)+")"));
+  var tiles=el("div","grid g-4");
+  var recCol=rec.score>=75?"var(--good)":rec.score>=55?"var(--warn)":"var(--crit)";
+  var recT=el("div","card tile");recT.innerHTML='<div class="lab">🌙 Recovery Status</div><div class="val" style="font-size:22px">'+rec.label+'</div><div class="note">score '+rec.score+'</div>';var rm=el("div","meter");rm.innerHTML='<i style="width:'+rec.score+'%;background:'+recCol+'"></i>';recT.appendChild(rm);tiles.appendChild(recT);
+  tiles.appendChild(tile({lab:"😴 Sono (última noite)",val:sleepL?sleepL.value:"—",unit:"h",note:sleepL?fmtDate(sleepL.date):"—"}));
+  tiles.appendChild(tile({lab:"♥ FC repouso",val:restTr?restTr.latest:"—",unit:"bpm",note:restTr&&restTr.deltaAbs!=null?(restTr.deltaAbs<=0?'<span class="delta up">▼ '+Math.abs(restTr.deltaAbs).toFixed(0)+'</span> vs base (bom)':'<span class="delta down">▲ '+restTr.deltaAbs.toFixed(0)+'</span> vs base'):"—"}));
+  tiles.appendChild(tile({lab:"💓 HRV (SDNN)",val:hrvTr?hrvTr.latest:"—",unit:"ms",note:hrvTr&&hrvTr.deltaPct!=null?(hrvTr.deltaPct>=0?'<span class="delta up">▲ '+hrvTr.deltaPct.toFixed(0)+'%</span> vs base':'<span class="delta down">▼ '+Math.abs(hrvTr.deltaPct).toFixed(0)+'%</span> vs base'):"—"}));
+  v.appendChild(tiles);
+  v.appendChild(hint("<b>FC repouso</b> caindo e <b>HRV</b> subindo ao longo do ciclo = recuperação e base melhorando. <b>HRV</b> abaixo do seu normal + <b>FC repouso</b> acima = sinal de recuar."));
+
+  // gráficos de tendência
+  v.appendChild(sectionTitle("Tendências"));
+  var ch=el("div","grid g-2");
+  function trendCard(title,key,color,yfmt,invertGood){
+    var pts=daily.filter(function(e){return e[key]!=null;}).map(function(e){return{label:fmtDate(e.date),y:e[key]};});
+    var c=card(title,null);
+    if(pts.length)c.appendChild(chartBox(lineChart({series:[{name:title,points:pts,colorVar:color}],yfmt:yfmt})));
+    else c.appendChild(el("div","empty",'<div class="big">📈</div>Sem dados de '+title+' ainda.'));
+    return c;
+  }
+  ch.appendChild(trendCard("FC repouso","restingHR",seriesColor(1),function(x){return Math.round(x)+"";}));
+  ch.appendChild(trendCard("HRV (SDNN)","hrv",seriesColor(3),function(x){return Math.round(x)+"";}));
+  ch.appendChild(trendCard("Sono","sleepH",seriesColor(6),function(x){return x.toFixed(1)+"h";}));
+  ch.appendChild(trendCard("VO₂máx","vo2",seriesColor(2),function(x){return x.toFixed(1);}));
+  v.appendChild(ch);
+
+  // lista
+  v.appendChild(sectionTitle("Diário"));
+  var listCard=el("div","card");listCard.style.padding="0";listCard.style.overflow="auto";
+  var t=el("table");
+  t.innerHTML='<thead><tr><th>Data</th><th class="num">Sono</th><th class="num">FC rep</th><th class="num">HRV</th><th class="num">VO₂</th><th>Ânimo</th><th></th></tr></thead>';
+  var tb=el("tbody");
+  daily.slice().reverse().forEach(function(e){
+    var r=el("tr");
+    r.innerHTML='<td>'+fmtDateFull(e.date)+'</td><td class="num">'+(e.sleepH!=null?e.sleepH+"h":"—")+'</td><td class="num">'+(e.restingHR||"—")+'</td><td class="num">'+(e.hrv||"—")+'</td><td class="num">'+(e.vo2||"—")+'</td><td>'+(e.mood?"★".repeat(e.mood):(e.note?esc(e.note):"—"))+'</td><td class="row-actions"><button class="linkish" data-del="'+e.date+'">excluir</button></td>';
+    r.querySelector("[data-del]").onclick=function(){if(confirm("Excluir o dia "+fmtDateFull(e.date)+"?")){state.daily=state.daily.filter(function(x){return x.date!==e.date;});save();render();}};
+    tb.appendChild(r);
+  });
+  t.appendChild(tb);listCard.appendChild(t);v.appendChild(listCard);
+}
+function handleHealthFile(file){
+  if(!file)return;
+  toast("Lendo "+file.name+"… (pode levar alguns segundos)");
+  readHealthFile(file,function(rows){
+    if(!rows.length){alert("Não encontrei FC de repouso, sono, HRV ou VO₂máx nesse arquivo. Confirme que é o export.xml do app Saúde.");return;}
+    var res=mergeDaily(rows);save();
+    toast("Apple Saúde: "+res.added+" dias novos, "+res.updated+" atualizados");
+    currentTab="recuperacao";setActiveTab();render();
+  },function(err){alert("Falha ao ler o arquivo do Saúde.\n\n"+(err&&err.message?err.message:err));});
+}
+
 /* -------- KPIs (referência) -------- */
 var KPI_DOCS=[
  {cat:"Motor",name:"Efficiency Factor (EF)",conf:"alta",formula:"EF = velocidade_GAP (m/s) ÷ FC_média (bpm)",desc:"Quanta velocidade você entrega por batimento. <b>Sobe = motor mais eficiente.</b> Compare sempre rodagens fáceis parecidas; a régua é você vs. você. Alvo: partir de ~0,0139 e subir +5 a +8%.",fields:"velocidade-GAP, FC média"},
  {cat:"Motor",name:"Decoupling (pace:FC)",conf:"alta",formula:"decoupling% = (EF_1ª_metade − EF_2ª_metade) ÷ EF_1ª_metade × 100",desc:"Quanto a relação pace÷FC se deteriora entre a 1ª e a 2ª metade. <b>&lt;5% base sólida · 5–8% limítrofe · &gt;8% investigar.</b> Negativo nos longões = você fica mais eficiente no fim (closer).",fields:"splits com FC por km, ou metades manuais"},
  {cat:"Motor",name:"VO₂máx",conf:"média",formula:"estimativa de relógio/TECP (erro ~5–10%)",desc:"O tamanho bruto do motor aeróbico. Homem 30–39: <b>bom 36–42 · excelente 43–52</b>. O EF é o quanto você aproveita desse teto.",fields:"informado por você"},
  {cat:"Motor",name:"Custo cardíaco do km",conf:"média",formula:"custo_km = FC_média_do_km ÷ velocidade_GAP_do_km",desc:"O inverso do EF, por km: revela qual trecho foi caro (subida? fadiga?). <b>Menor e mais estável = esforço melhor distribuído.</b>",fields:"splits por km"},
+ {cat:"Motor",name:"Hill / Climb Performance",conf:"baixa",formula:"efic. = velocidade real na subida ÷ prevista pelo GAP",desc:"Como você se sai nas subidas: perda de velocidade por % de rampa e FC extra. <b>Perder menos que o previsto = força de subida melhorando.</b> Ativo com splits que tragam Δelevação por km.",fields:"splits com Δelevação por km"},
  {cat:"Mecânica",name:"Cadência",conf:"alta",formula:"cadência = passos_de_um_pé × 2",desc:"Passos por minuto. Cadência maior encurta a passada e costuma baixar a FC no mesmo pace. Alvo ~173 spm. <b>Sinal de ouro: mesmo pace, cadência maior, FC menor.</b>",fields:"cadence"},
  {cat:"Mecânica",name:"Pacing Strategy",conf:"média",formula:"Δ = (pace_2ª − pace_1ª) ÷ pace_1ª",desc:"Classifica como você distribuiu o esforço: even / negative split / positive split. <b>Você é closer</b> — largar conservador e fechar forte é sua arma.",fields:"splits por km"},
  {cat:"Mecânica",name:"Pace Stability",conf:"média",formula:"desvio-padrão do pace-GAP entre os km",desc:"Quanto você mantém o ritmo planejado. Menor variação = melhor controle.",fields:"splits por km"},
@@ -1107,11 +1363,13 @@ var KPI_DOCS=[
  {cat:"Carga",name:"Razão aguda:crônica (A:C)",conf:"média",formula:"A:C = carga_aguda(7d) ÷ carga_crônica(28d média semanal)",desc:"Detecta salto de carga. <b>0,8–1,3 sweet spot · 1,3–1,5 atenção · &gt;1,5 risco.</b> É sobre a variação da sua carga, não um valor absoluto.",fields:"TRIMP diário (≥4 semanas)"},
  {cat:"Carga",name:"GAP · Ritmo ajustado à inclinação",conf:"alta*",formula:"subida: +3,5% de custo por +1%\ndescida: −1,5% de crédito por −1%\naplicar km a km · nunca elevação líquida",desc:"Traduz seu pace num terreno ondulado para o equivalente no plano. Base de quase todos os KPIs (EF, decoupling e pace usam a velocidade-GAP).",fields:"altitude/Δelev por km, distância"},
  {cat:"Forma",name:"Fitness / Fatigue / Form (CTL·ATL·TSB)",conf:"média",formula:"CTL = média exp. da carga, 42 dias\nATL = média exp. da carga, 7 dias\nTSB = CTL_ontem − ATL_ontem",desc:"Fitness (capacidade), Fatigue (cansaço) e Form (frescor). <b>TSB &gt;+5 fresco · −10 a +5 equilibrado · −10 a −30 treino pesado.</b>",fields:"TRIMP diário acumulado"},
- {cat:"Forma",name:"Aderência ao polarizado (80/20)",conf:"alta",formula:"% fácil = tempo em Z1–Z2 ÷ tempo total (alvo ~80)",desc:"% do tempo em zona fácil vs. forte. <b>Abaixo de 75% = treinando forte demais no volume.</b> Ataca o histórico de correr o fácil forte demais.",fields:"tempo em cada zona de FC"},
+ {cat:"Forma",name:"Aderência ao polarizado (80/20)",conf:"alta",formula:"% fácil = tempo em Z1–Z2 ÷ tempo total (alvo ~80)",desc:"% do tempo em zona fácil vs. forte, com <b>tempo REAL em zona</b> quando o .FIT traz o histograma de FC. <b>Abaixo de 75% = treinando forte demais no volume.</b>",fields:"histograma de FC do .FIT (ou FC média)"},
+ {cat:"Forma",name:"Training Distribution",conf:"média",formula:"volume por intensidade: fácil (Z1–2) · moderado (Z3) · forte (Z4–5)",desc:"Abre o 80/20 em faixas. Flagra o clássico excesso na intensidade moderada (Z3 cinzento). Base ideal = maioria fácil + uma fatia de qualidade.",fields:"histograma de FC do .FIT"},
  {cat:"Forma",name:"Performance Trend",conf:"média",formula:"Δ = (média_atual − média_anterior) ÷ média_anterior\n↗ &gt;+2% · → −2..+2% · ↘ &lt;−2%",desc:"Direção da forma numa janela configurável. É a 'manchete'; EF/GAP são a 'reportagem'.",fields:"EF/GAP · ≥3 sessões por janela"},
  {cat:"Forma",name:"Consistency",conf:"média",formula:"% de sessões completadas · streak",desc:"<b>Consistência &gt; heroísmo</b> — o maior preditor de evolução na base. Alvo prático: ≥85% das sessões.",fields:"datas dos treinos"},
  {cat:"Proprietário",name:"Athlete Performance Score",conf:"média",formula:"Score = 30% Eficiência + 25% Consistência + 25% Resist. fadiga + 20% Volume",desc:"Nota única 0–100 do seu estado, média ponderada transparente. <b>Nunca decida treino só pelo score</b> — abra os componentes.",fields:"agrega EF, consistência, decoupling, volume"},
- {cat:"Proprietário",name:"Running Readiness",conf:"média",formula:"estado do dia (0–100) a partir de carga, forma e subjetivo",desc:"Prontidão para qualidade hoje. <b>90–100 Peak · 80–89 Ready · 70–79 Moderate · 60–69 Caution · &lt;60 Recovery.</b> Indicador esportivo, não diagnóstico médico.",fields:"forma (TSB), sono, dor, RPE"},
+ {cat:"Proprietário",name:"Running Readiness",conf:"média",formula:"estado do dia (0–100) a partir de forma, sono, HRV e FC de repouso",desc:"Prontidão para qualidade hoje. <b>90–100 Peak · 80–89 Ready · 70–79 Moderate · 60–69 Caution · &lt;60 Recovery.</b> Incorpora o que o Apple Watch mede (sono, HRV, FC de repouso). Indicador esportivo, não diagnóstico médico.",fields:"forma (TSB) + diário: sono, HRV, FC repouso"},
+ {cat:"Proprietário",name:"Recovery Status",conf:"média",formula:"good / moderate / needs recovery",desc:"Olha para trás: quão recuperado, via FC de repouso e HRV vs. seu baseline, sono e carga recente. <b>FC repouso alta + HRV baixa = recuar.</b>",fields:"diário: FC repouso, HRV, sono (Apple Watch)"},
  {cat:"Proprietário",name:"Race Prediction",conf:"baixa",formula:"T2 = T1 × (D2 ÷ D1)^1,06   (Riegel)",desc:"Estima o tempo potencial em 5/10/21/42 km a partir de um esforço-âncora recente. <b>Sempre uma faixa, nunca uma garantia.</b>",fields:"distância, velocidade de um esforço-âncora"},
  {cat:"Proprietário",name:"Athlete Profile",conf:"média",formula:"síntese narrativa dos KPIs",desc:"Um retrato que muda sozinho: nível, ponto forte, foco, estilo, tendência, readiness e score — atualizado a cada treino.",fields:"EF, cadência, pacing, trend, readiness"}
 ];
@@ -1182,7 +1440,7 @@ function renderConfig(v){
   var row=el("div");row.style.cssText="display:flex;gap:10px;flex-wrap:wrap";
   var exp=el("button","btn ghost sm","⭳ Exportar JSON");exp.onclick=exportData;
   var imp=el("button","btn ghost sm","⭱ Importar JSON");imp.onclick=function(){$("#importFile").click();};
-  var reseed=el("button","btn ghost sm","↺ Restaurar dados de exemplo");reseed.onclick=function(){if(confirm("Substituir tudo pelos dados de exemplo (baseline do Lucas)?")){state.workouts=seedWorkouts();state.athlete=Object.assign({},DEFAULT_ATHLETE);save();render();}};
+  var reseed=el("button","btn ghost sm","↺ Restaurar dados de exemplo");reseed.onclick=function(){if(confirm("Substituir tudo pelos dados de exemplo (baseline do Lucas)?")){state.workouts=seedWorkouts();state.daily=seedDaily();state.athlete=Object.assign({},DEFAULT_ATHLETE);save();render();}};
   var wipe=el("button","btn danger sm","🗑 Apagar todos os treinos");wipe.onclick=function(){if(confirm("Apagar TODOS os treinos? Isto não pode ser desfeito.")){state.workouts=[];save();render();}};
   row.appendChild(exp);row.appendChild(imp);row.appendChild(reseed);row.appendChild(wipe);
   dm.appendChild(row);
@@ -1193,10 +1451,12 @@ function renderConfig(v){
    MODAL DE TREINO
 ============================================================================ */
 var editingId=null;
+var modalExtras={}; // campos não-editáveis preservados no salvar (histograma de FC, esporte)
 function openModal(id,prefill,fromFit){
   editingId=id||null;
   var w=id?state.workouts.find(function(x){return x.id===id;}):null;
   var s=w||prefill||null; // fonte dos valores
+  modalExtras={hrHist:s&&s.hrHist?s.hrHist:null,sport:s&&s.sport?s.sport:null};
   $("#modalTitle").textContent=w?"Editar treino":(fromFit?"Revisar treino do .FIT":"Novo treino");
   $("#fitBanner").style.display=fromFit?"flex":"none";
   var mb=$("#manualBlock");mb.classList.remove("flash");if(fromFit){void mb.offsetWidth;mb.classList.add("flash");}
@@ -1257,7 +1517,9 @@ function saveModal(){
     decouplingPct:$("#f_dec").value!==""?+$("#f_dec").value:null,
     notes:$("#f_notes").value.trim()||null,
     pain:$("#f_pain").checked,
-    splits:splits||null
+    splits:splits||null,
+    hrHist:modalExtras.hrHist||null,
+    sport:modalExtras.sport||null
   };
   if(editingId){
     var idx=state.workouts.findIndex(function(x){return x.id===editingId;});state.workouts[idx]=w;
@@ -1305,7 +1567,7 @@ function deleteWorkout(){if(!editingId)return;if(!confirm("Excluir este treino?"
    EXPORT / IMPORT / TEMA / TOAST
 ============================================================================ */
 function exportData(){
-  var payload=JSON.stringify({athlete:state.athlete,workouts:state.workouts},null,2);
+  var payload=JSON.stringify({athlete:state.athlete,workouts:state.workouts,daily:state.daily||[]},null,2);
   var filename="apex-treinos-"+new Date().toISOString().slice(0,10)+".json";
   // Dentro do visualizador de Artifact do claude.ai: usa a capability "downloads".
   if(window.claude&&typeof window.claude.use==="function"){
@@ -1326,7 +1588,7 @@ function blobDownload(filename,payload){
 }
 function importData(file){
   var r=new FileReader();
-  r.onload=function(){try{var p=JSON.parse(r.result);if(p.workouts){state.workouts=p.workouts;}if(p.athlete){state.athlete=Object.assign({},DEFAULT_ATHLETE,p.athlete);}save();toast("Dados importados");render();}catch(e){alert("Arquivo inválido.");}};
+  r.onload=function(){try{var p=JSON.parse(r.result);if(p.workouts){state.workouts=p.workouts;}if(p.daily){state.daily=p.daily;}if(p.athlete){state.athlete=Object.assign({},DEFAULT_ATHLETE,p.athlete);}save();toast("Dados importados");render();}catch(e){alert("Arquivo inválido.");}};
   r.readAsText(file);
 }
 function toggleTheme(){
@@ -1354,6 +1616,7 @@ function setActiveTab(){$("#tabs").querySelectorAll("button").forEach(function(b
   $("#importBtn").onclick=function(){$("#importFile").click();};
   $("#importFile").onchange=function(e){if(e.target.files[0])importData(e.target.files[0]);e.target.value="";};
   $("#fitFile").onchange=function(e){if(e.target.files[0])handleFitFile(e.target.files[0]);e.target.value="";};
+  $("#healthFile").onchange=function(e){if(e.target.files[0])handleHealthFile(e.target.files[0]);e.target.value="";};
   $("#modalFit").onclick=function(){$("#fitFile").click();};
   $("#modalClose").onclick=closeModal;$("#modalCancel").onclick=closeModal;
   $("#modalSave").onclick=saveModal;$("#modalDelete").onclick=deleteWorkout;

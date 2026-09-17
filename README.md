@@ -42,6 +42,16 @@ Implementa o **Livro de Fórmulas Apex** direto no front, com o visual
 - **Recálculo automático:** ao salvar/editar/excluir, o painel inteiro recomputa
   a partir do histórico completo (nenhum KPI fica desatualizado) e persiste no
   `localStorage`.
+- **Zonas reais de FC:** o `.FIT` guarda um histograma de FC (bpm→s), então
+  **Aderência 80/20** e **Training Distribution** (fácil/moderado/forte) usam
+  tempo REAL em zona, e **Hill / Climb Performance** sai dos splits com
+  Δelevação (eficiência de subida vs. Minetti, perda de velocidade por rampa).
+- **Recuperação (Apple Watch):** aba dedicada com **Diário** (sono, FC de
+  repouso, HRV/SDNN, VO₂máx, ânimo) — preenchido à mão ou **importando o
+  `export.xml` do app Saúde** (lido em pedaços no navegador; extrai só essas 4
+  métricas). Alimenta **Running Readiness** (agora com sono/HRV/FC de repouso vs.
+  baseline), ativa **Recovery Status** (good/moderate/needs recovery), torna
+  **VO₂máx** e **FC de repouso** semi-automáticos e mostra suas tendências.
 - **Registro manual:** data, tipo, distância, duração, FC média/máx, cadência,
   ganho/perda de elevação, RPE, temperatura, sono, dor, e **splits por km**
   (`tempo, FC, Δelev`) opcionais.
@@ -62,8 +72,9 @@ O motor de KPIs e a leitura de `.FIT` têm módulos de referência espelhados,
 validados por testes standalone (a página embute a mesma lógica):
 
 ```bash
-node analise/kpi.test.mjs   # 26 casos — GAP, EF, TRIMP, CTL/ATL, A:C, Riegel…
-node analise/fit.test.mjs   # 22 casos — encode→decode→map (@garmin/fitsdk) + KPIs
+node analise/kpi.test.mjs        # 26 casos — GAP, EF, TRIMP, CTL/ATL, A:C, Riegel…
+node analise/fit.test.mjs        # 22 casos — encode→decode→map (@garmin/fitsdk) + KPIs
+node analise/recovery.test.mjs   # 23 casos — zonas/80-20, Hill, recovery + export.xml do Saúde
 ```
 
 Complementa — não substitui — o pipeline de ingestão de `.FIT` do app React acima.
