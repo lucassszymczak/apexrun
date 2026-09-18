@@ -324,7 +324,7 @@ a:focus-visible,button:focus-visible,summary:focus-visible,[tabindex]:focus-visi
   </nav>
 </header>
 
-<main id="view"></main>
+<main id="view"><noscript><div style="max-width:640px;margin:40px auto;padding:20px;border:1px solid #e7a; border-radius:14px;background:#fff;color:#1a1512;font-family:system-ui,sans-serif;line-height:1.5"><b>Este app precisa de JavaScript.</b><br>Você provavelmente abriu o arquivo na pré-visualização do iPhone (app Arquivos ou Mail), que não executa o app. Abra o arquivo por um navegador de verdade — <b>Safari</b> ou <b>Chrome</b> — ou use o link hospedado que o desenvolvedor enviar.</div></noscript></main>
 
 <!-- Modal treino -->
 <div class="modal-bg" id="modalBg">
@@ -1900,22 +1900,33 @@ function setActiveTab(){$("#tabs").querySelectorAll("button").forEach(function(b
 /* ============================================================================
    INIT
 ============================================================================ */
+function showFatal(msg){
+  try{var v=document.getElementById("view");if(!v)return;
+    v.innerHTML='<div class="empty"><div class="big">⚠️</div><b>Não foi possível carregar o app.</b>'+
+      (msg?'<br><span class="sub">'+String(msg).replace(/[&<>]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;"}[c];})+'</span>':'')+
+      '<br><br><span class="sub">Recarregue a página. No iPhone, abra o arquivo por um navegador (Safari/Chrome) — a pré-visualização do app Arquivos/Mail não roda o app.</span></div>';
+  }catch(_){}
+}
+window.addEventListener("error",function(e){showFatal(e&&e.message);});
+window.addEventListener("unhandledrejection",function(e){showFatal(e&&e.reason&&e.reason.message);});
 (function init(){
-  try{var th=localStorage.getItem("apex.theme");if(th)document.documentElement.setAttribute("data-theme",th);}catch(e){}
-  $("#tabs").querySelectorAll("button").forEach(function(b){b.onclick=function(){currentTab=b.dataset.tab;setActiveTab();render();window.scrollTo(0,0);};});
-  $("#themeBtn").onclick=function(){toggleTheme();render();};
-  $("#exportBtn").onclick=exportData;
-  $("#importBtn").onclick=function(){$("#importFile").click();};
-  $("#importFile").onchange=function(e){if(e.target.files[0])importData(e.target.files[0]);e.target.value="";};
-  $("#fitFile").onchange=function(e){if(e.target.files[0])handleFitFile(e.target.files[0]);e.target.value="";};
-  $("#healthFile").onchange=function(e){if(e.target.files[0])handleHealthFile(e.target.files[0]);e.target.value="";};
-  $("#modalFit").onclick=function(){$("#fitFile").click();};
-  $("#modalClose").onclick=closeModal;$("#modalCancel").onclick=closeModal;
-  $("#modalSave").onclick=saveModal;$("#modalDelete").onclick=deleteWorkout;
-  $("#modalBg").onclick=function(e){if(e.target===$("#modalBg"))closeModal();};
-  document.addEventListener("keydown",function(e){if(e.key==="Escape")closeModal();});
-  if(state.seeded){save();delete state.seeded;}
-  render();
+  try{
+    try{var th=localStorage.getItem("apex.theme");if(th)document.documentElement.setAttribute("data-theme",th);}catch(e){}
+    $("#tabs").querySelectorAll("button").forEach(function(b){b.onclick=function(){currentTab=b.dataset.tab;setActiveTab();render();window.scrollTo(0,0);};});
+    $("#themeBtn").onclick=function(){toggleTheme();render();};
+    $("#exportBtn").onclick=exportData;
+    $("#importBtn").onclick=function(){$("#importFile").click();};
+    $("#importFile").onchange=function(e){if(e.target.files[0])importData(e.target.files[0]);e.target.value="";};
+    $("#fitFile").onchange=function(e){if(e.target.files[0])handleFitFile(e.target.files[0]);e.target.value="";};
+    $("#healthFile").onchange=function(e){if(e.target.files[0])handleHealthFile(e.target.files[0]);e.target.value="";};
+    $("#modalFit").onclick=function(){$("#fitFile").click();};
+    $("#modalClose").onclick=closeModal;$("#modalCancel").onclick=closeModal;
+    $("#modalSave").onclick=saveModal;$("#modalDelete").onclick=deleteWorkout;
+    $("#modalBg").onclick=function(e){if(e.target===$("#modalBg"))closeModal();};
+    document.addEventListener("keydown",function(e){if(e.key==="Escape")closeModal();});
+    if(state.seeded){save();delete state.seeded;}
+    render();
+  }catch(err){showFatal(err&&err.message?err.message:err);}
 })();
 </script>
 </body>
