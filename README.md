@@ -14,6 +14,73 @@ dashboards de performance.
 
 ---
 
+## `analise/` — página de análise autônoma (sem backend)
+
+Página **HTML autônoma** (`analise/index.html`) onde o atleta **registra os
+treinos** — importando um `.FIT` ou digitando — e recebe a análise conforme o
+Livro de Fórmulas. Abra o arquivo no navegador (duplo-clique) ou pelo GitHub
+Pages — não precisa de build, servidor nem login. Os dados ficam no
+`localStorage` do navegador; há **exportar/importar JSON** para backup.
+
+**Publicada no GitHub Pages** junto do app: uma vez na `main`, fica em
+`https://<usuario>.github.io/apexrun/analise/` (o `postbuild` copia a página
+para dentro do `dist/` do Vite — ver `scripts/copy-analise.mjs`).
+
+Implementa o **Livro de Fórmulas Apex** direto no front, com o visual
+*Run Performance // HEAT* (tema claro/escuro):
+
+- **Importar `.FIT`:** leia o arquivo do relógio e todos os campos entram
+  sozinhos — distância, tempo, FC média/máx, cadência (já ×2), ganho/perda de
+  elevação, temperatura e **splits por km com FC e Δelevação**. Abre um modal de
+  revisão com um bloco em destaque **"Percepção & recuperação"** para o que o
+  relógio não grava (**esforço/RPE 0–10, sono, dor**) antes de salvar. O leitor
+  `.FIT` é o `@garmin/fitsdk`, carregado sob demanda via CDN
+  (`cdn.jsdelivr.net`); tudo roda no navegador, nada sobe para servidor.
+- **Aviso de duplicata:** ao salvar um treino numa data que já tem registro, a
+  página pergunta **substituir / manter os dois / cancelar** (evita contar o
+  mesmo treino duas vezes na carga, na A:C e nos recordes).
+- **Recálculo automático:** ao salvar/editar/excluir, o painel inteiro recomputa
+  a partir do histórico completo (nenhum KPI fica desatualizado) e persiste no
+  `localStorage`.
+- **Zonas reais de FC:** o `.FIT` guarda um histograma de FC (bpm→s), então
+  **Aderência 80/20** e **Training Distribution** (fácil/moderado/forte) usam
+  tempo REAL em zona, e **Hill / Climb Performance** sai dos splits com
+  Δelevação (eficiência de subida vs. Minetti, perda de velocidade por rampa).
+- **Recuperação (Apple Watch):** aba dedicada com **Diário** (sono, FC de
+  repouso, HRV/SDNN, VO₂máx, ânimo) — preenchido à mão ou **importando o
+  `export.xml` do app Saúde** (lido em pedaços no navegador; extrai só essas 4
+  métricas). Alimenta **Running Readiness** (agora com sono/HRV/FC de repouso vs.
+  baseline), ativa **Recovery Status** (good/moderate/needs recovery), torna
+  **VO₂máx** e **FC de repouso** semi-automáticos e mostra suas tendências.
+- **Registro manual:** data, tipo, distância, duração, FC média/máx, cadência,
+  ganho/perda de elevação, RPE, temperatura, sono, dor, e **splits por km**
+  (`tempo, FC, Δelev`) opcionais.
+- **KPIs calculados** (fiéis ao livro): GAP (Minetti assimétrico km a km),
+  Efficiency Factor, Decoupling, Cadência, Velocidade-GAP, Custo cardíaco/km,
+  TRIMP, Carga semanal, **Fitness/Fatigue/Form (CTL·ATL·TSB)**, razão
+  aguda:crônica, aderência 80/20, Pacing Strategy, Pace Stability, Performance
+  Trend, **Race Prediction (Riegel)**, Athlete Performance Score, Running
+  Readiness, Consistency, VO₂máx e Athlete Profile — cada um com badge de
+  confiança, como no livro.
+- **Painel** (tiles + gráficos SVG de evolução: EF, decoupling, cadência,
+  GAP, carga, CTL/ATL), **Relatório semanal** (um card por semana), **referência
+  de KPIs** e **configuração do atleta** (FCrep, FCmáx, VO₂, metas).
+- Vem **semeada com os dados reais do baseline** (5K de 07/09, calibração
+  Floripa, Meia de 29/08) para já abrir com o painel montado.
+
+O motor de KPIs e a leitura de `.FIT` têm módulos de referência espelhados,
+validados por testes standalone (a página embute a mesma lógica):
+
+```bash
+node analise/kpi.test.mjs        # 26 casos — GAP, EF, TRIMP, CTL/ATL, A:C, Riegel…
+node analise/fit.test.mjs        # 22 casos — encode→decode→map (@garmin/fitsdk) + KPIs
+node analise/recovery.test.mjs   # 23 casos — zonas/80-20, Hill, recovery + export.xml do Saúde
+```
+
+Complementa — não substitui — o pipeline de ingestão de `.FIT` do app React acima.
+
+---
+
 ## Ordem de construção
 
 1. ✅ **Setup do projeto + schema Supabase + migrations**
