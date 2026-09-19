@@ -94,5 +94,55 @@ ok("TRIMP calculado", trimp > 0, trimp.toFixed(1));
 const pace = K.computePacing(w);
 ok("pacing classificado", pace != null, pace ? pace.label : "null");
 
+// ---- 2) sintetiza um .FIT de BIKE INDOOR (sem distância, só FC) ----
+function buildSyntheticBikeFit() {
+  const enc = new Encoder();
+  const start = new Date("2026-09-10T00:46:35Z");
+  enc.onMesg(Profile.MesgNum.FILE_ID, { manufacturer: "development", product: 1, timeCreated: start, type: "activity" });
+  const N = 3600; // 60 min
+  for (let i = 0; i <= N; i++) {
+    const ts = new Date(start.getTime() + i * 1000);
+    const hr = Math.round(110 + 15 * Math.sin((i / N) * Math.PI)); // 110–125, sem picos
+    enc.onMesg(Profile.MesgNum.RECORD, { timestamp: ts, distance: 0, heartRate: hr, enhancedAltitude: 1119 });
+  }
+  enc.onMesg(Profile.MesgNum.SESSION, {
+    timestamp: new Date(start.getTime() + N * 1000),
+    startTime: start,
+    sport: "cycling",
+    subSport: "indoorCycling",
+    totalDistance: 0,
+    totalTimerTime: N,
+    totalElapsedTime: N,
+    totalCalories: 316,
+    avgHeartRate: 124,
+    maxHeartRate: 135,
+    totalTrainingEffect: 2,
+  });
+  enc.onMesg(Profile.MesgNum.ACTIVITY, { timestamp: new Date(start.getTime() + N * 1000), totalTimerTime: N, numSessions: 1, type: "manual" });
+  return enc.close();
+}
+
+console.log("\n== bike indoor: encode → decode → map ==");
+const bBytes = buildSyntheticBikeFit();
+const bDecoder = new Decoder(Stream.fromByteArray(bBytes));
+const bRes = bDecoder.read();
+ok("bike: sem erros de decode", (bRes.errors || []).length === 0, (bRes.errors || []).length);
+const b = messagesToWorkout(bRes.messages);
+console.log("  bike workout:", JSON.stringify({ modal: b.modal, indoor: b.indoor, distKm: b.distKm, dur: K.hms(b.durationSec), hrAvg: b.hrAvg, cad: b.cadence, kcal: b.kcal, te: b.trainingEffect, splits: b.splits }));
+ok("bike: modalidade = bike", b.modal === "bike", b.modal);
+ok("bike: marcado como indoor", b.indoor === true, b.indoor);
+ok("bike: sem distância (indoor)", !b.distKm, b.distKm);
+ok("bike: sem cadência de corrida (spm)", b.cadence == null, b.cadence);
+ok("bike: sem splits por km", b.splits == null, b.splits);
+ok("bike: calorias lidas", b.kcal === 316, b.kcal);
+ok("bike: FC média 124", b.hrAvg === 124, b.hrAvg);
+ok("bike: Training Effect 2.0", b.trainingEffect === 2, b.trainingEffect);
+const bAthlete = { fcRep: 67, fcMax: 198 };
+ok("bike: TRIMP > 0 (entra na carga via FC)", K.computeTrimp(b, bAthlete) > 0, K.computeTrimp(b, bAthlete).toFixed(1));
+ok("bike: GAP não se aplica (sem distância)", K.computeGap(b).gapSpeed == null, String(K.computeGap(b).gapSpeed));
+ok("bike: EF não se aplica", K.computeEF(b) == null, String(K.computeEF(b)));
+ok("bike: isBike verdadeiro", K.isBike(b) === true, K.isBike(b));
+ok("corrida sintética: isBike falso", K.isBike(w) === false, K.isBike(w));
+
 console.log(`\n=== RESULTADO: ${pass} passaram, ${fail} falharam ===`);
 process.exit(fail ? 1 : 0);

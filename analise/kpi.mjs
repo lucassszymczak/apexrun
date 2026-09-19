@@ -525,3 +525,41 @@ function isoWeekKey(iso) {
   return `${d.getUTCFullYear()}-W${String(week).padStart(2, "0")}`;
 }
 export { isoWeekKey };
+
+/* ============================================================================
+   MODALIDADE — corrida vs bike (cross-training)
+   A bike alimenta a carga (TRIMP/CTL/ATL/TSB, A:C, zonas) via FC, mas fica fora
+   das métricas de corrida (EF, GAP, pace, cadência, decoupling, km, previsões).
+============================================================================ */
+export function isBike(w) {
+  return !!w && (w.modal === "bike" || /cycl|bike|bicicl/i.test((w.sport || "").toString()));
+}
+export function isRun(w) { return !isBike(w); }
+export function runsOnly(workouts) { return (workouts || []).filter(isRun); }
+export function bikesOnly(workouts) { return (workouts || []).filter(isBike); }
+
+// Resumo da bike para o painel: sessões, tempo, carga, FC, calorias e outdoor/indoor.
+export function bikeSummary(workouts, athlete) {
+  const bikes = bikesOnly(workouts);
+  if (!bikes.length) return null;
+  let totalSec = 0, totalKm = 0, totalKcal = 0, totalTrimp = 0, indoor = 0, outdoor = 0, totalGain = 0;
+  const hrs = [];
+  bikes.forEach((w) => {
+    totalSec += w.durationSec || 0;
+    totalKm += w.distKm || 0;
+    totalKcal += w.kcal || 0;
+    totalGain += w.gainM || 0;
+    const t = computeTrimp(w, athlete);
+    if (t != null) totalTrimp += t;
+    if (w.hrAvg) hrs.push(w.hrAvg);
+    if (w.indoor || !(w.distKm > 0.05)) indoor++; else outdoor++;
+  });
+  return {
+    sessions: bikes.length,
+    totalSec, totalKm: Math.round(totalKm * 10) / 10,
+    totalKcal, totalTrimp: Math.round(totalTrimp),
+    totalGain: Math.round(totalGain),
+    avgHr: hrs.length ? Math.round(mean(hrs)) : null,
+    indoor, outdoor,
+  };
+}

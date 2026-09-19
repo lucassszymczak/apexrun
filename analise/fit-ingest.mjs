@@ -112,11 +112,21 @@ function ascentDescentFromStream(records) {
 }
 
 // principal: messages = { recordMesgs, sessionMesgs, ... } do Decoder.read()
+// Modalidade a partir do sport/subSport do FIT. Bike (outdoor/indoor) entra
+// como cross-training; qualquer coisa que não seja ciclismo é tratada como corrida.
+export function modalFromSport(sport, subSport) {
+  const s = (sport || "").toString().toLowerCase();
+  if (/cycl|bike|bicicl/.test(s)) return "bike";
+  return "corrida";
+}
+
 export function messagesToWorkout(messages) {
   const records = normRecords(messages.recordMesgs);
   if (!records.length) throw new Error("Arquivo .FIT sem registros de trajeto (record messages).");
   const session = (messages.sessionMesgs && messages.sessionMesgs[0]) || {};
   const sport = (session.sport || "").toString().toLowerCase();
+  const subSport = (session.subSport || "").toString().toLowerCase();
+  const modal = modalFromSport(sport, subSport);
 
   const startDate =
     session.startTime instanceof Date ? session.startTime :
@@ -137,7 +147,9 @@ export function messagesToWorkout(messages) {
 
   const cads = records.map((r) => r.cad).filter((x) => x != null);
   const rawCad = num(session.avgCadence) != null ? session.avgCadence : (cads.length ? cads.reduce((a, b) => a + b, 0) / cads.length : null);
-  const cadence = normalizeCadence(rawCad);
+  // Cadência de corrida (spm) só faz sentido para corrida; na bike guardamos o rpm cru à parte.
+  const cadence = modal === "bike" ? null : normalizeCadence(rawCad);
+  const bikeRpm = modal === "bike" && rawCad != null ? Math.round(rawCad) : null;
 
   const stream = ascentDescentFromStream(records);
   const gainM = num(session.totalAscent) != null ? Math.round(session.totalAscent) : stream.up || null;
@@ -146,21 +158,31 @@ export function messagesToWorkout(messages) {
   const temps = records.map((r) => r.temp).filter((x) => x != null);
   const temp = temps.length ? Math.round(temps.reduce((a, b) => a + b, 0) / temps.length) : null;
 
-  const splits = buildSplits(records);
+  // Bike indoor não tem distância/splits por km; corrida mantém splits.
+  const splits = modal === "bike" ? null : buildSplits(records);
+  const indoor = modal === "bike" && (subSport.includes("indoor") || subSport.includes("virtual") || !(distKm > 0.05));
 
-  const type = sport.includes("run") ? "facil" : "facil";
+  const kcal = num(session.totalCalories) != null ? Math.round(session.totalCalories) : null;
+  const trainingEffect = num(session.totalTrainingEffect);
+
+  const type = modal === "bike" ? "bike" : "facil";
 
   return {
     date: toLocalISODate(startDate) || new Date().toISOString().slice(0, 10),
+    modal,
+    indoor: modal === "bike" ? !!indoor : undefined,
     type,
     distKm: Math.round(distKm * 100) / 100,
     durationSec,
     hrAvg: hrAvg || null,
     hrMax: hrMax || null,
     cadence: cadence || null,
+    bikeRpm: bikeRpm,
     gainM: gainM,
     lossM: lossM,
     temp: temp,
+    kcal: kcal,
+    trainingEffect: trainingEffect != null ? Math.round(trainingEffect * 10) / 10 : null,
     splits: splits,
     sport: session.sport || null,
     _records: records.length,

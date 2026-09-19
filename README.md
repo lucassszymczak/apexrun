@@ -46,6 +46,15 @@ Implementa o **Livro de Fórmulas Apex** direto no front, com o visual
   **Aderência 80/20** e **Training Distribution** (fácil/moderado/forte) usam
   tempo REAL em zona, e **Hill / Climb Performance** sai dos splits com
   Δelevação (eficiência de subida vs. Minetti, perda de velocidade por rampa).
+- **Bike & cross-training (outdoor + indoor):** treinos de ciclismo entram pelo
+  mesmo `.FIT` (detectados por `sport`) ou à mão, com seletor de **modalidade**.
+  A bike **alimenta a carga** — TRIMP, **Fitness/Fatigue/Form (CTL·ATL·TSB)**,
+  razão aguda:crônica e zonas de FC (via FC, que independe da modalidade) — mas
+  **fica de fora das métricas de corrida** (EF, GAP, pace, cadência, decoupling,
+  km semanais, recordes, Race Prediction), que continuam puras. Uma seção
+  **🚴 Bike & cross-training** no painel resume sessões, tempo, carga (TRIMP),
+  FC, calorias, zonas e indoor/outdoor; o relatório semanal e o Coach Insight
+  passam a contar a bike. Bike indoor não exige distância (só duração + FC).
 - **Recuperação (Apple Watch):** aba dedicada com **Diário** (sono, FC de
   repouso, HRV/SDNN, VO₂máx, ânimo) — preenchido à mão ou **importando o
   `export.xml` do app Saúde** (lido em pedaços no navegador; extrai só essas 4
@@ -72,8 +81,8 @@ O motor de KPIs e a leitura de `.FIT` têm módulos de referência espelhados,
 validados por testes standalone (a página embute a mesma lógica):
 
 ```bash
-node analise/kpi.test.mjs        # 26 casos — GAP, EF, TRIMP, CTL/ATL, A:C, Riegel…
-node analise/fit.test.mjs        # 22 casos — encode→decode→map (@garmin/fitsdk) + KPIs
+node analise/kpi.test.mjs        # 37 casos — GAP, EF, TRIMP, CTL/ATL, A:C, Riegel, bike/modalidade…
+node analise/fit.test.mjs        # 36 casos — encode→decode→map (@garmin/fitsdk), corrida + bike indoor
 node analise/recovery.test.mjs   # 23 casos — zonas/80-20, Hill, recovery + export.xml do Saúde
 ```
 
