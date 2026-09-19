@@ -138,6 +138,7 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
 .type-pill[data-t="teste"],.type-pill[data-t="prova"]{background:var(--accent-soft);color:var(--accent)}
 .type-pill[data-t="longão"]{background:color-mix(in srgb,var(--s1) 16%,transparent);color:var(--s1)}
 .type-pill[data-t="intervalado"],.type-pill[data-t="limiar"],.type-pill[data-t="tempo"]{background:color-mix(in srgb,var(--s2) 16%,transparent);color:var(--s2)}
+.type-pill[data-t="bike"],.type-pill[data-t="bike_int"]{background:color-mix(in srgb,var(--s3) 18%,transparent);color:var(--s3)}
 
 /* ---- timeline ---- */
 .timeline{display:grid;gap:10px}
@@ -336,27 +337,24 @@ a:focus-visible,button:focus-visible,summary:focus-visible,[tabindex]:focus-visi
         <div><b>Treino lido do .FIT.</b> Os dados do relógio já entraram (distância, FC, cadência, elevação e splits). Confirme o <b>Tipo</b> e preencha em <b>Percepção &amp; recuperação</b> o que o relógio não grava — <b>esforço (RPE), sono e dor</b>.</div>
       </div>
       <div class="grid g-3">
-        <div class="field"><label>Data</label><input type="date" id="f_date"></div>
-        <div class="field"><label>Tipo</label><select id="f_type">
-          <option value="facil">Fácil / rodagem</option>
-          <option value="longão">Longão</option>
-          <option value="tempo">Tempo</option>
-          <option value="limiar">Limiar</option>
-          <option value="intervalado">Intervalado</option>
-          <option value="regenerativo">Regenerativo</option>
-          <option value="teste">Teste</option>
-          <option value="prova">Prova</option>
+        <div class="field"><label>Modalidade</label><select id="f_modal">
+          <option value="corrida">🏃 Corrida</option>
+          <option value="bike">🚴 Bike</option>
         </select></div>
-        <div class="field"><label>Distância (km)</label><input type="number" id="f_dist" step="0.01" inputmode="decimal" placeholder="8.0"></div>
+        <div class="field"><label>Data</label><input type="date" id="f_date"></div>
+        <div class="field"><label>Tipo</label><select id="f_type"></select></div>
+        <div class="field"><label id="l_dist">Distância (km)</label><input type="number" id="f_dist" step="0.01" inputmode="decimal" placeholder="8.0"></div>
         <div class="field"><label>Duração <span class="hint">mm:ss ou h:mm:ss</span></label><input type="text" id="f_dur" placeholder="45:30"></div>
         <div class="field"><label>FC média (bpm)</label><input type="number" id="f_hr" inputmode="numeric" placeholder="150"></div>
         <div class="field"><label>FC máxima (bpm)</label><input type="number" id="f_hrmax" inputmode="numeric" placeholder="176"></div>
-        <div class="field"><label>Cadência (spm)</label><input type="number" id="f_cad" inputmode="numeric" placeholder="168"></div>
+        <div class="field run-only"><label>Cadência (spm)</label><input type="number" id="f_cad" inputmode="numeric" placeholder="168"></div>
+        <div class="field bike-only"><label>Calorias (kcal)</label><input type="number" id="f_kcal" inputmode="numeric" placeholder="316"></div>
         <div class="field"><label>Ganho elevação (m)</label><input type="number" id="f_gain" inputmode="numeric" placeholder="60"></div>
         <div class="field"><label>Perda elevação (m)</label><input type="number" id="f_loss" inputmode="numeric" placeholder="55"></div>
         <div class="field"><label>Temperatura (°C)</label><input type="number" id="f_temp" inputmode="decimal" placeholder="18"></div>
         <div class="field"><label>Terreno</label><input type="text" id="f_terrain" placeholder="ondulado"></div>
-        <div class="field"><label>Decoupling (%) <span class="hint">se você já tiver</span></label><input type="number" id="f_dec" step="0.1" inputmode="decimal" placeholder="ex.: 5.0"></div>
+        <div class="field run-only"><label>Decoupling (%) <span class="hint">se você já tiver</span></label><input type="number" id="f_dec" step="0.1" inputmode="decimal" placeholder="ex.: 5.0"></div>
+        <div class="field bike-only"><label class="pain-check" style="margin:0"><input type="checkbox" id="f_indoor" style="width:auto"> Bike indoor (sem distância)</label></div>
       </div>
       <div class="manual-block" id="manualBlock">
         <h4>Percepção &amp; recuperação <span>— só você sabe; o relógio não grava</span></h4>
@@ -368,7 +366,7 @@ a:focus-visible,button:focus-visible,summary:focus-visible,[tabindex]:focus-visi
         <label class="pain-check"><input type="checkbox" id="f_pain" style="width:auto"> Dor articular / suspeita de lesão (aciona alerta de recuo)</label>
       </div>
       <div class="grid g-2" style="margin-top:12px">
-        <div class="field" style="grid-column:span 2">
+        <div class="field run-only" style="grid-column:span 2">
           <label>Splits por km <span class="hint">1 linha por km — tempo[, FC][, Δelev m]. Ex.: <span class="kbd">6:36, 168, 12</span></span></label>
           <textarea id="f_splits" placeholder="6:36, 168, 12&#10;6:31, 172, -8&#10;6:33, 175, 10"></textarea>
         </div>
@@ -396,6 +394,7 @@ function mean(a){return a.length?a.reduce(function(x,y){return x+y;},0)/a.length
 function std(a){if(a.length<2)return 0;var m=mean(a);return Math.sqrt(a.reduce(function(x,y){return x+(y-m)*(y-m);},0)/(a.length-1));}
 function paceStr(s){if(!isFinite(s)||s<=0)return"—";var m=Math.floor(s/60),sec=Math.round(s-m*60);if(sec===60){sec=0;m++;}return m+":"+String(sec).padStart(2,"0");}
 function hms(sec){if(!isFinite(sec)||sec<0)return"—";var h=Math.floor(sec/3600),m=Math.floor((sec%3600)/60),s=Math.round(sec%60);return h>0?h+":"+String(m).padStart(2,"0")+":"+String(s).padStart(2,"0"):m+":"+String(s).padStart(2,"0");}
+function hmsShort(sec){if(!isFinite(sec)||sec<0)return"—";var h=Math.floor(sec/3600),m=Math.floor((sec%3600)/60);return h>0?h+"h"+String(m).padStart(2,"0"):m+"min";}
 function gradeCostMult(g){var k=g>=0?GAP_UP:GAP_DOWN;return 1+k*g;}
 function gapTimeFromSplits(sp){var t=0;for(var i=0;i<sp.length;i++){var s=sp[i],d=s.distKm||1;var g=clamp((s.elevDeltaM||0)/(d*10),-35,35);t+=s.timeSec/gradeCostMult(g);}return t;}
 function gapTimeEstimate(dur,dist,gain,loss){var p=dur/dist;return dur-(GAP_UP/10)*p*(gain||0)+(GAP_DOWN/10)*p*(loss||0);}
@@ -606,11 +605,15 @@ function fitHrHist(records){
   }
   return any?hist:null;
 }
+// modalidade a partir do sport do FIT: ciclismo → bike (cross-training), resto → corrida
+function modalFromSport(sport){return /cycl|bike|bicicl/i.test((sport||"").toString())?"bike":"corrida";}
 function fitMessagesToWorkout(messages){
   var records=fitNormRecords(messages.recordMesgs);
   if(!records.length)throw new Error("Arquivo .FIT sem registros de trajeto (record messages).");
   var session=(messages.sessionMesgs&&messages.sessionMesgs[0])||{};
   var sport=(session.sport||"").toString().toLowerCase();
+  var subSport=(session.subSport||"").toString().toLowerCase();
+  var modal=modalFromSport(sport);
   var startDate=session.startTime instanceof Date?session.startTime:(typeof records[0].t==="number"?new Date(records[0].t*1000):null);
   var lastDist=records[records.length-1].dist;
   var distKm=(fitNum(session.totalDistance)!=null?session.totalDistance:lastDist)/1000;
@@ -625,15 +628,24 @@ function fitMessagesToWorkout(messages){
   var lossM=fitNum(session.totalDescent)!=null?Math.round(session.totalDescent):(stream.down||null);
   var temps=records.map(function(r){return r.temp;}).filter(function(x){return x!=null;});
   var temp=temps.length?Math.round(temps.reduce(function(a,b){return a+b;},0)/temps.length):null;
+  var isBk=modal==="bike";
+  var indoor=isBk&&(subSport.indexOf("indoor")>=0||subSport.indexOf("virtual")>=0||!(distKm>0.05));
+  var kcal=fitNum(session.totalCalories)!=null?Math.round(session.totalCalories):null;
+  var te=fitNum(session.totalTrainingEffect);
   return{
     date:fitISODate(startDate)||new Date().toISOString().slice(0,10),
-    type:"facil",
+    modal:modal,
+    indoor:isBk?!!indoor:undefined,
+    type:isBk?"bike":"facil",
     distKm:Math.round(distKm*100)/100,
     durationSec:durationSec,
     hrAvg:hrAvg||null,hrMax:hrMax||null,
-    cadence:fitCadence(rawCad)||null,
+    cadence:isBk?null:(fitCadence(rawCad)||null),
+    bikeRpm:isBk&&rawCad!=null?Math.round(rawCad):null,
     gainM:gainM,lossM:lossM,temp:temp,
-    splits:fitBuildSplits(records),
+    kcal:kcal,
+    trainingEffect:te!=null?Math.round(te*10)/10:null,
+    splits:isBk?null:fitBuildSplits(records),
     hrHist:fitHrHist(records),
     sport:session.sport||null
   };
@@ -696,8 +708,8 @@ function handleFitFile(file){
       var res=decoder.read();
       var w=fitMessagesToWorkout(res.messages);
       openModal(null,w,true);
-      var extra=(w.splits?w.splits.length+" splits · ":"")+(w.sport?w.sport:"");
-      toast("Treino lido do .FIT — confira e salve"+(extra?" ("+extra+")":""));
+      var extra=w.modal==="bike"?("🚴 bike"+(w.indoor?" indoor":"")+(w.kcal?" · "+w.kcal+" kcal":"")):((w.splits?w.splits.length+" splits · ":"")+(w.sport?w.sport:""));
+      toast(("bike"===w.modal?"Bike":"Treino")+" lido do .FIT — confira e salve"+(extra?" ("+extra+")":""));
     });
   }).catch(function(err){
     console.error(err);
@@ -727,7 +739,9 @@ function seedWorkouts(){
     {id:uid(),date:"2026-08-29",type:"prova",distKm:21.2,durationSec:9723,hrAvg:167,hrMax:196,cadence:167,gainM:80,lossM:78,rpe:8,temp:19,terrain:"plano/urbano",decouplingPct:2.6,notes:"Meia de Floripa · 2:42:03"},
     {id:uid(),date:"2026-09-07",type:"teste",distKm:5.02,durationSec:1910,hrAvg:174,hrMax:192,cadence:174,gainM:35,lossM:30,rpe:9,temp:20,terrain:"ondulado",decouplingPct:5.0,
       splits:mkSplits([[1,396,168,12],[1,391,172,-8],[1,393,175,10],[1,395,178,6],[1.02,335,190,5]]),
-      notes:"Teste 5K · BASELINE · marco zero · corpo aguentava, fôlego cansou (RPE 9 no fim)"}
+      notes:"Teste 5K · BASELINE · marco zero · corpo aguentava, fôlego cansou (RPE 9 no fim)"},
+    {id:uid(),date:"2026-09-10",modal:"bike",indoor:true,type:"bike",distKm:0,durationSec:3605,hrAvg:124,hrMax:135,kcal:316,trainingEffect:2.0,rpe:4,notes:"Bike indoor · base aeróbica na pausa protetora (canela)"},
+    {id:uid(),date:"2026-09-13",modal:"bike",indoor:false,type:"bike",distKm:32.4,durationSec:4260,hrAvg:138,hrMax:158,gainM:410,lossM:405,kcal:640,rpe:5,temp:19,terrain:"ondulado",notes:"Pedal outdoor · rodízio longo de baixo impacto"}
   ];
 }
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7);}
@@ -897,32 +911,55 @@ function zonesBar(td){
   return barChart({bars:bars,yfmt:function(v){return v+"′";}});
 }
 function easyRuns(ws){return ws.filter(function(w){return(w.type==="facil"||w.type==="longão"||w.type==="regenerativo")&&w.hrAvg&&w.durationSec;});}
+// ---- modalidade: corrida vs bike (cross-training) ----
+// A bike entra na carga (TRIMP/CTL/ATL/TSB, A:C, zonas) via FC, mas fica fora das
+// métricas de corrida (EF, GAP, pace, cadência, decoupling, km, previsões).
+function isBike(w){return !!w&&(w.modal==="bike"||/cycl|bike|bicicl/i.test((w.sport||"").toString()));}
+function isRun(w){return !isBike(w);}
+function runsOnly(ws){return (ws||[]).filter(isRun);}
+function bikesOnly(ws){return (ws||[]).filter(isBike);}
+function bikeSummary(ws,a){
+  var bikes=bikesOnly(ws);if(!bikes.length)return null;
+  var totalSec=0,totalKm=0,totalKcal=0,totalTrimp=0,indoor=0,outdoor=0,totalGain=0,hrs=[];
+  bikes.forEach(function(w){
+    totalSec+=w.durationSec||0;totalKm+=w.distKm||0;totalKcal+=w.kcal||0;totalGain+=w.gainM||0;
+    var t=computeTrimp(w,a);if(t!=null)totalTrimp+=t;
+    if(w.hrAvg)hrs.push(w.hrAvg);
+    if(w.indoor||!(w.distKm>0.05))indoor++;else outdoor++;
+  });
+  return{sessions:bikes.length,totalSec:totalSec,totalKm:Math.round(totalKm*10)/10,totalKcal:totalKcal,
+    totalTrimp:Math.round(totalTrimp),totalGain:Math.round(totalGain),
+    avgHr:hrs.length?Math.round(hrs.reduce(function(x,y){return x+y;},0)/hrs.length):null,indoor:indoor,outdoor:outdoor};
+}
+function kmH(w){if(!w.distKm||!w.durationSec)return null;return w.distKm/(w.durationSec/3600);}
 function renderPainel(v){
   var a=state.athlete, ws=sortedWorkouts();
   if(!ws.length){v.appendChild(emptyState());return;}
 
   // ---- computed series ----
-  var easy=easyRuns(ws);
+  // Métricas de corrida usam só as corridas; carga (TRIMP/forma/zonas) usa tudo (corrida + bike).
+  var runs=runsOnly(ws), bikes=bikesOnly(ws), bike=bikeSummary(ws,a);
+  var easy=easyRuns(runs);
   var efPts=easy.map(function(w){var ef=computeEF(w);return ef?{label:fmtDate(w.date),y:ef,extra:"FC "+w.hrAvg,w:w}:null;}).filter(Boolean);
-  var gapPts=ws.filter(function(w){return computeGap(w).gapSpeed;}).map(function(w){var g=computeGap(w);return{label:fmtDate(w.date),y:g.gapPace,extra:w.type};});
-  var cadPts=ws.filter(function(w){return w.cadence;}).map(function(w){return{label:fmtDate(w.date),y:w.cadence,extra:w.type};});
+  var gapPts=runs.filter(function(w){return computeGap(w).gapSpeed;}).map(function(w){var g=computeGap(w);return{label:fmtDate(w.date),y:g.gapPace,extra:w.type};});
+  var cadPts=runs.filter(function(w){return w.cadence;}).map(function(w){return{label:fmtDate(w.date),y:w.cadence,extra:w.type};});
   var fit=fitnessSeries(ws,a);
   var ac=acuteChronic(ws,a);
   var pol=polarization(ws,a);
   var cons=consistency(ws,a.sessionsTarget);
   var trend=performanceTrend(efPts.map(function(p){return{value:p.y};}));
-  var decPts=ws.map(function(w){var d=computeDecoupling(w);return d==null?null:{label:fmtDate(w.date),y:d,extra:w.type,color:d<7?"var(--good)":d<8?"var(--warn)":"var(--crit)"};}).filter(Boolean);
+  var decPts=runs.map(function(w){var d=computeDecoupling(w);return d==null?null:{label:fmtDate(w.date),y:d,extra:w.type,color:d<7?"var(--good)":d<8?"var(--warn)":"var(--crit)"};}).filter(Boolean);
 
-  // load per week
+  // load per week — inclui corrida + bike (carga interna via FC)
   var loadByWeek={};ws.forEach(function(w){var t=computeTrimp(w,a);if(t==null)return;var k=isoWeekKey(w.date);loadByWeek[k]=(loadByWeek[k]||0)+t;});
   var weekKeys=Object.keys(loadByWeek).sort();
   var loadBars=weekKeys.map(function(k){return{label:k.replace(/^\d+-/,""),y:Math.round(loadByWeek[k])};});
 
-  // weekly km (última semana ISO presente, para exibição) + média das últimas 4 semanas (para o score)
+  // weekly km (só corrida — bike outdoor não conta como volume de corrida)
   var lastWeek=weekKeys[weekKeys.length-1];
-  var weeklyKm=ws.filter(function(w){return isoWeekKey(w.date)===lastWeek;}).reduce(function(a2,w){return a2+(w.distKm||0);},0);
+  var weeklyKm=runs.filter(function(w){return isoWeekKey(w.date)===lastWeek;}).reduce(function(a2,w){return a2+(w.distKm||0);},0);
   var refDate=new Date(ws[ws.length-1].date+"T00:00:00");
-  var km28=ws.filter(function(w){return Math.round((refDate-new Date(w.date+"T00:00:00"))/86400000)<28;}).reduce(function(a2,w){return a2+(w.distKm||0);},0);
+  var km28=runs.filter(function(w){return Math.round((refDate-new Date(w.date+"T00:00:00"))/86400000)<28;}).reduce(function(a2,w){return a2+(w.distKm||0);},0);
   var avgWeeklyKm=km28/4;
 
   // latest EF + delta
@@ -950,7 +987,7 @@ function renderPainel(v){
   var vo2Eff=vo2Last?vo2Last.value:a.vo2;
   var fcRepEff=restTr?restTr.latest:a.fcRep;
   var td=trainingDistribution(ws,a);
-  var hillAgg=hillAggregate(ws);
+  var hillAgg=hillAggregate(runs);
   var score=performanceScore({efTrendPct:trend?trend.deltaPct:0,decoupling:latestDec,adherencePct:cons?cons.adherencePct:null,weeklyKm:avgWeeklyKm,targetKm:a.weeklyTargetKm});
   var rd=readiness({tsb:tsb,adherencePct:cons?cons.adherencePct:null,sleepH:dctx.sleepH,soreness:last.soreness,pain:last.pain,restingDelta:dctx.restingDelta,hrvDeltaPct:dctx.hrvDeltaPct});
 
@@ -1001,7 +1038,7 @@ function renderPainel(v){
   var carga=el("div","grid g-2");
   var loadCard=card("Carga interna semanal · TRIMP","alta");
   loadCard.appendChild(chartBox(barChart({bars:loadBars,yfmt:function(v){return Math.round(v)+"";}})));
-  loadCard.appendChild(hint("Dose fisiológica via FC. O padrão certo é ondulado: sobe ~10%/semana, com descarga a cada 3–4 semanas."));
+  loadCard.appendChild(hint("Dose fisiológica via FC — <b>corrida + bike juntas</b>. O padrão certo é ondulado: sobe ~10%/semana, com descarga a cada 3–4 semanas."+(bike?" A bike responde por <b>"+Math.round(bike.totalTrimp/Math.max(1,fit.reduce(function(s,f){return s+f.load;},0))*100)+"%</b> da carga do período.":"")));
   carga.appendChild(loadCard);
   var formCard=card("Fitness / Fatigue / Form · CTL·ATL·TSB","média");
   formCard.appendChild(chartBox(lineChart({series:[
@@ -1011,6 +1048,37 @@ function renderPainel(v){
   formCard.appendChild(hint("Form (TSB) atual: <b>"+(tsb!=null?(tsb>0?"+":"")+tsb.toFixed(1):"—")+"</b> — "+tsbState(tsb)+". Fitness = capacidade adquirida; Fatigue = cansaço; Form = frescor resultante."));
   carga.appendChild(formCard);
   v.appendChild(carga);
+
+  // ---- BIKE & CROSS-TRAINING (só aparece quando há treinos de bike) ----
+  if(bike){
+    v.appendChild(sectionTitle("🚴 Bike & cross-training"));
+    var bikeNote=el("div","sub");bikeNote.style.cssText="margin:-6px 4px 12px;line-height:1.5";
+    bikeNote.innerHTML="A bike sustenta a base aeróbica sem impacto na canela. Entra na <b>carga (TRIMP), na forma (CTL·ATL·TSB), no A:C e nas zonas de FC</b> — mas fica de fora do EF, GAP, pace e cadência, que são de corrida.";
+    v.appendChild(bikeNote);
+    var bhero=el("div","grid g-4");
+    bhero.appendChild(tile({lab:"🚴 Sessões de bike",val:bike.sessions,note:bike.indoor+" indoor · "+bike.outdoor+" outdoor",conf:null}));
+    bhero.appendChild(tile({lab:"⏱ Tempo na bike",val:hmsShort(bike.totalSec),note:"acumulado no período",conf:null}));
+    bhero.appendChild(tile({lab:"⚡ Carga da bike",val:bike.totalTrimp,unit:"TRIMP",note:"soma à forma (CTL·ATL·TSB)",conf:"alta"}));
+    bhero.appendChild(tile({lab:"♥ FC média · bike",val:bike.avgHr||"—",unit:"bpm",note:(bike.totalKcal?bike.totalKcal+" kcal":"")+(bike.outdoor&&bike.totalKm?" · "+bike.totalKm.toFixed(0)+" km outdoor":""),conf:null}));
+    v.appendChild(bhero);
+    var bgrid=el("div","grid g-2");
+    // carga da bike por semana
+    var bLoadWk={};bikes.forEach(function(w){var t=computeTrimp(w,a);if(t==null)return;var k=isoWeekKey(w.date);bLoadWk[k]=(bLoadWk[k]||0)+t;});
+    var bWkKeys=Object.keys(bLoadWk).sort();
+    var bLoadBars=bWkKeys.map(function(k){return{label:k.replace(/^\d+-/,""),y:Math.round(bLoadWk[k])};});
+    var bLoadCard=card("Carga da bike por semana · TRIMP","alta");
+    if(bLoadBars.length)bLoadCard.appendChild(chartBox(barChart({bars:bLoadBars,yfmt:function(v){return Math.round(v)+"";}})));
+    else bLoadCard.appendChild(el("div","empty",'<div class="big">🚴</div>Importe um .FIT de bike para ver a carga.'));
+    bLoadCard.appendChild(hint("Quanta dose fisiológica veio da bike a cada semana — o quanto o cross-training está segurando o pé aeróbico."));
+    bgrid.appendChild(bLoadCard);
+    // zonas de FC na bike
+    var bTd=trainingDistribution(bikes,a);
+    var bZCard=card("Zonas de FC na bike","alta");
+    if(bTd){bZCard.appendChild(chartBox(zonesBar(bTd)));bZCard.appendChild(hint("Onde a bike trabalha: fácil (Z1–Z2) <b>"+Math.round(bTd.pct.facil)+"%</b> · moderado (Z3) "+Math.round(bTd.pct.moderado)+"% · forte (Z4–Z5) "+Math.round(bTd.pct.forte)+"%. Rodízio de base fica na Z2; tiros na bike sobem para Z4–Z5 sem castigar a tíbia."));}
+    else bZCard.appendChild(el("div","empty",'<div class="big">🎯</div>Sem FC nos treinos de bike ainda.'));
+    bgrid.appendChild(bZCard);
+    v.appendChild(bgrid);
+  }
 
   // ---- INTELIGÊNCIA (score, readiness, A:C, 80/20) ----
   v.appendChild(sectionTitle("Inteligência do atleta"));
@@ -1099,7 +1167,7 @@ function renderPainel(v){
   // ---- COACH INSIGHT ----
   v.appendChild(sectionTitle("Coach insight"));
   var ci=el("div","card");
-  ci.innerHTML='<h3>💬 Leitura da inteligência <span class="badge mid" style="margin-left:auto">média</span></h3><div class="insight" style="margin-top:8px">'+coachInsight(ws,a,{latestEF:latestEF,efDelta:efDelta,latestCad:latestCad,latestDec:latestDec,trend:trend,pol:pol,ac:ac,rd:rd,recov:recov,tsb:tsb,restTr:restTr,hrvTr:hrvTr,sleepLast:sleepLast,vo2Last:vo2Last,vo2Eff:vo2Eff,td:td,hillAgg:hillAgg,score:score})+'</div>';
+  ci.innerHTML='<h3>💬 Leitura da inteligência <span class="badge mid" style="margin-left:auto">média</span></h3><div class="insight" style="margin-top:8px">'+coachInsight(ws,a,{latestEF:latestEF,efDelta:efDelta,latestCad:latestCad,latestDec:latestDec,trend:trend,pol:pol,ac:ac,rd:rd,recov:recov,tsb:tsb,restTr:restTr,hrvTr:hrvTr,sleepLast:sleepLast,vo2Last:vo2Last,vo2Eff:vo2Eff,td:td,hillAgg:hillAgg,score:score,bike:bike})+'</div>';
   v.appendChild(ci);
 
   // ---- PROFILE + PREDICTION + RECORDS + TIMELINE ----
@@ -1108,11 +1176,11 @@ function renderPainel(v){
   var prof=el("div","card");
   prof.innerHTML='<h3>👤 Athlete Profile</h3>';
   var pl=el("div","pill-list");pl.style.marginTop="10px";
-  var closerSess=ws.filter(function(w){var p=computePacing(w);return p&&(p.closer||p.label==="negative split");}).length;
-  // rótulos derivados dos dados
-  var nWeeks=cons?cons.weeks:1;var kmTot=ws.reduce(function(s,w){return s+(w.distKm||0);},0);var kmWk=nWeeks?kmTot/nWeeks:0;
+  var closerSess=runs.filter(function(w){var p=computePacing(w);return p&&(p.closer||p.label==="negative split");}).length;
+  // rótulos derivados dos dados (perfil de corrida usa só as corridas)
+  var nWeeks=cons?cons.weeks:1;var kmTot=runs.reduce(function(s,w){return s+(w.distKm||0);},0);var kmWk=nWeeks?kmTot/nWeeks:0;
   var nivel=kmWk<15?"iniciante":kmWk<45?"intermediário":"avançado";
-  var decMean=(function(){var d=ws.map(computeDecoupling).filter(function(x){return x!=null;});return d.length?mean(d):null;})();
+  var decMean=(function(){var d=runs.map(computeDecoupling).filter(function(x){return x!=null;});return d.length?mean(d):null;})();
   var ponto=(closerSess>=2||(decMean!=null&&decMean<3))?"resistência":(latestEF&&a.efBaseline&&latestEF>a.efBaseline*1.03?"economia":"em análise");
   var focoMap={"Eficiência":"economia (EF)","Consistência":"consistência","Resist. fadiga":"resistência aeróbica","Volume":"volume gradual"};
   var worst=null,wv=101;if(score&&score.parts)for(var kk in score.parts)if(score.parts[kk]<wv){wv=score.parts[kk];worst=kk;}
@@ -1131,7 +1199,7 @@ function renderPainel(v){
   // race prediction
   var pred=el("div","card");
   pred.innerHTML='<h3>🏁 Race Prediction <span class="badge lo" style="margin-left:auto">Riegel</span></h3>';
-  var anchor=bestAnchor(ws);
+  var anchor=bestAnchor(runs);
   if(anchor){
     var preds=racePredictions(anchor.distKm,anchor.durationSec);
     var tb='<table style="margin-top:8px"><thead><tr><th>Distância</th><th class="num">Tempo</th><th class="num">Pace</th></tr></thead><tbody>';
@@ -1145,7 +1213,7 @@ function renderPainel(v){
   // records + timeline
   var lower2=el("div","grid g-2");
   var rec=el("div","card");rec.innerHTML='<h3>🏆 Recordes do ciclo</h3>';
-  rec.appendChild(recordsTable(ws));
+  rec.appendChild(recordsTable(runs));
   lower2.appendChild(rec);
   var tl=el("div","card");tl.innerHTML='<h3>⏱ Timeline · destaques</h3>';
   tl.appendChild(timelineEl(ws));
@@ -1183,6 +1251,8 @@ function coachInsight(ws,a,x){
   if(carga.length){var cargaWarn=x.ac&&(x.ac.zone==="atenção"||x.ac.zone==="risco");parts.push(' Carga: '+carga.join(' · ')+'.'+(cargaWarn?' <b>Salto de carga — segure a semana.</b>':''));}
   // 6) subida
   if(x.hillAgg)parts.push(' Subida: você sobe a <b>'+(x.hillAgg.effVsModel*100).toFixed(0)+'% do previsto</b> ('+x.hillAgg.totalClimbM+' m no ciclo) — '+(x.hillAgg.effVsModel>=1?'ponto forte no seu terreno':'espaço para ganhar força específica')+'.');
+  // 6b) bike / cross-training
+  if(x.bike)parts.push(' Cross-training: <b>'+x.bike.sessions+' sessão(ões) de bike</b> ('+hmsShort(x.bike.totalSec)+', TRIMP '+x.bike.totalTrimp+') sustentando a base aeróbica de baixo impacto — a carga da bike entra na forma (CTL·ATL·TSB) sem cobrar da tíbia. '+(x.bike.avgHr&&x.bike.avgHr<state.athlete.fcRep+(state.athlete.fcMax-state.athlete.fcRep)*0.74?'FC média em Z1–Z2: rodízio de base, exatamente o papel certo na pausa.':'Boa fatia de intensidade na bike — vale checar se não está competindo com a recuperação da canela.'));
   // 7) foco derivado do ponto mais fraco do score
   parts.push(' '+focusLine(x,a));
   return parts.join("");
@@ -1219,11 +1289,15 @@ function timelineEl(ws){
   var items=ws.slice().sort(function(a,b){return a.date<b.date?1:-1;}).slice(0,6);
   items.forEach(function(w){
     var it=el("div","tl-item");
+    var bk=isBike(w);
     var star=(w.type==="teste"||w.type==="prova");
-    it.innerHTML='<div class="mk'+(star?" star":"")+'">'+(star?"★":w.type==="longão"?"▲":"♦")+'</div>'+
-      '<div><div class="t">'+esc((w.notes||"").split("·")[0]||typeLabel(w.type))+'</div>'+
-      '<div class="m">'+fmtDate(w.date)+' · '+w.distKm.toFixed(1)+' km'+(w.rpe?' · RPE '+w.rpe:'')+(w.temp?' · '+w.temp+'°C':'')+'</div></div>'+
-      '<div class="r"><b>'+paceStr(w.durationSec/w.distKm)+'</b><div class="m">'+(w.hrAvg?w.hrAvg+(w.hrMax?" · "+w.hrMax:"")+" bpm":"")+'</div></div>';
+    var mk=bk?"🚴":star?"★":w.type==="longão"?"▲":"♦";
+    var metric=bk?(w.distKm?w.distKm.toFixed(1)+" km":hmsShort(w.durationSec)):(w.distKm?w.distKm.toFixed(1)+" km":"—");
+    var right=bk?hmsShort(w.durationSec):paceStr(w.durationSec/w.distKm);
+    it.innerHTML='<div class="mk'+(star?" star":"")+'">'+mk+'</div>'+
+      '<div><div class="t">'+esc((w.notes||"").split("·")[0]||(bk?(w.indoor?"Bike indoor":"Bike"):typeLabel(w.type)))+'</div>'+
+      '<div class="m">'+fmtDate(w.date)+' · '+metric+(w.rpe?' · RPE '+w.rpe:'')+(w.temp?' · '+w.temp+'°C':'')+'</div></div>'+
+      '<div class="r"><b>'+right+'</b><div class="m">'+(w.hrAvg?w.hrAvg+(w.hrMax?" · "+w.hrMax:"")+" bpm":"")+'</div></div>';
     wrap.appendChild(it);
   });
   return wrap;
@@ -1245,7 +1319,7 @@ function deltaHtml(pct){var cls=pct>0.5?"up":pct<-0.5?"down":"flat";var ar=pct>0
 function zoneBadge(z){var m={"sweet spot":"hi","baixa":"lo","atenção":"mid","risco":"lo"};return '<span class="badge '+(m[z]||"lo")+'">'+z+'</span>';}
 function bandBadge(b){var m={"bom":"hi","excelente":"hi","abaixo":"mid","superior":"hi"};return '<span class="badge '+(m[b]||"lo")+'">'+b+'</span>';}
 function tsbState(t){if(t==null)return"—";if(t>5)return"fresco (bom para teste/prova)";if(t>=-10)return"equilibrado";if(t>=-30)return"em treino pesado (normal na construção)";return"muito carregado";}
-function typeLabel(t){return{facil:"Fácil",longão:"Longão",tempo:"Tempo",limiar:"Limiar",intervalado:"Intervalado",regenerativo:"Regenerativo",teste:"Teste",prova:"Prova"}[t]||t;}
+function typeLabel(t){return{facil:"Fácil",longão:"Longão",tempo:"Tempo",limiar:"Limiar",intervalado:"Intervalado",regenerativo:"Regenerativo",teste:"Teste",prova:"Prova",bike:"Bike",bike_int:"Bike forte"}[t]||t;}
 function emptyState(){var e=el("div","empty");e.innerHTML='<div class="big">🏃</div><b>Nenhum treino ainda.</b><br>Importe um <b>.FIT</b> do relógio ou registre manualmente em <b>Treinos</b> — o painel se monta sozinho.';return e;}
 
 /* -------- TREINOS -------- */
@@ -1262,14 +1336,17 @@ function renderTreinos(v){
   t.innerHTML='<thead><tr><th>Data</th><th>Tipo</th><th class="num">Dist</th><th class="num">Tempo</th><th class="num">Pace</th><th class="num">GAP</th><th class="num">FC</th><th class="num">EF</th><th class="num">Cad</th><th class="num">Decoup</th><th class="num">TRIMP</th><th></th></tr></thead>';
   var tb=el("tbody");
   sortedWorkouts().slice().reverse().forEach(function(w){
-    var g=computeGap(w),ef=computeEF(w),dec=computeDecoupling(w),tr=computeTrimp(w,state.athlete);
+    var bk=isBike(w);
+    // GAP/EF/decoupling/pace/cadência são de corrida; na bike mostramos "—".
+    var g=bk?null:computeGap(w),ef=bk?null:computeEF(w),dec=bk?null:computeDecoupling(w),tr=computeTrimp(w,state.athlete);
+    var pill=bk?'<span class="type-pill" data-t="bike">'+(w.indoor?"🚴 Bike indoor":"🚴 Bike")+'</span>':'<span class="type-pill" data-t="'+w.type+'">'+typeLabel(w.type)+'</span>';
     var r=el("tr");r.style.cursor="pointer";
     r.innerHTML='<td>'+fmtDateFull(w.date)+'</td>'+
-      '<td><span class="type-pill" data-t="'+w.type+'">'+typeLabel(w.type)+'</span></td>'+
+      '<td>'+pill+'</td>'+
       '<td class="num">'+(w.distKm?w.distKm.toFixed(2):"—")+'</td>'+
       '<td class="num">'+hms(w.durationSec)+'</td>'+
-      '<td class="num">'+paceStr(w.durationSec/w.distKm)+'</td>'+
-      '<td class="num">'+(g.gapPace?paceStr(g.gapPace):"—")+'</td>'+
+      '<td class="num">'+(bk||!w.distKm?"—":paceStr(w.durationSec/w.distKm))+'</td>'+
+      '<td class="num">'+(g&&g.gapPace?paceStr(g.gapPace):"—")+'</td>'+
       '<td class="num">'+(w.hrAvg||"—")+'</td>'+
       '<td class="num">'+(ef?ef.toFixed(4):"—")+'</td>'+
       '<td class="num">'+(w.cadence||"—")+'</td>'+
@@ -1295,29 +1372,31 @@ function renderRelatorio(v){
   var keys=Object.keys(byWeek).sort().reverse();
   keys.forEach(function(k){
     var wk=byWeek[k];
-    var totKm=wk.reduce(function(s,w){return s+(w.distKm||0);},0);
-    var runs=wk.length;
-    var biggest=wk.slice().sort(function(a2,b2){return(b2.distKm||0)-(a2.distKm||0);})[0];
-    var easy=easyRuns(wk);
+    var wkRuns=runsOnly(wk), wkBikes=bikesOnly(wk);
+    var totKm=wkRuns.reduce(function(s,w){return s+(w.distKm||0);},0);
+    var runs=wkRuns.length;
+    var biggest=wkRuns.slice().sort(function(a2,b2){return(b2.distKm||0)-(a2.distKm||0);})[0];
+    var easy=easyRuns(wkRuns);
     var efVals=easy.map(computeEF).filter(Boolean);
     var efAvg=efVals.length?mean(efVals):null;
-    var decs=wk.map(computeDecoupling).filter(function(x){return x!=null;});
-    var hrRun=wk.filter(function(w){return w.hrAvg;});
+    var decs=wkRuns.map(computeDecoupling).filter(function(x){return x!=null;});
+    var hrRun=wkRuns.filter(function(w){return w.hrAvg;});
     var pol=polarization(wk,a);
     var dates=wk.map(function(w){return w.date;}).sort();
     var box=el("div","report-week");
     box.innerHTML='<div class="rh"><b>Semana '+k.split("-W")[1]+' · '+a.cycleName+'</b>'+
       '<span class="sub">'+fmtDateFull(dates[0])+' – '+fmtDateFull(dates[dates.length-1])+'</span>'+
-      '<span class="badge lo" style="margin-left:auto">'+runs+' sessão(ões) · '+totKm.toFixed(1)+' km</span></div>';
+      '<span class="badge lo" style="margin-left:auto">'+runs+' corrida(s)'+(wkBikes.length?' · '+wkBikes.length+' bike(s)':'')+' · '+totKm.toFixed(1)+' km</span></div>';
     var cards=el("div","report-cards");
-    cards.appendChild(rcard("Os números",totKm.toFixed(1)+" km",runs+" corrida(s) na semana"+(pol?" · "+Math.round(pol.easyPct)+"% fácil":"")));
-    cards.appendChild(rcard("A maior sessão",(biggest.distKm||0).toFixed(1)+" km",esc((biggest.notes||"").split("·")[0]||typeLabel(biggest.type))+" · "+paceStr(biggest.durationSec/biggest.distKm)+"/km"));
+    cards.appendChild(rcard("Os números",totKm.toFixed(1)+" km",runs+" corrida(s)"+(wkBikes.length?" + "+wkBikes.length+" bike":"")+(pol?" · "+Math.round(pol.easyPct)+"% fácil":"")));
+    if(biggest)cards.appendChild(rcard("A maior sessão",(biggest.distKm||0).toFixed(1)+" km",esc((biggest.notes||"").split("·")[0]||typeLabel(biggest.type))+(biggest.distKm?" · "+paceStr(biggest.durationSec/biggest.distKm)+"/km":"")));
     cards.appendChild(rcard("O motor (EF)",efAvg?efAvg.toFixed(4):"—",efAvg?"média das rodagens fáceis":"sem rodagem fácil registrada"));
     if(decs.length)cards.appendChild(rcard("Decoupling",mean(decs).toFixed(1)+"%",mean(decs)<0?"negativo = closer comprovado":mean(decs)<7?"base sólida":"acima do alvo"));
     var maxHr=hrRun.length?Math.max.apply(null,hrRun.map(function(w){return w.hrMax||w.hrAvg;})):null;
     if(maxHr)cards.appendChild(rcard("Coração",Math.round(mean(hrRun.map(function(w){return w.hrAvg;})))+" bpm","média · pico "+maxHr+" bpm"));
+    if(wkBikes.length){var bTime=wkBikes.reduce(function(s,w){return s+(w.durationSec||0);},0);var bTr=wkBikes.map(function(w){return computeTrimp(w,a)||0;}).reduce(function(s,x){return s+x;},0);cards.appendChild(rcard("Bike (cross-training)",hmsShort(bTime),wkBikes.length+" sessão(ões) · TRIMP "+Math.round(bTr)));}
     var trimpTot=wk.map(function(w){return computeTrimp(w,a)||0;}).reduce(function(s,x){return s+x;},0);
-    cards.appendChild(rcard("Carga (TRIMP)",Math.round(trimpTot)+"","dose fisiológica da semana"));
+    cards.appendChild(rcard("Carga total (TRIMP)",Math.round(trimpTot)+"","corrida + bike da semana"));
     // recuperação da semana (Apple Watch)
     var wkDaily=sortedDaily().filter(function(e){return isoWeekKey(e.date)===k;});
     var sleepVals=wkDaily.map(function(e){return e.sleepH;}).filter(function(x){return x!=null;});
@@ -1337,7 +1416,10 @@ function weeklyLesson(wk,a,wkDaily){
   var hasTest=wk.some(function(w){return w.type==="teste"||w.type==="prova";});
   var closer=wk.some(function(w){var p=computePacing(w);return p&&p.closer;});
   var pol=polarization(wk,a);
+  var runsN=runsOnly(wk).length, bikesN=bikesOnly(wk).length;
   var out=[];
+  if(bikesN&&!runsN)out.push("<b>Semana só de bike</b> — o cross-training segurou a base aeróbica sem castigar a canela; a carga não zerou, e é isso que preserva o fitness (CTL) na pausa.");
+  else if(bikesN&&runsN)out.push("Corrida + bike na mesma semana: a bike acrescenta carga aeróbica com baixo impacto — bom jeito de subir o volume sem subir o risco na tíbia.");
   if(hasTest)out.push("Semana com marco de esforço — teste/prova registrado dá o ponto de referência do ciclo.");
   if(closer)out.push("Seu padrão de fechamento forte (closer) apareceu de novo — arma natural de prova.");
   // recuperação da semana (Apple Watch)
@@ -1744,17 +1826,40 @@ function renderConfig(v){
 ============================================================================ */
 var editingId=null;
 var modalExtras={}; // campos não-editáveis preservados no salvar (histograma de FC, esporte)
+var RUN_TYPES=[["facil","Fácil / rodagem"],["longão","Longão"],["tempo","Tempo"],["limiar","Limiar"],["intervalado","Intervalado"],["regenerativo","Regenerativo"],["teste","Teste"],["prova","Prova"]];
+var BIKE_TYPES=[["bike","Bike (base / Z2)"],["bike_int","Bike forte / intervalado"]];
+function fillTypeOptions(modal,selected){
+  var sel=$("#f_type"),list=modal==="bike"?BIKE_TYPES:RUN_TYPES;
+  sel.innerHTML=list.map(function(o){return '<option value="'+o[0]+'">'+esc(o[1])+'</option>';}).join("");
+  if(selected)for(var i=0;i<sel.options.length;i++)if(sel.options[i].value===selected){sel.value=selected;break;}
+}
+// mostra/esconde campos conforme a modalidade (corrida vs bike)
+function applyModalMode(){
+  var isBk=$("#f_modal").value==="bike";
+  var ro=document.querySelectorAll("#modalBg .run-only");for(var i=0;i<ro.length;i++)ro[i].style.display=isBk?"none":"";
+  var bo=document.querySelectorAll("#modalBg .bike-only");for(var j=0;j<bo.length;j++)bo[j].style.display=isBk?"":"none";
+  $("#l_dist").innerHTML=isBk?'Distância (km) <span class="hint">opcional na indoor</span>':'Distância (km)';
+  $("#modalSave").textContent=isBk?"Salvar bike":"Salvar treino";
+}
 function openModal(id,prefill,fromFit){
   editingId=id||null;
   var w=id?state.workouts.find(function(x){return x.id===id;}):null;
   var s=w||prefill||null; // fonte dos valores
-  modalExtras={hrHist:s&&s.hrHist?s.hrHist:null,sport:s&&s.sport?s.sport:null};
+  modalExtras={hrHist:s&&s.hrHist?s.hrHist:null,sport:s&&s.sport?s.sport:null,bikeRpm:s&&s.bikeRpm!=null?s.bikeRpm:null,trainingEffect:s&&s.trainingEffect!=null?s.trainingEffect:null};
+  var modal=s&&s.modal?s.modal:(s&&isBike(s)?"bike":"corrida");
   $("#modalTitle").textContent=w?"Editar treino":(fromFit?"Revisar treino do .FIT":"Novo treino");
   $("#fitBanner").style.display=fromFit?"flex":"none";
+  if(fromFit){$("#fitBanner").innerHTML='<span class="bi">⬆</span><div>'+(modal==="bike"
+    ?'<b>Bike lida do .FIT.</b> Tempo, FC, zonas e calorias já entraram — a bike vai para a <b>carga (TRIMP) e a forma</b>. Confira o <b>Tipo</b> e, se quiser, o <b>esforço (RPE)</b>.'
+    :'<b>Treino lido do .FIT.</b> Os dados do relógio já entraram (distância, FC, cadência, elevação e splits). Confirme o <b>Tipo</b> e preencha em <b>Percepção &amp; recuperação</b> o que o relógio não grava — <b>esforço (RPE), sono e dor</b>.')+'</div>';}
   var mb=$("#manualBlock");mb.classList.remove("flash");if(fromFit){void mb.offsetWidth;mb.classList.add("flash");}
   $("#modalDelete").style.display=w?"inline-flex":"none";
+  $("#f_modal").value=modal;
+  fillTypeOptions(modal,s&&s.type?s.type:null);
+  applyModalMode();
+  $("#f_indoor").checked=s?!!s.indoor:false;
+  $("#f_kcal").value=s&&s.kcal!=null?s.kcal:"";
   $("#f_date").value=s&&s.date?s.date:new Date().toISOString().slice(0,10);
-  $("#f_type").value=s&&s.type?s.type:"facil";
   $("#f_dist").value=s&&s.distKm?s.distKm:"";
   $("#f_dur").value=s&&s.durationSec?hms(s.durationSec):"";
   $("#f_hr").value=s&&s.hrAvg?s.hrAvg:"";
@@ -1788,25 +1893,36 @@ function parseSplits(txt){
   return out.length?out:null;
 }
 function saveModal(){
+  var modal=$("#f_modal").value;var isBk=modal==="bike";
   var dist=+$("#f_dist").value;var dur=parseDur($("#f_dur").value);
-  if(!dist||!dur){alert("Informe ao menos distância e duração.");return;}
-  var splits=parseSplits($("#f_splits").value);
+  var hrAvg=+$("#f_hr").value||null;var kcal=$("#f_kcal").value!==""?+$("#f_kcal").value:null;
+  if(isBk){
+    if(!dur){alert("Informe ao menos a duração da bike.");return;}
+    if(!hrAvg&&!kcal){alert("Na bike, informe a FC média ou as calorias (a carga usa a FC).");return;}
+  }else if(!dist||!dur){alert("Informe ao menos distância e duração.");return;}
+  var indoor=isBk?$("#f_indoor").checked:false;
+  var splits=isBk?null:parseSplits($("#f_splits").value);
   // se splits não trazem distância explícita, ajusta a última para bater com o total
-  if(splits){var sd=splits.length;if(sd&&Math.abs(sd-dist)>0.001){splits[sd-1].distKm=Math.max(0.05,dist-(sd-1));}}
+  if(splits&&dist){var sd=splits.length;if(sd&&Math.abs(sd-dist)>0.001){splits[sd-1].distKm=Math.max(0.05,dist-(sd-1));}}
   var w={
     id:editingId||uid(),
     date:$("#f_date").value,
+    modal:modal,
+    indoor:isBk?indoor:undefined,
     type:$("#f_type").value,
-    distKm:dist,durationSec:dur,
-    hrAvg:+$("#f_hr").value||null,hrMax:+$("#f_hrmax").value||null,
-    cadence:+$("#f_cad").value||null,
+    distKm:dist||(isBk?0:dist),durationSec:dur,
+    hrAvg:hrAvg,hrMax:+$("#f_hrmax").value||null,
+    cadence:isBk?null:(+$("#f_cad").value||null),
+    bikeRpm:isBk?(modalExtras.bikeRpm||null):null,
     gainM:$("#f_gain").value!==""?+$("#f_gain").value:null,
     lossM:$("#f_loss").value!==""?+$("#f_loss").value:null,
     rpe:$("#f_rpe").value!==""?+$("#f_rpe").value:null,temp:$("#f_temp").value!==""?+$("#f_temp").value:null,
     terrain:$("#f_terrain").value.trim()||null,
+    kcal:kcal,
+    trainingEffect:isBk?(modalExtras.trainingEffect||null):null,
     sleepH:$("#f_sleep").value!==""?+$("#f_sleep").value:null,
     soreness:$("#f_sore").value!==""?+$("#f_sore").value:null,
-    decouplingPct:$("#f_dec").value!==""?+$("#f_dec").value:null,
+    decouplingPct:isBk?null:($("#f_dec").value!==""?+$("#f_dec").value:null),
     notes:$("#f_notes").value.trim()||null,
     pain:$("#f_pain").checked,
     splits:splits||null,
@@ -1820,11 +1936,16 @@ function saveModal(){
   // aviso de duplicata: já existe treino na mesma data?
   var dups=state.workouts.filter(function(x){return x.date===w.date;});
   if(dups.length){
-    var match=dups.slice().sort(function(a,b){return Math.abs((a.distKm||0)-w.distKm)-Math.abs((b.distKm||0)-w.distKm);})[0];
-    var sameDist=match.distKm!=null&&Math.abs(match.distKm-w.distKm)/w.distKm<0.05;
+    var match=dups.slice().sort(function(a,b){return Math.abs((a.durationSec||0)-w.durationSec)-Math.abs((b.durationSec||0)-w.durationSec);})[0];
+    // "mesmo treino" = mesma modalidade e (distância ~igual OU, sem distância, duração ~igual)
+    var sameModal=isBike(match)===isBike(w);
+    var sameDist=w.distKm>0&&match.distKm!=null&&Math.abs(match.distKm-w.distKm)/w.distKm<0.05;
+    var sameDur=match.durationSec&&w.durationSec&&Math.abs(match.durationSec-w.durationSec)/w.durationSec<0.05;
+    var same=sameModal&&(sameDist||(!w.distKm&&sameDur));
+    var label=isBike(match)?(match.indoor?"Bike indoor":"Bike"):typeLabel(match.type);
     var msg="Já existe um treino em <b>"+fmtDateFull(w.date)+"</b>"+
-      (match.distKm?" — "+match.distKm.toFixed(2)+" km · "+typeLabel(match.type):"")+
-      (sameDist?". <b>Parece ser o mesmo treino.</b>":". Foi uma segunda corrida no dia?")+" O que fazer?";
+      " — "+(match.distKm?match.distKm.toFixed(2)+" km · ":"")+label+
+      (same?". <b>Parece ser o mesmo treino.</b>":". Foi uma segunda sessão no dia?")+" O que fazer?";
     askChoice("Treino duplicado?",msg,[
       {key:"replace",label:"Substituir",style:""},
       {key:"keep",label:"Manter os dois",style:"ghost"},
@@ -1920,6 +2041,7 @@ window.addEventListener("unhandledrejection",function(e){showFatal(e&&e.reason&&
     $("#fitFile").onchange=function(e){if(e.target.files[0])handleFitFile(e.target.files[0]);e.target.value="";};
     $("#healthFile").onchange=function(e){if(e.target.files[0])handleHealthFile(e.target.files[0]);e.target.value="";};
     $("#modalFit").onclick=function(){$("#fitFile").click();};
+    $("#f_modal").onchange=function(){fillTypeOptions($("#f_modal").value);applyModalMode();};
     $("#modalClose").onclick=closeModal;$("#modalCancel").onclick=closeModal;
     $("#modalSave").onclick=saveModal;$("#modalDelete").onclick=deleteWorkout;
     $("#modalBg").onclick=function(e){if(e.target===$("#modalBg"))closeModal();};

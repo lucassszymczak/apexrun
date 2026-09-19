@@ -99,5 +99,26 @@ console.log("\n== paceStr / hms ==");
 ok("paceStr 381 → 6:21", K.paceStr(381) === "6:21", K.paceStr(381));
 ok("hms 1913 → 31:53", K.hms(1913) === "31:53", K.hms(1913));
 
+console.log("\n== Bike (cross-training): modalidade e carga ==");
+const runW = { date: "2026-09-14", modal: "corrida", type: "facil", distKm: 8, durationSec: 2880, hrAvg: 150 };
+const bikeIndoor = { date: "2026-09-15", modal: "bike", indoor: true, type: "bike", distKm: 0, durationSec: 3600, hrAvg: 124, kcal: 316 };
+const bikeOutdoor = { date: "2026-09-16", modal: "bike", indoor: false, type: "bike", distKm: 32.5, durationSec: 4200, hrAvg: 138, gainM: 420 };
+const mix = [runW, bikeIndoor, bikeOutdoor];
+ok("isBike distingue bike de corrida", K.isBike(bikeIndoor) && !K.isBike(runW), true);
+ok("isBike detecta por sport quando falta modal", K.isBike({ sport: "cycling" }), true);
+ok("runsOnly deixa só a corrida", K.runsOnly(mix).length === 1 && K.runsOnly(mix)[0].modal === "corrida", K.runsOnly(mix).length);
+ok("bikesOnly pega as duas bikes", K.bikesOnly(mix).length === 2, K.bikesOnly(mix).length);
+const bs = K.bikeSummary(mix, athlete);
+ok("bikeSummary: 2 sessões", bs.sessions === 2, bs.sessions);
+ok("bikeSummary: indoor/outdoor separados", bs.indoor === 1 && bs.outdoor === 1, bs.indoor + "/" + bs.outdoor);
+ok("bikeSummary: TRIMP da bike > 0 (entra na carga)", bs.totalTrimp > 0, bs.totalTrimp);
+ok("bikeSummary: km só das outdoor", Math.abs(bs.totalKm - 32.5) < 0.01, bs.totalKm);
+ok("bikeSummary: calorias somadas", bs.totalKcal === 316, bs.totalKcal);
+// A bike entra no CTL/ATL/TSB e no A:C, mas fica fora do EF/GAP
+const fitAll = K.fitnessSeries(mix, athlete);
+const fitRunOnly = K.fitnessSeries(K.runsOnly(mix), athlete);
+ok("bike aumenta a carga crônica (CTL) vs só corrida", fitAll[fitAll.length - 1].ctl > fitRunOnly[fitRunOnly.length - 1].ctl, fitAll[fitAll.length - 1].ctl.toFixed(1) + " > " + fitRunOnly[fitRunOnly.length - 1].ctl.toFixed(1));
+ok("EF não computa para bike indoor (sem distância)", K.computeEF(bikeIndoor) == null, String(K.computeEF(bikeIndoor)));
+
 console.log(`\n=== RESULTADO: ${pass} passaram, ${fail} falharam ===`);
 process.exit(fail ? 1 : 0);
