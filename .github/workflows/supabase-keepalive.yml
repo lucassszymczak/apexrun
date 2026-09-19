@@ -1,0 +1,57 @@
+# Mantém o projeto Supabase (plano gratuito) ATIVO.
+# O free tier pausa o projeto após ~7 dias sem atividade — o que derruba a
+# sincronização entre aparelhos da página analise/. Este workflow faz, 2x por
+# semana, uma consulta barata (RPC analise_sync_get com um id fictício) usando a
+# chave PÚBLICA anon. Isso conta como atividade e evita a pausa.
+#
+# Observações:
+#   - Usa os mesmos secrets do deploy (VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY).
+#   - A chave anon é pública por design; nada sensível é exposto.
+#   - Não "acorda" um projeto já pausado (isso é manual, 1 clique no painel) —
+#     ele PREVINE que a pausa aconteça, mantendo a atividade em dia.
+#   - Agendamentos rodam a partir da branch padrão (main).
+name: Supabase keep-alive
+
+on:
+  schedule:
+    # Segunda e quinta, 08:17 UTC (minuto fora da hora cheia p/ evitar fila).
+    # Folga confortável sob o limite de ~7 dias (maior intervalo = 4 dias).
+    - cron: "17 8 * * 1,4"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: supabase-keepalive
+  cancel-in-progress: false
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase (mantém o projeto ativo)
+        env:
+          SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+        run: |
+          set -u
+          if [ -z "${SUPABASE_URL}" ] || [ -z "${SUPABASE_ANON_KEY}" ]; then
+            echo "Secrets VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY ausentes."
+            exit 1
+          fi
+          url="${SUPABASE_URL%/}/rest/v1/rpc/analise_sync_get"
+          code=$(curl -sS -o /tmp/resp.json -w "%{http_code}" \
+            -X POST "$url" \
+            -H "apikey: ${SUPABASE_ANON_KEY}" \
+            -H "Authorization: Bearer ${SUPABASE_ANON_KEY}" \
+            -H "Content-Type: application/json" \
+            --data '{"p_sync_id":"keepalive-ping-0000000000000000"}' \
+            --retry 3 --retry-delay 5 --max-time 30)
+          echo "HTTP ${code}"
+          echo "Resposta: $(cat /tmp/resp.json 2>/dev/null | head -c 300)"
+          if [ "${code}" -ge 400 ]; then
+            echo "::error::Ping ao Supabase falhou (HTTP ${code}). O projeto pode estar pausado ou a migração analise_sync não foi aplicada."
+            exit 1
+          fi
+          echo "Supabase ativo — ping OK."
