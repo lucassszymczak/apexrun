@@ -1049,12 +1049,19 @@ function renderPainel(v){
   carga.appendChild(formCard);
   v.appendChild(carga);
 
-  // ---- BIKE & CROSS-TRAINING (só aparece quando há treinos de bike) ----
-  if(bike){
-    v.appendChild(sectionTitle("🚴 Bike & cross-training"));
-    var bikeNote=el("div","sub");bikeNote.style.cssText="margin:-6px 4px 12px;line-height:1.5";
-    bikeNote.innerHTML="A bike sustenta a base aeróbica sem impacto na canela. Entra na <b>carga (TRIMP), na forma (CTL·ATL·TSB), no A:C e nas zonas de FC</b> — mas fica de fora do EF, GAP, pace e cadência, que são de corrida.";
-    v.appendChild(bikeNote);
+  // ---- BIKE & CROSS-TRAINING (sempre visível; convida a adicionar a 1ª bike) ----
+  v.appendChild(sectionTitle("🚴 Bike & cross-training"));
+  var bikeNote=el("div","sub");bikeNote.style.cssText="margin:-6px 4px 12px;line-height:1.5";
+  bikeNote.innerHTML="A bike sustenta a base aeróbica sem impacto na canela. Entra na <b>carga (TRIMP), na forma (CTL·ATL·TSB), no A:C e nas zonas de FC</b> — mas fica de fora do EF, GAP, pace e cadência, que são de corrida.";
+  v.appendChild(bikeNote);
+  if(!bike){
+    var bEmpty=el("div","card");
+    bEmpty.innerHTML='<div class="empty" style="padding:26px 18px"><div class="big">🚴</div><b>Nenhuma bike registrada ainda.</b><br><span class="sub">Importe um <b>.FIT</b> de bike (é detectado sozinho) ou adicione à mão em <b>Modalidade → Bike</b>. Aí esta seção mostra tempo, carga (TRIMP), FC, calorias e zonas — e a bike passa a somar na sua forma (CTL·ATL·TSB).</span></div>';
+    var bFit=el("button","btn ghost sm",'⬆ Importar .FIT de bike');bFit.onclick=function(){$("#fitFile").click();};
+    var bAdd=el("button","btn sm",'＋ Adicionar bike');bAdd.onclick=function(){openModal(null,{modal:"bike",indoor:true});};
+    var bWrap=el("div");bWrap.style.cssText="display:flex;justify-content:center;gap:10px;flex-wrap:wrap;padding:0 0 14px";bWrap.appendChild(bFit);bWrap.appendChild(bAdd);
+    v.appendChild(bEmpty);v.appendChild(bWrap);
+  } else {
     var bhero=el("div","grid g-4");
     bhero.appendChild(tile({lab:"🚴 Sessões de bike",val:bike.sessions,note:bike.indoor+" indoor · "+bike.outdoor+" outdoor",conf:null}));
     bhero.appendChild(tile({lab:"⏱ Tempo na bike",val:hmsShort(bike.totalSec),note:"acumulado no período",conf:null}));
