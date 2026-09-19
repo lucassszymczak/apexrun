@@ -383,6 +383,13 @@ a:focus-visible,button:focus-visible,summary:focus-visible,[tabindex]:focus-visi
 
 <div class="tooltip" id="tooltip"></div>
 
+<!-- Chaves PÚBLICAS do Supabase (só para sincronização opcional entre aparelhos).
+     Os placeholders são substituídos no build (scripts/copy-analise.mjs) pelos
+     secrets do CI. A chave anon é pública por design; a service_role NUNCA vai aqui.
+     Sem chaves (build local/arquivo), a sincronização fica desligada e o app roda
+     100% no localStorage, como antes. -->
+<script>window.__APEX_SB__={url:"__SUPABASE_URL__",anon:"__SUPABASE_ANON_KEY__"};</script>
+
 <script>
 "use strict";
 /* ============================================================================
@@ -758,10 +765,12 @@ function seedDaily(){
 }
 var state=load();
 function load(){
-  try{var raw=localStorage.getItem(LS_KEY);if(raw){var p=JSON.parse(raw);return{athlete:Object.assign({},DEFAULT_ATHLETE,p.athlete||{}),workouts:p.workouts||[],daily:p.daily||[]};}}catch(e){}
-  return{athlete:Object.assign({},DEFAULT_ATHLETE),workouts:seedWorkouts(),daily:seedDaily(),seeded:true};
+  try{var raw=localStorage.getItem(LS_KEY);if(raw){var p=JSON.parse(raw);return{athlete:Object.assign({},DEFAULT_ATHLETE,p.athlete||{}),workouts:p.workouts||[],daily:p.daily||[],deleted:p.deleted||[],updatedAt:p.updatedAt||null,lastSyncAt:p.lastSyncAt||null};}}catch(e){}
+  return{athlete:Object.assign({},DEFAULT_ATHLETE),workouts:seedWorkouts(),daily:seedDaily(),deleted:[],updatedAt:null,lastSyncAt:null,seeded:true};
 }
-function save(){try{localStorage.setItem(LS_KEY,JSON.stringify({athlete:state.athlete,workouts:state.workouts,daily:state.daily}));}catch(e){}}
+// marca o momento da última mudança local (usado pelo merge "mais novo vence")
+function touch(){state.updatedAt=new Date().toISOString();}
+function save(){try{localStorage.setItem(LS_KEY,JSON.stringify({athlete:state.athlete,workouts:state.workouts,daily:state.daily,deleted:state.deleted||[],updatedAt:state.updatedAt,lastSyncAt:state.lastSyncAt}));}catch(e){}}
 function sortedWorkouts(){return state.workouts.slice().sort(function(a,b){return a.date<b.date?-1:a.date>b.date?1:0;});}
 function sortedDaily(){return (state.daily||[]).slice().sort(function(a,b){return a.date<b.date?-1:a.date>b.date?1:0;});}
 // mescla entradas diárias (do Saúde ou manuais) por data, sem perder campos
@@ -769,8 +778,66 @@ function mergeDaily(rows){
   state.daily=state.daily||[];
   var byDate={};state.daily.forEach(function(e){byDate[e.date]=e;});
   var added=0,updated=0;
-  rows.forEach(function(r){if(!r.date)return;if(byDate[r.date]){var e=byDate[r.date];["restingHR","hrv","vo2","sleepH","sleepQuality","mood","note"].forEach(function(k){if(r[k]!=null&&r[k]!=="")e[k]=r[k];});updated++;}else{byDate[r.date]=r;state.daily.push(r);added++;}});
+  rows.forEach(function(r){if(!r.date)return;r.updatedAt=new Date().toISOString();if(byDate[r.date]){var e=byDate[r.date];["restingHR","hrv","vo2","sleepH","sleepQuality","mood","note"].forEach(function(k){if(r[k]!=null&&r[k]!=="")e[k]=r[k];});e.updatedAt=r.updatedAt;updated++;}else{byDate[r.date]=r;state.daily.push(r);added++;}});
   return{added:added,updated:updated};
+}
+
+/* ============================================================================
+   SINCRONIZAÇÃO ENTRE APARELHOS (opcional, sem login)
+   Um "código de sincronização" (alta entropia) é o segredo: seu hash SHA-256 é a
+   chave (sync_id) de uma linha JSON no Supabase, acessada só por RPC (anon).
+   Espelha a lógica pura testável de analise/sync.mjs (merge comutativo).
+============================================================================ */
+var SB=(typeof window!=="undefined"&&window.__APEX_SB__)||{};
+var SYNC_CODE_KEY="apex.analise.synccode";
+var _syncing=false,_syncTimer=null,_syncStatus={state:"idle",msg:""};
+function sbReady(){return !!(SB.url&&SB.anon&&SB.url.indexOf("__")<0&&SB.anon.indexOf("__")<0&&typeof crypto!=="undefined"&&crypto.subtle);}
+function getSyncCode(){try{return localStorage.getItem(SYNC_CODE_KEY)||null;}catch(e){return null;}}
+function setSyncCode(c){try{if(c)localStorage.setItem(SYNC_CODE_KEY,c);else localStorage.removeItem(SYNC_CODE_KEY);}catch(e){}}
+function syncEnabled(){return sbReady()&&!!getSyncCode();}
+function normalizeSyncCode(raw){return (raw||"").toString().trim().toLowerCase().replace(/\s+/g,"");}
+function newSyncCode(){var alpha="23456789abcdefghjkmnpqrstuvwxyz";function g(){var s="";for(var i=0;i<4;i++)s+=alpha[Math.floor(Math.random()*alpha.length)];return s;}return "apex-"+g()+"-"+g()+"-"+g();}
+function syncHashId(code){var data=new TextEncoder().encode("apexv1:"+normalizeSyncCode(code));return crypto.subtle.digest("SHA-256",data).then(function(buf){var b=new Uint8Array(buf),h="";for(var i=0;i<b.length;i++)h+=("0"+b[i].toString(16)).slice(-2);return h;});}
+function sbRpc(fn,body){return fetch(SB.url.replace(/\/$/,"")+"/rest/v1/rpc/"+fn,{method:"POST",headers:{apikey:SB.anon,Authorization:"Bearer "+SB.anon,"Content-Type":"application/json"},body:JSON.stringify(body)}).then(function(r){if(!r.ok)return r.text().then(function(t){throw new Error("HTTP "+r.status+" "+t.slice(0,120));});return r.text().then(function(t){return t?JSON.parse(t):null;});});}
+// ---- merge puro (espelha sync.mjs) ----
+function syncTs(x){if(x==null)return 0;if(typeof x==="number")return x;var t=Date.parse(x);return isNaN(t)?0:t;}
+function syncStripEmpty(o){var out={};for(var k in o)if(o[k]!=null&&o[k]!=="")out[k]=o[k];return out;}
+function syncMergeDeleted(a,b){var m={};(a||[]).concat(b||[]).forEach(function(d){if(d&&d.id){if(!m[d.id]||syncTs(d.at)>syncTs(m[d.id].at))m[d.id]={id:d.id,at:d.at};}});return Object.keys(m).map(function(k){return m[k];});}
+function syncMergeWorkouts(aw,bw,deleted){var byId={};(aw||[]).concat(bw||[]).forEach(function(w){if(w&&w.id){if(!byId[w.id]||syncTs(w.updatedAt)>=syncTs(byId[w.id].updatedAt))byId[w.id]=w;}});var tomb={};(deleted||[]).forEach(function(d){tomb[d.id]=syncTs(d.at);});var out=[];for(var id in byId){var w=byId[id];if(tomb[id]!=null&&tomb[id]>=syncTs(w.updatedAt))continue;out.push(w);}return out.sort(function(x,y){return x.date<y.date?-1:x.date>y.date?1:0;});}
+function syncMergeDaily(ad,bd){var byDate={};(ad||[]).concat(bd||[]).forEach(function(r){if(!r||!r.date)return;var prev=byDate[r.date];if(!prev){byDate[r.date]=r;return;}var newer=syncTs(r.updatedAt)>=syncTs(prev.updatedAt)?r:prev,older=newer===r?prev:r;byDate[r.date]=Object.assign({},syncStripEmpty(older),syncStripEmpty(newer));});return Object.keys(byDate).map(function(k){return byDate[k];}).sort(function(x,y){return x.date<y.date?-1:1;});}
+function syncMergeStates(a,b){a=a||{};b=b||{};var deleted=syncMergeDeleted(a.deleted,b.deleted);var workouts=syncMergeWorkouts(a.workouts,b.workouts,deleted);var daily=syncMergeDaily(a.daily,b.daily);var aa=a.athlete||{},ba=b.athlete||{};var athlete=syncTs(aa.updatedAt)>=syncTs(ba.updatedAt)?(a.athlete||b.athlete||{}):(b.athlete||a.athlete||{});var updatedAt=new Date(Math.max(syncTs(a.updatedAt),syncTs(b.updatedAt))).toISOString();return{athlete:athlete,workouts:workouts,daily:daily,deleted:deleted,updatedAt:updatedAt};}
+function currentPayload(){return{athlete:state.athlete,workouts:state.workouts,daily:state.daily||[],deleted:state.deleted||[],updatedAt:state.updatedAt||new Date().toISOString()};}
+function applyMerged(m){state.athlete=Object.assign({},DEFAULT_ATHLETE,m.athlete||state.athlete);state.workouts=m.workouts||[];state.daily=m.daily||[];state.deleted=m.deleted||[];state.updatedAt=m.updatedAt;delete state.seeded;save();}
+function syncStatusHtml(){var s=_syncStatus;var map={idle:["—",""],syncing:["🔄 sincronizando…","var(--muted)"],ok:["✓ sincronizado"+(state.lastSyncAt?" · "+new Date(state.lastSyncAt).toLocaleString("pt-BR",{hour:"2-digit",minute:"2-digit"}):""),"var(--good)"],err:["⚠ "+(s.msg||"falha"),"var(--crit)"]};var m=map[s.state]||map.idle;return '<span style="color:'+(m[1]||"var(--muted)")+'">'+esc(m[0])+'</span>';}
+function setSyncStatus(st,msg){_syncStatus={state:st,msg:msg||""};var el2=document.getElementById("syncStatus");if(el2)el2.innerHTML=syncStatusHtml();}
+function syncPull(){var code=getSyncCode();return syncHashId(code).then(function(id){return sbRpc("analise_sync_get",{p_sync_id:id});}).then(function(rows){return rows&&rows[0]?rows[0]:null;});}
+function syncPush(){var code=getSyncCode();return syncHashId(code).then(function(id){return sbRpc("analise_sync_put",{p_sync_id:id,p_payload:currentPayload()});});}
+// pull → merge → push: os dois lados convergem para a união
+function syncNow(silent){
+  if(!syncEnabled())return Promise.resolve(false);
+  if(_syncing)return Promise.resolve(false);
+  _syncing=true;setSyncStatus("syncing");
+  return syncPull().then(function(remote){
+    if(remote&&remote.payload)applyMerged(syncMergeStates(currentPayload(),remote.payload));
+    return syncPush();
+  }).then(function(){
+    state.lastSyncAt=new Date().toISOString();save();
+    _syncing=false;setSyncStatus("ok");
+    // não re-renderiza a aba Config (não apaga o que o usuário está digitando)
+    if(currentTab!=="config")render();
+    return true;
+  }).catch(function(e){_syncing=false;setSyncStatus("err",e&&e.message?e.message:String(e));if(!silent)toast("Falha ao sincronizar: "+(e&&e.message?e.message:e));return false;});
+}
+function scheduleSync(){if(!syncEnabled())return;if(_syncTimer)clearTimeout(_syncTimer);_syncTimer=setTimeout(function(){_syncTimer=null;syncNow(true);},1500);}
+// entrar num código existente: ADOTA o dataset remoto (evita levar o seed junto)
+function syncJoin(code){
+  var norm=normalizeSyncCode(code);if(!norm){return Promise.reject(new Error("Código vazio."));}
+  setSyncCode(norm);setSyncStatus("syncing");
+  return syncPull().then(function(remote){
+    if(remote&&remote.payload){applyMerged(remote.payload);}
+    return syncPush();
+  }).then(function(){state.lastSyncAt=new Date().toISOString();save();setSyncStatus("ok");render();return true;})
+  .catch(function(e){setSyncCode(null);setSyncStatus("err",e&&e.message?e.message:String(e));throw e;});
 }
 
 /* ============================================================================
@@ -1485,7 +1552,7 @@ function renderRecuperacao(v){
     if($("#rec_hrv").value!=="")row.hrv=+$("#rec_hrv").value;
     if($("#rec_vo2").value!=="")row.vo2=+$("#rec_vo2").value;
     if($("#rec_mood").value!=="")row.mood=+$("#rec_mood").value;
-    mergeDaily([row]);save();toast("Dia salvo");render();
+    mergeDaily([row]);touch();save();scheduleSync();toast("Dia salvo");render();
   };
   form.appendChild(saveDay);
   v.appendChild(form);
@@ -1531,7 +1598,7 @@ function renderRecuperacao(v){
   daily.slice().reverse().forEach(function(e){
     var r=el("tr");
     r.innerHTML='<td>'+fmtDateFull(e.date)+'</td><td class="num">'+(e.sleepH!=null?e.sleepH+"h":"—")+'</td><td class="num">'+(e.restingHR||"—")+'</td><td class="num">'+(e.hrv||"—")+'</td><td class="num">'+(e.vo2||"—")+'</td><td>'+(e.mood?"★".repeat(e.mood):(e.note?esc(e.note):"—"))+'</td><td class="row-actions"><button class="linkish" data-del="'+e.date+'">excluir</button></td>';
-    r.querySelector("[data-del]").onclick=function(){if(confirm("Excluir o dia "+fmtDateFull(e.date)+"?")){state.daily=state.daily.filter(function(x){return x.date!==e.date;});save();render();}};
+    r.querySelector("[data-del]").onclick=function(){if(confirm("Excluir o dia "+fmtDateFull(e.date)+"?")){state.daily=state.daily.filter(function(x){return x.date!==e.date;});touch();save();scheduleSync();render();}};
     tb.appendChild(r);
   });
   t.appendChild(tb);listCard.appendChild(t);v.appendChild(listCard);
@@ -1541,7 +1608,7 @@ function handleHealthFile(file){
   toast("Lendo "+file.name+"… (pode levar alguns segundos)");
   readHealthFile(file,function(rows){
     if(!rows.length){alert("Não encontrei FC de repouso, sono, HRV ou VO₂máx nesse arquivo. Confirme que é o export.xml do app Saúde.");return;}
-    var res=mergeDaily(rows);save();
+    var res=mergeDaily(rows);touch();save();scheduleSync();
     toast("Apple Saúde: "+res.added+" dias novos, "+res.updated+" atualizados");
     currentTab="recuperacao";setActiveTab();render();
   },function(err){alert("Falha ao ler o arquivo do Saúde.\n\n"+(err&&err.message?err.message:err));});
@@ -1810,22 +1877,75 @@ function renderConfig(v){
     a.decouplingTarget=+$("#c_dec").value||a.decouplingTarget;a.weeklyTargetKm=+$("#c_wk").value||a.weeklyTargetKm;
     a.sessionsTarget=+$("#c_ses").value||a.sessionsTarget;a.cycleName=$("#c_cycle").value.trim()||a.cycleName;
     a.alert=$("#c_alert").value.trim();a.fcMaxProv=$("#c_fcprov").checked;
-    save();toast("Configuração salva");render();
+    a.updatedAt=new Date().toISOString();touch();save();scheduleSync();toast("Configuração salva");render();
   };
   c.appendChild(saveBtn);
   v.appendChild(c);
 
+  // sincronização entre aparelhos
+  v.appendChild(renderSyncCard());
+
   // data management
   var dm=el("div","card");dm.style.marginTop="14px";
-  dm.innerHTML='<h3>🗄️ Dados</h3><div class="sub" style="margin:8px 0 12px">Tudo fica salvo só no seu navegador (localStorage). Exporte para backup ou para levar a outro dispositivo.</div>';
+  dm.innerHTML='<h3>🗄️ Dados</h3><div class="sub" style="margin:8px 0 12px">Por padrão tudo fica só neste navegador (localStorage). Exporte para backup — ou ligue a <b>sincronização</b> abaixo para os dados aparecerem no celular e no notebook.</div>';
   var row=el("div");row.style.cssText="display:flex;gap:10px;flex-wrap:wrap";
   var exp=el("button","btn ghost sm","⭳ Exportar JSON");exp.onclick=exportData;
   var imp=el("button","btn ghost sm","⭱ Importar JSON");imp.onclick=function(){$("#importFile").click();};
-  var reseed=el("button","btn ghost sm","↺ Restaurar dados de exemplo");reseed.onclick=function(){if(confirm("Substituir tudo pelos dados de exemplo (baseline do Lucas)?")){state.workouts=seedWorkouts();state.daily=seedDaily();state.athlete=Object.assign({},DEFAULT_ATHLETE);save();render();}};
-  var wipe=el("button","btn danger sm","🗑 Apagar todos os treinos");wipe.onclick=function(){if(confirm("Apagar TODOS os treinos? Isto não pode ser desfeito.")){state.workouts=[];save();render();}};
+  var reseed=el("button","btn ghost sm","↺ Restaurar dados de exemplo");reseed.onclick=function(){if(confirm("Substituir tudo pelos dados de exemplo (baseline do Lucas)?")){state.workouts=seedWorkouts();state.daily=seedDaily();state.athlete=Object.assign({},DEFAULT_ATHLETE);state.athlete.updatedAt=new Date().toISOString();touch();save();scheduleSync();render();}};
+  var wipe=el("button","btn danger sm","🗑 Apagar todos os treinos");wipe.onclick=function(){if(confirm("Apagar TODOS os treinos? Isto não pode ser desfeito.")){var now=new Date().toISOString();state.deleted=(state.deleted||[]).concat(state.workouts.map(function(w){return{id:w.id,at:now};}));state.workouts=[];touch();save();scheduleSync();render();}};
   row.appendChild(exp);row.appendChild(imp);row.appendChild(reseed);row.appendChild(wipe);
   dm.appendChild(row);
   v.appendChild(dm);
+}
+function renderSyncCard(){
+  var c=el("div","card");c.style.marginTop="14px";
+  c.innerHTML='<h3>🔄 Sincronizar entre aparelhos <span id="syncStatus" style="margin-left:auto;font-size:12px;font-weight:600">'+syncStatusHtml()+'</span></h3>';
+  if(!sbReady()){
+    c.appendChild(hint("A sincronização em nuvem funciona na <b>versão publicada</b> (o link do GitHub Pages). Abrindo o arquivo localmente, o app roda só neste aparelho — use <b>Exportar/Importar JSON</b> acima para levar os dados."));
+    return c;
+  }
+  if(!syncEnabled()){
+    c.appendChild(hint("Ligue a sincronização para que os treinos apareçam no <b>celular e no notebook</b>. Um <b>código secreto</b> conecta seus aparelhos — sem login, sem senha. Guarde o código; quem tiver ele acessa seus dados."));
+    var actions=el("div");actions.style.cssText="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:6px";
+    var gen=el("button","btn sm","✨ Ativar e gerar meu código");
+    gen.onclick=function(){
+      var code=newSyncCode();setSyncCode(code);setSyncStatus("syncing");
+      // primeira publicação dos dados deste aparelho
+      syncPush().then(function(){state.lastSyncAt=new Date().toISOString();save();setSyncStatus("ok");toast("Sincronização ligada");render();})
+        .catch(function(e){setSyncCode(null);setSyncStatus("err",e.message);alert("Não deu para ativar agora: "+e.message);render();});
+    };
+    actions.appendChild(gen);
+    c.appendChild(actions);
+    var join=el("div");join.style.cssText="margin-top:14px;border-top:1px solid var(--line);padding-top:12px";
+    join.innerHTML='<div class="sub" style="margin-bottom:8px">Já ativou em outro aparelho? Cole o código dele aqui para <b>puxar os mesmos dados</b>:</div>';
+    var jrow=el("div");jrow.style.cssText="display:flex;gap:8px;flex-wrap:wrap;align-items:center";
+    var jin=el("input");jin.className="";jin.placeholder="apex-xxxx-xxxx-xxxx";jin.style.cssText="flex:1;min-width:190px;padding:9px 11px;border:1px solid var(--line);border-radius:10px;background:var(--surface-2);color:var(--ink);font-family:var(--mono,monospace)";
+    var jbtn=el("button","btn ghost sm","Conectar");
+    jbtn.onclick=function(){
+      var code=normalizeSyncCode(jin.value);if(!/^apex-/.test(code)){alert("Código inválido. Ele tem o formato apex-xxxx-xxxx-xxxx.");return;}
+      if(state.workouts&&state.workouts.length&&!state.seeded){if(!confirm("Conectar vai substituir os dados deste aparelho pelos do código. Continuar?"))return;}
+      setSyncStatus("syncing");
+      syncJoin(code).then(function(){toast("Conectado — dados sincronizados");}).catch(function(e){alert("Não deu para conectar: "+e.message);render();});
+    };
+    jrow.appendChild(jin);jrow.appendChild(jbtn);join.appendChild(jrow);
+    c.appendChild(join);
+    return c;
+  }
+  // já sincronizando
+  var code=getSyncCode();
+  c.appendChild(hint("Este aparelho está sincronizado. Abra o app no <b>outro aparelho</b>, vá em <b>Config → Sincronizar</b> e use <b>“Já ativou em outro aparelho?”</b> com o código abaixo. O que você importar num aparelho aparece no outro (leva alguns segundos + recarregar)."));
+  var codeBox=el("div");codeBox.style.cssText="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:10px 0";
+  var codeChip=el("code");codeChip.textContent=code;codeChip.style.cssText="font-size:16px;font-weight:700;letter-spacing:.5px;padding:8px 12px;border-radius:10px;background:var(--accent-soft);color:var(--accent);font-family:var(--mono,monospace)";
+  var copy=el("button","btn ghost sm","⧉ Copiar");copy.onclick=function(){try{navigator.clipboard.writeText(code);toast("Código copiado");}catch(e){prompt("Copie seu código:",code);}};
+  codeBox.appendChild(codeChip);codeBox.appendChild(copy);c.appendChild(codeBox);
+  var actions2=el("div");actions2.style.cssText="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:4px";
+  var sn=el("button","btn sm","🔄 Sincronizar agora");
+  sn.onclick=function(){syncNow(false).then(function(){currentTab="config";setActiveTab();render();});};
+  var off=el("button","btn danger sm","Desativar neste aparelho");
+  off.onclick=function(){if(confirm("Desativar a sincronização NESTE aparelho? Os dados continuam salvos aqui e na nuvem; só param de atualizar entre si."))
+    {setSyncCode(null);setSyncStatus("idle");toast("Sincronização desativada");render();}};
+  actions2.appendChild(sn);actions2.appendChild(off);c.appendChild(actions2);
+  return c;
 }
 
 /* ============================================================================
@@ -1934,7 +2054,8 @@ function saveModal(){
     pain:$("#f_pain").checked,
     splits:splits||null,
     hrHist:modalExtras.hrHist||null,
-    sport:modalExtras.sport||null
+    sport:modalExtras.sport||null,
+    updatedAt:new Date().toISOString()
   };
   if(editingId){
     var idx=state.workouts.findIndex(function(x){return x.id===editingId;});state.workouts[idx]=w;
@@ -1967,7 +2088,7 @@ function saveModal(){
   state.workouts.push(w);
   finalizeSave("Treino registrado");
 }
-function finalizeSave(msg){save();closeModal();toast(msg);currentTab="painel";setActiveTab();render();}
+function finalizeSave(msg){touch();save();scheduleSync();closeModal();toast(msg);currentTab="painel";setActiveTab();render();}
 function askChoice(title,message,choices){
   return new Promise(function(resolve){
     var bg=el("div","choice-bg");
@@ -1981,7 +2102,7 @@ function askChoice(title,message,choices){
     document.body.appendChild(bg);
   });
 }
-function deleteWorkout(){if(!editingId)return;if(!confirm("Excluir este treino?"))return;state.workouts=state.workouts.filter(function(x){return x.id!==editingId;});save();closeModal();toast("Treino excluído");render();}
+function deleteWorkout(){if(!editingId)return;if(!confirm("Excluir este treino?"))return;var delId=editingId;state.workouts=state.workouts.filter(function(x){return x.id!==delId;});state.deleted=(state.deleted||[]).filter(function(d){return d.id!==delId;});state.deleted.push({id:delId,at:new Date().toISOString()});touch();save();scheduleSync();closeModal();toast("Treino excluído");render();}
 
 /* ============================================================================
    EXPORT / IMPORT / TEMA / TOAST
@@ -2008,7 +2129,7 @@ function blobDownload(filename,payload){
 }
 function importData(file){
   var r=new FileReader();
-  r.onload=function(){try{var p=JSON.parse(r.result);if(p.workouts){state.workouts=p.workouts;}if(p.daily){state.daily=p.daily;}if(p.athlete){state.athlete=Object.assign({},DEFAULT_ATHLETE,p.athlete);}save();toast("Dados importados");render();}catch(e){alert("Arquivo inválido.");}};
+  r.onload=function(){try{var p=JSON.parse(r.result);var now=new Date().toISOString();if(p.workouts){state.workouts=p.workouts.map(function(w){if(!w.updatedAt)w.updatedAt=now;return w;});}if(p.daily){state.daily=p.daily.map(function(d){if(!d.updatedAt)d.updatedAt=now;return d;});}if(p.athlete){state.athlete=Object.assign({},DEFAULT_ATHLETE,p.athlete);state.athlete.updatedAt=now;}touch();save();scheduleSync();toast("Dados importados");render();}catch(e){alert("Arquivo inválido.");}};
   r.readAsText(file);
 }
 function toggleTheme(){
@@ -2055,6 +2176,8 @@ window.addEventListener("unhandledrejection",function(e){showFatal(e&&e.reason&&
     document.addEventListener("keydown",function(e){if(e.key==="Escape")closeModal();});
     if(state.seeded){save();delete state.seeded;}
     render();
+    // sincroniza ao abrir (puxa o que veio de outro aparelho e reenvia a união)
+    if(syncEnabled())setTimeout(function(){syncNow(true);},300);
   }catch(err){showFatal(err&&err.message?err.message:err);}
 })();
 </script>

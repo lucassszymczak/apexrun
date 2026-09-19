@@ -55,6 +55,16 @@ Implementa o **Livro de Fórmulas Apex** direto no front, com o visual
   **🚴 Bike & cross-training** no painel resume sessões, tempo, carga (TRIMP),
   FC, calorias, zonas e indoor/outdoor; o relatório semanal e o Coach Insight
   passam a contar a bike. Bike indoor não exige distância (só duração + FC).
+- **Sincronização entre aparelhos (opcional, sem login):** em **Config →
+  Sincronizar**, o app gera um **código de alta entropia** (`apex-xxxx-xxxx-xxxx`);
+  digitando o mesmo código no outro aparelho, os treinos passam a aparecer nos
+  dois (celular e notebook). Sincroniza via Supabase: o **hash SHA-256** do
+  código (o código cru nunca sai do dispositivo) é a chave de uma linha JSON,
+  acessada só por **RPC `security definer`** (papel `anon`, sem enumeração). O
+  merge é **união por id** (o que você importa num aparelho aparece no outro),
+  "o mais novo vence" em conflitos, com **tombstones** para propagar exclusões.
+  Requer aplicar a migração `supabase/migrations/*_analise_sync.sql` uma vez.
+  Sem as chaves públicas no build, a sync fica desligada e tudo roda local.
 - **Recuperação (Apple Watch):** aba dedicada com **Diário** (sono, FC de
   repouso, HRV/SDNN, VO₂máx, ânimo) — preenchido à mão ou **importando o
   `export.xml` do app Saúde** (lido em pedaços no navegador; extrai só essas 4
@@ -84,6 +94,7 @@ validados por testes standalone (a página embute a mesma lógica):
 node analise/kpi.test.mjs        # 37 casos — GAP, EF, TRIMP, CTL/ATL, A:C, Riegel, bike/modalidade…
 node analise/fit.test.mjs        # 36 casos — encode→decode→map (@garmin/fitsdk), corrida + bike indoor
 node analise/recovery.test.mjs   # 23 casos — zonas/80-20, Hill, recovery + export.xml do Saúde
+node analise/sync.test.mjs       # 17 casos — merge entre aparelhos (união por id, tombstones, código)
 ```
 
 Complementa — não substitui — o pipeline de ingestão de `.FIT` do app React acima.
