@@ -87,6 +87,12 @@ main{max-width:1120px;margin:0 auto;padding:18px 16px 40px}
 .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow)}
 .card h3{font-size:13.5px;letter-spacing:-.005em;color:var(--ink-2);font-weight:700;display:flex;align-items:center;gap:8px}
 .card .sub{color:var(--muted);font-size:12.5px}
+/* cards recolhíveis: o cabeçalho (h3) vira botão; recolhido, some tudo menos o h3 */
+.card > h3.can-collapse{cursor:pointer;margin:-2px 0}
+.card > h3 .chev{margin-left:8px;font-size:12px;color:var(--muted);transition:transform .18s ease;flex:none}
+.card.is-collapsed > h3 .chev{transform:rotate(-90deg)}
+.card.is-collapsed > :not(h3){display:none!important}
+.card > h3.can-collapse:hover{color:var(--ink)}
 .section-title{font-size:13px;letter-spacing:0;color:var(--ink-2);
   font-weight:700;margin:28px 2px 12px;display:flex;align-items:center;gap:10px}
 .section-title::after{content:"";flex:1;height:1px;background:var(--line)}
@@ -198,12 +204,16 @@ svg.chart{width:100%;height:auto;display:block;overflow:visible}
 .legend span{display:inline-flex;align-items:center;gap:6px}
 .legend i{width:12px;height:3px;border-radius:2px;display:inline-block}
 .legend i.dot{width:9px;height:9px;border-radius:50%}
-.tooltip{position:absolute;pointer-events:none;background:var(--ink);color:var(--plane);font-size:11.5px;
-  padding:7px 9px;border-radius:8px;transform:translate(-50%,-115%);white-space:nowrap;z-index:5;opacity:0;transition:opacity .08s;
-  box-shadow:0 4px 14px rgba(0,0,0,.25);font-variant-numeric:tabular-nums;line-height:1.35}
+.tooltip{position:fixed;pointer-events:none;background:var(--ink);color:var(--plane);font-size:12px;
+  padding:7px 10px;border-radius:8px;transform:translate(-50%,-118%);white-space:nowrap;z-index:60;opacity:0;transition:opacity .08s;
+  box-shadow:0 4px 14px rgba(0,0,0,.25);font-variant-numeric:tabular-nums;line-height:1.4}
 .tooltip.show{opacity:1}
 .tooltip b{color:#fff}
 :root[data-theme="dark"] .tooltip{background:#000;color:#eee}
+/* ponto/barra em destaque quando tocado/selecionado */
+svg.chart .pt-active{r:6.5;stroke-width:3}
+svg.chart rect.pt-active{opacity:1;filter:brightness(1.08)}
+svg.chart{cursor:pointer}
 
 .empty{text-align:center;color:var(--muted);padding:40px 16px;font-size:13.5px}
 .empty .big{font-size:30px;margin-bottom:8px}
@@ -979,21 +989,65 @@ function barChart(opts){
   svg+='</svg>';
   return '<div class="chart-wrap">'+svg+'</div>';
 }
-// tooltip wiring (delegated)
+// tooltip: hover no desktop + TOQUE/CLIQUE em qualquer ponto no celular
+function tipPositionAt(node){
+  var tip=$("#tooltip"),svg=node.closest("svg");if(!svg)return;
+  var sr=svg.getBoundingClientRect(),vb=svg.viewBox.baseVal;
+  var sx=+node.getAttribute("data-x"),sy=+node.getAttribute("data-y");
+  var px=sr.left+(sx/vb.width)*sr.width;         // coords da viewport (tooltip é position:fixed)
+  var py=sr.top+(sy/vb.height)*sr.height;
+  tip.innerHTML=node.getAttribute("data-tip").replace(/·/g,"<br>·");
+  tip.style.left=px+"px";tip.style.top=Math.max(py,44)+"px";tip.classList.add("show");
+  var prev=document.querySelector("svg.chart .pt-active");if(prev)prev.classList.remove("pt-active");
+  node.classList.add("pt-active");
+}
+function tipHide(){var tip=$("#tooltip");if(tip)tip.classList.remove("show");var a=document.querySelector("svg.chart .pt-active");if(a)a.classList.remove("pt-active");}
+function tipNearest(svg,clientX){
+  var pts=svg.querySelectorAll("[data-tip]");if(!pts.length)return null;
+  var sr=svg.getBoundingClientRect(),vb=svg.viewBox.baseVal,tx=(clientX-sr.left)/sr.width*vb.width;
+  var best=null,bd=1e9;Array.prototype.forEach.call(pts,function(n){var dx=Math.abs(+n.getAttribute("data-x")-tx);if(dx<bd){bd=dx;best=n;}});
+  return best;
+}
 function wireTooltips(root){
-  var tip=$("#tooltip");
+  // hover (desktop)
   root.querySelectorAll("[data-tip]").forEach(function(node){
-    node.addEventListener("mouseenter",function(){
-      var wrap=node.closest(".chart-wrap"),svg=node.closest("svg");
-      var wr=wrap.getBoundingClientRect(),sr=svg.getBoundingClientRect();
-      var vb=svg.viewBox.baseVal;
-      var sx=+node.getAttribute("data-x"),sy=+node.getAttribute("data-y");
-      var px=sr.left-wr.left+(sx/vb.width)*sr.width;
-      var py=sr.top-wr.top+(sy/vb.height)*sr.height;
-      tip.innerHTML=node.getAttribute("data-tip").replace(/·/g,"<br>·");
-      tip.style.left=px+"px";tip.style.top=py+"px";tip.classList.add("show");
-    });
-    node.addEventListener("mouseleave",function(){tip.classList.remove("show");});
+    node.addEventListener("mouseenter",function(){tipPositionAt(node);});
+    node.addEventListener("mouseleave",function(){tipHide();});
+  });
+  // tocar/clicar em qualquer lugar do gráfico mostra o ponto mais próximo (mobile-friendly)
+  root.querySelectorAll("svg.chart").forEach(function(svg){
+    svg.addEventListener("click",function(e){var n=tipNearest(svg,e.clientX);if(n){tipPositionAt(n);e.stopPropagation();}});
+  });
+}
+
+/* ---- cards recolhíveis (o cabeçalho vira botão; estado guardado por card) ---- */
+var COLLAPSE_KEY="apex.analise.collapsed";
+function collapsedList(){try{return JSON.parse(localStorage.getItem(COLLAPSE_KEY)||"[]");}catch(e){return [];}}
+function collapsedSave(a){try{localStorage.setItem(COLLAPSE_KEY,JSON.stringify(a));}catch(e){}}
+function makeCardsCollapsible(root){
+  var saved=collapsedList();
+  root.querySelectorAll(".card > h3").forEach(function(h3){
+    var card=h3.parentNode;
+    if(h3.classList.contains("can-collapse")||card.children.length<2)return; // precisa ter conteúdo além do h3
+    var key=(h3.textContent||"").trim().slice(0,80); // chave estável (antes do chevron)
+    h3.classList.add("can-collapse");
+    h3.setAttribute("role","button");h3.setAttribute("tabindex","0");
+    var hasBadge=!!h3.querySelector("span");
+    var chev=document.createElement("span");chev.className="chev";chev.setAttribute("aria-hidden","true");chev.textContent="▾";
+    if(!hasBadge)chev.style.marginLeft="auto";
+    h3.appendChild(chev);
+    var collapsed=saved.indexOf(key)>=0;
+    card.classList.toggle("is-collapsed",collapsed);
+    h3.setAttribute("aria-expanded",collapsed?"false":"true");
+    function toggle(){
+      var now=card.classList.toggle("is-collapsed");
+      h3.setAttribute("aria-expanded",now?"false":"true");
+      var s=collapsedList(),i=s.indexOf(key);
+      if(now){if(i<0)s.push(key);}else if(i>=0)s.splice(i,1);
+      collapsedSave(s);
+    }
+    h3.addEventListener("click",toggle);
+    h3.addEventListener("keydown",function(e){if(e.key==="Enter"||e.key===" "){e.preventDefault();toggle();}});
   });
 }
 
@@ -1013,6 +1067,7 @@ function render(){
   else if(currentTab==="kpis")renderKpis(v);
   else if(currentTab==="config")renderConfig(v);
   wireTooltips(v);
+  makeCardsCollapsible(v);
 }
 
 /* -------- PAINEL (dashboard) -------- */
@@ -2248,6 +2303,9 @@ window.addEventListener("unhandledrejection",function(e){showFatal(e&&e.reason&&
       if(e.key==="Escape")closeModal();
       else modalTrap(e);
     });
+    // fecha o tooltip do gráfico ao tocar fora / rolar a página
+    document.addEventListener("click",function(e){if(!(e.target.closest&&e.target.closest("svg.chart")))tipHide();});
+    window.addEventListener("scroll",function(){tipHide();},{passive:true});
     if(state.seeded){save();delete state.seeded;}
     render();
     // sincroniza ao abrir (puxa o que veio de outro aparelho e reenvia a união)
