@@ -11,7 +11,7 @@
 :root{
   color-scheme: light;
   --plane:#f3f1ec; --surface:#ffffff; --surface-2:#faf8f4; --surface-3:#f2efe9;
-  --ink:#1a1512; --ink-2:#5f584e; --muted:#948b7e; --line:#e7e1d8; --line-2:#efeae2;
+  --ink:#1a1512; --ink-2:#5f584e; --muted:#726b62; --line:#e7e1d8; --line-2:#efeae2;
   --accent:#ef5a2b; --accent-2:#d81f2c; --accent-ink:#ffffff; --accent-soft:#fdeee7;
   --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a; --s4:#c98500; --s5:#c14d80; --s6:#4a3aa7; --s7:#008300; --s8:#e34948;
   --good:#0ca30c; --warn:#c98500; --serious:#ec835a; --crit:#d03b3b;
@@ -297,40 +297,53 @@ svg.chart{width:100%;height:auto;display:block;overflow:visible}
 .steps .st{display:grid;grid-template-columns:26px 1fr;gap:10px;font-size:13.5px;align-items:start}
 .steps .st b{width:24px;height:24px;border-radius:7px;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center;font-size:12px;font-weight:800}
 a:focus-visible,button:focus-visible,summary:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+
+/* ---- acessibilidade ---- */
+/* texto só para leitor de tela */
+.sr-only{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+/* alvos de toque mais confortáveis no celular (WCAG 2.5.5) */
+.icon-btn{width:40px;height:40px;font-size:16px}
+.btn.sm{min-height:38px}
+.linkish{min-height:32px;padding:4px 6px}
+nav.tabs button{min-height:44px}
+/* respeita quem pediu menos movimento no sistema */
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important;scroll-behavior:auto!important}
+}
 </style>
 </head>
 <body>
 <header class="top">
   <div class="top-in">
     <div class="brand">
-      <span class="wordmark">🔥 RUN PERFORMANCE <span class="slash">//</span> <b>HEAT</b></span>
+      <h1 class="wordmark">🔥 RUN PERFORMANCE <span class="slash">//</span> <b>HEAT</b></h1>
       <small>Ciclo Base &amp; Pace · seus dados, seu ritmo, sua evolução</small>
     </div>
-    <div class="athlete-chip" id="athleteChip" title="Atleta"><span class="dot" id="athleteInitial">L</span><span id="athleteName">Atleta</span></div>
-    <button class="icon-btn" id="themeBtn" title="Alternar tema (claro/escuro)">◐</button>
-    <button class="icon-btn" id="exportBtn" title="Exportar dados (JSON)">⭳</button>
-    <button class="icon-btn" id="importBtn" title="Importar dados (JSON)">⭱</button>
+    <div class="athlete-chip" id="athleteChip" title="Atleta"><span class="dot" id="athleteInitial" aria-hidden="true">L</span><span id="athleteName">Atleta</span></div>
+    <button class="icon-btn" id="themeBtn" aria-label="Alternar tema claro/escuro" title="Alternar tema (claro/escuro)">◐</button>
+    <button class="icon-btn" id="exportBtn" aria-label="Exportar dados (JSON)" title="Exportar dados (JSON)">⭳</button>
+    <button class="icon-btn" id="importBtn" aria-label="Importar dados (JSON)" title="Importar dados (JSON)">⭱</button>
     <input type="file" id="importFile" accept="application/json" hidden />
     <input type="file" id="fitFile" accept=".fit,.FIT" hidden />
     <input type="file" id="healthFile" accept=".xml" hidden />
   </div>
-  <nav class="tabs" id="tabs">
-    <button data-tab="painel" class="active">📊 Painel</button>
-    <button data-tab="treinos">🏃 Treinos</button>
-    <button data-tab="relatorio">🗒️ Relatório semanal</button>
-    <button data-tab="recuperacao">🌙 Recuperação</button>
-    <button data-tab="forca">💪 Força &amp; Canela</button>
-    <button data-tab="kpis">📚 KPIs</button>
-    <button data-tab="config">⚙️ Config</button>
+  <nav class="tabs" id="tabs" role="tablist" aria-label="Seções da análise">
+    <button data-tab="painel" id="tab-painel" role="tab" aria-selected="true" aria-controls="view" tabindex="0" class="active">📊 Painel</button>
+    <button data-tab="treinos" id="tab-treinos" role="tab" aria-selected="false" aria-controls="view" tabindex="-1">🏃 Treinos</button>
+    <button data-tab="relatorio" id="tab-relatorio" role="tab" aria-selected="false" aria-controls="view" tabindex="-1">🗒️ Relatório semanal</button>
+    <button data-tab="recuperacao" id="tab-recuperacao" role="tab" aria-selected="false" aria-controls="view" tabindex="-1">🌙 Recuperação</button>
+    <button data-tab="forca" id="tab-forca" role="tab" aria-selected="false" aria-controls="view" tabindex="-1">💪 Força &amp; Canela</button>
+    <button data-tab="kpis" id="tab-kpis" role="tab" aria-selected="false" aria-controls="view" tabindex="-1">📚 KPIs</button>
+    <button data-tab="config" id="tab-config" role="tab" aria-selected="false" aria-controls="view" tabindex="-1">⚙️ Config</button>
   </nav>
 </header>
 
-<main id="view"><noscript><div style="max-width:640px;margin:40px auto;padding:20px;border:1px solid #e7a; border-radius:14px;background:#fff;color:#1a1512;font-family:system-ui,sans-serif;line-height:1.5"><b>Este app precisa de JavaScript.</b><br>Você provavelmente abriu o arquivo na pré-visualização do iPhone (app Arquivos ou Mail), que não executa o app. Abra o arquivo por um navegador de verdade — <b>Safari</b> ou <b>Chrome</b> — ou use o link hospedado que o desenvolvedor enviar.</div></noscript></main>
+<main id="view" role="tabpanel" aria-labelledby="tab-painel" tabindex="-1"><noscript><div style="max-width:640px;margin:40px auto;padding:20px;border:1px solid #e7a; border-radius:14px;background:#fff;color:#1a1512;font-family:system-ui,sans-serif;line-height:1.5"><b>Este app precisa de JavaScript.</b><br>Você provavelmente abriu o arquivo na pré-visualização do iPhone (app Arquivos ou Mail), que não executa o app. Abra o arquivo por um navegador de verdade — <b>Safari</b> ou <b>Chrome</b> — ou use o link hospedado que o desenvolvedor enviar.</div></noscript></main>
 
 <!-- Modal treino -->
 <div class="modal-bg" id="modalBg">
-  <div class="modal">
-    <div class="modal-h"><h2 id="modalTitle">Novo treino</h2><button class="btn ghost sm" id="modalFit" title="Preencher a partir de um arquivo .FIT">⬆ .FIT</button><button class="icon-btn" id="modalClose">✕</button></div>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-h"><h2 id="modalTitle">Novo treino</h2><button class="btn ghost sm" id="modalFit" title="Preencher a partir de um arquivo .FIT">⬆ .FIT</button><button class="icon-btn" id="modalClose" aria-label="Fechar">✕</button></div>
     <div class="modal-b">
       <div class="fit-banner" id="fitBanner" style="display:none">
         <span class="bi">⬆</span>
@@ -877,7 +890,9 @@ function lineChart(opts){
   var plotW=CW-PADL-PADR,plotH=CH-PADT-PADB;
   function X(i){return PADL+(n<=1?plotW/2:plotW*i/(n-1));}
   function Y(v){var t=(v-sc.min)/(sc.max-sc.min);if(opts.reverseY)t=1-t;return PADT+plotH*(1-t);}
-  var svg='<svg class="chart" viewBox="0 0 '+CW+' '+CH+'" preserveAspectRatio="none" role="img">';
+  var ariaBits=series.map(function(s){var ps=s.points.filter(function(p){return p.y!=null;});var lv=ps.length?ps[ps.length-1].y:null;return s.name+(lv!=null?": último "+(opts.yfmt?opts.yfmt(lv):lv):"");});
+  var aria="Gráfico de linha. "+ariaBits.join("; ")+(opts.target?". Meta "+(opts.yfmt?opts.yfmt(opts.target.y):opts.target.y):"")+".";
+  var svg='<svg class="chart" viewBox="0 0 '+CW+' '+CH+'" preserveAspectRatio="none" role="img" aria-label="'+esc(aria)+'">';
   // gridlines + y ticks
   sc.ticks.forEach(function(tk){var y=Y(tk);svg+='<line x1="'+PADL+'" x2="'+(CW-PADR)+'" y1="'+y+'" y2="'+y+'" stroke="var(--grid)" stroke-width="1"/>';
     svg+='<text x="'+(PADL-8)+'" y="'+(y+4)+'" text-anchor="end" font-size="11" fill="var(--muted)">'+(opts.yfmt?opts.yfmt(tk):tk)+'</text>';});
@@ -918,7 +933,9 @@ function barChart(opts){
   var plotW=CW-PADL-PADR,plotH=CH-PADT-PADB,n=bars.length;
   var bw=Math.min(46,plotW/n*0.62),gap=plotW/n;
   function Y(v){var t=(v-sc.min)/(sc.max-sc.min);return PADT+plotH*(1-t);}
-  var svg='<svg class="chart" viewBox="0 0 '+CW+' '+CH+'" role="img">';
+  var _bv=bars.map(function(b){return b.y;});
+  var aria="Gráfico de barras, "+bars.length+" barra(s). Mín "+(opts.yfmt?opts.yfmt(Math.min.apply(null,_bv)):Math.min.apply(null,_bv))+", máx "+(opts.yfmt?opts.yfmt(Math.max.apply(null,_bv)):Math.max.apply(null,_bv))+", último "+(opts.yfmt?opts.yfmt(_bv[_bv.length-1]):_bv[_bv.length-1])+".";
+  var svg='<svg class="chart" viewBox="0 0 '+CW+' '+CH+'" role="img" aria-label="'+esc(aria)+'">';
   sc.ticks.forEach(function(tk){var y=Y(tk);svg+='<line x1="'+PADL+'" x2="'+(CW-PADR)+'" y1="'+y+'" y2="'+y+'" stroke="var(--grid)"/>';
     svg+='<text x="'+(PADL-8)+'" y="'+(y+4)+'" text-anchor="end" font-size="11" fill="var(--muted)">'+(opts.yfmt?opts.yfmt(tk):tk)+'</text>';});
   var y0=Y(0);
@@ -1378,7 +1395,7 @@ function timelineEl(ws){
 }
 
 /* -------- helper builders -------- */
-function sectionTitle(t){return el("div","section-title",esc(t));}
+function sectionTitle(t){return el("h2","section-title",esc(t));}
 function tile(o){
   var e=el("div","card tile");
   var html='<div class="lab">'+esc(o.lab)+'</div><div class="val">'+o.val+(o.unit?'<small> '+o.unit+'</small>':'')+'</div><div class="note">'+(o.note||"")+'</div>';
@@ -1426,7 +1443,7 @@ function renderTreinos(v){
       '<td class="num">'+(w.cadence||"—")+'</td>'+
       '<td class="num">'+(dec!=null?dec.toFixed(1)+"%":"—")+'</td>'+
       '<td class="num">'+(tr!=null?Math.round(tr):"—")+'</td>'+
-      '<td class="row-actions"><button class="linkish" data-edit="'+w.id+'">editar</button></td>';
+      '<td class="row-actions"><button class="linkish" data-edit="'+w.id+'" aria-label="Editar treino de '+esc(fmtDateFull(w.date))+'">editar</button></td>';
     r.querySelector("[data-edit]").onclick=function(e){e.stopPropagation();openModal(w.id);};
     r.onclick=function(){openModal(w.id);};
     tb.appendChild(r);
@@ -2003,9 +2020,22 @@ function openModal(id,prefill,fromFit){
   $("#f_notes").value=s&&s.notes?s.notes:"";
   $("#f_pain").checked=s?!!s.pain:false;
   $("#f_splits").value=s&&s.splits?s.splits.map(function(sp){return[hms(sp.timeSec),sp.hrAvg||"",sp.elevDeltaM!=null?sp.elevDeltaM:""].filter(function(x,i){return i===0||x!=="";}).join(", ");}).join("\n"):"";
+  _modalLastFocus=document.activeElement;
   $("#modalBg").classList.add("show");
+  // move o foco para dentro do diálogo (acessibilidade)
+  setTimeout(function(){var f=$("#f_modal");if(f)f.focus();},0);
 }
-function closeModal(){$("#modalBg").classList.remove("show");editingId=null;}
+var _modalLastFocus=null;
+// lista de elementos focáveis dentro do modal (para o focus-trap)
+function modalFocusables(){var m=$("#modalBg").querySelector(".modal");if(!m)return[];return Array.prototype.slice.call(m.querySelectorAll('a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])')).filter(function(e){return e.offsetParent!==null;});}
+function modalTrap(e){
+  if(e.key!=="Tab")return;
+  var f=modalFocusables();if(!f.length)return;
+  var first=f[0],last=f[f.length-1];
+  if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}
+  else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}
+}
+function closeModal(){$("#modalBg").classList.remove("show");editingId=null;if(_modalLastFocus&&_modalLastFocus.focus){try{_modalLastFocus.focus();}catch(e){}}_modalLastFocus=null;}
 function parseSplits(txt){
   if(!txt||!txt.trim())return null;
   var out=[];var lines=txt.split(/\n/);
@@ -2144,7 +2174,7 @@ function toast(msg){
   if(!t){t=el("div");t.id="toastEl";t.style.cssText="position:fixed;left:50%;bottom:26px;transform:translateX(-50%);background:var(--ink);color:var(--plane);padding:10px 18px;border-radius:10px;font-size:13.5px;font-weight:600;z-index:99;box-shadow:0 6px 20px rgba(0,0,0,.25);opacity:0;transition:opacity .2s";document.body.appendChild(t);}
   t.textContent=msg;t.style.opacity="1";clearTimeout(toastT);toastT=setTimeout(function(){t.style.opacity="0";},1800);
 }
-function setActiveTab(){$("#tabs").querySelectorAll("button").forEach(function(b){b.classList.toggle("active",b.dataset.tab===currentTab);});}
+function setActiveTab(){$("#tabs").querySelectorAll("button").forEach(function(b){var on=b.dataset.tab===currentTab;b.classList.toggle("active",on);b.setAttribute("aria-selected",on?"true":"false");b.tabIndex=on?0:-1;});var v=$("#view");if(v)v.setAttribute("aria-labelledby","tab-"+currentTab);}
 
 /* ============================================================================
    INIT
@@ -2161,7 +2191,20 @@ window.addEventListener("unhandledrejection",function(e){showFatal(e&&e.reason&&
 (function init(){
   try{
     try{var th=localStorage.getItem("apex.theme");if(th)document.documentElement.setAttribute("data-theme",th);}catch(e){}
-    $("#tabs").querySelectorAll("button").forEach(function(b){b.onclick=function(){currentTab=b.dataset.tab;setActiveTab();render();window.scrollTo(0,0);};});
+    var tabBtns=Array.prototype.slice.call($("#tabs").querySelectorAll("button"));
+    tabBtns.forEach(function(b,i){
+      b.onclick=function(){currentTab=b.dataset.tab;setActiveTab();render();window.scrollTo(0,0);};
+      // navegação por teclado no padrão ARIA tablist (setas / Home / End)
+      b.onkeydown=function(e){
+        var k=e.key,j=-1;
+        if(k==="ArrowRight"||k==="ArrowDown")j=(i+1)%tabBtns.length;
+        else if(k==="ArrowLeft"||k==="ArrowUp")j=(i-1+tabBtns.length)%tabBtns.length;
+        else if(k==="Home")j=0;
+        else if(k==="End")j=tabBtns.length-1;
+        else return;
+        e.preventDefault();var t=tabBtns[j];currentTab=t.dataset.tab;setActiveTab();render();t.focus();
+      };
+    });
     $("#themeBtn").onclick=function(){toggleTheme();render();};
     $("#exportBtn").onclick=exportData;
     $("#importBtn").onclick=function(){$("#importFile").click();};
@@ -2173,7 +2216,11 @@ window.addEventListener("unhandledrejection",function(e){showFatal(e&&e.reason&&
     $("#modalClose").onclick=closeModal;$("#modalCancel").onclick=closeModal;
     $("#modalSave").onclick=saveModal;$("#modalDelete").onclick=deleteWorkout;
     $("#modalBg").onclick=function(e){if(e.target===$("#modalBg"))closeModal();};
-    document.addEventListener("keydown",function(e){if(e.key==="Escape")closeModal();});
+    document.addEventListener("keydown",function(e){
+      if(!$("#modalBg").classList.contains("show"))return;
+      if(e.key==="Escape")closeModal();
+      else modalTrap(e);
+    });
     if(state.seeded){save();delete state.seeded;}
     render();
     // sincroniza ao abrir (puxa o que veio de outro aparelho e reenvia a união)
