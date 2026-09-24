@@ -87,12 +87,30 @@ main{max-width:1120px;margin:0 auto;padding:18px 16px 40px}
 .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow)}
 .card h3{font-size:13.5px;letter-spacing:-.005em;color:var(--ink-2);font-weight:700;display:flex;align-items:center;gap:8px}
 .card .sub{color:var(--muted);font-size:12.5px}
-/* cards recolhíveis: o cabeçalho (h3) vira botão; recolhido, some tudo menos o h3 */
-.card > h3.can-collapse{cursor:pointer;margin:-2px 0}
-.card > h3 .chev{margin-left:8px;font-size:12px;color:var(--muted);transition:transform .18s ease;flex:none}
+/* cards recolhíveis + botão de "sobre o indicador" no cabeçalho */
+.card > h3.can-collapse{cursor:pointer}
+.card > h3 .card-info,.card > h3 .card-toggle{background:none;border:none;color:var(--muted);cursor:pointer;line-height:1;border-radius:7px;padding:3px 5px;flex:none}
+.card > h3 .card-info{font-size:14px;margin-left:4px}
+.card > h3 .card-info:hover{color:var(--accent)}
+.card > h3 .card-toggle{margin-left:8px;min-width:28px;min-height:28px}
+.card > h3 .card-toggle:hover{color:var(--ink)}
+.card > h3 .chev{display:inline-block;font-size:12px;transition:transform .18s ease}
 .card.is-collapsed > h3 .chev{transform:rotate(-90deg)}
 .card.is-collapsed > :not(h3){display:none!important}
-.card > h3.can-collapse:hover{color:var(--ink)}
+/* ficha do indicador (o que é, referências, objetivo) */
+.info-bg{position:fixed;inset:0;background:rgba(10,8,6,.5);z-index:70;display:flex;align-items:flex-end;justify-content:center;padding:0}
+@media(min-width:640px){.info-bg{align-items:center;padding:24px}}
+.info-box{background:var(--surface);border:1px solid var(--line);border-radius:18px 18px 0 0;width:100%;max-width:560px;max-height:82vh;overflow:auto;box-shadow:var(--shadow);padding:18px 18px 22px}
+@media(min-width:640px){.info-box{border-radius:16px}}
+.info-h{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.info-h b{font-size:16px}
+.info-h .close{margin-left:auto;background:var(--surface-2);border:1px solid var(--line);color:var(--ink-2);border-radius:9px;width:34px;height:34px;cursor:pointer;font-size:15px;flex:none}
+.info-sec{margin-top:14px}
+.info-sec .k{display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:5px}
+.info-sec p{margin:0;font-size:14px;line-height:1.55;color:var(--ink)}
+.info-sec pre{margin:0;font-family:var(--mono);font-size:12.5px;line-height:1.5;color:var(--ink-2);background:var(--surface-2);border:1px solid var(--line-2);border-radius:10px;padding:10px 12px;white-space:pre-wrap}
+.tile.has-info{cursor:pointer}
+.tile .info-dot{margin-left:5px;color:var(--muted);font-size:11px}
 .section-title{font-size:13px;letter-spacing:0;color:var(--ink-2);
   font-weight:700;margin:28px 2px 12px;display:flex;align-items:center;gap:10px}
 .section-title::after{content:"";flex:1;height:1px;background:var(--line)}
@@ -211,8 +229,8 @@ svg.chart{width:100%;height:auto;display:block;overflow:visible}
 .tooltip b{color:#fff}
 :root[data-theme="dark"] .tooltip{background:#000;color:#eee}
 /* ponto/barra em destaque quando tocado/selecionado */
-svg.chart .pt-active{r:6.5;stroke-width:3}
-svg.chart rect.pt-active{opacity:1;filter:brightness(1.08)}
+svg.chart circle.pt-active{r:6.5;stroke-width:3}
+svg.chart path.pt-active,svg.chart rect.pt-active{filter:brightness(1.12)}
 svg.chart{cursor:pointer}
 
 .empty{text-align:center;color:var(--muted);padding:40px 16px;font-size:13.5px}
@@ -905,7 +923,21 @@ function confBadge(level){var map={"alta":["hi","alta"],"média":["mid","média"
    GRÁFICOS SVG (eixo único, hover, legenda, cores colorblind-safe)
 ============================================================================ */
 var CW=760,CH=250,PADL=52,PADR=18,PADT=18,PADB=34;
+var _gid=0; // ids únicos para os degradês de cada gráfico
 function seriesColor(n){return getComputedStyle(document.documentElement).getPropertyValue("--s"+n).trim();}
+// caminho SUAVIZADO (Catmull-Rom → Bézier cúbico); tensão baixa evita overshoot
+function smoothPath(pts){
+  if(!pts.length)return "";
+  if(pts.length<3)return pts.reduce(function(d,p,i){return d+(i?"L":"M")+p.x+" "+p.y+" ";},"");
+  var t=0.16,d="M"+pts[0].x+" "+pts[0].y+" ";
+  for(var i=0;i<pts.length-1;i++){
+    var p0=pts[i-1]||pts[i],p1=pts[i],p2=pts[i+1],p3=pts[i+2]||p2;
+    var c1x=p1.x+(p2.x-p0.x)*t,c1y=p1.y+(p2.y-p0.y)*t;
+    var c2x=p2.x-(p3.x-p1.x)*t,c2y=p2.y-(p3.y-p1.y)*t;
+    d+="C"+c1x.toFixed(1)+" "+c1y.toFixed(1)+" "+c2x.toFixed(1)+" "+c2y.toFixed(1)+" "+p2.x.toFixed(1)+" "+p2.y.toFixed(1)+" ";
+  }
+  return d;
+}
 function niceScale(min,max){
   if(min===max){min-=1;max+=1;}
   var span=max-min,step=Math.pow(10,Math.floor(Math.log10(span/4)));
@@ -929,33 +961,41 @@ function lineChart(opts){
   function Y(v){var t=(v-sc.min)/(sc.max-sc.min);if(opts.reverseY)t=1-t;return PADT+plotH*(1-t);}
   var ariaBits=series.map(function(s){var ps=s.points.filter(function(p){return p.y!=null;});var lv=ps.length?ps[ps.length-1].y:null;return s.name+(lv!=null?": último "+(opts.yfmt?opts.yfmt(lv):lv):"");});
   var aria="Gráfico de linha. "+ariaBits.join("; ")+(opts.target?". Meta "+(opts.yfmt?opts.yfmt(opts.target.y):opts.target.y):"")+".";
-  var svg='<svg class="chart" viewBox="0 0 '+CW+' '+CH+'" preserveAspectRatio="none" role="img" aria-label="'+esc(aria)+'">';
+  var defs="",body="";
   // gridlines + y ticks
-  sc.ticks.forEach(function(tk){var y=Y(tk);svg+='<line x1="'+PADL+'" x2="'+(CW-PADR)+'" y1="'+y+'" y2="'+y+'" stroke="var(--grid)" stroke-width="1"/>';
-    svg+='<text x="'+(PADL-8)+'" y="'+(y+4)+'" text-anchor="end" font-size="11" fill="var(--muted)">'+(opts.yfmt?opts.yfmt(tk):tk)+'</text>';});
+  sc.ticks.forEach(function(tk){var y=Y(tk);body+='<line x1="'+PADL+'" x2="'+(CW-PADR)+'" y1="'+y+'" y2="'+y+'" stroke="var(--grid)" stroke-width="1"/>';
+    body+='<text x="'+(PADL-8)+'" y="'+(y+4)+'" text-anchor="end" font-size="11" fill="var(--muted)">'+(opts.yfmt?opts.yfmt(tk):tk)+'</text>';});
   // x labels
   var lbls=opts.xlabels||series[0].points.map(function(p){return p.label;});
   var stepLbl=Math.ceil(n/8);
-  lbls.forEach(function(l,i){if(i%stepLbl!==0&&i!==n-1)return;svg+='<text x="'+X(i)+'" y="'+(CH-12)+'" text-anchor="middle" font-size="11" fill="var(--muted)">'+esc(l)+'</text>';});
+  lbls.forEach(function(l,i){if(i%stepLbl!==0&&i!==n-1)return;body+='<text x="'+X(i)+'" y="'+(CH-12)+'" text-anchor="middle" font-size="11" fill="var(--muted)">'+esc(l)+'</text>';});
   // target line
-  if(opts.target){var ty=Y(opts.target.y);svg+='<line x1="'+PADL+'" x2="'+(CW-PADR)+'" y1="'+ty+'" y2="'+ty+'" stroke="var(--accent)" stroke-width="1.5" stroke-dasharray="5 4" opacity=".8"/>';
-    svg+='<text x="'+(CW-PADR)+'" y="'+(ty-6)+'" text-anchor="end" font-size="10.5" fill="var(--accent)" font-weight="700">'+esc(opts.target.label)+'</text>';}
-  // series lines + points
+  if(opts.target){var ty=Y(opts.target.y);body+='<line x1="'+PADL+'" x2="'+(CW-PADR)+'" y1="'+ty+'" y2="'+ty+'" stroke="var(--accent)" stroke-width="1.5" stroke-dasharray="5 4" opacity=".8"/>';
+    body+='<text x="'+(CW-PADR)+'" y="'+(ty-6)+'" text-anchor="end" font-size="10.5" fill="var(--accent)" font-weight="700">'+esc(opts.target.label)+'</text>';}
+  // series: linha suavizada + área com degradê (área só quando 1 série, para não sujar)
   series.forEach(function(s,si){
     var col=s.colorVar||seriesColor(si+1);
-    var dpath="",pts=[];
-    s.points.forEach(function(p,i){if(p.y==null)return;var x=X(i),y=Y(p.y);dpath+=(dpath?"L":"M")+x+" "+y+" ";pts.push({x:x,y:y,p:p,i:i});});
-    if(s.area){var first=pts[0],last=pts[pts.length-1];svg+='<path d="'+dpath+'L'+last.x+' '+Y(sc.min)+' L'+first.x+' '+Y(sc.min)+' Z" fill="'+col+'" opacity=".10"/>';}
-    svg+='<path d="'+dpath+'" fill="none" stroke="'+col+'" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>';
+    var pts=[];
+    s.points.forEach(function(p,i){if(p.y==null)return;pts.push({x:X(i),y:Y(p.y),p:p,i:i});});
+    if(!pts.length)return;
+    var dLine=smoothPath(pts);
+    if(series.length===1||s.area){
+      var gid="lg"+(_gid++),baseY=Y(sc.min);
+      defs+='<linearGradient id="'+gid+'" x1="0" y1="0" x2="0" y2="1">'+
+        '<stop offset="0%" stop-color="'+col+'" stop-opacity="0.30"/>'+
+        '<stop offset="72%" stop-color="'+col+'" stop-opacity="0.06"/>'+
+        '<stop offset="100%" stop-color="'+col+'" stop-opacity="0"/></linearGradient>';
+      body+='<path d="'+dLine+'L'+pts[pts.length-1].x+' '+baseY+' L'+pts[0].x+' '+baseY+' Z" fill="url(#'+gid+')" stroke="none"/>';
+    }
+    body+='<path d="'+dLine+'" fill="none" stroke="'+col+'" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/>';
     pts.forEach(function(pt){
-      svg+='<circle cx="'+pt.x+'" cy="'+pt.y+'" r="4.2" fill="var(--surface)" stroke="'+col+'" stroke-width="2.2" '+
+      body+='<circle cx="'+pt.x+'" cy="'+pt.y+'" r="4.2" fill="var(--surface)" stroke="'+col+'" stroke-width="2.2" '+
         'data-tip="'+esc((pt.p.label||"")+' · '+s.name+': '+(opts.yfmt?opts.yfmt(pt.p.y):pt.p.y)+(pt.p.extra?' · '+pt.p.extra:''))+'" data-x="'+pt.x+'" data-y="'+pt.y+'"/>';
     });
-    // direct label at last point (relief rule)
     var lastPt=pts[pts.length-1];
-    if(lastPt&&series.length<=4)svg+='<text x="'+(lastPt.x+7)+'" y="'+(lastPt.y+4)+'" font-size="11" font-weight="700" fill="'+col+'">'+esc(opts.yfmt?opts.yfmt(lastPt.p.y):lastPt.p.y)+'</text>';
+    if(lastPt&&series.length<=4)body+='<text x="'+(lastPt.x+7)+'" y="'+(lastPt.y+4)+'" font-size="11" font-weight="700" fill="'+col+'">'+esc(opts.yfmt?opts.yfmt(lastPt.p.y):lastPt.p.y)+'</text>';
   });
-  svg+='</svg>';
+  var svg='<svg class="chart" viewBox="0 0 '+CW+' '+CH+'" preserveAspectRatio="none" role="img" aria-label="'+esc(aria)+'"><defs>'+defs+'</defs>'+body+'</svg>';
   var legend="";
   if(series.length>1){legend='<div class="legend">'+series.map(function(s,si){return '<span><i class="dot" style="background:'+(s.colorVar||seriesColor(si+1))+'"></i>'+esc(s.name)+'</span>';}).join("")+'</div>';}
   return '<div class="chart-wrap">'+svg+legend+'</div>';
@@ -972,21 +1012,32 @@ function barChart(opts){
   function Y(v){var t=(v-sc.min)/(sc.max-sc.min);return PADT+plotH*(1-t);}
   var _bv=bars.map(function(b){return b.y;});
   var aria="Gráfico de barras, "+bars.length+" barra(s). Mín "+(opts.yfmt?opts.yfmt(Math.min.apply(null,_bv)):Math.min.apply(null,_bv))+", máx "+(opts.yfmt?opts.yfmt(Math.max.apply(null,_bv)):Math.max.apply(null,_bv))+", último "+(opts.yfmt?opts.yfmt(_bv[_bv.length-1]):_bv[_bv.length-1])+".";
-  var svg='<svg class="chart" viewBox="0 0 '+CW+' '+CH+'" role="img" aria-label="'+esc(aria)+'">';
-  sc.ticks.forEach(function(tk){var y=Y(tk);svg+='<line x1="'+PADL+'" x2="'+(CW-PADR)+'" y1="'+y+'" y2="'+y+'" stroke="var(--grid)"/>';
-    svg+='<text x="'+(PADL-8)+'" y="'+(y+4)+'" text-anchor="end" font-size="11" fill="var(--muted)">'+(opts.yfmt?opts.yfmt(tk):tk)+'</text>';});
+  var defs="",body="";
+  sc.ticks.forEach(function(tk){var y=Y(tk);body+='<line x1="'+PADL+'" x2="'+(CW-PADR)+'" y1="'+y+'" y2="'+y+'" stroke="var(--grid)"/>';
+    body+='<text x="'+(PADL-8)+'" y="'+(y+4)+'" text-anchor="end" font-size="11" fill="var(--muted)">'+(opts.yfmt?opts.yfmt(tk):tk)+'</text>';});
   var y0=Y(0);
+  // um degradê por cor usada (topo mais forte → base translúcida)
+  var gmap={};
   bars.forEach(function(b,i){
     var cx=PADL+gap*i+gap/2,col=b.color||seriesColor(1);
-    var yTop=Y(Math.max(0,b.y)),yBot=Y(Math.min(0,b.y)),h=Math.max(1,yBot-yTop);
-    svg+='<rect x="'+(cx-bw/2)+'" y="'+yTop+'" width="'+bw+'" height="'+h+'" rx="4" fill="'+col+'" '+
-      'data-tip="'+esc(b.label+': '+(opts.yfmt?opts.yfmt(b.y):b.y)+(b.extra?' · '+b.extra:''))+'" data-x="'+cx+'" data-y="'+yTop+'"/>';
-    svg+='<text x="'+cx+'" y="'+(CH-12)+'" text-anchor="middle" font-size="10.5" fill="var(--muted)">'+esc(b.label)+'</text>';
+    if(!gmap[col]){var gid="bg"+(_gid++);gmap[col]=gid;
+      defs+='<linearGradient id="'+gid+'" x1="0" y1="0" x2="0" y2="1">'+
+        '<stop offset="0%" stop-color="'+col+'" stop-opacity="1"/>'+
+        '<stop offset="100%" stop-color="'+col+'" stop-opacity="0.55"/></linearGradient>';}
+    var up=b.y>=0,yTop=Y(Math.max(0,b.y)),yBot=Y(Math.min(0,b.y)),h=Math.max(2,yBot-yTop);
+    var x=cx-bw/2,r=Math.min(6,bw/2,h/2);
+    // barra com cantos arredondados só no topo (embaixo, quando positiva)
+    var d=up
+      ? "M"+x+" "+(yTop+h)+" V"+(yTop+r)+" Q"+x+" "+yTop+" "+(x+r)+" "+yTop+" H"+(x+bw-r)+" Q"+(x+bw)+" "+yTop+" "+(x+bw)+" "+(yTop+r)+" V"+(yTop+h)+" Z"
+      : "M"+x+" "+yTop+" V"+(yBot-r)+" Q"+x+" "+yBot+" "+(x+r)+" "+yBot+" H"+(x+bw-r)+" Q"+(x+bw)+" "+yBot+" "+(x+bw)+" "+(yBot-r)+" V"+yTop+" Z";
+    body+='<path d="'+d+'" fill="url(#'+gmap[col]+')" '+
+      'data-tip="'+esc(b.label+': '+(opts.yfmt?opts.yfmt(b.y):b.y)+(b.extra?' · '+b.extra:''))+'" data-x="'+cx+'" data-y="'+(up?yTop:yBot)+'"/>';
+    body+='<text x="'+cx+'" y="'+(CH-12)+'" text-anchor="middle" font-size="10.5" fill="var(--muted)">'+esc(b.label)+'</text>';
   });
-  if(opts.threshold){var ty=Y(opts.threshold.y);svg+='<line x1="'+PADL+'" x2="'+(CW-PADR)+'" y1="'+ty+'" y2="'+ty+'" stroke="var(--warn)" stroke-width="1.5" stroke-dasharray="5 4"/>';
-    svg+='<text x="'+(CW-PADR)+'" y="'+(ty-6)+'" text-anchor="end" font-size="10.5" fill="var(--warn)" font-weight="700">'+esc(opts.threshold.label)+'</text>';}
-  if(opts.zeroLine)svg+='<line x1="'+PADL+'" x2="'+(CW-PADR)+'" y1="'+y0+'" y2="'+y0+'" stroke="var(--axis)" stroke-width="1.5"/>';
-  svg+='</svg>';
+  if(opts.threshold){var ty=Y(opts.threshold.y);body+='<line x1="'+PADL+'" x2="'+(CW-PADR)+'" y1="'+ty+'" y2="'+ty+'" stroke="var(--warn)" stroke-width="1.5" stroke-dasharray="5 4"/>';
+    body+='<text x="'+(CW-PADR)+'" y="'+(ty-6)+'" text-anchor="end" font-size="10.5" fill="var(--warn)" font-weight="700">'+esc(opts.threshold.label)+'</text>';}
+  if(opts.zeroLine)body+='<line x1="'+PADL+'" x2="'+(CW-PADR)+'" y1="'+y0+'" y2="'+y0+'" stroke="var(--axis)" stroke-width="1.5"/>';
+  var svg='<svg class="chart" viewBox="0 0 '+CW+' '+CH+'" role="img" aria-label="'+esc(aria)+'"><defs>'+defs+'</defs>'+body+'</svg>';
   return '<div class="chart-wrap">'+svg+'</div>';
 }
 // tooltip: hover no desktop + TOQUE/CLIQUE em qualquer ponto no celular
@@ -1031,23 +1082,66 @@ function makeCardsCollapsible(root){
     if(h3.classList.contains("can-collapse")||card.children.length<2)return; // precisa ter conteúdo além do h3
     var key=(h3.textContent||"").trim().slice(0,80); // chave estável (antes do chevron)
     h3.classList.add("can-collapse");
-    h3.setAttribute("role","button");h3.setAttribute("tabindex","0");
-    var hasBadge=!!h3.querySelector("span");
-    var chev=document.createElement("span");chev.className="chev";chev.setAttribute("aria-hidden","true");chev.textContent="▾";
-    if(!hasBadge)chev.style.marginLeft="auto";
-    h3.appendChild(chev);
+    // botão de recolher (real, acessível) — chevron à direita
+    var btn=document.createElement("button");btn.type="button";btn.className="card-toggle";
+    btn.setAttribute("aria-label","Recolher ou expandir");
+    if(!h3.querySelector(".badge"))btn.style.marginLeft="auto";
+    btn.innerHTML='<span class="chev" aria-hidden="true">▾</span>';
+    h3.appendChild(btn);
     var collapsed=saved.indexOf(key)>=0;
     card.classList.toggle("is-collapsed",collapsed);
-    h3.setAttribute("aria-expanded",collapsed?"false":"true");
+    btn.setAttribute("aria-expanded",collapsed?"false":"true");
     function toggle(){
       var now=card.classList.toggle("is-collapsed");
-      h3.setAttribute("aria-expanded",now?"false":"true");
+      btn.setAttribute("aria-expanded",now?"false":"true");
       var s=collapsedList(),i=s.indexOf(key);
       if(now){if(i<0)s.push(key);}else if(i>=0)s.splice(i,1);
       collapsedSave(s);
     }
-    h3.addEventListener("click",toggle);
-    h3.addEventListener("keydown",function(e){if(e.key==="Enter"||e.key===" "){e.preventDefault();toggle();}});
+    btn.addEventListener("click",function(e){e.stopPropagation();toggle();});
+    // conveniência no mouse/toque: tocar no cabeçalho (menos os botões) também recolhe
+    h3.addEventListener("click",function(e){if(e.target.closest("button")||e.target.closest("[data-info]"))return;toggle();});
+  });
+}
+
+/* ---- ficha do indicador: o que é, referências e objetivo (reusa KPI_DOCS) ---- */
+function _norm(s){return (s||"").toString().toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"");}
+var EXTRA_DOCS={
+  baseline:{name:"Baseline 5K",conf:"alta",formula:"marco zero do ciclo (teste ou prova de ~5 km mais recente)",desc:"Seu ponto de partida de referência: o pace (e o GAP) do 5K que ancora as comparações e as projeções de prova. <b>Objetivo: melhorar o pace no mesmo esforço ao longo do ciclo.</b>",fields:"teste/prova de ~5 km"},
+  fcrep:{name:"FC de repouso",conf:"média",formula:"menor FC em repouso (do Apple Watch) — média/mediana do período",desc:"Termômetro de recuperação e adaptação. <b>Tendência de queda = adaptando bem; subida de +3 a +5 bpm sobre o seu normal = fadiga/estresse — considere aliviar.</b> É individual: compare com você mesmo.",fields:"FC de repouso (Apple Watch) ou informado"}
+};
+function kpiDoc(key){
+  if(EXTRA_DOCS[key])return EXTRA_DOCS[key];
+  var q=_norm(key),list=(typeof KPI_DOCS!=="undefined"?KPI_DOCS:[]);
+  for(var i=0;i<list.length;i++)if(_norm(list[i].name).indexOf(q)>=0)return list[i];
+  return null;
+}
+var _infoLastFocus=null;
+function openInfo(key){
+  var doc=kpiDoc(key);if(!doc)return;
+  _infoLastFocus=document.activeElement;
+  var bg=el("div","info-bg");
+  var box=el("div","info-box");
+  var h='<div class="info-h"><b>'+esc(doc.name)+'</b>'+(doc.conf?confBadge(doc.conf):'')+'<button class="close" aria-label="Fechar">✕</button></div>';
+  h+='<div class="info-sec"><span class="k">O que é</span><p>'+doc.desc+'</p></div>';
+  if(doc.formula)h+='<div class="info-sec"><span class="k">Cálculo &amp; referências</span><pre>'+esc(doc.formula)+'</pre></div>';
+  if(doc.fields)h+='<div class="info-sec"><span class="k">De onde vem o dado</span><p>'+esc(doc.fields)+'</p></div>';
+  box.innerHTML=h;bg.appendChild(box);
+  function close(){if(bg.parentNode)document.body.removeChild(bg);document.removeEventListener("keydown",onKey);if(_infoLastFocus&&_infoLastFocus.focus){try{_infoLastFocus.focus();}catch(e){}}}
+  function onKey(e){if(e.key==="Escape")close();}
+  bg.addEventListener("click",function(e){if(e.target===bg)close();});
+  box.querySelector(".close").addEventListener("click",close);
+  document.addEventListener("keydown",onKey);
+  document.body.appendChild(bg);
+  setTimeout(function(){box.querySelector(".close").focus();},0);
+}
+// liga o ⓘ (cards) e o toque no tile (que têm data-info)
+function wireInfo(root){
+  root.querySelectorAll("[data-info]").forEach(function(node){
+    if(node._infoWired)return;node._infoWired=true;
+    node.addEventListener("click",function(e){e.stopPropagation();openInfo(node.getAttribute("data-info"));});
+    if(node.tagName!=="BUTTON"){node.setAttribute("role","button");node.setAttribute("tabindex","0");
+      node.addEventListener("keydown",function(e){if(e.key==="Enter"||e.key===" "){e.preventDefault();openInfo(node.getAttribute("data-info"));}});}
   });
 }
 
@@ -1068,6 +1162,7 @@ function render(){
   else if(currentTab==="config")renderConfig(v);
   wireTooltips(v);
   makeCardsCollapsible(v);
+  wireInfo(v);
 }
 
 /* -------- PAINEL (dashboard) -------- */
@@ -1164,23 +1259,23 @@ function renderPainel(v){
   v.appendChild(sectionTitle("Painel geral · dados reais"));
   var hero=el("div","grid g-4");
   var baseline5k=ws.filter(function(w){return w.type==="teste"||w.type==="prova";}).find(function(w){return Math.abs(w.distKm-5)<0.6;});
-  hero.appendChild(tile({lab:"★ Baseline 5K",ico:"",val:baseline5k?paceStr(baseline5k.durationSec/baseline5k.distKm):"—",unit:"/km",note:baseline5k?fmtDate(baseline5k.date)+" · marco zero · GAP "+paceStr(computeGap(baseline5k).gapPace):"registre um teste",conf:null}));
-  hero.appendChild(tile({lab:"◈ EF fácil (base)",val:latestEF?latestEF.toFixed(4):"—",note:efDelta!=null?deltaHtml(efDelta)+" desde o 1º":"meta +"+a.efGainPct+"% no ciclo",conf:"alta"}));
-  hero.appendChild(tile({lab:"⚡ Cadência",val:latestCad?latestCad:"—",unit:"spm",note:"meta ~"+a.cadenceTarget+(latestCad?" · faltam "+Math.max(0,a.cadenceTarget-latestCad):""),conf:"alta"}));
+  hero.appendChild(tile({lab:"★ Baseline 5K",ico:"",val:baseline5k?paceStr(baseline5k.durationSec/baseline5k.distKm):"—",unit:"/km",note:baseline5k?fmtDate(baseline5k.date)+" · marco zero · GAP "+paceStr(computeGap(baseline5k).gapPace):"registre um teste",conf:null,info:"baseline"}));
+  hero.appendChild(tile({lab:"◈ EF fácil (base)",val:latestEF?latestEF.toFixed(4):"—",note:efDelta!=null?deltaHtml(efDelta)+" desde o 1º":"meta +"+a.efGainPct+"% no ciclo",conf:"alta",info:"efficiency"}));
+  hero.appendChild(tile({lab:"⚡ Cadência",val:latestCad?latestCad:"—",unit:"spm",note:"meta ~"+a.cadenceTarget+(latestCad?" · faltam "+Math.max(0,a.cadenceTarget-latestCad):""),conf:"alta",info:"cadência"}));
   var fcRepNote=restTr&&restTr.baseline!=null
     ?(restTr.deltaAbs<=0?'<span class="delta up">▼ '+Math.abs(restTr.deltaAbs).toFixed(0)+'</span> vs base':'<span class="delta down">▲ '+restTr.deltaAbs.toFixed(0)+'</span> vs base')+' · do Apple Watch'
     :"reserva "+(a.fcMax-a.fcRep)+" bpm"+(a.fcMaxProv?" · FCmáx prov.":"");
-  hero.appendChild(tile({lab:"♥ FC repouso",val:fcRepEff,unit:"bpm",note:fcRepNote,conf:null}));
+  hero.appendChild(tile({lab:"♥ FC repouso",val:fcRepEff,unit:"bpm",note:fcRepNote,conf:null,info:"fcrep"}));
   v.appendChild(hero);
 
   // ---- MOTOR: EF + decoupling ----
   v.appendChild(sectionTitle("Motor aeróbico · EF & decoupling"));
   var motor=el("div","grid g-2");
-  var efCard=card("Efficiency Factor · o KPI central","alta");
+  var efCard=card("Efficiency Factor · o KPI central","alta","efficiency");
   efCard.appendChild(chartBox(lineChart({series:[{name:"EF fácil",points:efPts}],yfmt:function(v){return v.toFixed(4);},target:{y:efTarget,label:"meta "+efTarget.toFixed(4)}})));
   efCard.appendChild(hint("Sobe = motor mais econômico. A régua é você mesmo: EF de hoje vs. 6 semanas atrás."+(trend?" Tendência "+trend.arrow+" "+deltaHtml(trend.deltaPct)+".":"")));
   motor.appendChild(efCard);
-  var decCard=card("Decoupling · resistência aeróbica","alta");
+  var decCard=card("Decoupling · resistência aeróbica","alta","decoupling");
   decCard.appendChild(chartBox(barChart({bars:decPts,yfmt:function(v){return v.toFixed(1)+"%";},threshold:{y:7,label:"alvo <7%"},zeroLine:true})));
   decCard.appendChild(hint("Decoupling negativo nos longões = closer comprovado (fica mais eficiente na 2ª metade). &lt;5% = base sólida; &gt;8% = investigar."));
   motor.appendChild(decCard);
@@ -1189,11 +1284,11 @@ function renderPainel(v){
   // ---- MECÂNICA + GAP ----
   v.appendChild(sectionTitle("Mecânica & ritmo"));
   var mec=el("div","grid g-2");
-  var cadCard=card("Cadência média","alta");
+  var cadCard=card("Cadência média","alta","cadência");
   cadCard.appendChild(chartBox(lineChart({series:[{name:"Cadência",points:cadPts,colorVar:seriesColor(3)}],yfmt:function(v){return Math.round(v)+"";},target:{y:a.cadenceTarget,label:"meta "+a.cadenceTarget}})));
   cadCard.appendChild(hint("A alavanca de maior retorno: subir ~5% já traz ganho. Sinal de ouro: mesmo pace, cadência maior, FC menor."));
   mec.appendChild(cadCard);
-  var gapCard=card("Velocidade-GAP · Minetti assimétrico","alta");
+  var gapCard=card("Velocidade-GAP · Minetti assimétrico","alta","gap");
   gapCard.appendChild(chartBox(lineChart({series:[{name:"Pace-GAP",points:gapPts,colorVar:seriesColor(2)}],yfmt:function(v){return paceStr(v);},reverseY:true})));
   gapCard.appendChild(hint("Pace ajustado à inclinação km a km (subida +3,5%/1%, descida −1,5%/1%). Torna sessões em relevos diferentes comparáveis. Menor = mais rápido."));
   mec.appendChild(gapCard);
@@ -1202,11 +1297,11 @@ function renderPainel(v){
   // ---- CARGA & FORMA ----
   v.appendChild(sectionTitle("Carga & forma"));
   var carga=el("div","grid g-2");
-  var loadCard=card("Carga interna semanal · TRIMP","alta");
+  var loadCard=card("Carga interna semanal · TRIMP","alta","trimp");
   loadCard.appendChild(chartBox(barChart({bars:loadBars,yfmt:function(v){return Math.round(v)+"";}})));
   loadCard.appendChild(hint("Dose fisiológica via FC — <b>corrida + bike juntas</b>. O padrão certo é ondulado: sobe ~10%/semana, com descarga a cada 3–4 semanas."+(bike?" A bike responde por <b>"+Math.round(bike.totalTrimp/Math.max(1,fit.reduce(function(s,f){return s+f.load;},0))*100)+"%</b> da carga do período.":"")));
   carga.appendChild(loadCard);
-  var formCard=card("Fitness / Fatigue / Form · CTL·ATL·TSB","média");
+  var formCard=card("Fitness / Fatigue / Form · CTL·ATL·TSB","média","form");
   formCard.appendChild(chartBox(lineChart({series:[
     {name:"Fitness (CTL)",points:fit.map(function(f){return{label:fmtDate(f.date),y:f.ctl};}),colorVar:seriesColor(1)},
     {name:"Fatigue (ATL)",points:fit.map(function(f){return{label:fmtDate(f.date),y:f.atl};}),colorVar:seriesColor(2)}
@@ -1239,14 +1334,14 @@ function renderPainel(v){
     var bLoadWk={};bikes.forEach(function(w){var t=computeTrimp(w,a);if(t==null)return;var k=isoWeekKey(w.date);bLoadWk[k]=(bLoadWk[k]||0)+t;});
     var bWkKeys=Object.keys(bLoadWk).sort();
     var bLoadBars=bWkKeys.map(function(k){return{label:k.replace(/^\d+-/,""),y:Math.round(bLoadWk[k])};});
-    var bLoadCard=card("Carga da bike por semana · TRIMP","alta");
+    var bLoadCard=card("Carga da bike por semana · TRIMP","alta","trimp");
     if(bLoadBars.length)bLoadCard.appendChild(chartBox(barChart({bars:bLoadBars,yfmt:function(v){return Math.round(v)+"";}})));
     else bLoadCard.appendChild(el("div","empty",'<div class="big">🚴</div>Importe um .FIT de bike para ver a carga.'));
     bLoadCard.appendChild(hint("Quanta dose fisiológica veio da bike a cada semana — o quanto o cross-training está segurando o pé aeróbico."));
     bgrid.appendChild(bLoadCard);
     // zonas de FC na bike
     var bTd=trainingDistribution(bikes,a);
-    var bZCard=card("Zonas de FC na bike","alta");
+    var bZCard=card("Zonas de FC na bike","alta","polarizado");
     if(bTd){bZCard.appendChild(chartBox(zonesBar(bTd)));bZCard.appendChild(hint("Onde a bike trabalha: fácil (Z1–Z2) <b>"+Math.round(bTd.pct.facil)+"%</b> · moderado (Z3) "+Math.round(bTd.pct.moderado)+"% · forte (Z4–Z5) "+Math.round(bTd.pct.forte)+"%. Rodízio de base fica na Z2; tiros na bike sobem para Z4–Z5 sem castigar a tíbia."));}
     else bZCard.appendChild(el("div","empty",'<div class="big">🎯</div>Sem FC nos treinos de bike ainda.'));
     bgrid.appendChild(bZCard);
@@ -1324,11 +1419,11 @@ function renderPainel(v){
   // ---- ZONAS DE FC & SUBIDA ----
   v.appendChild(sectionTitle("Zonas de FC & subida"));
   var zc=el("div","grid g-2");
-  var zCard=card("Distribuição por intensidade","alta");
+  var zCard=card("Distribuição por intensidade","alta","distribution");
   if(td){zCard.appendChild(chartBox(zonesBar(td)));zCard.appendChild(hint("Tempo REAL em cada zona (do histograma de FC do .FIT). Fácil (Z1–Z2) <b>"+Math.round(td.pct.facil)+"%</b> · moderado (Z3) "+Math.round(td.pct.moderado)+"% · forte (Z4–Z5) "+Math.round(td.pct.forte)+"%. Base ideal: maioria fácil + uma fatia de qualidade."));}
   else zCard.appendChild(el("div","empty",'<div class="big">🎯</div>Importe um .FIT para ver o tempo real em zona.'));
   zc.appendChild(zCard);
-  var hCard=card("Desempenho em subida","baixa");
+  var hCard=card("Desempenho em subida","baixa","hill");
   if(hillAgg){
     hCard.innerHTML+='<div class="ring-wrap" style="margin-top:12px"><div><div style="font-size:28px;font-weight:800">'+(hillAgg.effVsModel*100).toFixed(0)+'<small style="font-size:14px;color:var(--ink-2)">% do modelo</small></div>'+
       '<div class="sub" style="margin-top:4px">'+hillAgg.totalClimbM+' m de subida no ciclo · '+hillAgg.sessions+' sessão(ões) com rampa</div></div></div>';
@@ -1479,12 +1574,15 @@ function timelineEl(ws){
 /* -------- helper builders -------- */
 function sectionTitle(t){return el("h2","section-title",esc(t));}
 function tile(o){
-  var e=el("div","card tile");
-  var html='<div class="lab">'+esc(o.lab)+'</div><div class="val">'+o.val+(o.unit?'<small> '+o.unit+'</small>':'')+'</div><div class="note">'+(o.note||"")+'</div>';
+  var e=el("div","card tile"+(o.info?" has-info":""));
+  var dot=o.info?'<span class="info-dot" aria-hidden="true">ⓘ</span>':'';
+  var html='<div class="lab">'+esc(o.lab)+dot+'</div><div class="val">'+o.val+(o.unit?'<small> '+o.unit+'</small>':'')+'</div><div class="note">'+(o.note||"")+'</div>';
   if(o.conf)html+='<div class="conf-row">'+confBadge(o.conf)+'</div>';
-  e.innerHTML=html;return e;
+  e.innerHTML=html;
+  if(o.info){e.setAttribute("data-info",o.info);e.setAttribute("aria-label","Sobre: "+o.lab);}
+  return e;
 }
-function card(title,conf){var e=el("div","card");e.innerHTML='<h3>'+esc(title)+(conf?'<span style="margin-left:auto">'+confBadge(conf)+'</span>':'')+'</h3>';return e;}
+function card(title,conf,info){var e=el("div","card");var infoBtn=info?'<button class="card-info" type="button" data-info="'+esc(info)+'" aria-label="Sobre este indicador" title="Sobre este indicador">ⓘ</button>':'';e.innerHTML='<h3><span class="ct">'+esc(title)+'</span>'+infoBtn+(conf?'<span style="margin-left:auto">'+confBadge(conf)+'</span>':'')+'</h3>';return e;}
 function chartBox(html){var e=el("div");e.style.marginTop="10px";e.innerHTML=html;return e;}
 function hint(html){var e=el("div","sub");e.style.marginTop="10px";e.style.lineHeight="1.5";e.innerHTML=html;return e;}
 function subbar(label,val){var e=el("div","subbar");e.innerHTML='<span>'+esc(label)+'</span><span class="track"><i style="width:'+val+'%;background:'+(val>=80?"var(--good)":val>=60?"var(--s1)":"var(--warn)")+'"></i></span><b class="tnum">'+val+'</b>';return e;}
