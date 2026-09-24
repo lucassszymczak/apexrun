@@ -85,21 +85,21 @@ main{max-width:1120px;margin:0 auto;padding:18px 16px 40px}
 .span-2{grid-column:span 2}@media(max-width:860px){.span-2{grid-column:span 2}}@media(max-width:560px){.span-2{grid-column:span 1}}
 
 .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow)}
-.card h3{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:700;display:flex;align-items:center;gap:8px}
+.card h3{font-size:13.5px;letter-spacing:-.005em;color:var(--ink-2);font-weight:700;display:flex;align-items:center;gap:8px}
 .card .sub{color:var(--muted);font-size:12.5px}
-.section-title{font-size:12px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);
-  font-weight:700;margin:26px 2px 12px;display:flex;align-items:center;gap:10px}
+.section-title{font-size:13px;letter-spacing:0;color:var(--ink-2);
+  font-weight:700;margin:28px 2px 12px;display:flex;align-items:center;gap:10px}
 .section-title::after{content:"";flex:1;height:1px;background:var(--line)}
 
 /* ---- KPI tile ---- */
 .tile{position:relative}
-.tile .lab{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:700;display:flex;align-items:center;gap:6px}
+.tile .lab{font-size:11.5px;letter-spacing:.01em;color:var(--muted);font-weight:700;display:flex;align-items:center;gap:6px}
 .tile .val{font-size:30px;font-weight:800;letter-spacing:-.02em;margin:6px 0 2px;line-height:1}
 .tile .val small{font-size:14px;color:var(--ink-2);font-weight:600}
 .tile .note{font-size:12px;color:var(--ink-2)}
 .tile .ico{font-size:14px;opacity:.85}
-.badge{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:700;text-transform:uppercase;
-  letter-spacing:.04em;padding:2px 8px;border-radius:999px;border:1px solid var(--line)}
+.badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;text-transform:uppercase;
+  letter-spacing:.04em;padding:2px 9px;border-radius:999px;border:1px solid var(--line)}
 .badge.hi{color:var(--good);background:color-mix(in srgb,var(--good) 12%,transparent);border-color:transparent}
 .badge.mid{color:var(--warn);background:color-mix(in srgb,var(--warn) 15%,transparent);border-color:transparent}
 .badge.lo{color:var(--muted);background:var(--surface-3);border-color:transparent}
@@ -153,8 +153,8 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
 
 /* ---- forms ---- */
 .field{display:flex;flex-direction:column;gap:5px}
-.field label{font-size:11.5px;font-weight:700;color:var(--ink-2);text-transform:uppercase;letter-spacing:.03em}
-.field .hint{font-size:11px;color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0}
+.field label{font-size:12.5px;font-weight:600;color:var(--ink-2);letter-spacing:0}
+.field .hint{font-size:11.5px;color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0}
 input,select,textarea{font-family:inherit;font-size:14px;color:var(--ink);background:var(--surface-2);
   border:1px solid var(--line);border-radius:9px;padding:9px 11px;width:100%}
 input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
@@ -306,9 +306,36 @@ a:focus-visible,button:focus-visible,summary:focus-visible,[tabindex]:focus-visi
 .btn.sm{min-height:38px}
 .linkish{min-height:32px;padding:4px 6px}
 nav.tabs button{min-height:44px}
+/* ---- microinterações (suaves; desligadas pelo reduced-motion abaixo) ---- */
+.btn,.icon-btn,nav.tabs button,.linkish,.type-pill,.athlete-chip{transition:background-color .15s ease,border-color .15s ease,color .15s ease,box-shadow .15s ease,filter .15s ease,transform .08s ease}
+.card{transition:box-shadow .18s ease,border-color .18s ease}
+tbody tr{transition:background-color .12s ease}
+.btn:active,.icon-btn:active,.linkish:active{transform:translateY(1px)}
+.tl-item{transition:border-color .15s ease,background-color .15s ease}
+.tl-item:hover{border-color:color-mix(in srgb,var(--accent) 35%,var(--line))}
+
 /* respeita quem pediu menos movimento no sistema */
 @media (prefers-reduced-motion: reduce){
   *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important;scroll-behavior:auto!important}
+}
+
+/* ---- Treinos: tabela vira CARTÕES no celular (sem rolagem horizontal) ---- */
+@media (max-width:640px){
+  .wk-wrap{overflow:visible!important;background:transparent;border:none;box-shadow:none;padding:0!important}
+  .wk-table thead{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+  .wk-table,.wk-table tbody{display:block;width:100%}
+  .wk-table tr{display:grid;grid-template-columns:1fr 1fr;gap:7px 14px;
+    background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);
+    padding:13px 15px 11px;margin:0 0 12px}
+  .wk-table tr:hover{background:var(--surface)}
+  .wk-table td{display:flex;justify-content:space-between;align-items:baseline;gap:10px;
+    border:none;padding:0;font-size:14px;min-height:0}
+  .wk-table td::before{content:attr(data-label);color:var(--muted);font-weight:600;font-size:12px}
+  .wk-table td.num{text-align:right}
+  .wk-table td.cell-date{grid-column:1;justify-content:flex-start;font-weight:800;font-size:15.5px}
+  .wk-table td.cell-type{grid-column:2;justify-content:flex-end}
+  .wk-table td.cell-date::before,.wk-table td.cell-type::before,.wk-table td.row-actions::before{display:none}
+  .wk-table td.row-actions{grid-column:1 / -1;justify-content:flex-end;margin-top:2px;padding-top:8px;border-top:1px solid var(--line-2)}
 }
 </style>
 </head>
@@ -1422,8 +1449,8 @@ function renderTreinos(v){
   head.appendChild(fitBtn);head.appendChild(addBtn);
   v.appendChild(head);
   if(!state.workouts.length){v.appendChild(emptyState());return;}
-  var c=el("div","card");c.style.padding="0";c.style.overflow="auto";
-  var t=el("table");
+  var c=el("div","card wk-wrap");c.style.padding="0";c.style.overflow="auto";
+  var t=el("table");t.className="wk-table";
   t.innerHTML='<thead><tr><th>Data</th><th>Tipo</th><th class="num">Dist</th><th class="num">Tempo</th><th class="num">Pace</th><th class="num">GAP</th><th class="num">FC</th><th class="num">EF</th><th class="num">Cad</th><th class="num">Decoup</th><th class="num">TRIMP</th><th></th></tr></thead>';
   var tb=el("tbody");
   sortedWorkouts().slice().reverse().forEach(function(w){
@@ -1432,17 +1459,17 @@ function renderTreinos(v){
     var g=bk?null:computeGap(w),ef=bk?null:computeEF(w),dec=bk?null:computeDecoupling(w),tr=computeTrimp(w,state.athlete);
     var pill=bk?'<span class="type-pill" data-t="bike">'+(w.indoor?"🚴 Bike indoor":"🚴 Bike")+'</span>':'<span class="type-pill" data-t="'+w.type+'">'+typeLabel(w.type)+'</span>';
     var r=el("tr");r.style.cursor="pointer";
-    r.innerHTML='<td>'+fmtDateFull(w.date)+'</td>'+
-      '<td>'+pill+'</td>'+
-      '<td class="num">'+(w.distKm?w.distKm.toFixed(2):"—")+'</td>'+
-      '<td class="num">'+hms(w.durationSec)+'</td>'+
-      '<td class="num">'+(bk||!w.distKm?"—":paceStr(w.durationSec/w.distKm))+'</td>'+
-      '<td class="num">'+(g&&g.gapPace?paceStr(g.gapPace):"—")+'</td>'+
-      '<td class="num">'+(w.hrAvg||"—")+'</td>'+
-      '<td class="num">'+(ef?ef.toFixed(4):"—")+'</td>'+
-      '<td class="num">'+(w.cadence||"—")+'</td>'+
-      '<td class="num">'+(dec!=null?dec.toFixed(1)+"%":"—")+'</td>'+
-      '<td class="num">'+(tr!=null?Math.round(tr):"—")+'</td>'+
+    r.innerHTML='<td data-label="Data" class="cell-date">'+fmtDateFull(w.date)+'</td>'+
+      '<td data-label="Tipo" class="cell-type">'+pill+'</td>'+
+      '<td data-label="Dist" class="num">'+(w.distKm?w.distKm.toFixed(2):"—")+'</td>'+
+      '<td data-label="Tempo" class="num">'+hms(w.durationSec)+'</td>'+
+      '<td data-label="Pace" class="num">'+(bk||!w.distKm?"—":paceStr(w.durationSec/w.distKm))+'</td>'+
+      '<td data-label="GAP" class="num">'+(g&&g.gapPace?paceStr(g.gapPace):"—")+'</td>'+
+      '<td data-label="FC" class="num">'+(w.hrAvg||"—")+'</td>'+
+      '<td data-label="EF" class="num">'+(ef?ef.toFixed(4):"—")+'</td>'+
+      '<td data-label="Cad" class="num">'+(w.cadence||"—")+'</td>'+
+      '<td data-label="Decoup" class="num">'+(dec!=null?dec.toFixed(1)+"%":"—")+'</td>'+
+      '<td data-label="TRIMP" class="num">'+(tr!=null?Math.round(tr):"—")+'</td>'+
       '<td class="row-actions"><button class="linkish" data-edit="'+w.id+'" aria-label="Editar treino de '+esc(fmtDateFull(w.date))+'">editar</button></td>';
     r.querySelector("[data-edit]").onclick=function(e){e.stopPropagation();openModal(w.id);};
     r.onclick=function(){openModal(w.id);};
