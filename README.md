@@ -55,6 +55,8 @@ Implementa o **Livro de Fórmulas Apex** direto no front, com o visual
   **🚴 Bike & cross-training** no painel resume sessões, tempo, carga (TRIMP),
   FC, calorias, zonas e indoor/outdoor; o relatório semanal e o Coach Insight
   passam a contar a bike. Bike indoor não exige distância (só duração + FC).
+  A bike usa **FCmáx e zonas próprias** (do Garmin, em bpm), configuráveis em
+  **Config → Zonas de FC · Bike** — a corrida mantém a FCmáx e as zonas dela.
 - **Sincronização entre aparelhos (opcional, sem login):** em **Config →
   Sincronizar**, o app gera um **código de alta entropia** (`apex-xxxx-xxxx-xxxx`);
   digitando o mesmo código no outro aparelho, os treinos passam a aparecer nos
@@ -91,7 +93,7 @@ O motor de KPIs e a leitura de `.FIT` têm módulos de referência espelhados,
 validados por testes standalone (a página embute a mesma lógica):
 
 ```bash
-node analise/kpi.test.mjs        # 37 casos — GAP, EF, TRIMP, CTL/ATL, A:C, Riegel, bike/modalidade…
+node analise/kpi.test.mjs        # 46 casos — GAP, EF, TRIMP, CTL/ATL, A:C, Riegel, bike/modalidade, zonas de bike…
 node analise/fit.test.mjs        # 36 casos — encode→decode→map (@garmin/fitsdk), corrida + bike indoor
 node analise/recovery.test.mjs   # 23 casos — zonas/80-20, Hill, recovery + export.xml do Saúde
 node analise/sync.test.mjs       # 17 casos — merge entre aparelhos (união por id, tombstones, código)

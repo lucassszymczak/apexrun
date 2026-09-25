@@ -120,5 +120,24 @@ const fitRunOnly = K.fitnessSeries(K.runsOnly(mix), athlete);
 ok("bike aumenta a carga crônica (CTL) vs só corrida", fitAll[fitAll.length - 1].ctl > fitRunOnly[fitRunOnly.length - 1].ctl, fitAll[fitAll.length - 1].ctl.toFixed(1) + " > " + fitRunOnly[fitRunOnly.length - 1].ctl.toFixed(1));
 ok("EF não computa para bike indoor (sem distância)", K.computeEF(bikeIndoor) == null, String(K.computeEF(bikeIndoor)));
 
+console.log("\n== Zonas de FC da bike (limites do Garmin, FCmáx 186) ==");
+const aBike = { fcRep: 67, fcMax: 198, bikeFcMax: 186, bikeZones: [123, 138, 145, 167, 179] };
+const mkBike = (hr) => ({ modal: "bike", type: "bike", indoor: true, distKm: 0, durationSec: 3600, hrAvg: hr });
+const zoneIdx = (w) => { const z = K.zoneSeconds(w, aBike); return z ? z.findIndex((s) => s > 0) : -1; };
+ok("bike FC 137 → Z1", zoneIdx(mkBike(137)) === 0, "idx " + zoneIdx(mkBike(137)));
+ok("bike FC 138 → Z2", zoneIdx(mkBike(138)) === 1, "idx " + zoneIdx(mkBike(138)));
+ok("bike FC 145 → Z3", zoneIdx(mkBike(145)) === 2, "idx " + zoneIdx(mkBike(145)));
+ok("bike FC 167 → Z4", zoneIdx(mkBike(167)) === 3, "idx " + zoneIdx(mkBike(167)));
+ok("bike FC 180 → Z5", zoneIdx(mkBike(180)) === 4, "idx " + zoneIdx(mkBike(180)));
+const bikeHist = { 120: 600, 140: 1200, 150: 900, 170: 300 }; // Z1,Z2,Z3,Z4
+const zh = K.zoneSeconds({ modal: "bike", hrHist: bikeHist, hrAvg: 145, durationSec: 3000 }, aBike);
+ok("bike: histograma classificado pelos limites", zh[0] === 600 && zh[1] === 1200 && zh[2] === 900 && zh[3] === 300, JSON.stringify(zh));
+const tb186 = K.computeTrimp(mkBike(140), aBike);
+const tb198 = K.computeTrimp(mkBike(140), { fcRep: 67, fcMax: 198 });
+ok("bike: TRIMP usa FCmáx da bike (186) → maior que com 198", tb186 > tb198, tb186.toFixed(1) + " > " + tb198.toFixed(1));
+const runW2 = { modal: "corrida", type: "facil", distKm: 8, durationSec: 2880, hrAvg: 150 };
+ok("corrida: ignora zonas de bike (usa Karvonen)", K.zoneBoundsFor(runW2, aBike) === null, String(K.zoneBoundsFor(runW2, aBike)));
+ok("corrida: TRIMP inalterado pela config de bike", K.computeTrimp(runW2, aBike) === K.computeTrimp(runW2, { fcRep: 67, fcMax: 198 }), "igual");
+
 console.log(`\n=== RESULTADO: ${pass} passaram, ${fail} falharam ===`);
 process.exit(fail ? 1 : 0);

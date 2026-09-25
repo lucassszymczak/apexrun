@@ -184,16 +184,21 @@ export function trimpSegment(minutes, hr, fcRep, fcMax) {
   const fcr = clamp((hr - fcRep) / (fcMax - fcRep), 0, 1);
   return minutes * fcr * 0.64 * Math.exp(1.92 * fcr);
 }
+// FCmáx da modalidade: a bike usa a sua própria (menor), quando configurada.
+export function maxFor(w, athlete) {
+  return (isBike(w) && athlete.bikeFcMax) ? athlete.bikeFcMax : athlete.fcMax;
+}
 export function computeTrimp(w, athlete) {
   const fcRep = athlete.fcRep, fcMax = athlete.fcMax;
   if (!fcRep || !fcMax) return null;
+  const mx = maxFor(w, athlete);
   if (w.splits && w.splits.length && w.splits.every((s) => s.hrAvg)) {
     let t = 0;
-    for (const s of w.splits) t += trimpSegment(s.timeSec / 60, s.hrAvg, fcRep, fcMax) || 0;
+    for (const s of w.splits) t += trimpSegment(s.timeSec / 60, s.hrAvg, fcRep, mx) || 0;
     return t;
   }
   if (!w.hrAvg || !w.durationSec) return null;
-  return trimpSegment(w.durationSec / 60, w.hrAvg, fcRep, fcMax);
+  return trimpSegment(w.durationSec / 60, w.hrAvg, fcRep, mx);
 }
 
 // ---- Custo cardíaco do km = FC média ÷ velocidade-GAP ----------------------
@@ -213,6 +218,22 @@ export function hrZone(hr, fcRep, fcMax) {
   if (pct < 0.88) return 4;
   return 5;
 }
+// Zonas explícitas em bpm (do relógio) para a bike: início de Z2..Z5.
+export function zoneBoundsFor(w, athlete) {
+  if (isBike(w) && athlete.bikeZones && athlete.bikeZones.length === 5) {
+    const z = athlete.bikeZones;
+    return [z[1], z[2], z[3], z[4]];
+  }
+  return null;
+}
+export function hrZoneBounds(hr, b) {
+  if (!hr) return null;
+  if (hr < b[0]) return 1;
+  if (hr < b[1]) return 2;
+  if (hr < b[2]) return 3;
+  if (hr < b[3]) return 4;
+  return 5;
+}
 // Segundos em cada zona a partir do histograma de FC (bpm -> s) do .FIT.
 export function zonesFromHist(hrHist, fcRep, fcMax) {
   const z = [0, 0, 0, 0, 0];
@@ -223,15 +244,26 @@ export function zonesFromHist(hrHist, fcRep, fcMax) {
   }
   return z;
 }
+export function zonesFromHistBounds(hrHist, b) {
+  const z = [0, 0, 0, 0, 0];
+  if (!hrHist) return null;
+  for (const bpm in hrHist) {
+    const zn = hrZoneBounds(+bpm, b);
+    if (zn) z[zn - 1] += hrHist[bpm];
+  }
+  return z;
+}
 // Segundos por zona de UM treino: usa o histograma real do .FIT quando existe;
-// senão joga a duração inteira na zona da FC média (aproximação).
+// senão joga a duração inteira na zona da FC média (aproximação). Bike usa as
+// zonas explícitas em bpm; corrida usa %FCR (Karvonen).
 export function zoneSeconds(w, athlete) {
+  const b = zoneBoundsFor(w, athlete), mx = maxFor(w, athlete);
   if (w.hrHist) {
-    const z = zonesFromHist(w.hrHist, athlete.fcRep, athlete.fcMax);
+    const z = b ? zonesFromHistBounds(w.hrHist, b) : zonesFromHist(w.hrHist, athlete.fcRep, mx);
     if (z && z.some((x) => x > 0)) return z;
   }
   if (w.hrAvg && w.durationSec) {
-    const zone = hrZone(w.hrAvg, athlete.fcRep, athlete.fcMax);
+    const zone = b ? hrZoneBounds(w.hrAvg, b) : hrZone(w.hrAvg, athlete.fcRep, mx);
     if (zone) { const z = [0, 0, 0, 0, 0]; z[zone - 1] = w.durationSec; return z; }
   }
   return null;

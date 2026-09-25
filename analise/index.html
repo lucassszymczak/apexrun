@@ -511,16 +511,26 @@ function computePaceStability(w){
   return{stdSec:std(gp),cvPct:(std(gp)/mean(gp))*100};
 }
 function trimpSeg(min,hr,rep,max){if(!hr||!rep||!max||max<=rep)return null;var fcr=clamp((hr-rep)/(max-rep),0,1);return min*fcr*0.64*Math.exp(1.92*fcr);}
+// FCmáx da modalidade: a bike usa a sua própria (menor), quando configurada
+function maxFor(w,a){return (isBike(w)&&a.bikeFcMax)?a.bikeFcMax:a.fcMax;}
 function computeTrimp(w,a){
   if(!a.fcRep||!a.fcMax)return null;
-  if(w.splits&&w.splits.length&&w.splits.every(function(s){return s.hrAvg;})){var t=0;for(var i=0;i<w.splits.length;i++)t+=trimpSeg(w.splits[i].timeSec/60,w.splits[i].hrAvg,a.fcRep,a.fcMax)||0;return t;}
+  var mx=maxFor(w,a);
+  if(w.splits&&w.splits.length&&w.splits.every(function(s){return s.hrAvg;})){var t=0;for(var i=0;i<w.splits.length;i++)t+=trimpSeg(w.splits[i].timeSec/60,w.splits[i].hrAvg,a.fcRep,mx)||0;return t;}
   if(!w.hrAvg||!w.durationSec)return null;
-  return trimpSeg(w.durationSec/60,w.hrAvg,a.fcRep,a.fcMax);
+  return trimpSeg(w.durationSec/60,w.hrAvg,a.fcRep,mx);
 }
 function computeHrCostKm(w){var g=computeGap(w);if(!g.gapSpeed||!w.hrAvg)return null;return w.hrAvg/g.gapSpeed;}
 function hrZone(hr,rep,max){if(!hr||!rep||!max||max<=rep)return null;var p=(hr-rep)/(max-rep);return p<0.59?1:p<0.74?2:p<0.84?3:p<0.88?4:5;}
+// limites em bpm (início de Z2..Z5) quando há zonas explícitas do relógio (bike)
+function zoneBoundsFor(w,a){if(isBike(w)&&a.bikeZones&&a.bikeZones.length===5)return [a.bikeZones[1],a.bikeZones[2],a.bikeZones[3],a.bikeZones[4]];return null;}
+function hrZoneBounds(hr,b){if(!hr)return null;if(hr<b[0])return 1;if(hr<b[1])return 2;if(hr<b[2])return 3;if(hr<b[3])return 4;return 5;}
 function zonesFromHist(hist,rep,max){if(!hist)return null;var z=[0,0,0,0,0];for(var bpm in hist){var zone=hrZone(+bpm,rep,max);if(zone)z[zone-1]+=hist[bpm];}return z;}
-function zoneSeconds(w,a){if(w.hrHist){var z=zonesFromHist(w.hrHist,a.fcRep,a.fcMax);if(z&&z.some(function(x){return x>0;}))return z;}if(w.hrAvg&&w.durationSec){var zn=hrZone(w.hrAvg,a.fcRep,a.fcMax);if(zn){var zz=[0,0,0,0,0];zz[zn-1]=w.durationSec;return zz;}}return null;}
+function zonesFromHistBounds(hist,b){if(!hist)return null;var z=[0,0,0,0,0];for(var bpm in hist){var zn=hrZoneBounds(+bpm,b);if(zn)z[zn-1]+=hist[bpm];}return z;}
+function zoneSeconds(w,a){var b=zoneBoundsFor(w,a),mx=maxFor(w,a);
+  if(w.hrHist){var z=b?zonesFromHistBounds(w.hrHist,b):zonesFromHist(w.hrHist,a.fcRep,mx);if(z&&z.some(function(x){return x>0;}))return z;}
+  if(w.hrAvg&&w.durationSec){var zn=b?hrZoneBounds(w.hrAvg,b):hrZone(w.hrAvg,a.fcRep,mx);if(zn){var zz=[0,0,0,0,0];zz[zn-1]=w.durationSec;return zz;}}
+  return null;}
 function polarization(ws,a){var zt=[0,0,0,0,0];ws.forEach(function(w){var z=zoneSeconds(w,a);if(z)for(var i=0;i<5;i++)zt[i]+=z[i];});var tot=zt.reduce(function(x,y){return x+y;},0);if(!tot)return null;return{easyPct:((zt[0]+zt[1])/tot)*100,totalSec:tot,zones:zt};}
 function trainingDistribution(ws,a){var pol=polarization(ws,a);if(!pol)return null;var z=pol.zones,t=pol.totalSec;return{zones:z,totalSec:t,bands:{facil:z[0]+z[1],moderado:z[2],forte:z[3]+z[4]},pct:{facil:(z[0]+z[1])/t*100,moderado:z[2]/t*100,forte:(z[3]+z[4])/t*100}};}
 function hillPerformance(w){
@@ -799,6 +809,7 @@ var LS_KEY="apex.analise.v1";
 var DEFAULT_ATHLETE={
   name:"Lucas",city:"Guarapuava/PR",fcRep:67,fcMax:198,fcMaxProv:true,vo2:39.4,weight:82,age:34,
   cadenceTarget:173,efBaseline:0.0139,efGainPct:6.5,decouplingTarget:7,weeklyTargetKm:35,sessionsTarget:3,
+  bikeFcMax:186,bikeZones:[123,138,145,167,179], // zonas do Garmin (bike): início Z1..Z5 em bpm
   cycleName:"Base & Pace",cycleWeeks:10,
   alert:"⚠ PAUSA PROTETORA · sensibilidade na tíbia direita (08/09). Corrida suspensa; foco em reforço estrutural, bike e reab. Baseline 5K (6:21) segue como marco zero."
 };
@@ -1342,7 +1353,7 @@ function renderPainel(v){
     // zonas de FC na bike
     var bTd=trainingDistribution(bikes,a);
     var bZCard=card("Zonas de FC na bike","alta","polarizado");
-    if(bTd){bZCard.appendChild(chartBox(zonesBar(bTd)));bZCard.appendChild(hint("Onde a bike trabalha: fácil (Z1–Z2) <b>"+Math.round(bTd.pct.facil)+"%</b> · moderado (Z3) "+Math.round(bTd.pct.moderado)+"% · forte (Z4–Z5) "+Math.round(bTd.pct.forte)+"%. Rodízio de base fica na Z2; tiros na bike sobem para Z4–Z5 sem castigar a tíbia."));}
+    if(bTd){bZCard.appendChild(chartBox(zonesBar(bTd)));bZCard.appendChild(hint("Onde a bike trabalha: fácil (Z1–Z2) <b>"+Math.round(bTd.pct.facil)+"%</b> · moderado (Z3) "+Math.round(bTd.pct.moderado)+"% · forte (Z4–Z5) "+Math.round(bTd.pct.forte)+"%. "+(a.bikeZones?"Zonas do seu Garmin (FCmáx "+(a.bikeFcMax||186)+"). ":"")+"Rodízio de base fica na Z2; tiros na bike sobem para Z4–Z5 sem castigar a tíbia."));}
     else bZCard.appendChild(el("div","empty",'<div class="big">🎯</div>Sem FC nos treinos de bike ainda.'));
     bgrid.appendChild(bZCard);
     v.appendChild(bgrid);
@@ -2079,6 +2090,9 @@ function renderConfig(v){
   c.appendChild(saveBtn);
   v.appendChild(c);
 
+  // zonas de FC da bike (limites em bpm do relógio)
+  v.appendChild(renderBikeZonesCard());
+
   // sincronização entre aparelhos
   v.appendChild(renderSyncCard());
 
@@ -2093,6 +2107,33 @@ function renderConfig(v){
   row.appendChild(exp);row.appendChild(imp);row.appendChild(reseed);row.appendChild(wipe);
   dm.appendChild(row);
   v.appendChild(dm);
+}
+function renderBikeZonesCard(){
+  var a=state.athlete;
+  var z=(a.bikeZones&&a.bikeZones.length===5)?a.bikeZones.slice():[123,138,145,167,179];
+  var fm=a.bikeFcMax||186;
+  var c=el("div","card");c.style.marginTop="14px";
+  c.innerHTML='<h3>🚴 Zonas de FC · Bike</h3>';
+  c.appendChild(hint("As zonas da bike (do seu Garmin) — usadas na <b>carga (TRIMP) e nas zonas de FC da bike</b>. A corrida segue com a FCmáx e as zonas dela. Início de cada zona, em bpm:"));
+  var grid=el("div","grid g-3");grid.style.marginTop="10px";
+  function f(label,id,val){var d=el("div","field");d.innerHTML='<label>'+label+'</label>';var i=el("input");i.type="number";i.id=id;i.inputMode="numeric";i.value=val==null?"":val;d.appendChild(i);return d;}
+  grid.appendChild(f("FCmáx bike (bpm)","bz_max",fm));
+  ["Z1 início","Z2 início","Z3 início","Z4 início","Z5 início"].forEach(function(lb,i){grid.appendChild(f(lb,"bz_"+i,z[i]));});
+  c.appendChild(grid);
+  var prev=el("div","sub");prev.id="bzPrev";prev.style.cssText="margin-top:10px;line-height:1.6";
+  function ranges(){var zz=[0,1,2,3,4].map(function(i){var e=$("#bz_"+i);return e?+e.value:z[i];});var out=[];for(var i=0;i<5;i++){var lo=zz[i],hi=i<4?zz[i+1]-1:"máx";out.push("<b>Z"+(i+1)+"</b> "+lo+"–"+hi);}return out.join(" · ");}
+  prev.innerHTML=ranges();
+  grid.addEventListener("input",function(){prev.innerHTML=ranges();});
+  c.appendChild(prev);
+  var saveBtn=el("button","btn sm","Salvar zonas da bike");saveBtn.style.marginTop="14px";
+  saveBtn.onclick=function(){
+    var nm=+$("#bz_max").value||fm;var nz=[0,1,2,3,4].map(function(i){return +$("#bz_"+i).value||z[i];});
+    // garante ordem crescente
+    for(var i=1;i<5;i++)if(nz[i]<=nz[i-1]){alert("As zonas precisam ser crescentes (Z1 < Z2 < … < Z5).");return;}
+    a.bikeFcMax=nm;a.bikeZones=nz;a.updatedAt=new Date().toISOString();touch();save();scheduleSync();toast("Zonas da bike salvas");render();
+  };
+  c.appendChild(saveBtn);
+  return c;
 }
 function renderSyncCard(){
   var c=el("div","card");c.style.marginTop="14px";
