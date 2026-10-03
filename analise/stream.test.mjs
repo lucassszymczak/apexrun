@@ -109,6 +109,55 @@ const di = S.paceGapAtHR(hi, { fcRef: 145, band: 3, lagSec: 0, win: [10, 45] });
 ok("FC_REF fora da faixa → Dados insuficientes", di.confidence === "Dados insuficientes", di.confidence);
 ok("nunca extrapola (sem pace fora da faixa)", di.paceSec == null, String(di.paceSec));
 
+console.log("\n== Árvore da Eficiência (3.2) ==");
+function steady(vg, hr, spm, minMin) {
+  const s = []; for (let t = 0; t <= minMin * 60; t++) s.push({ t, vgap: vg, hr, spm, grade: 0, valid: t >= 600 });
+  return s;
+}
+const effA = S.sessionEff(steady(2.78, 145, 170, 30));
+ok("sessionEff calcula médias", effA && near(effA.vgapMean, 2.78, 1e-6), effA && effA.vgapMean.toFixed(3));
+ok("identidade fecha: m/bat = passos/bat × m/passo", effA && near(effA.mPerBeat, effA.stepsPerBeat * effA.mPerStep, 1e-9), effA && (effA.stepsPerBeat * effA.mPerStep).toFixed(6) + " vs " + effA.mPerBeat.toFixed(6));
+ok("m/bat = EF×60 (v_GAP×60÷FC)", effA && near(effA.mPerBeat, 2.78 * 60 / 145, 1e-9), effA && effA.mPerBeat.toFixed(4));
+// cadência sobe ~5% com EF (m/bat) estável → "passada encurtou sem custo"
+const prevAvg = S.sessionEff(steady(2.78, 145, 170, 30));
+const curA = S.sessionEff(steady(2.78, 145, 179, 30)); // spm +5,3%, mesma velocidade e FC → m/bat igual
+const treeA = S.effTree(curA, prevAvg);
+ok("Δln fecha: Δln(m/bat)=Δln(passos/bat)+Δln(m/passo)", near(treeA.dln.mPerBeat, treeA.dln.stepsPerBeat + treeA.dln.mPerStep, 1e-9), treeA.dln.mPerBeat.toFixed(5));
+ok("rótulo 'passada encurtou sem custo'", treeA.label === "Passada encurtou sem custo — ganho mecânico", treeA.label);
+// cadência estável, EF sobe → "motor: mais passada na mesma FC"
+const curB = S.sessionEff(steady(3.0, 145, 170, 30));
+ok("rótulo 'motor: mais passada na mesma FC'", S.effTree(curB, prevAvg).label === "Motor: mais passada na mesma FC", S.effTree(curB, prevAvg).label);
+
+console.log("\n== Cadência @ PACE_REF (3.4) ==");
+// pace-GAP ~6:00/km (v_GAP 2,78) com spm 174 por 20 min; paceRef 360 s/km
+const cadS = steady(2.78, 145, 174, 30);
+const cad = S.cadenceAtPace(cadS, { paceRef: 360, tol: 15, win: [10, 45] });
+ok("spm @ pace_ref ≈ 174", cad.spm === 174, cad.spm + " (" + cad.confidence + ", " + cad.minInRange + " min)");
+ok("adesão 170–176 = 100%", cad.adherencePct === 100, cad.adherencePct + "%");
+const cadLow = S.cadenceAtPace(steady(2.78, 145, 160, 30), { paceRef: 360 });
+ok("adesão baixa quando spm fora da faixa", cadLow.adherencePct === 0, cadLow.adherencePct + "%");
+const cadFar = S.cadenceAtPace(steady(3.33, 145, 174, 30), { paceRef: 360, tol: 15 }); // pace 300 s/km, fora de 360±15
+ok("pace fora da faixa → Dados insuficientes", cadFar.confidence === "Dados insuficientes", cadFar.confidence);
+
+console.log("\n== Decoupling mecânico (3.5) ==");
+// 50 min: passada cai ~6% na 2ª metade (spm sobe de 170 para 181 na mesma velocidade)
+const mechS = [];
+for (let t = 0; t <= 3000; t++) { const half2 = t > 1800; mechS.push({ t, vgap: 2.78, hr: 150, spm: half2 ? 181 : 170, grade: 0, valid: t >= 600 }); }
+const mech = S.mechDecoupling(mechS);
+ok("decoupling mecânico > 0 (passada caiu)", mech.pct != null && mech.pct > 3, mech.pct + "% (" + mech.confidence + ", " + mech.validMin + " min)");
+const shortS = steady(2.78, 150, 170, 25); // 25 min < 40 → insuficiente
+ok("sessão <40 min → Dados insuficientes", S.mechDecoupling(shortS).confidence === "Dados insuficientes", S.mechDecoupling(shortS).confidence);
+
+console.log("\n== 3.3 defasagem · matriz · pace_ref · rebaixar ==");
+ok("medianLag das sessões válidas", S.medianLag([{ hrLagSec: 18, quality: { needsConfirm: false } }, { hrLagSec: 22, quality: { needsConfirm: false } }, { hrLagSec: 20, quality: { needsConfirm: false } }]).lagSec === 20, JSON.stringify(S.medianLag([{ hrLagSec: 18, quality: { needsConfirm: false } }, { hrLagSec: 22, quality: { needsConfirm: false } }, { hrLagSec: 20, quality: { needsConfirm: false } }])));
+ok("medianLag ignora sessões que precisam confirmação", S.medianLag([{ hrLagSec: 90, quality: { needsConfirm: true } }, { hrLagSec: 20, quality: { needsConfirm: false } }]).n === 1, S.medianLag([{ hrLagSec: 90, quality: { needsConfirm: true } }, { hrLagSec: 20, quality: { needsConfirm: false } }]).n);
+ok("matriz: FC deriva + passada estável → deriva CV", S.decoupleMatrix(8, 0) === "Deriva cardiovascular (calor/hidratação/duração)", S.decoupleMatrix(8, 0));
+ok("matriz: FC deriva + passada cai → fadiga global", S.decoupleMatrix(8, 5) === "Fadiga global", S.decoupleMatrix(8, 5));
+ok("matriz: ambos estáveis → sob controle", S.decoupleMatrix(2, 1) === "Sessão sob controle", S.decoupleMatrix(2, 1));
+ok("paceRefSuggest arredonda a 5 s/km", S.paceRefSuggest([{ paceGap: { paceSec: 357, confidence: "Alta" } }, { paceGap: { paceSec: 363, confidence: "Moderada" } }]) === 360, String(S.paceRefSuggest([{ paceGap: { paceSec: 357, confidence: "Alta" } }, { paceGap: { paceSec: 363, confidence: "Moderada" } }])));
+ok("downgradeConf Alta→Moderada", S.downgradeConf("Alta") === "Moderada", S.downgradeConf("Alta"));
+ok("downgradeConf não passa de Dados insuficientes", S.downgradeConf("Dados insuficientes") === "Dados insuficientes", S.downgradeConf("Dados insuficientes"));
+
 console.log("\n== retenção de streams ==");
 const ws = [];
 for (let i = 0; i < 25; i++) ws.push({ id: "w" + i, date: "2026-" + String(1 + (i % 9)).padStart(2, "0") + "-" + String(1 + (i % 27)).padStart(2, "0"), stream: { s: [1] } });

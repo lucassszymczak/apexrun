@@ -79,6 +79,17 @@ Implementa o **Livro de Fórmulas Apex** direto no front, com o visual
   Livro de Fórmulas. Guarda um **stream reduzido** (~1 amostra/3 s) só nas sessões
   recentes (**retenção** mantém o armazenamento limitado) + GPS inicial (clima
   futuro). Não altera EF/decoupling/TRIMP. Fonte: Vesterinen et al., 2014.
+- **Árvore da Eficiência, Cadência @ ritmo-ref e Decoupling mecânico** (mesma base
+  por amostra): a **Árvore** decompõe o EF pela identidade *m/batimento =
+  (passos/bat) × (m/passo)* e atribui, em log, quanto da variação veio da cadência
+  e quanto da passada. **Cadência @ ritmo-ref** mede o spm quando o pace-GAP fica
+  no ritmo de referência ±15 s/km (comparação no mesmo ritmo) + adesão à faixa
+  170–176 (fonte: Heiderscheit et al., 2011). **Decoupling mecânico** é o Δ% da
+  passada-GAP entre a 2ª e a 1ª metade (sessões ≥40 min), cruzado com o decoupling
+  cardíaco numa **matriz** (deriva cardiovascular × fadiga global). A **defasagem
+  de FC** vira parâmetro do ciclo (mediana das sessões válidas; com <3 sessões, a
+  confiança de Pace-GAP e decoupling mecânico é rebaixada). Cards em "Foco atual",
+  fichas no Livro de Fórmulas e coluna extra na auditoria.
 - **Recuperação (Apple Watch):** aba dedicada com **Diário** (sono, FC de
   repouso, HRV/SDNN, VO₂máx, ânimo) — preenchido à mão ou **importando o
   `export.xml` do app Saúde** (lido em pedaços no navegador; extrai só essas 4

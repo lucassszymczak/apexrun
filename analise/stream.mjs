@@ -227,7 +227,126 @@ export function paceGapAtHR(samples, opts = {}) {
   return { paceSec: null, vGap: null, confidence: "Dados insuficientes", minInBand: 0, method: null, hrRange: [hrMin, hrMax] };
 }
 
-// --- 8) retenção: mantém o stream só nas sessões mais recentes ------------
+// --- 9) médias da sessão para a Árvore da Eficiência (3.2) ----------------
+// Médias das amostras VÁLIDAS (do min firstMin ao fim). A identidade
+// m/bat = passos/bat × m/passo fecha exatamente porque as três usam as mesmas médias.
+export function sessionEff(samples, win = [10, 1e9]) {
+  const w0 = win[0] * 60, w1 = win[1] * 60, dt = sampleDt(samples);
+  const vg = [], hr = [], spm = [];
+  for (const s of samples) {
+    if (!s.valid || s.t < w0 || s.t > w1) continue;
+    if (s.vgap == null || s.hr == null || s.spm == null) continue;
+    vg.push(s.vgap); hr.push(s.hr); spm.push(s.spm);
+  }
+  const validMin = Math.round((vg.length * dt) / 60 * 10) / 10;
+  if (vg.length < 30) return null;
+  const mean = (a) => a.reduce((s, x) => s + x, 0) / a.length;
+  const vgapMean = mean(vg), hrMean = mean(hr), spmMean = mean(spm);
+  return {
+    vgapMean, hrMean, spmMean,
+    mPerBeat: vgapMean * 60 / hrMean,     // = EF × 60
+    stepsPerBeat: spmMean / hrMean,
+    mPerStep: vgapMean * 60 / spmMean,    // passada-GAP (m/passo)
+    validMin, n: vg.length,
+  };
+}
+
+// Decomposição Δln(m/bat) = Δln(passos/bat) + Δln(m/passo) vs. referência (média das 3 anteriores).
+export function effTree(cur, prevAvg, neutralPct = 2) {
+  if (!cur) return null;
+  const out = { cur, prevAvg: prevAvg || null };
+  if (!prevAvg) { out.label = "Primeira sessão com stream — sem comparação ainda"; return out; }
+  const ln = (a, b) => (a > 0 && b > 0 ? Math.log(a / b) : 0);
+  const dSb = ln(cur.stepsPerBeat, prevAvg.stepsPerBeat);
+  const dMs = ln(cur.mPerStep, prevAvg.mPerStep);
+  out.dln = { mPerBeat: dSb + dMs, stepsPerBeat: dSb, mPerStep: dMs };
+  const denom = Math.abs(dSb) + Math.abs(dMs);
+  out.contribPct = denom > 1e-9
+    ? { stepsPerBeat: dSb / denom * 100, mPerStep: dMs / denom * 100 }
+    : { stepsPerBeat: 0, mPerStep: 0 };
+  const cadDeltaPct = (cur.spmMean / prevAvg.spmMean - 1) * 100;
+  const efDeltaPct = (cur.mPerBeat / prevAvg.mPerBeat - 1) * 100;
+  out.cadDeltaPct = cadDeltaPct; out.efDeltaPct = efDeltaPct;
+  const cadUp = cadDeltaPct > neutralPct, cadStable = Math.abs(cadDeltaPct) <= neutralPct;
+  const efUp = efDeltaPct > neutralPct, efDown = efDeltaPct < -neutralPct, efNeutral = Math.abs(efDeltaPct) <= neutralPct;
+  let label = "Variação dentro do normal";
+  if (cadUp && efNeutral) label = "Passada encurtou sem custo — ganho mecânico";
+  else if (cadUp && efUp) label = "Economia";
+  else if (cadUp && efDown) label = "Cadência com custo — revisar";
+  else if (cadStable && efUp) label = "Motor: mais passada na mesma FC";
+  out.label = label;
+  return out;
+}
+
+// --- 10) Cadência @ PACE_REF (3.4) ----------------------------------------
+// Mediana do spm nas amostras válidas da JANELA com pace-GAP em paceRef ± tol (s/km).
+// Junto: % do tempo em movimento com spm na faixa de adesão [170,176].
+export function cadenceAtPace(samples, opts = {}) {
+  const o = Object.assign({ paceRef: null, tol: 15, win: [10, 45], adher: [170, 176], minMin: 5 }, opts);
+  const w0 = o.win[0] * 60, w1 = o.win[1] * 60, dt = sampleDt(samples);
+  const inRange = []; let moving = 0, adhN = 0;
+  for (const s of samples) {
+    if (!s.valid || s.t < w0 || s.t > w1 || s.spm == null) continue;
+    moving++;
+    if (s.spm >= o.adher[0] && s.spm <= o.adher[1]) adhN++;
+    if (o.paceRef != null && s.vgap != null && s.vgap > 0 && Math.abs(1000 / s.vgap - o.paceRef) <= o.tol) inRange.push(s.spm);
+  }
+  const adherencePct = moving ? Math.round(adhN / moving * 1000) / 10 : null;
+  const minInRange = Math.round((inRange.length * dt) / 60 * 10) / 10;
+  if (o.paceRef == null || minInRange < o.minMin) return { spm: null, confidence: "Dados insuficientes", minInRange, adherencePct };
+  return { spm: Math.round(median(inRange)), confidence: minInRange >= 10 ? "Alta" : "Moderada", minInRange, adherencePct };
+}
+
+// --- 11) Decoupling mecânico (3.5): passada-GAP 2ª vs 1ª metade -----------
+// Δ% = (m/passo_1ª − m/passo_2ª) ÷ 1ª × 100 (positivo = passada caiu no fim).
+// Só sessões com ≥minMin de tempo válido (como o decoupling cardíaco).
+export function mechDecoupling(samples, win = [10, 1e9], minMin = 40) {
+  const w0 = win[0] * 60, w1 = win[1] * 60, dt = sampleDt(samples);
+  const pts = [];
+  for (const s of samples) {
+    if (!s.valid || s.t < w0 || s.t > w1 || s.vgap == null || s.spm == null || s.spm <= 0) continue;
+    pts.push(s.vgap * 60 / s.spm);
+  }
+  const validMin = Math.round((pts.length * dt) / 60 * 10) / 10;
+  if (validMin < minMin || pts.length < 4) return { pct: null, confidence: "Dados insuficientes", validMin };
+  const mid = Math.floor(pts.length / 2), mean = (a) => a.reduce((s, x) => s + x, 0) / a.length;
+  const h1 = mean(pts.slice(0, mid)), h2 = mean(pts.slice(mid));
+  const pct = h1 > 0 ? (h1 - h2) / h1 * 100 : null;
+  return { pct: pct != null ? Math.round(pct * 10) / 10 : null, confidence: "Moderada", half1: h1, half2: h2, validMin };
+}
+
+// --- 12) parâmetros de ciclo e utilidades dos KPIs ------------------------
+// 3.3 defasagem: mediana do hrLag das sessões fáceis válidas (persistir no app).
+export function medianLag(workouts) {
+  const vals = (workouts || []).filter((w) => w && w.hrLagSec != null && !(w.quality && w.quality.needsConfirm)).map((w) => w.hrLagSec);
+  if (!vals.length) return { lagSec: 0, n: 0 };
+  return { lagSec: Math.round(median(vals)), n: vals.length };
+}
+// Matriz FC × mecânica (usa o limiar do decoupling cardíaco + zona neutra).
+export function decoupleMatrix(cardiacPct, mechPct, opts = {}) {
+  const o = Object.assign({ neutralPct: 2, cardiacThresh: 5 }, opts);
+  if (cardiacPct == null && mechPct == null) return "Sem dados";
+  const drift = cardiacPct != null && cardiacPct > o.cardiacThresh;
+  const strideFell = mechPct != null && mechPct > o.neutralPct;
+  if (drift && !strideFell) return "Deriva cardiovascular (calor/hidratação/duração)";
+  if (drift && strideFell) return "Fadiga global";
+  if (!drift && !strideFell) return "Sessão sob controle";
+  return "Passada cedeu sem custo cardíaco — forma/força";
+}
+// PACE_REF_CAD sugerido: mediana do pace-GAP das sessões fáceis, arredondada a 5 s/km.
+export function paceRefSuggest(workouts) {
+  const vals = (workouts || []).filter((w) => w && w.paceGap && w.paceGap.paceSec != null && w.paceGap.confidence !== "Dados insuficientes").map((w) => w.paceGap.paceSec);
+  if (vals.length < 2) return null;
+  return Math.round(median(vals) / 5) * 5;
+}
+// Rebaixa a confiança um nível (para 3.3 com <3 sessões válidas).
+export function downgradeConf(conf) {
+  const order = ["Alta", "Moderada", "Baixa", "Dados insuficientes"];
+  const i = order.indexOf(conf);
+  return i < 0 || i >= order.length - 1 ? conf : order[i + 1];
+}
+
+// --- 13) retenção: mantém o stream só nas sessões mais recentes -----------
 // Remove w.stream (mantém agregados/resumo) das sessões além de keepRecent com stream.
 export function pruneStreams(workouts, keepRecent = 20) {
   const withStream = (workouts || []).filter((w) => w && w.stream).sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));

@@ -783,13 +783,52 @@ function paceGapAtHR(samples,opts){
   return{paceSec:null,vGap:null,confidence:"Dados insuficientes",minInBand:0,method:null,hrRange:[hrMin,hrMax]};
 }
 function pruneStreams(workouts,keepRecent){keepRecent=keepRecent||20;var ws=(workouts||[]).filter(function(w){return w&&w.stream;}).sort(function(a,b){return a.date<b.date?1:(a.date>b.date?-1:0);});var dropped=0;ws.forEach(function(w,i){if(i>=keepRecent){delete w.stream;w.streamPruned=true;dropped++;}});return dropped;}
+// --- Fase B: Árvore (3.2), Cadência@PACE_REF (3.4), Decoupling mecânico (3.5) ---
+function sessionEff(samples,win){win=win||[10,1e9];var w0=win[0]*60,w1=win[1]*60,dt=sampleDt(samples),vg=[],hr=[],spm=[];
+  for(var i=0;i<samples.length;i++){var s=samples[i];if(!s.valid||s.t<w0||s.t>w1||s.vgap==null||s.hr==null||s.spm==null)continue;vg.push(s.vgap);hr.push(s.hr);spm.push(s.spm);}
+  var validMin=Math.round((vg.length*dt)/60*10)/10;if(vg.length<30)return null;
+  function mean(a){return a.reduce(function(s,x){return s+x;},0)/a.length;}
+  var vgapMean=mean(vg),hrMean=mean(hr),spmMean=mean(spm);
+  return{vgapMean:vgapMean,hrMean:hrMean,spmMean:spmMean,mPerBeat:vgapMean*60/hrMean,stepsPerBeat:spmMean/hrMean,mPerStep:vgapMean*60/spmMean,validMin:validMin,n:vg.length};}
+function effTree(cur,prevAvg,neutralPct){neutralPct=neutralPct||2;if(!cur)return null;var out={cur:cur,prevAvg:prevAvg||null};
+  if(!prevAvg){out.label="Primeira sessão com stream — sem comparação ainda";return out;}
+  function ln(a,b){return a>0&&b>0?Math.log(a/b):0;}
+  var dSb=ln(cur.stepsPerBeat,prevAvg.stepsPerBeat),dMs=ln(cur.mPerStep,prevAvg.mPerStep);
+  out.dln={mPerBeat:dSb+dMs,stepsPerBeat:dSb,mPerStep:dMs};
+  var denom=Math.abs(dSb)+Math.abs(dMs);out.contribPct=denom>1e-9?{stepsPerBeat:dSb/denom*100,mPerStep:dMs/denom*100}:{stepsPerBeat:0,mPerStep:0};
+  var cadDeltaPct=(cur.spmMean/prevAvg.spmMean-1)*100,efDeltaPct=(cur.mPerBeat/prevAvg.mPerBeat-1)*100;out.cadDeltaPct=cadDeltaPct;out.efDeltaPct=efDeltaPct;
+  var cadUp=cadDeltaPct>neutralPct,cadStable=Math.abs(cadDeltaPct)<=neutralPct,efUp=efDeltaPct>neutralPct,efDown=efDeltaPct<-neutralPct,efNeutral=Math.abs(efDeltaPct)<=neutralPct;
+  var label="Variação dentro do normal";
+  if(cadUp&&efNeutral)label="Passada encurtou sem custo — ganho mecânico";else if(cadUp&&efUp)label="Economia";else if(cadUp&&efDown)label="Cadência com custo — revisar";else if(cadStable&&efUp)label="Motor: mais passada na mesma FC";
+  out.label=label;return out;}
+function cadenceAtPace(samples,opts){var o={paceRef:null,tol:15,win:[10,45],adher:[170,176],minMin:5};if(opts)for(var kk in opts)o[kk]=opts[kk];
+  var w0=o.win[0]*60,w1=o.win[1]*60,dt=sampleDt(samples),inRange=[],moving=0,adhN=0;
+  for(var i=0;i<samples.length;i++){var s=samples[i];if(!s.valid||s.t<w0||s.t>w1||s.spm==null)continue;moving++;if(s.spm>=o.adher[0]&&s.spm<=o.adher[1])adhN++;if(o.paceRef!=null&&s.vgap!=null&&s.vgap>0&&Math.abs(1000/s.vgap-o.paceRef)<=o.tol)inRange.push(s.spm);}
+  var adherencePct=moving?Math.round(adhN/moving*1000)/10:null,minInRange=Math.round((inRange.length*dt)/60*10)/10;
+  if(o.paceRef==null||minInRange<o.minMin)return{spm:null,confidence:"Dados insuficientes",minInRange:minInRange,adherencePct:adherencePct};
+  return{spm:Math.round(median(inRange)),confidence:minInRange>=10?"Alta":"Moderada",minInRange:minInRange,adherencePct:adherencePct};}
+function mechDecoupling(samples,win,minMin){win=win||[10,1e9];minMin=minMin||40;var w0=win[0]*60,w1=win[1]*60,dt=sampleDt(samples),pts=[];
+  for(var i=0;i<samples.length;i++){var s=samples[i];if(!s.valid||s.t<w0||s.t>w1||s.vgap==null||s.spm==null||s.spm<=0)continue;pts.push(s.vgap*60/s.spm);}
+  var validMin=Math.round((pts.length*dt)/60*10)/10;if(validMin<minMin||pts.length<4)return{pct:null,confidence:"Dados insuficientes",validMin:validMin};
+  var mid=Math.floor(pts.length/2);function mean(a){return a.reduce(function(s,x){return s+x;},0)/a.length;}
+  var h1=mean(pts.slice(0,mid)),h2=mean(pts.slice(mid)),pct=h1>0?(h1-h2)/h1*100:null;
+  return{pct:pct!=null?Math.round(pct*10)/10:null,confidence:"Moderada",half1:h1,half2:h2,validMin:validMin};}
+function medianLag(workouts){var vals=(workouts||[]).filter(function(w){return w&&w.hrLagSec!=null&&!(w.quality&&w.quality.needsConfirm);}).map(function(w){return w.hrLagSec;});if(!vals.length)return{lagSec:0,n:0};return{lagSec:Math.round(median(vals)),n:vals.length};}
+function decoupleMatrix(cardiacPct,mechPct,opts){var o={neutralPct:2,cardiacThresh:5};if(opts)for(var kk in opts)o[kk]=opts[kk];
+  if(cardiacPct==null&&mechPct==null)return"Sem dados";var drift=cardiacPct!=null&&cardiacPct>o.cardiacThresh,strideFell=mechPct!=null&&mechPct>o.neutralPct;
+  if(drift&&!strideFell)return"Deriva cardiovascular (calor/hidratação/duração)";if(drift&&strideFell)return"Fadiga global";if(!drift&&!strideFell)return"Sessão sob controle";return"Passada cedeu sem custo cardíaco — forma/força";}
+function paceRefSuggest(workouts){var vals=(workouts||[]).filter(function(w){return w&&w.paceGap&&w.paceGap.paceSec!=null&&w.paceGap.confidence!=="Dados insuficientes";}).map(function(w){return w.paceGap.paceSec;});if(vals.length<2)return null;return Math.round(median(vals)/5)*5;}
+function downgradeConf(conf){var order=["Alta","Moderada","Baixa","Dados insuficientes"],i=order.indexOf(conf);return i<0||i>=order.length-1?conf:order[i+1];}
 // computa os KPIs por amostra a partir dos records normalizados (corrida)
 function computeStreamKpis(records,a){
   var pp=preprocess(records);
   var lag=hrLag(pp.samples,90);
   var fcRef=(a&&a.fcRef)||145,bandFc=(a&&a.bandFc)||3;
   var pg=paceGapAtHR(pp.samples,{fcRef:fcRef,band:bandFc,lagSec:lag.lagSec,win:[10,45]});
-  return{quality:pp.quality,hrLagSec:lag.lagSec,paceGap:pg,stream:reduceStream(pp.samples,3)};
+  var eff=sessionEff(pp.samples);
+  var mech=mechDecoupling(pp.samples);
+  var cadAdh=cadenceAtPace(pp.samples,{paceRef:null}).adherencePct; // adesão 170–176 (independe do PACE_REF)
+  return{quality:pp.quality,hrLagSec:lag.lagSec,paceGap:pg,eff:eff,mech:mech,cadAdherencePct:cadAdh,stream:reduceStream(pp.samples,3)};
 }
 
 // modalidade a partir do sport do FIT: ciclismo → bike (cross-training), resto → corrida
@@ -842,6 +881,9 @@ function fitMessagesToWorkout(messages){
     quality:sk?sk.quality:null,
     hrLagSec:sk?sk.hrLagSec:null,
     paceGap:sk?sk.paceGap:null,
+    eff:sk?sk.eff:null,
+    mech:sk?sk.mech:null,
+    cadAdherencePct:sk?sk.cadAdherencePct:null,
     sport:session.sport||null
   };
 }
@@ -1234,7 +1276,8 @@ var EXTRA_DOCS={
 function kpiDoc(key){
   if(EXTRA_DOCS[key])return EXTRA_DOCS[key];
   var q=_norm(key),list=(typeof KPI_DOCS!=="undefined"?KPI_DOCS:[]);
-  for(var i=0;i<list.length;i++)if(_norm(list[i].name).indexOf(q)>=0)return list[i];
+  for(var i=0;i<list.length;i++)if(list[i].key===key)return list[i];
+  for(var j=0;j<list.length;j++)if(_norm(list[j].name).indexOf(q)>=0)return list[j];
   return null;
 }
 var _infoLastFocus=null;
@@ -1376,26 +1419,102 @@ function renderPainel(v){
   // ---- alert banner ----
   if(a.alert){var b=el("div","banner warn");b.style.marginBottom="16px";b.innerHTML='<span class="bi">⚠</span><span>'+esc(a.alert)+'</span>';v.appendChild(b);}
 
-  // ---- FOCO ATUAL (Pace-GAP @ FC_REF) ----
+  // ---- FOCO ATUAL (KPIs de FC × inclinação e cadência) ----
   var fcRef=a.fcRef||145;
-  var pgRuns=runs.filter(function(w){return w.paceGap&&w.paceGap.paceSec!=null;}).sort(function(x,y){return x.date<y.date?-1:x.date>y.date?1:0;});
-  if(pgRuns.length){
+  var confMap={"Alta":"alta","Moderada":"média","Baixa":"baixa","Dados insuficientes":"sem dados"};
+  function byDateAsc(x,y){return x.date<y.date?-1:x.date>y.date?1:0;}
+  var pgRuns=runs.filter(function(w){return w.paceGap&&w.paceGap.paceSec!=null;}).sort(byDateAsc);
+  var effHist=runs.filter(function(w){return w.eff;}).sort(byDateAsc);
+  var mechHist=runs.filter(function(w){return w.mech&&w.mech.pct!=null;}).sort(byDateAsc);
+  var streamRuns=runs.filter(function(w){return w.stream;}).sort(byDateAsc);
+  var easyR=easyRuns(runs);
+  var ml=medianLag(easyR);               // 3.3 — defasagem mediana (parâmetro)
+  var lagLow=ml.n<3;                      // <3 sessões válidas → rebaixa 3.1 e 3.5
+  var paceRef=paceRefSuggest(easyR.length?easyR:runs);
+  if(pgRuns.length||effHist.length||streamRuns.length){
     v.appendChild(sectionTitle("Foco atual"));
-    var pgPts=pgRuns.map(function(w){return{label:fmtDate(w.date),y:w.paceGap.paceSec,extra:w.paceGap.confidence};});
-    var last=pgRuns[pgRuns.length-1].paceGap;
-    var prev3=pgPts.slice(-4,-1).map(function(p){return p.y;});
-    var ma3=prev3.length?prev3.reduce(function(s,x){return s+x;},0)/prev3.length:null;
-    var dPct=ma3?((last.paceSec-ma3)/ma3)*100:null; // menor pace = melhor (negativo = melhorou)
-    var confMap={"Alta":"alta","Moderada":"média","Baixa":"baixa","Dados insuficientes":"sem dados"};
-    var pgCard=card("Pace-GAP @ "+fcRef+" bpm · esforço padronizado",confMap[last.confidence]||"média","pace-gap");
-    var vr=el("div");vr.style.cssText="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-top:8px";
-    vr.innerHTML='<div style="font-size:34px;font-weight:800;letter-spacing:-.02em;line-height:1">'+paceStr(last.paceSec)+'<small style="font-size:15px;color:var(--ink-2);font-weight:600"> /km</small></div>'+
-      (dPct!=null?'<span class="delta '+(dPct<=-1?"up":dPct>=1?"down":"flat")+'">'+(dPct<0?"▼ ":dPct>0?"▲ ":"→ ")+Math.abs(dPct).toFixed(1)+'% vs média 3</span>':'')+
-      '<span class="sub">na mesma FC — quanto de plano você produz</span>';
-    pgCard.appendChild(vr);
-    pgCard.appendChild(chartBox(lineChart({series:[{name:"Pace-GAP@"+fcRef,points:pgPts,colorVar:seriesColor(1)}],yfmt:function(vv){return paceStr(vv);},reverseY:true})));
-    pgCard.appendChild(hint("Mediana da velocidade-GAP quando a FC (defasada) fica em <b>"+fcRef+"±3 bpm</b>, nos min 10–45. <b>Menor pace = mais trabalho de plano no mesmo esforço.</b> Confiança por sessão: Alta ≥15 min na banda · Moderada 8–15 min ou regressão (R²≥0,5) · Baixa. Precisa do stream por amostra do .FIT — reimporte treinos antigos."));
-    v.appendChild(pgCard);
+    var grid1=el("div","grid g-2");
+
+    // 1) Pace-GAP @ FC_REF ---------------------------------------------------
+    if(pgRuns.length){
+      var pgPts=pgRuns.map(function(w){return{label:fmtDate(w.date),y:w.paceGap.paceSec,extra:w.paceGap.confidence};});
+      var last=pgRuns[pgRuns.length-1].paceGap;
+      var prev3=pgPts.slice(-4,-1).map(function(p){return p.y;});
+      var ma3=prev3.length?prev3.reduce(function(s,x){return s+x;},0)/prev3.length:null;
+      var dPct=ma3?((last.paceSec-ma3)/ma3)*100:null; // menor pace = melhor (negativo = melhorou)
+      var pgConf=lagLow?downgradeConf(last.confidence):last.confidence;
+      var pgCard=card("Pace-GAP @ "+fcRef+" bpm · esforço padronizado",confMap[pgConf]||"média","pace-gap");
+      var vr=el("div");vr.style.cssText="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-top:8px";
+      vr.innerHTML='<div style="font-size:34px;font-weight:800;letter-spacing:-.02em;line-height:1">'+paceStr(last.paceSec)+'<small style="font-size:15px;color:var(--ink-2);font-weight:600"> /km</small></div>'+
+        (dPct!=null?'<span class="delta '+(dPct<=-1?"up":dPct>=1?"down":"flat")+'">'+(dPct<0?"▼ ":dPct>0?"▲ ":"→ ")+Math.abs(dPct).toFixed(1)+'% vs média 3</span>':'')+
+        '<span class="sub">na mesma FC — quanto de plano você produz</span>';
+      pgCard.appendChild(vr);
+      pgCard.appendChild(chartBox(lineChart({series:[{name:"Pace-GAP@"+fcRef,points:pgPts,colorVar:seriesColor(1)}],yfmt:function(vv){return paceStr(vv);},reverseY:true})));
+      pgCard.appendChild(hint("Mediana da velocidade-GAP quando a FC (defasada "+ml.lagSec+"s) fica em <b>"+fcRef+"±3 bpm</b>, nos min 10–45. <b>Menor pace = mais trabalho de plano no mesmo esforço.</b> Confiança: Alta ≥15 min · Moderada 8–15 min ou regressão (R²≥0,5) · Baixa."+(lagLow?' <b>Rebaixada</b> — menos de 3 sessões válidas para estimar a defasagem de FC (3.3).':'')));
+      grid1.appendChild(pgCard);
+    }
+
+    // 2) Árvore da Eficiência (3.2) -----------------------------------------
+    if(effHist.length){
+      var curEff=effHist[effHist.length-1].eff;
+      var prevE=effHist.slice(-4,-1).map(function(w){return w.eff;});
+      var prevAvg=prevE.length?{mPerBeat:mean(prevE.map(function(e){return e.mPerBeat;})),stepsPerBeat:mean(prevE.map(function(e){return e.stepsPerBeat;})),mPerStep:mean(prevE.map(function(e){return e.mPerStep;})),spmMean:mean(prevE.map(function(e){return e.spmMean;})),hrMean:mean(prevE.map(function(e){return e.hrMean;})),vgapMean:mean(prevE.map(function(e){return e.vgapMean;}))}:null;
+      var tree=effTree(curEff,prevAvg);
+      var efCard=card("Árvore da Eficiência · decomposição do EF","média","arvore-ef");
+      var idn=el("div");idn.style.cssText="margin-top:8px;font-size:14px;line-height:1.6";
+      idn.innerHTML='<b style="font-size:17px">'+curEff.mPerBeat.toFixed(3)+'</b> m/batimento = <b>'+curEff.stepsPerBeat.toFixed(3)+'</b> passos/bat × <b>'+curEff.mPerStep.toFixed(3)+'</b> m/passo'+
+        '<div class="sub" style="margin-top:4px">EF = '+(curEff.mPerBeat/60).toFixed(4)+' · cadência '+Math.round(curEff.spmMean)+' spm · FC '+Math.round(curEff.hrMean)+' bpm</div>';
+      efCard.appendChild(idn);
+      if(tree.dln){
+        var pill=el("div");pill.style.cssText="margin:10px 0 2px";pill.innerHTML='<span class="pill">'+esc(tree.label)+'</span>';efCard.appendChild(pill);
+        efCard.appendChild(chartBox(barChart({bars:[
+          {label:"passos/bat",y:Math.round(tree.contribPct.stepsPerBeat*10)/10,color:tree.contribPct.stepsPerBeat>=0?"var(--good)":"var(--crit)"},
+          {label:"m/passo",y:Math.round(tree.contribPct.mPerStep*10)/10,color:tree.contribPct.mPerStep>=0?"var(--good)":"var(--crit)"}
+        ],yfmt:function(vv){return vv.toFixed(0)+"%";},zeroLine:true})));
+        efCard.appendChild(hint("Quanto cada parte contribuiu para a variação do EF vs. as 3 anteriores. Cadência <b>"+(tree.cadDeltaPct>=0?"+":"")+tree.cadDeltaPct.toFixed(1)+"%</b> · EF <b>"+(tree.efDeltaPct>=0?"+":"")+tree.efDeltaPct.toFixed(1)+"%</b>. A identidade é exata; a leitura é exploratória."));
+      }else{
+        efCard.appendChild(chartBox(lineChart({series:[{name:"m/batimento",points:effHist.map(function(w){return{label:fmtDate(w.date),y:w.eff.mPerBeat,extra:"EF "+(w.eff.mPerBeat/60).toFixed(4)};}),colorVar:seriesColor(4)}],yfmt:function(vv){return vv.toFixed(3);}})));
+        efCard.appendChild(hint("m/batimento = (passos/bat) × (m/passo). Sobe = mais metros por batimento. Precisa de ao menos uma sessão anterior com stream para decompor a variação."));
+      }
+      grid1.appendChild(efCard);
+    }
+
+    // 3) Cadência @ PACE_REF (3.4) ------------------------------------------
+    if(streamRuns.length&&paceRef){
+      var lastSr=streamRuns[streamRuns.length-1];
+      var cad=cadenceAtPace(expandStream(lastSr.stream),{paceRef:paceRef});
+      var cadPts=streamRuns.map(function(w){var c=cadenceAtPace(expandStream(w.stream),{paceRef:paceRef});return c.spm!=null?{label:fmtDate(w.date),y:c.spm,extra:c.confidence}:null;}).filter(Boolean);
+      var adh=lastSr.cadAdherencePct!=null?lastSr.cadAdherencePct:cad.adherencePct;
+      var cadCard=card("Cadência @ ritmo-ref ("+paceStr(paceRef)+"/km)",confMap[cad.confidence]||"média","cad-ref");
+      var cvr=el("div");cvr.style.cssText="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-top:8px";
+      cvr.innerHTML='<div style="font-size:34px;font-weight:800;letter-spacing:-.02em;line-height:1">'+(cad.spm!=null?cad.spm:"—")+'<small style="font-size:15px;color:var(--ink-2);font-weight:600"> spm</small></div>'+
+        (adh!=null?'<span class="pill">'+adh.toFixed(0)+'% na faixa 170–176</span>':'')+
+        '<span class="sub">meta 173 · baseline 168</span>';
+      cadCard.appendChild(cvr);
+      if(cadPts.length)cadCard.appendChild(chartBox(lineChart({series:[{name:"spm@ref",points:cadPts,colorVar:seriesColor(3)}],yfmt:function(vv){return Math.round(vv)+"";},target:{y:a.cadenceTarget,label:"meta "+a.cadenceTarget}})));
+      cadCard.appendChild(hint("Mediana do spm quando o pace-GAP fica em <b>"+paceStr(paceRef)+"±15 s/km</b> (ritmo-ref = mediana das sessões fáceis). Cadência comparada sempre no mesmo ritmo, não no mesmo esforço. <b>Fonte:</b> Heiderscheit et al., 2011."));
+      grid1.appendChild(cadCard);
+    }
+
+    // 4) Decoupling cardíaco | mecânico (3.5) + matriz -----------------------
+    if(mechHist.length){
+      var lastMech=mechHist[mechHist.length-1];
+      var cardiac=computeDecoupling(lastMech);
+      var mechPct=lastMech.mech.pct;
+      var mechConf=lagLow?downgradeConf(lastMech.mech.confidence):lastMech.mech.confidence;
+      var matrix=cardiac!=null?decoupleMatrix(cardiac,mechPct):null;
+      var dcard=card("Decoupling · cardíaco | mecânico",confMap[mechConf]||"média","decoupling-mec");
+      var dvr=el("div");dvr.style.cssText="display:flex;gap:18px;flex-wrap:wrap;margin-top:8px;align-items:baseline";
+      dvr.innerHTML='<div><div class="sub">cardíaco (pace:FC)</div><div style="font-size:26px;font-weight:800;line-height:1.1">'+(cardiac!=null?cardiac.toFixed(1)+'%':'—')+'</div></div>'+
+        '<div><div class="sub">mecânico (passada)</div><div style="font-size:26px;font-weight:800;line-height:1.1;color:'+(mechPct>2?'var(--crit)':mechPct<-2?'var(--good)':'inherit')+'">'+(mechPct!=null?(mechPct>0?'+':'')+mechPct.toFixed(1)+'%':'—')+'</div></div>';
+      dcard.appendChild(dvr);
+      if(matrix){var mp=el("div");mp.style.cssText="margin:10px 0 2px";mp.innerHTML='<span class="pill">'+esc(matrix)+'</span>';dcard.appendChild(mp);}
+      if(mechHist.length>1)dcard.appendChild(chartBox(barChart({bars:mechHist.map(function(w){return{label:fmtDate(w.date),y:w.mech.pct,extra:w.type,color:w.mech.pct>2?"var(--crit)":w.mech.pct<-2?"var(--good)":"var(--warn)"};}),yfmt:function(vv){return(vv>0?'+':'')+vv.toFixed(1)+"%";},zeroLine:true})));
+      dcard.appendChild(hint("Mecânico = Δ% da passada-GAP (m/passo) entre a 2ª e a 1ª metade (só sessões ≥40 min). <b>Positivo = passada caiu no fim.</b> Cruzado com o cardíaco: FC sobe + passada estável → deriva cardiovascular; ambos cedem → fadiga global."+(lagLow?' Confiança rebaixada (defasagem de FC com <3 sessões).':'')));
+      grid1.appendChild(dcard);
+    }
+
+    v.appendChild(grid1);
   }
 
   // ---- PAINEL GERAL (hero tiles) ----
@@ -1636,18 +1755,20 @@ function renderPainel(v){
   if(aud.length){
     var ac2=card("Auditoria das sessões (.FIT)","alta");
     var at=el("div");at.style.cssText="overflow:auto;margin-top:8px";
-    var t2=el("table");t2.innerHTML='<thead><tr><th>Data</th><th class="num">Válidos</th><th class="num">Excl.</th><th class="num">Defas.</th><th>Pace-GAP@145</th><th>Motivos</th></tr></thead>';
+    var t2=el("table");t2.innerHTML='<thead><tr><th>Data</th><th class="num">Válidos</th><th class="num">Excl.</th><th class="num">Defas.</th><th>Pace-GAP@145</th><th class="num">Mec.</th><th>Motivos</th></tr></thead>';
     var tb2=el("tbody");
     aud.slice(0,16).forEach(function(w){var q=w.quality,pg=w.paceGap,mot=[];for(var rk in q.reasons)mot.push(rk);
+      var mv=w.mech&&w.mech.pct!=null?(w.mech.pct>0?"+":"")+w.mech.pct.toFixed(1)+"%":"—";
       var r=el("tr");r.innerHTML='<td>'+fmtDateFull(w.date)+'</td>'+
         '<td class="num">'+q.validMin+' min</td>'+
         '<td class="num"'+(q.excludedPct>20?' style="color:var(--crit)"':'')+'>'+q.excludedPct+'%</td>'+
         '<td class="num">'+(w.hrLagSec!=null?w.hrLagSec+"s":"—")+'</td>'+
         '<td>'+(pg&&pg.paceSec?paceStr(pg.paceSec)+" <span class=\"sub\">"+pg.confidence+"</span>":(pg?pg.confidence:"—"))+(w.streamPruned?' <span class="sub">(resumido)</span>':'')+'</td>'+
+        '<td class="num"'+(w.mech&&w.mech.pct>2?' style="color:var(--crit)"':'')+'>'+mv+'</td>'+
         '<td class="sub">'+esc(mot.slice(0,3).join(" · ")||"—")+'</td>';
       tb2.appendChild(r);});
     t2.appendChild(tb2);at.appendChild(t2);ac2.appendChild(at);
-    ac2.appendChild(hint("Transparência do pré-processamento: minutos válidos, % excluído, defasagem de FC usada e a confiança do Pace-GAP por sessão. &gt;20% excluído aparece em vermelho. Sessões antigas podem aparecer como <b>(resumido)</b> — o stream por amostra é mantido só nas mais recentes."));
+    ac2.appendChild(hint("Transparência do pré-processamento: minutos válidos, % excluído, defasagem de FC usada, Pace-GAP e decoupling mecânico por sessão. &gt;20% excluído (e passada caindo &gt;2%) aparecem em vermelho. Defasagem de FC do ciclo: <b>"+ml.lagSec+"s</b> (mediana de "+ml.n+" sessão(ões) válida(s))"+(lagLow?" — <b>&lt;3 sessões</b>, então Pace-GAP e decoupling mecânico entram com confiança rebaixada (3.3).":".")+" Sessões antigas podem aparecer como <b>(resumido)</b> — o stream por amostra é mantido só nas mais recentes."));
     v.appendChild(ac2);
   }
 }
@@ -2161,6 +2282,9 @@ function renderForca(v){
 var KPI_DOCS=[
  {cat:"Motor",name:"Pace-GAP @ FC_REF (145)",conf:"alta*",formula:"mediana da velocidade-GAP nas amostras com FC (defasada) em 145±3 bpm, min 10–45\nfallback: regressão robusta (Theil-Sen) FC ~ v_GAP, lida em 145 — só interpola, nunca extrapola",desc:"Na <b>mesma FC</b>, quanto pace de plano você produz. É o comparador do treino guiado por FC — o pace bruto deixou de comparar em terreno ondulado. <b>Menor = melhor.</b> Confiança: <b>Alta ≥15 min</b> na banda · <b>Moderada 8–15 min</b> ou regressão (R²≥0,5) · <b>Baixa</b> · <b>Dados insuficientes</b> se 145 estiver fora da faixa de FC observada. Contexto exibido sem correção: temperatura, elevação e duração. <b>Limitações:</b> precisa do stream por amostra do .FIT (reimporte treinos antigos); indoor/sem FC não entra. <b>Sobreposição com outros KPIs:</b> o EF mede economia em qualquer intensidade (a FC tem intercepto); o Pace-GAP@145 fixa a FC e remove esse viés — são complementares. <b>Fonte:</b> Vesterinen et al., 2014, J Strength Cond Res 28(4):902–908.",fields:"stream 1 Hz do .FIT: FC, velocidade, altitude (grade via GAP)"},
  {cat:"Motor",name:"Efficiency Factor (EF)",conf:"alta",formula:"EF = velocidade_GAP (m/s) ÷ FC_média (bpm)",desc:"Quanta velocidade você entrega por batimento. <b>Sobe = motor mais eficiente.</b> Compare sempre rodagens fáceis parecidas; a régua é você vs. você. Alvo: partir de ~0,0139 e subir +5 a +8%.",fields:"velocidade-GAP, FC média"},
+ {cat:"Motor",key:"arvore-ef",name:"Árvore da Eficiência (decomposição do EF)",conf:"média",formula:"m/batimento = (passos/batimento) × (m/passo)\nm/batimento = v_GAP×60 ÷ FC (= EF×60)\npassos/batimento = spm ÷ FC · m/passo = v_GAP×60 ÷ spm\nΔln(m/bat) = Δln(passos/bat) + Δln(m/passo) vs. média das 3 anteriores",desc:"Abre o EF em duas alavancas: <b>quantos passos você dá por batimento</b> (cardio-mecânico) e <b>quanto cada passo avança</b> (passada-GAP). Usa as médias das amostras válidas da sessão, então a identidade fecha exata. A decomposição em log diz que fração da variação do EF veio da cadência e que fração veio da passada. Rótulos: cadência↑ e EF estável = <i>passada encurtou sem custo (ganho mecânico)</i>; cadência↑ e EF↑ = <i>economia</i>; cadência↑ e EF↓ = <i>cadência com custo — revisar</i>; cadência estável e EF↑ = <i>motor: mais passada na mesma FC</i>. <b>Confiança: Moderada</b> — a identidade é exata, a interpretação é exploratória. <b>Sobreposição:</b> é o EF por outro ângulo; não é um KPI novo de economia, e sim o <i>porquê</i> dele mudar.",fields:"stream 1 Hz: velocidade-GAP, FC, cadência (spm)"},
+ {cat:"Motor",key:"decoupling-mec",name:"Decoupling mecânico (passada)",conf:"média",formula:"mecânico% = (passada-GAP_1ª_metade − passada-GAP_2ª_metade) ÷ 1ª × 100\n(só sessões ≥40 min de tempo válido)",desc:"O irmão mecânico do decoupling cardíaco: quanto a <b>passada-GAP (m/passo)</b> encurta entre a 1ª e a 2ª metade. <b>Positivo = passada caiu no fim (fadiga mecânica).</b> Cruzado com o cardíaco vira uma matriz: FC sobe + passada estável → <i>deriva cardiovascular</i> (calor/hidratação/duração); ambos cedem → <i>fadiga global</i>; ambos estáveis → <i>sessão sob controle</i>. <b>Confiança: Moderada</b> (Exploratória com &lt;3 sessões). <b>Sobreposição:</b> complementa o decoupling cardíaco — um olha o coração, o outro a mecânica; juntos separam calor de fadiga real.",fields:"stream 1 Hz: velocidade-GAP, cadência; decoupling cardíaco (splits com FC)"},
+ {cat:"Mecânica",key:"cad-ref",name:"Cadência @ ritmo-ref",conf:"média",formula:"mediana do spm nas amostras com pace-GAP em RITMO_REF ± 15 s/km (min 5 min)\nadesão = % do tempo em movimento com spm entre 170 e 176\nRITMO_REF = mediana do pace-GAP das sessões fáceis, arredondada a 5 s/km",desc:"Cadência comparada <b>sempre no mesmo ritmo</b> (não no mesmo esforço): remove o efeito de correr mais rápido/devagar. Mostra também a <b>adesão</b> — quanto do tempo você passou na faixa-alvo 170–176 spm. Linhas de referência: <b>meta 173</b>, baseline 168. <b>Confiança:</b> Alta ≥10 min no ritmo-ref · Moderada 5–10 min · Dados insuficientes &lt;5 min. <b>Sobreposição:</b> a Cadência média (seção Mecânica) é bruta; esta fixa o ritmo para comparar maçãs com maçãs. <b>Fonte:</b> Heiderscheit et al., 2011, Med Sci Sports Exerc 43(2):296–302.",fields:"stream 1 Hz: cadência (spm), velocidade-GAP"},
  {cat:"Motor",name:"Decoupling (pace:FC)",conf:"alta",formula:"decoupling% = (EF_1ª_metade − EF_2ª_metade) ÷ EF_1ª_metade × 100",desc:"Quanto a relação pace÷FC se deteriora entre a 1ª e a 2ª metade. <b>&lt;5% base sólida · 5–8% limítrofe · &gt;8% investigar.</b> Negativo nos longões = você fica mais eficiente no fim (closer).",fields:"splits com FC por km, ou metades manuais"},
  {cat:"Motor",name:"VO₂máx",conf:"média",formula:"estimativa de relógio/TECP (erro ~5–10%)",desc:"O tamanho bruto do motor aeróbico. Homem 30–39: <b>bom 36–42 · excelente 43–52</b>. O EF é o quanto você aproveita desse teto.",fields:"informado por você"},
  {cat:"Motor",name:"Custo cardíaco do km",conf:"média",formula:"custo_km = FC_média_do_km ÷ velocidade_GAP_do_km",desc:"O inverso do EF, por km: revela qual trecho foi caro (subida? fadiga?). <b>Menor e mais estável = esforço melhor distribuído.</b>",fields:"splits por km"},
@@ -2364,7 +2488,8 @@ function openModal(id,prefill,fromFit){
   var w=id?state.workouts.find(function(x){return x.id===id;}):null;
   var s=w||prefill||null; // fonte dos valores
   modalExtras={hrHist:s&&s.hrHist?s.hrHist:null,sport:s&&s.sport?s.sport:null,bikeRpm:s&&s.bikeRpm!=null?s.bikeRpm:null,trainingEffect:s&&s.trainingEffect!=null?s.trainingEffect:null,
-    stream:s&&s.stream?s.stream:null,quality:s&&s.quality?s.quality:null,paceGap:s&&s.paceGap?s.paceGap:null,hrLagSec:s&&s.hrLagSec!=null?s.hrLagSec:null,geo:s&&s.geo?s.geo:null};
+    stream:s&&s.stream?s.stream:null,quality:s&&s.quality?s.quality:null,paceGap:s&&s.paceGap?s.paceGap:null,hrLagSec:s&&s.hrLagSec!=null?s.hrLagSec:null,geo:s&&s.geo?s.geo:null,
+    eff:s&&s.eff?s.eff:null,mech:s&&s.mech?s.mech:null,cadAdherencePct:s&&s.cadAdherencePct!=null?s.cadAdherencePct:null};
   var modal=s&&s.modal?s.modal:(s&&isBike(s)?"bike":"corrida");
   $("#modalTitle").textContent=w?"Editar treino":(fromFit?"Revisar treino do .FIT":"Novo treino");
   $("#fitBanner").style.display=fromFit?"flex":"none";
@@ -2473,6 +2598,9 @@ function saveModal(){
     quality:isBk?null:(modalExtras.quality||null),
     paceGap:isBk?null:(modalExtras.paceGap||null),
     hrLagSec:isBk?null:(modalExtras.hrLagSec!=null?modalExtras.hrLagSec:null),
+    eff:isBk?null:(modalExtras.eff||null),
+    mech:isBk?null:(modalExtras.mech||null),
+    cadAdherencePct:isBk?null:(modalExtras.cadAdherencePct!=null?modalExtras.cadAdherencePct:null),
     geo:modalExtras.geo||null,
     updatedAt:new Date().toISOString()
   };
