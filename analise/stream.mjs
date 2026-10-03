@@ -401,7 +401,41 @@ export function gradeProfile(sessions, opts = {}) {
   return { ok: true, rows, fit: { a: fit.a, b: fit.b, r2: Math.round(fit.r2 * 100) / 100, n: fit.n }, nSessions: perSession.length, upPosSessions, upResidual: upResidual != null ? Math.round(upResidual * 10) / 10 : null, label };
 }
 
-// --- 14) retenção: mantém o stream só nas sessões mais recentes -----------
+// --- 14) IMP — Índice do Motor Padronizado, Fase 1 (estratificação) -------
+// v_padrao = mediana da velocidade-GAP nas amostras PLANAS (|grade|≤plano) da
+// JANELA_IMP, com FC (defasada) em fcRef±band. A gating por clima (PADRAO_CLIMA)
+// é feita fora daqui; esta função só mede v_padrao da sessão. Confiança máx = Moderada.
+export function impSample(samples, opts = {}) {
+  const o = Object.assign({ fcRef: 145, band: 3, lagSec: 0, plano: 2, win: [10, 30] }, opts);
+  const w0 = o.win[0] * 60, w1 = o.win[1] * 60, dt = sampleDt(samples), lagIdx = Math.round(o.lagSec / dt);
+  const vg = [];
+  for (let i = 0; i < samples.length; i++) {
+    const s = samples[i], j = i + lagIdx;
+    if (!s.valid || s.vgap == null || s.grade == null || Math.abs(s.grade) > o.plano || s.t < w0 || s.t > w1) continue;
+    const hr = (j < samples.length && samples[j] && samples[j].valid && samples[j].hr != null) ? samples[j].hr : null;
+    if (hr == null || Math.abs(hr - o.fcRef) > o.band) continue;
+    vg.push(s.vgap);
+  }
+  const minInBand = Math.round((vg.length * dt) / 60 * 10) / 10;
+  if (minInBand < 5) return { vPadrao: null, minInBand, confidence: "Dados insuficientes" };
+  return { vPadrao: median(vg), minInBand, confidence: minInBand >= 8 ? "Moderada" : "Baixa" };
+}
+// BASELINE_IMP: média de v_padrao das 3 primeiras sessões qualificadas (conf≥Moderada,
+// dentro do padrão de clima) → índice 100 (congelado). qualifies(w) decide a elegibilidade.
+export function impBaseline(workouts, qualifies) {
+  const q = (workouts || []).filter((w) => w && w.imp && w.imp.vPadrao != null && (qualifies ? qualifies(w) : true))
+    .sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
+  const first3 = q.slice(0, 3);
+  if (first3.length < 3) return { vBaseline: null, n: first3.length };
+  const vBaseline = first3.reduce((s, w) => s + w.imp.vPadrao, 0) / first3.length;
+  return { vBaseline, n: first3.length, dates: first3.map((w) => w.date) };
+}
+export function impIndex(vPadrao, vBaseline) {
+  if (vPadrao == null || !vBaseline) return null;
+  return Math.round((100 * vPadrao / vBaseline) * 10) / 10;
+}
+
+// --- 15) retenção: mantém o stream só nas sessões mais recentes -----------
 // Remove w.stream (mantém agregados/resumo) das sessões além de keepRecent com stream.
 export function pruneStreams(workouts, keepRecent = 20) {
   const withStream = (workouts || []).filter((w) => w && w.stream).sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
