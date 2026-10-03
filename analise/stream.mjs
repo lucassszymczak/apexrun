@@ -435,7 +435,96 @@ export function impIndex(vPadrao, vBaseline) {
   return Math.round((100 * vPadrao / vBaseline) * 10) / 10;
 }
 
-// --- 15) retenção: mantém o stream só nas sessões mais recentes -----------
+// --- 15) IMP Fase 2 — modelo individual FC = a + b·v_GAP + c·temp + d·min --
+// Regressão múltipla robusta (Huber-IRLS), validação leave-one-session-out e
+// projeção de cada sessão ao PONTO_PADRÃO. NUNCA usa coeficientes da literatura.
+function matInv(A) {
+  const n = A.length, M = A.map((row, i) => row.concat(Array.from({ length: n }, (_, j) => (i === j ? 1 : 0))));
+  for (let col = 0; col < n; col++) {
+    let piv = col;
+    for (let r = col + 1; r < n; r++) if (Math.abs(M[r][col]) > Math.abs(M[piv][col])) piv = r;
+    if (Math.abs(M[piv][col]) < 1e-12) return null;
+    const tmp = M[col]; M[col] = M[piv]; M[piv] = tmp;
+    const d = M[col][col];
+    for (let j = 0; j < 2 * n; j++) M[col][j] /= d;
+    for (let r = 0; r < n; r++) { if (r === col) continue; const f = M[r][col]; for (let j = 0; j < 2 * n; j++) M[r][j] -= f * M[col][j]; }
+  }
+  return M.map((row) => row.slice(n));
+}
+export function mlr(X, y, weights) {
+  const n = X.length, p = X[0].length, w = weights || X.map(() => 1);
+  const XtX = Array.from({ length: p }, () => new Array(p).fill(0)), Xty = new Array(p).fill(0);
+  for (let i = 0; i < n; i++) { const wi = w[i]; for (let a = 0; a < p; a++) { Xty[a] += wi * X[i][a] * y[i]; for (let b = 0; b < p; b++) XtX[a][b] += wi * X[i][a] * X[i][b]; } }
+  const inv = matInv(XtX); if (!inv) return null;
+  const beta = new Array(p).fill(0);
+  for (let a = 0; a < p; a++) { let s = 0; for (let b = 0; b < p; b++) s += inv[a][b] * Xty[b]; beta[a] = s; }
+  let ssr = 0; const res = new Array(n);
+  for (let i = 0; i < n; i++) { let pred = 0; for (let a = 0; a < p; a++) pred += beta[a] * X[i][a]; res[i] = y[i] - pred; ssr += w[i] * res[i] * res[i]; }
+  const sigma2 = ssr / Math.max(1, n - p), se = new Array(p);
+  for (let a = 0; a < p; a++) se[a] = Math.sqrt(Math.max(0, sigma2 * inv[a][a]));
+  return { beta, se, n, res };
+}
+export function mlrRobust(X, y, iters = 2) {
+  let fit = mlr(X, y); if (!fit) return null;
+  for (let it = 0; it < iters; it++) {
+    const mad = median(fit.res.map(Math.abs)) || 1, scale = 1.4826 * mad || 1, k = 1.345 * scale;
+    const w = fit.res.map((r) => { const a = Math.abs(r); return a <= k ? 1 : k / a; });
+    const f2 = mlr(X, y, w); if (!f2) break; fit = f2;
+  }
+  return fit;
+}
+export function impPhase2(sessions, opts = {}) {
+  const o = Object.assign({ fcRef: 145, tRef: 13, minRef: 20, minSessions: 10, tempAmp: 8, maxLosoBpm: 4 }, opts);
+  const valid = (sessions || []).filter((s) => s && s.temp != null && s.aligned && s.aligned.length > 30);
+  const temps = valid.map((s) => s.temp), amp = temps.length ? Math.max.apply(null, temps) - Math.min.apply(null, temps) : 0;
+  if (valid.length < o.minSessions || amp < o.tempAmp) return { ok: false, reason: "gatilho não atingido", nSessions: valid.length, tempAmp: Math.round(amp * 10) / 10 };
+  const rows = (sess) => { const X = [], y = []; for (const s of sess) for (const a of s.aligned) { X.push([1, a.vgap, s.temp, a.minute]); y.push(a.hr); } return { X, y }; };
+  const all = rows(valid), fit = mlrRobust(all.X, all.y);
+  if (!fit) return { ok: false, reason: "regressão falhou", nSessions: valid.length };
+  const a = fit.beta[0], b = fit.beta[1], c = fit.beta[2], d = fit.beta[3];
+  if (Math.abs(b) < 1e-6) return { ok: false, reason: "b≈0", nSessions: valid.length };
+  const cLo = c - 1.96 * fit.se[2], cHi = c + 1.96 * fit.se[2], cZero = cLo <= 0 && cHi >= 0, cEff = cZero ? 0 : c;
+  // LOSO: erro mediano de previsão de FC na sessão deixada de fora
+  const errs = [];
+  for (let k = 0; k < valid.length; k++) {
+    const train = valid.filter((_, i) => i !== k), tr = rows(train), f = mlrRobust(tr.X, tr.y); if (!f) continue;
+    for (const al of valid[k].aligned) { const pred = f.beta[0] + f.beta[1] * al.vgap + f.beta[2] * valid[k].temp + f.beta[3] * al.minute; errs.push(Math.abs(al.hr - pred)); }
+  }
+  const losoMedAbs = errs.length ? Math.round(median(errs) * 10) / 10 : Infinity, usable = losoMedAbs <= o.maxLosoBpm;
+  // projeção por sessão: intercepto efetivo = a + resíduo médio da sessão (efeito do dia)
+  const mean = (arr) => (arr.length ? arr.reduce((s, x) => s + x, 0) / arr.length : 0);
+  const perSession = valid.map((s) => {
+    const rs = mean(s.aligned.map((al) => al.hr - (a + b * al.vgap + c * s.temp + d * al.minute)));
+    const vPad = (o.fcRef - (a + rs) - cEff * o.tRef - d * o.minRef) / b;
+    return { date: s.date, vPadrao: vPad > 0 ? Math.round(vPad * 1000) / 1000 : null, temp: s.temp };
+  });
+  return {
+    ok: true, usable, nSessions: valid.length, tempAmp: Math.round(amp * 10) / 10,
+    coef: { a, b, c, d }, heatSens: Math.round(c * 100) / 100, heatCI: [Math.round(cLo * 100) / 100, Math.round(cHi * 100) / 100], cZero,
+    losoMedAbs, perSession,
+  };
+}
+
+// --- 16) Teste do Motor — velocidade por estágio (circuito plano fixo) -----
+// Métrica por estágio: mediana da velocidade bruta nos últimos 3 min; marca se a
+// FC média sair de ±tol do alvo. Usa velocidade BRUTA (circuito plano, não GAP).
+export function motorTest(samples, stages, opts = {}) {
+  const o = Object.assign({ tol: 3, lastMin: 3 }, opts);
+  let t0 = 0; const out = [];
+  for (const st of (stages || [])) {
+    const start = t0, end = t0 + st.min * 60; t0 = end;
+    const w0 = Math.max(start, end - o.lastMin * 60);
+    const seg = samples.filter((s) => s.t >= w0 && s.t < end && s.spd != null);
+    if (seg.length < 10) { out.push({ name: st.name, targetHr: st.targetHr, speed: null, pace: null, hrMean: null, min: st.min, flagged: st.targetHr != null, reason: "sem dados" }); continue; }
+    const speed = median(seg.map((s) => s.spd));
+    const hrs = seg.filter((s) => s.hr != null).map((s) => s.hr), hrMean = hrs.length ? hrs.reduce((a, b) => a + b, 0) / hrs.length : null;
+    const flagged = st.targetHr != null && hrMean != null && Math.abs(hrMean - st.targetHr) > o.tol;
+    out.push({ name: st.name, targetHr: st.targetHr, speed: Math.round(speed * 1000) / 1000, pace: speed > 0 ? Math.round(1000 / speed) : null, hrMean: hrMean != null ? Math.round(hrMean) : null, min: st.min, flagged: flagged });
+  }
+  return out;
+}
+
+// --- 17) retenção: mantém o stream só nas sessões mais recentes -----------
 // Remove w.stream (mantém agregados/resumo) das sessões além de keepRecent com stream.
 export function pruneStreams(workouts, keepRecent = 20) {
   const withStream = (workouts || []).filter((w) => w && w.stream).sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));

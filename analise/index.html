@@ -875,6 +875,52 @@ function impBaseline(workouts,qualifies){var q=(workouts||[]).filter(function(w)
   var first3=q.slice(0,3);if(first3.length<3)return{vBaseline:null,n:first3.length};
   return{vBaseline:first3.reduce(function(s,w){return s+w.imp.vPadrao;},0)/first3.length,n:3,dates:first3.map(function(w){return w.date;})};}
 function impIndex(vPadrao,vBaseline){if(vPadrao==null||!vBaseline)return null;return Math.round((100*vPadrao/vBaseline)*10)/10;}
+// --- IMP Fase 2 (modelo individual) + Teste do Motor — espelha stream.mjs ---
+function matInv(A){var n=A.length,M=A.map(function(row,i){return row.concat(Array.apply(null,{length:n}).map(function(_,j){return i===j?1:0;}));});
+  for(var col=0;col<n;col++){var piv=col;for(var r=col+1;r<n;r++)if(Math.abs(M[r][col])>Math.abs(M[piv][col]))piv=r;
+    if(Math.abs(M[piv][col])<1e-12)return null;var tmp=M[col];M[col]=M[piv];M[piv]=tmp;var d=M[col][col];
+    for(var j=0;j<2*n;j++)M[col][j]/=d;
+    for(var rr=0;rr<n;rr++){if(rr===col)continue;var f=M[rr][col];for(var jj=0;jj<2*n;jj++)M[rr][jj]-=f*M[col][jj];}}
+  return M.map(function(row){return row.slice(n);});}
+function mlr(X,y,weights){var n=X.length,p=X[0].length,w=weights||X.map(function(){return 1;});
+  var XtX=[],Xty=[];for(var q=0;q<p;q++){XtX.push(new Array(p));for(var qq=0;qq<p;qq++)XtX[q][qq]=0;Xty.push(0);}
+  for(var i=0;i<n;i++){var wi=w[i];for(var a=0;a<p;a++){Xty[a]+=wi*X[i][a]*y[i];for(var b=0;b<p;b++)XtX[a][b]+=wi*X[i][a]*X[i][b];}}
+  var inv=matInv(XtX);if(!inv)return null;var beta=new Array(p);
+  for(var a2=0;a2<p;a2++){var s=0;for(var b2=0;b2<p;b2++)s+=inv[a2][b2]*Xty[b2];beta[a2]=s;}
+  var ssr=0,res=new Array(n);for(var k=0;k<n;k++){var pred=0;for(var a3=0;a3<p;a3++)pred+=beta[a3]*X[k][a3];res[k]=y[k]-pred;ssr+=w[k]*res[k]*res[k];}
+  var sigma2=ssr/Math.max(1,n-p),se=new Array(p);for(var a4=0;a4<p;a4++)se[a4]=Math.sqrt(Math.max(0,sigma2*inv[a4][a4]));
+  return{beta:beta,se:se,n:n,res:res};}
+function mlrRobust(X,y,iters){iters=iters==null?2:iters;var fit=mlr(X,y);if(!fit)return null;
+  for(var it=0;it<iters;it++){var mad=median(fit.res.map(Math.abs))||1,scale=1.4826*mad||1,kk=1.345*scale;
+    var w=fit.res.map(function(r){var a=Math.abs(r);return a<=kk?1:kk/a;});var f2=mlr(X,y,w);if(!f2)break;fit=f2;}
+  return fit;}
+function impPhase2(sessions,opts){var o={fcRef:145,tRef:13,minRef:20,minSessions:10,tempAmp:8,maxLosoBpm:4};if(opts)for(var kk in opts)o[kk]=opts[kk];
+  var valid=(sessions||[]).filter(function(s){return s&&s.temp!=null&&s.aligned&&s.aligned.length>30;});
+  var temps=valid.map(function(s){return s.temp;}),amp=temps.length?Math.max.apply(null,temps)-Math.min.apply(null,temps):0;
+  if(valid.length<o.minSessions||amp<o.tempAmp)return{ok:false,reason:"gatilho não atingido",nSessions:valid.length,tempAmp:Math.round(amp*10)/10};
+  function rows(sess){var X=[],y=[];for(var i=0;i<sess.length;i++)for(var j=0;j<sess[i].aligned.length;j++){var a=sess[i].aligned[j];X.push([1,a.vgap,sess[i].temp,a.minute]);y.push(a.hr);}return{X:X,y:y};}
+  var all=rows(valid),fit=mlrRobust(all.X,all.y);if(!fit)return{ok:false,reason:"regressão falhou",nSessions:valid.length};
+  var a=fit.beta[0],b=fit.beta[1],c=fit.beta[2],d=fit.beta[3];if(Math.abs(b)<1e-6)return{ok:false,reason:"b≈0",nSessions:valid.length};
+  var cLo=c-1.96*fit.se[2],cHi=c+1.96*fit.se[2],cZero=cLo<=0&&cHi>=0,cEff=cZero?0:c;
+  var errs=[];for(var kx=0;kx<valid.length;kx++){var train=valid.filter(function(_,i){return i!==kx;}),tr=rows(train),f=mlrRobust(tr.X,tr.y);if(!f)continue;
+    for(var m=0;m<valid[kx].aligned.length;m++){var al=valid[kx].aligned[m],pr=f.beta[0]+f.beta[1]*al.vgap+f.beta[2]*valid[kx].temp+f.beta[3]*al.minute;errs.push(Math.abs(al.hr-pr));}}
+  var losoMedAbs=errs.length?Math.round(median(errs)*10)/10:Infinity,usable=losoMedAbs<=o.maxLosoBpm;
+  function mean(arr){return arr.length?arr.reduce(function(s,x){return s+x;},0)/arr.length:0;}
+  var perSession=valid.map(function(s){var rs=mean(s.aligned.map(function(al){return al.hr-(a+b*al.vgap+c*s.temp+d*al.minute);}));
+    var vPad=(o.fcRef-(a+rs)-cEff*o.tRef-d*o.minRef)/b;return{date:s.date,vPadrao:vPad>0?Math.round(vPad*1000)/1000:null,temp:s.temp};});
+  return{ok:true,usable:usable,nSessions:valid.length,tempAmp:Math.round(amp*10)/10,coef:{a:a,b:b,c:c,d:d},heatSens:Math.round(c*100)/100,heatCI:[Math.round(cLo*100)/100,Math.round(cHi*100)/100],cZero:cZero,losoMedAbs:losoMedAbs,perSession:perSession};}
+function motorTest(samples,stages,opts){var o={tol:3,lastMin:3};if(opts)for(var kk in opts)o[kk]=opts[kk];var t0=0,out=[];
+  for(var si=0;si<(stages||[]).length;si++){var st=stages[si],start=t0,end=t0+st.min*60;t0=end;var w0=Math.max(start,end-o.lastMin*60);
+    var seg=samples.filter(function(s){return s.t>=w0&&s.t<end&&s.spd!=null;});
+    if(seg.length<10){out.push({name:st.name,targetHr:st.targetHr,speed:null,pace:null,hrMean:null,min:st.min,flagged:st.targetHr!=null,reason:"sem dados"});continue;}
+    var speed=median(seg.map(function(s){return s.spd;})),hrs=seg.filter(function(s){return s.hr!=null;}).map(function(s){return s.hr;}),hrMean=hrs.length?hrs.reduce(function(a,b){return a+b;},0)/hrs.length:null;
+    var flagged=st.targetHr!=null&&hrMean!=null&&Math.abs(hrMean-st.targetHr)>o.tol;
+    out.push({name:st.name,targetHr:st.targetHr,speed:Math.round(speed*1000)/1000,pace:speed>0?Math.round(1000/speed):null,hrMean:hrMean!=null?Math.round(hrMean):null,min:st.min,flagged:flagged});}
+  return out;}
+// alinha o stream da sessão para o modelo (FC defasada), com minuto e v_GAP
+function alignForModel(samples,lagSec){var dt=sampleDt(samples),lagIdx=Math.round((lagSec||0)/dt),out=[];
+  for(var i=0;i<samples.length;i++){var s=samples[i],j=i+lagIdx;if(!s.valid||s.vgap==null)continue;var hr=(j<samples.length&&samples[j]&&samples[j].valid&&samples[j].hr!=null)?samples[j].hr:null;if(hr==null)continue;out.push({vgap:s.vgap,hr:hr,minute:s.t/60});}
+  return out;}
 // computa os KPIs por amostra a partir dos records normalizados (corrida)
 function computeStreamKpis(records,a){
   var pp=preprocess(records);
@@ -1043,6 +1089,7 @@ var DEFAULT_ATHLETE={
   cadenceTarget:173,efBaseline:0.0139,efGainPct:6.5,decouplingTarget:7,weeklyTargetKm:35,sessionsTarget:3,
   bikeFcMax:186,bikeZones:[123,138,145,167,179], // zonas do Garmin (bike): início Z1..Z5 em bpm
   baseAltM:1120,climTempLo:8,climTempHi:18,climDewMax:14,windMax:20, // Guarapuava ~1120 m · PADRÃO_CLIMA
+  motorStages:[{name:"Aquecimento",min:10,targetHr:null},{name:"135 bpm",min:6,targetHr:135},{name:"145 bpm",min:6,targetHr:145}], // Teste do Motor (estágios superiores liberam com a tíbia)
   cycleName:"Base & Pace",cycleWeeks:10,
   alert:"⚠ PAUSA PROTETORA · sensibilidade na tíbia direita (08/09). Corrida suspensa; foco em reforço estrutural, bike e reab. Baseline 5K (6:21) segue como marco zero."
 };
@@ -1516,6 +1563,11 @@ function renderPainel(v){
   function impQual(w){return w.imp&&w.imp.vPadrao!=null&&w.imp.confidence==="Moderada"&&w.weather&&w.weather.inStandard;}
   var impBl=impBaseline(runs,impQual);
   var needWeatherN=runs.filter(function(w){return w.geo&&w.geo.lat!=null&&!w.weather;}).length;
+  // IMP Fase 2 (modelo individual) — ativa com ≥10 sessões fáceis cobrindo ≥8 °C
+  var p2sessions=easyR.filter(function(w){return w.stream&&w.weather&&w.weather.tempC!=null;}).map(function(w){return{date:w.date,temp:w.weather.tempC,aligned:alignForModel(expandStream(w.stream),ml.lagSec)};});
+  var phase2=impPhase2(p2sessions);
+  var p2map={},p2vmap={};if(phase2.ok&&phase2.usable&&impBl.vBaseline){phase2.perSession.forEach(function(p){if(p.vPadrao!=null){p2map[p.date]=impIndex(p.vPadrao,impBl.vBaseline);p2vmap[p.date]=p.vPadrao;}});}
+  var p2on=phase2.ok&&phase2.usable&&impBl.vBaseline;
   if(pgRuns.length||effHist.length||streamRuns.length){
     v.appendChild(sectionTitle("Foco atual"));
     var grid1=el("div","grid g-2");
@@ -1523,7 +1575,8 @@ function renderPainel(v){
     // 1) IMP (quando há baseline) ou Pace-GAP @ FC_REF -----------------------
     if(impBl.vBaseline){
       var impTl=pgRuns.map(function(w){
-        var inStd=w.weather&&w.weather.inStandard,yImp=(inStd&&w.imp&&w.imp.vPadrao!=null)?impIndex(w.imp.vPadrao,impBl.vBaseline):null;
+        var inStd=w.weather&&w.weather.inStandard;
+        var yImp=p2on?(p2map[w.date]!=null?p2map[w.date]:null):((inStd&&w.imp&&w.imp.vPadrao!=null)?impIndex(w.imp.vPadrao,impBl.vBaseline):null);
         var yAll=w.paceGap&&w.paceGap.vGap!=null?impIndex(w.paceGap.vGap,impBl.vBaseline):null;
         return{date:w.date,label:fmtDate(w.date),yImp:yImp,yAll:yAll,w:w};
       });
@@ -1534,24 +1587,40 @@ function renderPainel(v){
       var impPrev3=impWithIdx.slice(-4,-1).map(function(p){return p.yImp;});
       var impMa3=impPrev3.length?impPrev3.reduce(function(s,x){return s+x;},0)/impPrev3.length:null;
       var impDelta=(lastImp&&impMa3)?lastImp.yImp-impMa3:null;
-      // custo do contexto: IMP médio (padrão) − índice médio nas sessões fora do padrão
-      var meanImp=impWithIdx.length?mean(impWithIdx.map(function(p){return p.yImp;})):null;
-      var outIdx=impTl.filter(function(p){return p.yAll!=null&&!(p.w.weather&&p.w.weather.inStandard);}).map(function(p){return p.yAll;});
-      var custo=(meanImp!=null&&outIdx.length)?meanImp-mean(outIdx):null;
-      var impConf=lastImp?(lastImp.w.imp.confidence):"Dados insuficientes";
-      var impCard=card("IMP · Índice do Motor Padronizado",confMap[impConf]||"média","imp");
+      // custo do contexto: Fase 2 → média(todas − padrão) por sessão; Fase 1 → padrão médio − fora do padrão
+      var custo;
+      if(p2on){var both=impTl.filter(function(p){return p.yImp!=null&&p.yAll!=null;});custo=both.length?mean(both.map(function(p){return p.yImp-p.yAll;})):null;}
+      else{var meanImp=impWithIdx.length?mean(impWithIdx.map(function(p){return p.yImp;})):null;var outIdx=impTl.filter(function(p){return p.yAll!=null&&!(p.w.weather&&p.w.weather.inStandard);}).map(function(p){return p.yAll;});custo=(meanImp!=null&&outIdx.length)?meanImp-mean(outIdx):null;}
+      var lastVpad=lastImp?(p2on&&p2vmap[lastImp.date]!=null?p2vmap[lastImp.date]:(lastImp.w.imp?lastImp.w.imp.vPadrao:null)):null;
+      var impConf=p2on?"Moderada":(lastImp&&lastImp.w.imp?lastImp.w.imp.confidence:"Dados insuficientes");
+      var impCard=card("IMP · Índice do Motor Padronizado"+(p2on?" · Fase 2":""),confMap[impConf]||"média","imp");
       var ivr=el("div");ivr.style.cssText="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-top:8px";
       ivr.innerHTML='<div style="font-size:34px;font-weight:800;letter-spacing:-.02em;line-height:1">'+(lastImp?lastImp.yImp.toFixed(0):"—")+'<small style="font-size:15px;color:var(--ink-2);font-weight:600"> índice</small></div>'+
-        (lastImp?'<span class="sub">≈ '+paceStr(1000/lastImp.w.imp.vPadrao)+'/km no padrão</span>':'')+
+        (lastVpad?'<span class="sub">≈ '+paceStr(1000/lastVpad)+'/km no padrão</span>':'')+
         (impDelta!=null?'<span class="delta '+(impDelta>=0.5?"up":impDelta<=-0.5?"down":"flat")+'">'+(impDelta>0?"▲ +":impDelta<0?"▼ ":"→ ")+impDelta.toFixed(1)+' vs média 3</span>':'');
       impCard.appendChild(ivr);
       impCard.appendChild(chartBox(lineChart({series:[
         {name:"IMP (padrão)",points:impPts,colorVar:seriesColor(1)},
         {name:"Todas as condições",points:allPts,colorVar:seriesColor(5)}
       ],yfmt:function(vv){return vv.toFixed(0);},target:{y:100,label:"baseline 100"}})));
-      impCard.appendChild(hint("Velocidade-GAP a <b>"+fcRef+" bpm em terreno plano e clima padrão</b> (8–18 °C, orvalho ≤14), como índice (baseline das 3 primeiras = 100). A linha <b>Todas as condições</b> é o Pace-GAP@145 no mesmo índice; a distância entre as duas é o <b>custo do contexto</b>"+(custo!=null?' — hoje ~<b>'+custo.toFixed(0)+' pts</b> fora do padrão':'')+". Sessões fora do padrão não entram no IMP (mas o Pace-GAP continua)."+(impBl.n<3?"":" Baseline: "+impBl.dates.map(fmtDate).join(", ")+".")));
+      var p2note=p2on
+        ?" <b>Fase 2 ativa:</b> modelo individual FC = a + b·v_GAP + c·temp + d·min projeta <b>todas</b> as sessões ao ponto-padrão (13 °C, min 20) — erro LOSO "+phase2.losoMedAbs+" bpm."
+        :(phase2.ok&&!phase2.usable?" Fase 2 testada mas o erro de validação ficou alto ("+phase2.losoMedAbs+" bpm &gt; 4) — seguindo na Fase 1.":" Fase 2 (modelo individual) ativa com ≥10 sessões fáceis cobrindo ≥8 °C — hoje "+phase2.nSessions+" sessão(ões), amplitude "+(phase2.tempAmp||0)+" °C.");
+      impCard.appendChild(hint("Velocidade-GAP a <b>"+fcRef+" bpm em terreno plano e clima padrão</b> (8–18 °C, orvalho ≤14), como índice (baseline das 3 primeiras = 100). A linha <b>Todas as condições</b> é o Pace-GAP@145 no mesmo índice; a distância entre as duas é o <b>custo do contexto</b>"+(custo!=null?' — ~<b>'+custo.toFixed(0)+' pts</b>':'')+"."+(p2on?"":" Sessões fora do padrão não entram no IMP (mas o Pace-GAP continua).")+p2note));
       if(needWeatherN){var bw=el("button","btn sm");bw.style.marginTop="10px";bw.textContent="🌤 Buscar clima de "+needWeatherN+" sessão(ões)";bw.onclick=function(){backfillWeather(bw);};impCard.appendChild(bw);}
       grid1.appendChild(impCard);
+      // Sensibilidade ao calor (exploratório) — só quando a Fase 2 roda (ok)
+      if(phase2.ok){
+        var hc=card("Sensibilidade ao calor","exploratório","calor-sens");
+        var hv=el("div");hv.style.cssText="margin-top:8px;display:flex;align-items:baseline;gap:12px;flex-wrap:wrap";
+        hv.innerHTML='<div style="font-size:30px;font-weight:800;line-height:1">'+(phase2.cZero?"~0":(phase2.heatSens>0?"+":"")+phase2.heatSens.toFixed(2))+'<small style="font-size:14px;color:var(--ink-2);font-weight:600"> bpm/°C</small></div>'+
+          '<span class="sub">IC95% ['+phase2.heatCI[0].toFixed(2)+', '+phase2.heatCI[1].toFixed(2)+']</span>';
+        hc.appendChild(hv);
+        hc.appendChild(hint(phase2.cZero
+          ?"O intervalo de confiança inclui zero — <b>sem efeito de calor detectável</b> nos seus dados ainda (c = 0 na projeção). Exploratório; nunca usa coeficientes da literatura."
+          :"Quanto sua FC sobe por grau de temperatura, no seu próprio histórico: <b>"+(phase2.heatSens>0?"+":"")+phase2.heatSens.toFixed(2)+" bpm/°C</b>. Alimenta a correção do IMP Fase 2. <b>Exploratório</b> — modelo individual, nunca coeficientes da literatura. Cobertura: "+phase2.nSessions+" sessões, amplitude "+phase2.tempAmp+" °C."));
+        grid1.appendChild(hc);
+      }
     }
     else if(pgRuns.length){
       var pgPts=pgRuns.map(function(w){return{label:fmtDate(w.date),y:w.paceGap.paceSec,extra:w.paceGap.confidence};});
@@ -1655,6 +1724,37 @@ function renderPainel(v){
         v.appendChild(gcard);
       }
     }
+  }
+
+  // ---- TESTE DO MOTOR ----
+  var motorRuns=runs.filter(function(w){return w.type==="teste_motor"&&w.stream;}).sort(byDateAsc);
+  if(motorRuns.length){
+    v.appendChild(sectionTitle("Teste do Motor · circuito fixo"));
+    var stages=(a.motorStages||[]).filter(function(s){return s;});
+    var lastMt=motorRuns[motorRuns.length-1];
+    var mt=motorTest(expandStream(lastMt.stream),stages);
+    var inPad=lastMt.weather?lastMt.weather.inStandard:null;
+    var mtCard=card("Último teste — "+fmtDateFull(lastMt.date),(lastMt.weather&&inPad)?"alta":"média","teste-motor");
+    var mhead=el("div");mhead.style.cssText="margin-top:6px";
+    mhead.innerHTML='<span class="sub">'+(lastMt.weather?("🌤 "+Math.round(lastMt.weather.tempC)+"°C · orvalho "+(lastMt.weather.dewC!=null?Math.round(lastMt.weather.dewC)+"°":"—")+(inPad?" · <b>clima padrão</b>":" · <b style=\"color:var(--warn)\">fora do padrão</b>")+(lastMt.weather.tags&&lastMt.weather.tags.length?" · "+esc(lastMt.weather.tags.join(" · ")):"")):"sem clima")+'</span>';
+    mtCard.appendChild(mhead);
+    var mtbl=el("div");mtbl.style.cssText="overflow:auto;margin-top:8px";
+    var tt=el("table");var th='<thead><tr><th>Estágio</th><th class="num">Alvo FC</th><th class="num">Veloc.</th><th class="num">Pace</th><th class="num">FC real</th></tr></thead><tbody>';
+    mt.forEach(function(r){th+='<tr><td>'+esc(r.name)+(r.flagged?' <span class="sub" style="color:var(--crit)">⚑ fora do alvo</span>':'')+'</td><td class="num">'+(r.targetHr!=null?r.targetHr+" bpm":"—")+'</td><td class="num">'+(r.speed!=null?r.speed.toFixed(2)+" m/s":"—")+'</td><td class="num">'+(r.pace!=null?paceStr(r.pace)+"/km":"—")+'</td><td class="num"'+(r.flagged?' style="color:var(--crit)"':'')+'>'+(r.hrMean!=null?r.hrMean+" bpm":"—")+'</td></tr>';});
+    th+='</tbody>';tt.innerHTML=th;mtbl.appendChild(tt);mtCard.appendChild(mtbl);
+    // histórico: velocidade por estágio (com alvo) ao longo dos testes
+    var targetStages=stages.filter(function(s){return s.targetHr!=null;});
+    if(motorRuns.length>1&&targetStages.length){
+      var series=targetStages.map(function(st,si){
+        var pts=motorRuns.map(function(w){var r=motorTest(expandStream(w.stream),stages).filter(function(x){return x.name===st.name;})[0];return r&&r.speed!=null?{label:fmtDate(w.date),y:r.speed,extra:st.name+(r.flagged?" ⚑":"")}:null;}).filter(Boolean);
+        return{name:st.name,points:pts,colorVar:seriesColor(si+1)};
+      }).filter(function(s){return s.points.length;});
+      if(series.length)mtCard.appendChild(chartBox(lineChart({series:series,yfmt:function(vv){return vv.toFixed(2)+" m/s";}})));
+    }
+    // próximo teste sugerido (~14 dias após o último)
+    var nextD=new Date(lastMt.date+"T00:00:00");nextD.setDate(nextD.getDate()+14);
+    mtCard.appendChild(hint("Mesmo circuito plano e horário, por estágio de FC-alvo. <b>Velocidade = mediana dos últimos 3 min</b> de cada estágio; se a FC média sair de ±3 bpm do alvo, o estágio é <b>marcado</b>. Compare a velocidade no mesmo alvo ao longo do tempo: <b>mais rápido no mesmo alvo = motor melhor.</b> Estágios acima de 145 liberam quando a tíbia permitir. <b>Próximo teste sugerido:</b> "+fmtDateFull(nextD.toISOString().slice(0,10))+". <b>Fonte:</b> Vesterinen et al., 2017."));
+    v.appendChild(mtCard);
   }
 
   // ---- PAINEL GERAL (hero tiles) ----
@@ -2424,6 +2524,8 @@ function renderForca(v){
 var KPI_DOCS=[
  {cat:"Motor",name:"Pace-GAP @ FC_REF (145)",conf:"alta*",formula:"mediana da velocidade-GAP nas amostras com FC (defasada) em 145±3 bpm, min 10–45\nfallback: regressão robusta (Theil-Sen) FC ~ v_GAP, lida em 145 — só interpola, nunca extrapola",desc:"Na <b>mesma FC</b>, quanto pace de plano você produz. É o comparador do treino guiado por FC — o pace bruto deixou de comparar em terreno ondulado. <b>Menor = melhor.</b> Confiança: <b>Alta ≥15 min</b> na banda · <b>Moderada 8–15 min</b> ou regressão (R²≥0,5) · <b>Baixa</b> · <b>Dados insuficientes</b> se 145 estiver fora da faixa de FC observada. Contexto exibido sem correção: temperatura, elevação e duração. <b>Limitações:</b> precisa do stream por amostra do .FIT (reimporte treinos antigos); indoor/sem FC não entra. <b>Sobreposição com outros KPIs:</b> o EF mede economia em qualquer intensidade (a FC tem intercepto); o Pace-GAP@145 fixa a FC e remove esse viés — são complementares. <b>Fonte:</b> Vesterinen et al., 2014, J Strength Cond Res 28(4):902–908.",fields:"stream 1 Hz do .FIT: FC, velocidade, altitude (grade via GAP)"},
  {cat:"Motor",key:"imp",name:"IMP · Índice do Motor Padronizado",conf:"média",formula:"v_padrao = mediana da velocidade-GAP nas amostras PLANAS (|grade|≤2%), min 10–30, com FC (defasada) em 145±3, em sessão de clima padrão (8–18 °C e orvalho ≤14)\nIMP = 100 × v_padrao ÷ v_baseline\nbaseline = média das 3 primeiras sessões no padrão (conf ≥ Moderada) → 100 (congelado)",desc:"Tira a condição da jogada: mede o motor a <b>145 bpm, no plano, em clima padrão</b>, como um índice (baseline = 100). <b>Sobe = motor melhor.</b> Sessões <b>fora do padrão</b> (calor, úmido, fora da base) não entram — ficam só no Pace-GAP@145. No gráfico, a linha <b>Todas as condições</b> é o Pace-GAP@145 no mesmo índice; a distância para o IMP é o <b>custo do contexto</b> (quanto o calor/altitude te tiram). <b>Confiança:</b> Moderada ≥8 min · Baixa 5–8 min · Dados insuficientes &lt;5 min (IMP nunca passa de Moderada na Fase 1). <b>Clima:</b> buscado automaticamente no Open-Meteo pelo GPS inicial + horário — nunca usa o sensor de pulso do relógio. <b>Sobreposição:</b> o Pace-GAP@145 mede o motor em qualquer condição; o IMP fixa também o clima e o terreno. <b>Fonte:</b> Vesterinen et al., 2014/2017.",fields:"stream 1 Hz (plano, 145±3) + clima do Open-Meteo (GPS + horário)"},
+ {cat:"Motor",key:"calor-sens",name:"Sensibilidade ao calor",conf:"exploratório",formula:"do modelo FC = a + b·v_GAP + c·temperatura + d·minuto (IMP Fase 2)\nsensibilidade = c (bpm/°C), com IC 95%\nse o IC incluir zero → c = 0 (sem correção de calor)",desc:"Quanto a <b>sua</b> FC sobe por grau de temperatura, estimado do seu próprio histórico — não de tabela. Vem do coeficiente <b>c</b> do modelo individual do IMP Fase 2 (regressão robusta sobre várias sessões, de ≥8 °C de amplitude). Se o intervalo de confiança incluir zero, o app assume <b>sem efeito de calor</b> e não corrige. <b>Exploratório</b> — nunca usa coeficientes da literatura; serve para interpretar o custo do contexto no IMP. <b>Fonte:</b> Vesterinen et al., 2017.",fields:"modelo FC~v_GAP+temp+min das sessões fáceis + clima do Open-Meteo"},
+ {cat:"Motor",key:"teste-motor",name:"Teste do Motor",conf:"alta",formula:"circuito plano fixo, mesmo horário · estágios por FC-alvo (ex.: 10 min aquec. + 6 min @135 + 6 min @145)\nmétrica por estágio = mediana da velocidade bruta nos últimos 3 min\nmarca o estágio se a FC média sair de ±3 bpm do alvo",desc:"Um teste controlado para ler o motor direto: no <b>mesmo circuito, horário e estágios de FC</b>, mede a velocidade sustentada em cada alvo. <b>Mais rápido no mesmo alvo de FC = motor melhor.</b> Estágios acima de 145 ficam desativados até a tíbia liberar. Mostra temperatura e orvalho; fora do padrão climático recebe etiqueta, e a confiança é <b>Alta</b> quando circuito, horário e clima batem. Usa a velocidade <b>bruta</b> (circuito plano), não o GAP. <b>Sobreposição:</b> o IMP padroniza as rodagens do dia a dia; o Teste do Motor é a medida limpa e repetível. <b>Fonte:</b> Vesterinen et al., 2017, J Strength Cond Res 31(1):233–243.",fields:"stream 1 Hz de uma sessão tipo 'Teste do Motor' + clima"},
  {cat:"Motor",name:"Efficiency Factor (EF)",conf:"alta",formula:"EF = velocidade_GAP (m/s) ÷ FC_média (bpm)",desc:"Quanta velocidade você entrega por batimento. <b>Sobe = motor mais eficiente.</b> Compare sempre rodagens fáceis parecidas; a régua é você vs. você. Alvo: partir de ~0,0139 e subir +5 a +8%.",fields:"velocidade-GAP, FC média"},
  {cat:"Motor",key:"arvore-ef",name:"Árvore da Eficiência (decomposição do EF)",conf:"média",formula:"m/batimento = (passos/batimento) × (m/passo)\nm/batimento = v_GAP×60 ÷ FC (= EF×60)\npassos/batimento = spm ÷ FC · m/passo = v_GAP×60 ÷ spm\nΔln(m/bat) = Δln(passos/bat) + Δln(m/passo) vs. média das 3 anteriores",desc:"Abre o EF em duas alavancas: <b>quantos passos você dá por batimento</b> (cardio-mecânico) e <b>quanto cada passo avança</b> (passada-GAP). Usa as médias das amostras válidas da sessão, então a identidade fecha exata. A decomposição em log diz que fração da variação do EF veio da cadência e que fração veio da passada. Rótulos: cadência↑ e EF estável = <i>passada encurtou sem custo (ganho mecânico)</i>; cadência↑ e EF↑ = <i>economia</i>; cadência↑ e EF↓ = <i>cadência com custo — revisar</i>; cadência estável e EF↑ = <i>motor: mais passada na mesma FC</i>. <b>Confiança: Moderada</b> — a identidade é exata, a interpretação é exploratória. <b>Sobreposição:</b> é o EF por outro ângulo; não é um KPI novo de economia, e sim o <i>porquê</i> dele mudar.",fields:"stream 1 Hz: velocidade-GAP, FC, cadência (spm)"},
  {cat:"Motor",key:"decoupling-mec",name:"Decoupling mecânico (passada)",conf:"média",formula:"mecânico% = (passada-GAP_1ª_metade − passada-GAP_2ª_metade) ÷ 1ª × 100\n(só sessões ≥40 min de tempo válido)",desc:"O irmão mecânico do decoupling cardíaco: quanto a <b>passada-GAP (m/passo)</b> encurta entre a 1ª e a 2ª metade. <b>Positivo = passada caiu no fim (fadiga mecânica).</b> Cruzado com o cardíaco vira uma matriz: FC sobe + passada estável → <i>deriva cardiovascular</i> (calor/hidratação/duração); ambos cedem → <i>fadiga global</i>; ambos estáveis → <i>sessão sob controle</i>. <b>Confiança: Moderada</b> (Exploratória com &lt;3 sessões). <b>Sobreposição:</b> complementa o decoupling cardíaco — um olha o coração, o outro a mecânica; juntos separam calor de fadiga real.",fields:"stream 1 Hz: velocidade-GAP, cadência; decoupling cardíaco (splits com FC)"},
@@ -2612,7 +2714,7 @@ function renderSyncCard(){
 ============================================================================ */
 var editingId=null;
 var modalExtras={}; // campos não-editáveis preservados no salvar (histograma de FC, esporte)
-var RUN_TYPES=[["facil","Fácil / rodagem"],["longão","Longão"],["tempo","Tempo"],["limiar","Limiar"],["intervalado","Intervalado"],["regenerativo","Regenerativo"],["teste","Teste"],["prova","Prova"]];
+var RUN_TYPES=[["facil","Fácil / rodagem"],["longão","Longão"],["tempo","Tempo"],["limiar","Limiar"],["intervalado","Intervalado"],["regenerativo","Regenerativo"],["teste_motor","Teste do Motor"],["teste","Teste"],["prova","Prova"]];
 var BIKE_TYPES=[["bike","Bike (base / Z2)"],["bike_int","Bike forte / intervalado"]];
 function fillTypeOptions(modal,selected){
   var sel=$("#f_type"),list=modal==="bike"?BIKE_TYPES:RUN_TYPES;
