@@ -108,6 +108,16 @@ Implementa o **Livro de Fórmulas Apex** direto no front, com o visual
   Sessões fora do padrão não entram no IMP (o Pace-GAP@145 continua). Botão para
   **buscar clima** de sessões antigas. Nenhum dado pessoal sai do aparelho além de
   coordenada + data/hora, e só quando há GPS.
+- **IMP Fase 2 (modelo individual) + Sensibilidade ao calor + Teste do Motor:**
+  com **≥10 sessões fáceis cobrindo ≥8 °C**, ajusta um modelo pessoal
+  `FC = a + b·v_GAP + c·temperatura + d·minuto` (regressão robusta Huber) e projeta
+  **todas** as sessões ao ponto-padrão (13 °C, min 20) — valida por **leave-one-session-out**
+  (fica na Fase 1 se o erro mediano passar de 4 bpm). O coeficiente **c** vira a
+  **Sensibilidade ao calor** (bpm/°C com IC 95%; se o IC inclui zero, assume sem efeito,
+  nunca usa coeficientes da literatura). O **Teste do Motor** é um tipo de sessão novo
+  (circuito plano fixo, estágios por FC-alvo — ex. 10 min aquec. + 6 min @135 + 6 min
+  @145): mede a velocidade (mediana dos últimos 3 min) por estágio, marca se a FC média
+  sair de ±3 bpm do alvo, e sugere a data do próximo teste. Fonte: Vesterinen et al., 2017.
 - **Recuperação (Apple Watch):** aba dedicada com **Diário** (sono, FC de
   repouso, HRV/SDNN, VO₂máx, ânimo) — preenchido à mão ou **importando o
   `export.xml` do app Saúde** (lido em pedaços no navegador; extrai só essas 4

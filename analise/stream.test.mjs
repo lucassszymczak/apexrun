@@ -216,6 +216,60 @@ ok("baseline = média das 3 primeiras (2,80)", near(bl.vBaseline, 2.80, 1e-9), b
 ok("índice 100 no baseline, >100 quando melhora", S.impIndex(2.80, bl.vBaseline) === 100 && S.impIndex(3.00, bl.vBaseline) > 100, S.impIndex(3.00, bl.vBaseline));
 ok("baseline exige 3 sessões (senão null)", S.impBaseline(impWs.slice(0, 2)).vBaseline === null, String(S.impBaseline(impWs.slice(0, 2)).vBaseline));
 
+console.log("\n== IMP Fase 2 (modelo individual) ==");
+// 12 sessões, temp 8..19 (amp 11); FC = 100 + 16·v_GAP + 0,8·temp + 0,1·min + viés da sessão
+function p2Sessions() {
+  const out = [];
+  for (let k = 0; k < 12; k++) {
+    const temp = 8 + k, bias = (k % 3) - 1; // −1,0,+1 por sessão
+    const aligned = [];
+    for (let i = 0; i < 300; i++) {
+      const vgap = 2.4 + 0.8 * Math.sin(i / 20), minute = 10 + i / 30;
+      const hr = 100 + 16 * vgap + 0.8 * temp + 0.1 * minute + bias;
+      aligned.push({ vgap: vgap, hr: hr, minute: minute });
+    }
+    out.push({ date: "2026-07-" + String(1 + k).padStart(2, "0"), temp: temp, aligned: aligned });
+  }
+  return out;
+}
+const p2 = S.impPhase2(p2Sessions());
+ok("gatilho atingido (≥10 sessões, ≥8 °C)", p2.ok && p2.nSessions >= 10 && p2.tempAmp >= 8, p2.ok ? (p2.nSessions + " sessões · amp " + p2.tempAmp + "°C") : p2.reason);
+ok("recupera b≈16 (FC por v_GAP)", p2.ok && Math.abs(p2.coef.b - 16) < 0.5, p2.ok && p2.coef.b.toFixed(2));
+ok("sensibilidade ao calor c≈0,8 bpm/°C", p2.ok && Math.abs(p2.heatSens - 0.8) < 0.3, p2.ok && p2.heatSens + " [" + p2.heatCI.join(",") + "]");
+ok("CI de c exclui zero (calor significativo)", p2.ok && !p2.cZero, p2.ok && JSON.stringify(p2.heatCI));
+ok("LOSO ≤ 4 bpm → modelo usável", p2.ok && p2.usable && p2.losoMedAbs <= 4, p2.ok && p2.losoMedAbs + " bpm");
+ok("projeta v_padrao por sessão (reflete o viés)", p2.ok && p2.perSession.length === 12 && p2.perSession[0].vPadrao != null, p2.ok && p2.perSession[0].vPadrao);
+// viés menor (−1) deve projetar v_padrao MAIOR que viés maior (+1): k=0 (−1) vs k=2 (+1)
+ok("sessão com menos custo projeta mais rápido", p2.ok && p2.perSession[0].vPadrao > p2.perSession[2].vPadrao, p2.ok && (p2.perSession[0].vPadrao + " > " + p2.perSession[2].vPadrao));
+// sem amplitude de temperatura → não ativa
+const p2noamp = S.impPhase2(p2Sessions().map(function (s) { return Object.assign({}, s, { temp: 12 }); }));
+ok("sem amplitude de temp → gatilho não atingido", p2noamp.ok === false, p2noamp.reason);
+// c sem efeito (CI inclui zero) → cZero
+function p2flat() { const out = []; for (let k = 0; k < 12; k++) { const temp = 8 + k, aligned = []; for (let i = 0; i < 300; i++) { const vgap = 2.4 + 0.8 * Math.sin(i / 20), minute = 10 + i / 30, noise = 2.5 * Math.sin(i * 1.7 + k * 2.3); aligned.push({ vgap: vgap, hr: 100 + 16 * vgap + 0.1 * minute + noise, minute: minute }); } out.push({ date: "2026-07-" + (1 + k), temp: temp, aligned: aligned }); } return out; }
+const p2z = S.impPhase2(p2flat());
+ok("sem efeito de calor → CI de c inclui zero (c=0)", p2z.ok && p2z.cZero, p2z.ok && JSON.stringify(p2z.heatCI));
+
+console.log("\n== Teste do Motor ==");
+// aquecimento 10 min + estágio 135 (6 min, speed 2,6) + estágio 145 (6 min, speed 2,9)
+function motorSamples() {
+  const s = [];
+  for (let t = 0; t <= (10 + 6 + 6) * 60; t++) {
+    let spd = 2.3, hr = 120;
+    if (t >= 600 && t < 960) { spd = 2.6; hr = 135; }
+    else if (t >= 960 && t < 1320) { spd = 2.9; hr = 145; }
+    s.push({ t, spd: spd, hr: hr, valid: true });
+  }
+  return s;
+}
+const stages = [{ name: "Aquecimento", min: 10, targetHr: null }, { name: "135 bpm", min: 6, targetHr: 135 }, { name: "145 bpm", min: 6, targetHr: 145 }];
+const mt = S.motorTest(motorSamples(), stages);
+ok("3 estágios medidos", mt.length === 3, mt.length);
+ok("estágio 135: velocidade ≈ 2,6 e FC no alvo", Math.abs(mt[1].speed - 2.6) < 0.05 && !mt[1].flagged, mt[1].speed + " m/s · FC " + mt[1].hrMean);
+ok("estágio 145: velocidade ≈ 2,9 e FC no alvo", Math.abs(mt[2].speed - 2.9) < 0.05 && !mt[2].flagged, mt[2].speed + " m/s · FC " + mt[2].hrMean);
+// FC fora de ±3 do alvo → marca o estágio
+const mtOff = S.motorTest((function () { const s = []; for (let t = 0; t <= 1320; t++) { let spd = 2.3, hr = 120; if (t >= 600 && t < 960) { spd = 2.6; hr = 141; } else if (t >= 960 && t < 1320) { spd = 2.9; hr = 145; } s.push({ t, spd, hr, valid: true }); } return s; })(), stages);
+ok("FC 141 no estágio 135 (>±3) → marcado", mtOff[1].flagged === true, "flagged=" + mtOff[1].flagged + " FC " + mtOff[1].hrMean);
+
 console.log("\n== retenção de streams ==");
 const ws = [];
 for (let i = 0; i < 25; i++) ws.push({ id: "w" + i, date: "2026-" + String(1 + (i % 9)).padStart(2, "0") + "-" + String(1 + (i % 27)).padStart(2, "0"), stream: { s: [1] } });
