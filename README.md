@@ -67,6 +67,18 @@ Implementa o **Livro de Fórmulas Apex** direto no front, com o visual
   "o mais novo vence" em conflitos, com **tombstones** para propagar exclusões.
   Requer aplicar a migração `supabase/migrations/*_analise_sync.sql` uma vez.
   Sem as chaves públicas no build, a sync fica desligada e tudo roda local.
+- **Pace-GAP @ FC_REF (145) — treino guiado por FC:** ao importar um `.FIT` de
+  corrida, o app reamostra o stream a **1 Hz**, calcula a **grade** (altitude
+  suavizada em janela ~50 m) e a **velocidade-GAP por amostra** (reusa o Minetti),
+  aplica as **exclusões** (<1,5 m/s, caminhada, 1os 10 min, saltos de FC, lacunas)
+  e mede o **Pace-GAP@145**: a mediana da velocidade-GAP quando a FC (defasada por
+  correlação cruzada) fica em 145±3 bpm — *na mesma FC, quanto pace de plano você
+  produz*. Confiança Alta/Moderada/Baixa (fallback por regressão robusta que **só
+  interpola**). Card **"Foco atual"**, **camada de verificação** (não salva calado
+  se faltar sinal ou >20% excluído), **tabela de auditoria** por sessão e ficha no
+  Livro de Fórmulas. Guarda um **stream reduzido** (~1 amostra/3 s) só nas sessões
+  recentes (**retenção** mantém o armazenamento limitado) + GPS inicial (clima
+  futuro). Não altera EF/decoupling/TRIMP. Fonte: Vesterinen et al., 2014.
 - **Recuperação (Apple Watch):** aba dedicada com **Diário** (sono, FC de
   repouso, HRV/SDNN, VO₂máx, ânimo) — preenchido à mão ou **importando o
   `export.xml` do app Saúde** (lido em pedaços no navegador; extrai só essas 4

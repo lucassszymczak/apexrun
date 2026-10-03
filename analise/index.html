@@ -627,6 +627,7 @@ function loadFitSdk(){
 function fitNum(x){return typeof x==="number"&&isFinite(x)?x:null;}
 function fitISODate(d){if(!(d instanceof Date)||isNaN(d))return null;return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");}
 function fitCadence(rpm){if(rpm==null)return null;return rpm<130?Math.round(rpm*2):Math.round(rpm);}
+var SEMI=180/2147483648; // semicircles → graus
 function fitNormRecords(rec){
   return (rec||[]).map(function(r){return{
     t:r.timestamp instanceof Date?r.timestamp.getTime()/1000:fitNum(r.timestamp),
@@ -635,6 +636,8 @@ function fitNormRecords(rec){
     hr:fitNum(r.heartRate),
     alt:fitNum(r.enhancedAltitude)!=null?fitNum(r.enhancedAltitude):fitNum(r.altitude),
     cad:fitNum(r.cadence)!=null?fitNum(r.cadence)+(fitNum(r.fractionalCadence)||0):null,
+    lat:fitNum(r.positionLat)!=null?r.positionLat*SEMI:null,
+    lon:fitNum(r.positionLong)!=null?r.positionLong*SEMI:null,
     temp:fitNum(r.temperature)
   };}).filter(function(r){return r.t!=null;}).sort(function(a,b){return a.t-b.t;});
 }
@@ -690,6 +693,105 @@ function fitHrHist(records){
   }
   return any?hist:null;
 }
+
+/* ============================================================================
+   MOTOR POR AMOSTRA (KPIs de FC × inclinação) — espelha analise/stream.mjs
+   (31 testes). Reusa gradeCostMult (Minetti); não altera EF/decoupling/TRIMP.
+============================================================================ */
+function strSpm(cad){if(cad==null)return null;return cad<130?Math.round(cad*2):Math.round(cad);}
+function vGap(speed,grade){if(speed==null||grade==null)return null;return speed*gradeCostMult(grade);}
+function resampleHz(records,hz,maxGapS){
+  hz=hz||1;maxGapS=maxGapS||5;
+  var recs=(records||[]).filter(function(r){return r&&fitNum(r.t)!=null;}).sort(function(a,b){return a.t-b.t;});
+  if(recs.length<2)return [];
+  var step=1/hz,t0=recs[0].t,tN=recs[recs.length-1].t,out=[],j=0,fields=["dist","speed","hr","alt","cad"];
+  for(var t=t0;t<=tN+1e-6;t+=step){
+    while(j<recs.length-1&&recs[j+1].t<=t)j++;
+    var a=recs[j],b=recs[Math.min(j+1,recs.length-1)],span=b.t-a.t;
+    var bigGap=span>maxGapS&&t>a.t+1e-6&&t<b.t-1e-6;
+    var f=span>0?clamp((t-a.t)/span,0,1):0,s={t:Math.round((t-t0)*1000)/1000,gap:bigGap};
+    for(var k=0;k<fields.length;k++){var fk=fields[k],va=fitNum(a[fk]),vb=fitNum(b[fk]);s[fk]=va==null?vb:(vb==null?va:va+(vb-va)*f);}
+    out.push(s);
+  }
+  return out;
+}
+function gradeSeries(samples,winM,clipPct){
+  winM=winM||50;clipPct=clipPct||25;var n=samples.length,grade=[];for(var q=0;q<n;q++)grade.push(null);
+  if(!n||samples[0].dist==null)return grade;
+  var half=winM/2,altSm=[];
+  for(var i=0;i<n;i++){var d=samples[i].dist;if(d==null){altSm.push(null);continue;}var sum=0,cnt=0;
+    for(var k=i;k>=0&&d-samples[k].dist<=half;k--){if(samples[k].alt!=null){sum+=samples[k].alt;cnt++;}}
+    for(var k2=i+1;k2<n&&samples[k2].dist-d<=half;k2++){if(samples[k2].alt!=null){sum+=samples[k2].alt;cnt++;}}
+    altSm.push(cnt?sum/cnt:samples[i].alt);}
+  for(var m=0;m<n;m++){var dm=samples[m].dist;if(dm==null)continue;var lo=m,hi=m;
+    while(lo>0&&dm-samples[lo].dist<half)lo--;while(hi<n-1&&samples[hi].dist-dm<half)hi++;
+    var dd=samples[hi].dist-samples[lo].dist;
+    if(dd>1&&altSm[lo]!=null&&altSm[hi]!=null)grade[m]=clamp(((altSm[hi]-altSm[lo])/dd)*100,-clipPct,clipPct);else grade[m]=0;}
+  return grade;
+}
+function preprocess(records,opts){
+  var o={hz:1,maxGapS:5,winM:50,firstMin:10,minSpeed:1.5,walkSpm:140,hrJump:15,gradeRegLimit:15};
+  if(opts)for(var kk in opts)o[kk]=opts[kk];
+  var rs=resampleHz(records,o.hz,o.maxGapS),grade=gradeSeries(rs,o.winM);
+  var hasHR=rs.some(function(s){return s.hr!=null;}),hasCad=rs.some(function(s){return s.cad!=null;}),hasAlt=rs.some(function(s){return s.alt!=null;});
+  var reasons={},samples=[],prevHr=null,prevT=null;
+  function bump(k){reasons[k]=(reasons[k]||0)+1;}
+  for(var i=0;i<rs.length;i++){
+    var r=rs[i],spm=strSpm(r.cad),g=grade[i];
+    var s={t:r.t,spd:r.speed!=null?Math.round(r.speed*1000)/1000:null,grade:g!=null?Math.round(g*10)/10:null,hr:r.hr!=null?Math.round(r.hr):null,spm:spm,vgap:vGap(r.speed,g),valid:true,inReg:true};
+    var hrArt=false;
+    if(s.hr!=null&&prevHr!=null&&prevT!=null){var dt=r.t-prevT;if(dt>0&&Math.abs(s.hr-prevHr)/dt>o.hrJump)hrArt=true;}
+    if(s.hr!=null){prevHr=s.hr;prevT=r.t;}
+    if(r.gap){s.valid=false;bump("lacuna>5s");}
+    if(r.t<o.firstMin*60){s.valid=false;bump("primeiros "+o.firstMin+" min");}
+    if(s.spd!=null&&s.spd<o.minSpeed){s.valid=false;bump("parado/<"+o.minSpeed+" m/s");}
+    if(spm!=null&&spm<o.walkSpm){s.valid=false;bump("caminhada (spm<"+o.walkSpm+")");}
+    if(hrArt){s.valid=false;bump("artefato de FC");}
+    if(s.hr==null){s.valid=false;bump("sem FC");}
+    if(g!=null&&Math.abs(g)>o.gradeRegLimit)s.inReg=false;
+    samples.push(s);
+  }
+  var total=samples.length,validN=samples.filter(function(s){return s.valid;}).length;
+  var excludedPct=total?Math.round((1-validN/total)*1000)/10:100;
+  var quality={totalSec:total,validSec:validN,validMin:Math.round(validN/60*10)/10,excludedPct:excludedPct,reasons:reasons,hasHR:hasHR,hasCad:hasCad,hasAlt:hasAlt,needsConfirm:(!hasHR||!hasCad||!hasAlt||excludedPct>20)};
+  return{samples:samples,grade:grade,quality:quality};
+}
+function reduceStream(samples,everyS){everyS=everyS||3;var s=[],next=0;for(var i=0;i<samples.length;i++){var x=samples[i];if(x.t+1e-9>=next){s.push({t:Math.round(x.t),spd:x.spd,grade:x.grade,hr:x.hr,spm:x.spm,v:x.valid?1:0});next=x.t+everyS;}}return{everyS:everyS,n:s.length,s:s};}
+function expandStream(stream){if(!stream||!stream.s)return [];return stream.s.map(function(x){return{t:x.t,spd:x.spd,grade:x.grade,hr:x.hr,spm:x.spm,vgap:vGap(x.spd,x.grade),valid:x.v!==0,inReg:true};});}
+function theilSen(xs,ys){var n=xs.length,slopes=[];for(var i=0;i<n;i++)for(var j=i+1;j<n;j++){var dx=xs[j]-xs[i];if(Math.abs(dx)<1e-9)continue;slopes.push((ys[j]-ys[i])/dx);}if(!slopes.length)return null;var b=median(slopes);var a=median(xs.map(function(x,ii){return ys[ii]-b*x;}));var yb=ys.reduce(function(s,y){return s+y;},0)/n,ssTot=0,ssRes=0;for(var m=0;m<n;m++){var pred=a+b*xs[m];ssRes+=(ys[m]-pred)*(ys[m]-pred);ssTot+=(ys[m]-yb)*(ys[m]-yb);}var r2=ssTot>0?1-ssRes/ssTot:0;return{a:a,b:b,r2:r2,n:n};}
+function sampleDt(samples){var d=[];for(var i=1;i<samples.length;i++){var x=samples[i].t-samples[i-1].t;if(x>0)d.push(x);}return median(d)||1;}
+function hrLag(samples,maxLagS){maxLagS=maxLagS||90;var dt=sampleDt(samples);
+  var v=samples.map(function(s){return s.valid?s.vgap:null;}),hr=samples.map(function(s){return s.valid?s.hr:null;});
+  function corrAt(lagIdx){var xs=[],ys=[];for(var i=0;i+lagIdx<samples.length;i++)if(v[i]!=null&&hr[i+lagIdx]!=null){xs.push(v[i]);ys.push(hr[i+lagIdx]);}
+    if(xs.length<30)return -2;var mx=xs.reduce(function(s,x){return s+x;},0)/xs.length,my=ys.reduce(function(s,y){return s+y;},0)/ys.length,nu=0,dx=0,dy=0;
+    for(var k=0;k<xs.length;k++){var a=xs[k]-mx,bb=ys[k]-my;nu+=a*bb;dx+=a*a;dy+=bb*bb;}return dx>0&&dy>0?nu/Math.sqrt(dx*dy):-2;}
+  var best=0,bestC=-2;for(var lag=0;lag<=maxLagS;lag+=dt){var c=corrAt(Math.round(lag/dt));if(c>bestC){bestC=c;best=Math.round(lag);}}
+  return{lagSec:best,corr:bestC>=-1?Math.round(bestC*1000)/1000:null};}
+function paceGapAtHR(samples,opts){
+  var o={fcRef:145,band:3,lagSec:0,win:[10,45]};if(opts)for(var kk in opts)o[kk]=opts[kk];
+  var w0=o.win[0]*60,w1=o.win[1]*60,dt=sampleDt(samples),lagIdx=Math.round(o.lagSec/dt),inWin=[];
+  for(var i=0;i<samples.length;i++){var s=samples[i],j=i+lagIdx;if(!s.valid||s.vgap==null||s.t<w0||s.t>w1)continue;
+    var hrL=(j<samples.length&&samples[j]&&samples[j].hr!=null&&samples[j].valid)?samples[j].hr:null;if(hrL==null)continue;inWin.push({vgap:s.vgap,hr:hrL});}
+  function toPace(v){return v>0?1000/v:null;}
+  if(!inWin.length)return{paceSec:null,vGap:null,confidence:"Dados insuficientes",minInBand:0,method:null};
+  var hrs=inWin.map(function(p){return p.hr;}),hrMin=Math.min.apply(null,hrs),hrMax=Math.max.apply(null,hrs);
+  var band=inWin.filter(function(p){return Math.abs(p.hr-o.fcRef)<=o.band;}),minInBand=Math.round((band.length*dt)/60*10)/10;
+  if(minInBand>=8){var v=median(band.map(function(p){return p.vgap;}));return{paceSec:toPace(v),vGap:v,confidence:minInBand>=15?"Alta":"Moderada",minInBand:minInBand,method:"mediana"};}
+  if(o.fcRef>=hrMin&&o.fcRef<=hrMax){var fit=theilSen(inWin.map(function(p){return p.vgap;}),inWin.map(function(p){return p.hr;}));
+    if(fit&&Math.abs(fit.b)>1e-6){var vv=(o.fcRef-fit.a)/fit.b;if(vv>0)return{paceSec:toPace(vv),vGap:vv,confidence:fit.r2>=0.5?"Moderada":"Baixa",minInBand:minInBand,method:"regressão",r2:Math.round(fit.r2*100)/100};}
+    if(band.length){var v2=median(band.map(function(p){return p.vgap;}));return{paceSec:toPace(v2),vGap:v2,confidence:"Baixa",minInBand:minInBand,method:"mediana"};}}
+  return{paceSec:null,vGap:null,confidence:"Dados insuficientes",minInBand:0,method:null,hrRange:[hrMin,hrMax]};
+}
+function pruneStreams(workouts,keepRecent){keepRecent=keepRecent||20;var ws=(workouts||[]).filter(function(w){return w&&w.stream;}).sort(function(a,b){return a.date<b.date?1:(a.date>b.date?-1:0);});var dropped=0;ws.forEach(function(w,i){if(i>=keepRecent){delete w.stream;w.streamPruned=true;dropped++;}});return dropped;}
+// computa os KPIs por amostra a partir dos records normalizados (corrida)
+function computeStreamKpis(records,a){
+  var pp=preprocess(records);
+  var lag=hrLag(pp.samples,90);
+  var fcRef=(a&&a.fcRef)||145,bandFc=(a&&a.bandFc)||3;
+  var pg=paceGapAtHR(pp.samples,{fcRef:fcRef,band:bandFc,lagSec:lag.lagSec,win:[10,45]});
+  return{quality:pp.quality,hrLagSec:lag.lagSec,paceGap:pg,stream:reduceStream(pp.samples,3)};
+}
+
 // modalidade a partir do sport do FIT: ciclismo → bike (cross-training), resto → corrida
 function modalFromSport(sport){return /cycl|bike|bicicl/i.test((sport||"").toString())?"bike":"corrida";}
 function fitMessagesToWorkout(messages){
@@ -717,6 +819,9 @@ function fitMessagesToWorkout(messages){
   var indoor=isBk&&(subSport.indexOf("indoor")>=0||subSport.indexOf("virtual")>=0||!(distKm>0.05));
   var kcal=fitNum(session.totalCalories)!=null?Math.round(session.totalCalories):null;
   var te=fitNum(session.totalTrainingEffect);
+  // GPS inicial (para clima futuro) e KPIs por amostra — só corrida com trajeto
+  var geo=null;for(var gi=0;gi<records.length;gi++){if(records[gi].lat!=null&&records[gi].lon!=null){geo={lat:Math.round(records[gi].lat*1e5)/1e5,lon:Math.round(records[gi].lon*1e5)/1e5};break;}}
+  var sk=null;if(!isBk){try{sk=computeStreamKpis(records,(typeof state!=="undefined"&&state.athlete)||null);}catch(e){sk=null;}}
   return{
     date:fitISODate(startDate)||new Date().toISOString().slice(0,10),
     modal:modal,
@@ -732,6 +837,11 @@ function fitMessagesToWorkout(messages){
     trainingEffect:te!=null?Math.round(te*10)/10:null,
     splits:isBk?null:fitBuildSplits(records),
     hrHist:fitHrHist(records),
+    geo:geo,
+    stream:sk?sk.stream:null,
+    quality:sk?sk.quality:null,
+    hrLagSec:sk?sk.hrLagSec:null,
+    paceGap:sk?sk.paceGap:null,
     sport:session.sport||null
   };
 }
@@ -886,7 +996,7 @@ function syncMergeWorkouts(aw,bw,deleted){var byId={};(aw||[]).concat(bw||[]).fo
 function syncMergeDaily(ad,bd){var byDate={};(ad||[]).concat(bd||[]).forEach(function(r){if(!r||!r.date)return;var prev=byDate[r.date];if(!prev){byDate[r.date]=r;return;}var newer=syncTs(r.updatedAt)>=syncTs(prev.updatedAt)?r:prev,older=newer===r?prev:r;byDate[r.date]=Object.assign({},syncStripEmpty(older),syncStripEmpty(newer));});return Object.keys(byDate).map(function(k){return byDate[k];}).sort(function(x,y){return x.date<y.date?-1:1;});}
 function syncMergeStates(a,b){a=a||{};b=b||{};var deleted=syncMergeDeleted(a.deleted,b.deleted);var workouts=syncMergeWorkouts(a.workouts,b.workouts,deleted);var daily=syncMergeDaily(a.daily,b.daily);var aa=a.athlete||{},ba=b.athlete||{};var athlete=syncTs(aa.updatedAt)>=syncTs(ba.updatedAt)?(a.athlete||b.athlete||{}):(b.athlete||a.athlete||{});var updatedAt=new Date(Math.max(syncTs(a.updatedAt),syncTs(b.updatedAt))).toISOString();return{athlete:athlete,workouts:workouts,daily:daily,deleted:deleted,updatedAt:updatedAt};}
 function currentPayload(){return{athlete:state.athlete,workouts:state.workouts,daily:state.daily||[],deleted:state.deleted||[],updatedAt:state.updatedAt||new Date().toISOString()};}
-function applyMerged(m){state.athlete=Object.assign({},DEFAULT_ATHLETE,m.athlete||state.athlete);state.workouts=m.workouts||[];state.daily=m.daily||[];state.deleted=m.deleted||[];state.updatedAt=m.updatedAt;delete state.seeded;save();}
+function applyMerged(m){state.athlete=Object.assign({},DEFAULT_ATHLETE,m.athlete||state.athlete);state.workouts=m.workouts||[];state.daily=m.daily||[];state.deleted=m.deleted||[];state.updatedAt=m.updatedAt;delete state.seeded;try{pruneStreams(state.workouts,20);}catch(e){}save();}
 function syncStatusHtml(){var s=_syncStatus;var map={idle:["—",""],syncing:["🔄 sincronizando…","var(--muted)"],ok:["✓ sincronizado"+(state.lastSyncAt?" · "+new Date(state.lastSyncAt).toLocaleString("pt-BR",{hour:"2-digit",minute:"2-digit"}):""),"var(--good)"],err:["⚠ "+(s.msg||"falha"),"var(--crit)"]};var m=map[s.state]||map.idle;return '<span style="color:'+(m[1]||"var(--muted)")+'">'+esc(m[0])+'</span>';}
 function setSyncStatus(st,msg){_syncStatus={state:st,msg:msg||""};var el2=document.getElementById("syncStatus");if(el2)el2.innerHTML=syncStatusHtml();}
 function syncPull(){var code=getSyncCode();return syncHashId(code).then(function(id){return sbRpc("analise_sync_get",{p_sync_id:id});}).then(function(rows){return rows&&rows[0]?rows[0]:null;});}
@@ -1266,6 +1376,28 @@ function renderPainel(v){
   // ---- alert banner ----
   if(a.alert){var b=el("div","banner warn");b.style.marginBottom="16px";b.innerHTML='<span class="bi">⚠</span><span>'+esc(a.alert)+'</span>';v.appendChild(b);}
 
+  // ---- FOCO ATUAL (Pace-GAP @ FC_REF) ----
+  var fcRef=a.fcRef||145;
+  var pgRuns=runs.filter(function(w){return w.paceGap&&w.paceGap.paceSec!=null;}).sort(function(x,y){return x.date<y.date?-1:x.date>y.date?1:0;});
+  if(pgRuns.length){
+    v.appendChild(sectionTitle("Foco atual"));
+    var pgPts=pgRuns.map(function(w){return{label:fmtDate(w.date),y:w.paceGap.paceSec,extra:w.paceGap.confidence};});
+    var last=pgRuns[pgRuns.length-1].paceGap;
+    var prev3=pgPts.slice(-4,-1).map(function(p){return p.y;});
+    var ma3=prev3.length?prev3.reduce(function(s,x){return s+x;},0)/prev3.length:null;
+    var dPct=ma3?((last.paceSec-ma3)/ma3)*100:null; // menor pace = melhor (negativo = melhorou)
+    var confMap={"Alta":"alta","Moderada":"média","Baixa":"baixa","Dados insuficientes":"sem dados"};
+    var pgCard=card("Pace-GAP @ "+fcRef+" bpm · esforço padronizado",confMap[last.confidence]||"média","pace-gap");
+    var vr=el("div");vr.style.cssText="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-top:8px";
+    vr.innerHTML='<div style="font-size:34px;font-weight:800;letter-spacing:-.02em;line-height:1">'+paceStr(last.paceSec)+'<small style="font-size:15px;color:var(--ink-2);font-weight:600"> /km</small></div>'+
+      (dPct!=null?'<span class="delta '+(dPct<=-1?"up":dPct>=1?"down":"flat")+'">'+(dPct<0?"▼ ":dPct>0?"▲ ":"→ ")+Math.abs(dPct).toFixed(1)+'% vs média 3</span>':'')+
+      '<span class="sub">na mesma FC — quanto de plano você produz</span>';
+    pgCard.appendChild(vr);
+    pgCard.appendChild(chartBox(lineChart({series:[{name:"Pace-GAP@"+fcRef,points:pgPts,colorVar:seriesColor(1)}],yfmt:function(vv){return paceStr(vv);},reverseY:true})));
+    pgCard.appendChild(hint("Mediana da velocidade-GAP quando a FC (defasada) fica em <b>"+fcRef+"±3 bpm</b>, nos min 10–45. <b>Menor pace = mais trabalho de plano no mesmo esforço.</b> Confiança por sessão: Alta ≥15 min na banda · Moderada 8–15 min ou regressão (R²≥0,5) · Baixa. Precisa do stream por amostra do .FIT — reimporte treinos antigos."));
+    v.appendChild(pgCard);
+  }
+
   // ---- PAINEL GERAL (hero tiles) ----
   v.appendChild(sectionTitle("Painel geral · dados reais"));
   var hero=el("div","grid g-4");
@@ -1498,6 +1630,26 @@ function renderPainel(v){
   tl.appendChild(timelineEl(ws));
   lower2.appendChild(tl);
   v.appendChild(lower2);
+
+  // ---- AUDITORIA DAS SESSÕES (.FIT por amostra) ----
+  var aud=runs.filter(function(w){return w.quality;}).sort(function(x,y){return x.date<y.date?1:x.date>y.date?-1:0;});
+  if(aud.length){
+    var ac2=card("Auditoria das sessões (.FIT)","alta");
+    var at=el("div");at.style.cssText="overflow:auto;margin-top:8px";
+    var t2=el("table");t2.innerHTML='<thead><tr><th>Data</th><th class="num">Válidos</th><th class="num">Excl.</th><th class="num">Defas.</th><th>Pace-GAP@145</th><th>Motivos</th></tr></thead>';
+    var tb2=el("tbody");
+    aud.slice(0,16).forEach(function(w){var q=w.quality,pg=w.paceGap,mot=[];for(var rk in q.reasons)mot.push(rk);
+      var r=el("tr");r.innerHTML='<td>'+fmtDateFull(w.date)+'</td>'+
+        '<td class="num">'+q.validMin+' min</td>'+
+        '<td class="num"'+(q.excludedPct>20?' style="color:var(--crit)"':'')+'>'+q.excludedPct+'%</td>'+
+        '<td class="num">'+(w.hrLagSec!=null?w.hrLagSec+"s":"—")+'</td>'+
+        '<td>'+(pg&&pg.paceSec?paceStr(pg.paceSec)+" <span class=\"sub\">"+pg.confidence+"</span>":(pg?pg.confidence:"—"))+(w.streamPruned?' <span class="sub">(resumido)</span>':'')+'</td>'+
+        '<td class="sub">'+esc(mot.slice(0,3).join(" · ")||"—")+'</td>';
+      tb2.appendChild(r);});
+    t2.appendChild(tb2);at.appendChild(t2);ac2.appendChild(at);
+    ac2.appendChild(hint("Transparência do pré-processamento: minutos válidos, % excluído, defasagem de FC usada e a confiança do Pace-GAP por sessão. &gt;20% excluído aparece em vermelho. Sessões antigas podem aparecer como <b>(resumido)</b> — o stream por amostra é mantido só nas mais recentes."));
+    v.appendChild(ac2);
+  }
 }
 
 function coachInsight(ws,a,x){
@@ -2007,6 +2159,7 @@ function renderForca(v){
 
 /* -------- KPIs (referência) -------- */
 var KPI_DOCS=[
+ {cat:"Motor",name:"Pace-GAP @ FC_REF (145)",conf:"alta*",formula:"mediana da velocidade-GAP nas amostras com FC (defasada) em 145±3 bpm, min 10–45\nfallback: regressão robusta (Theil-Sen) FC ~ v_GAP, lida em 145 — só interpola, nunca extrapola",desc:"Na <b>mesma FC</b>, quanto pace de plano você produz. É o comparador do treino guiado por FC — o pace bruto deixou de comparar em terreno ondulado. <b>Menor = melhor.</b> Confiança: <b>Alta ≥15 min</b> na banda · <b>Moderada 8–15 min</b> ou regressão (R²≥0,5) · <b>Baixa</b> · <b>Dados insuficientes</b> se 145 estiver fora da faixa de FC observada. Contexto exibido sem correção: temperatura, elevação e duração. <b>Limitações:</b> precisa do stream por amostra do .FIT (reimporte treinos antigos); indoor/sem FC não entra. <b>Sobreposição com outros KPIs:</b> o EF mede economia em qualquer intensidade (a FC tem intercepto); o Pace-GAP@145 fixa a FC e remove esse viés — são complementares. <b>Fonte:</b> Vesterinen et al., 2014, J Strength Cond Res 28(4):902–908.",fields:"stream 1 Hz do .FIT: FC, velocidade, altitude (grade via GAP)"},
  {cat:"Motor",name:"Efficiency Factor (EF)",conf:"alta",formula:"EF = velocidade_GAP (m/s) ÷ FC_média (bpm)",desc:"Quanta velocidade você entrega por batimento. <b>Sobe = motor mais eficiente.</b> Compare sempre rodagens fáceis parecidas; a régua é você vs. você. Alvo: partir de ~0,0139 e subir +5 a +8%.",fields:"velocidade-GAP, FC média"},
  {cat:"Motor",name:"Decoupling (pace:FC)",conf:"alta",formula:"decoupling% = (EF_1ª_metade − EF_2ª_metade) ÷ EF_1ª_metade × 100",desc:"Quanto a relação pace÷FC se deteriora entre a 1ª e a 2ª metade. <b>&lt;5% base sólida · 5–8% limítrofe · &gt;8% investigar.</b> Negativo nos longões = você fica mais eficiente no fim (closer).",fields:"splits com FC por km, ou metades manuais"},
  {cat:"Motor",name:"VO₂máx",conf:"média",formula:"estimativa de relógio/TECP (erro ~5–10%)",desc:"O tamanho bruto do motor aeróbico. Homem 30–39: <b>bom 36–42 · excelente 43–52</b>. O EF é o quanto você aproveita desse teto.",fields:"informado por você"},
@@ -2210,13 +2363,23 @@ function openModal(id,prefill,fromFit){
   editingId=id||null;
   var w=id?state.workouts.find(function(x){return x.id===id;}):null;
   var s=w||prefill||null; // fonte dos valores
-  modalExtras={hrHist:s&&s.hrHist?s.hrHist:null,sport:s&&s.sport?s.sport:null,bikeRpm:s&&s.bikeRpm!=null?s.bikeRpm:null,trainingEffect:s&&s.trainingEffect!=null?s.trainingEffect:null};
+  modalExtras={hrHist:s&&s.hrHist?s.hrHist:null,sport:s&&s.sport?s.sport:null,bikeRpm:s&&s.bikeRpm!=null?s.bikeRpm:null,trainingEffect:s&&s.trainingEffect!=null?s.trainingEffect:null,
+    stream:s&&s.stream?s.stream:null,quality:s&&s.quality?s.quality:null,paceGap:s&&s.paceGap?s.paceGap:null,hrLagSec:s&&s.hrLagSec!=null?s.hrLagSec:null,geo:s&&s.geo?s.geo:null};
   var modal=s&&s.modal?s.modal:(s&&isBike(s)?"bike":"corrida");
   $("#modalTitle").textContent=w?"Editar treino":(fromFit?"Revisar treino do .FIT":"Novo treino");
   $("#fitBanner").style.display=fromFit?"flex":"none";
-  if(fromFit){$("#fitBanner").innerHTML='<span class="bi">⬆</span><div>'+(modal==="bike"
+  if(fromFit){
+    var qline="";
+    if(s&&s.quality){var q=s.quality;var motivos=[];for(var rk in q.reasons)motivos.push(rk+" ("+q.reasons[rk]+"s)");
+      qline='<div style="margin-top:8px;font-size:12.5px;'+(q.needsConfirm?'color:var(--crit)':'color:var(--ink-2)')+'">'+
+        (q.needsConfirm?'⚠ <b>Confira antes de salvar:</b> ':'✓ ')+
+        q.validMin+' min válidos · '+q.excludedPct+'% excluído'+
+        (!q.hasHR?' · <b>sem FC</b>':'')+(!q.hasCad?' · <b>sem cadência</b>':'')+(!q.hasAlt?' · <b>sem altitude</b>':'')+
+        (s.paceGap&&s.paceGap.paceSec?' · Pace-GAP@145 '+paceStr(s.paceGap.paceSec)+'/km ('+s.paceGap.confidence+')':(s.paceGap?' · Pace-GAP@145: '+s.paceGap.confidence:''))+
+        (motivos.length?'<br><span class="sub">Excluído: '+esc(motivos.slice(0,4).join(" · "))+'</span>':'')+'</div>';}
+    $("#fitBanner").innerHTML='<span class="bi">⬆</span><div>'+(modal==="bike"
     ?'<b>Bike lida do .FIT.</b> Tempo, FC, zonas e calorias já entraram — a bike vai para a <b>carga (TRIMP) e a forma</b>. Confira o <b>Tipo</b> e, se quiser, o <b>esforço (RPE)</b>.'
-    :'<b>Treino lido do .FIT.</b> Os dados do relógio já entraram (distância, FC, cadência, elevação e splits). Confirme o <b>Tipo</b> e preencha em <b>Percepção &amp; recuperação</b> o que o relógio não grava — <b>esforço (RPE), sono e dor</b>.')+'</div>';}
+    :'<b>Treino lido do .FIT.</b> Os dados do relógio já entraram (distância, FC, cadência, elevação e splits). Confirme o <b>Tipo</b> e preencha em <b>Percepção &amp; recuperação</b> o que o relógio não grava — <b>esforço (RPE), sono e dor</b>.')+qline+'</div>';}
   var mb=$("#manualBlock");mb.classList.remove("flash");if(fromFit){void mb.offsetWidth;mb.classList.add("flash");}
   $("#modalDelete").style.display=w?"inline-flex":"none";
   $("#f_modal").value=modal;
@@ -2306,6 +2469,11 @@ function saveModal(){
     splits:splits||null,
     hrHist:modalExtras.hrHist||null,
     sport:modalExtras.sport||null,
+    stream:isBk?null:(modalExtras.stream||null),
+    quality:isBk?null:(modalExtras.quality||null),
+    paceGap:isBk?null:(modalExtras.paceGap||null),
+    hrLagSec:isBk?null:(modalExtras.hrLagSec!=null?modalExtras.hrLagSec:null),
+    geo:modalExtras.geo||null,
     updatedAt:new Date().toISOString()
   };
   if(editingId){
@@ -2339,7 +2507,7 @@ function saveModal(){
   state.workouts.push(w);
   finalizeSave("Treino registrado");
 }
-function finalizeSave(msg){touch();save();scheduleSync();closeModal();toast(msg);currentTab="painel";setActiveTab();render();}
+function finalizeSave(msg){try{pruneStreams(state.workouts,20);}catch(e){}touch();save();scheduleSync();closeModal();toast(msg);currentTab="painel";setActiveTab();render();}
 function askChoice(title,message,choices){
   return new Promise(function(resolve){
     var bg=el("div","choice-bg");
