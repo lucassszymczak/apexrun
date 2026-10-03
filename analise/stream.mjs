@@ -346,7 +346,62 @@ export function downgradeConf(conf) {
   return i < 0 || i >= order.length - 1 ? conf : order[i + 1];
 }
 
-// --- 13) retenção: mantém o stream só nas sessões mais recentes -----------
+// --- 13) Perfil de inclinação (3.6) — INDICADOR EXPLORATÓRIO --------------
+// Modelo individual FC ~ v_GAP com amostras planas (|grade|≤flatGrade) de várias
+// sessões fáceis; resíduo por amostra = FC real (defasada) − FC prevista, agregado
+// por faixa de grade. NUNCA altera os coeficientes do GAP — apenas reporta.
+function _bandIdx(g) { if (g <= -5) return 0; if (g < -2) return 1; if (g <= 2) return 2; if (g <= 5) return 3; return 4; }
+function _cap(arr, max) { if (arr.length <= max) return arr; const step = arr.length / max, out = []; for (let i = 0; i < arr.length; i += step) out.push(arr[Math.floor(i)]); return out; }
+export function gradeProfile(sessions, opts = {}) {
+  const o = Object.assign({ lagSec: 0, flatGrade: 2, minMinPerBand: 3, maxFit: 500 }, opts);
+  const BANDS = ["<−5%", "−5 a −2%", "±2%", "2 a 5%", ">5%"];
+  const mean = (a) => (a.length ? a.reduce((s, x) => s + x, 0) / a.length : null);
+  const perSession = [], pool = [];
+  for (const s of sessions) {
+    if (!s || !s.length) continue;
+    const dt = sampleDt(s), lagIdx = Math.round(o.lagSec / dt), al = [];
+    for (let i = 0; i < s.length; i++) {
+      const a = s[i], j = i + lagIdx;
+      if (!a.valid || a.vgap == null || a.grade == null) continue;
+      const hr = (j < s.length && s[j] && s[j].valid && s[j].hr != null) ? s[j].hr : null;
+      if (hr == null) continue;
+      const smp = { vgap: a.vgap, hr, spm: a.spm, grade: a.grade, dt };
+      al.push(smp); pool.push(smp);
+    }
+    if (al.length) perSession.push(al);
+  }
+  const flat = pool.filter((p) => Math.abs(p.grade) <= o.flatGrade);
+  if (flat.length < 20) return { ok: false, reason: "poucas amostras planas", nSessions: perSession.length };
+  const flatCap = _cap(flat, o.maxFit);
+  const fit = theilSen(flatCap.map((p) => p.vgap), flatCap.map((p) => p.hr));
+  if (!fit) return { ok: false, reason: "regressão falhou", nSessions: perSession.length };
+  const predict = (vg) => fit.a + fit.b * vg;
+  const agg = BANDS.map(() => ({ res: [], spm: [], mps: [], sec: 0 }));
+  for (const p of pool) {
+    const A = agg[_bandIdx(p.grade)];
+    A.res.push(p.hr - predict(p.vgap));
+    if (p.spm != null && p.spm > 0) { A.spm.push(p.spm); A.mps.push(p.vgap * 60 / p.spm); }
+    A.sec += p.dt;
+  }
+  const rows = BANDS.map((b, i) => {
+    const A = agg[i], min = Math.round(A.sec / 60 * 10) / 10;
+    return { band: b, residual: A.res.length ? Math.round(mean(A.res) * 10) / 10 : null, spm: A.spm.length ? Math.round(mean(A.spm)) : null, mPerStep: A.mps.length ? Math.round(mean(A.mps) * 1000) / 1000 : null, minutes: min, show: min >= o.minMinPerBand };
+  });
+  // rótulo: resíduo médio em subida (faixas >2%) e nº de sessões com subida positiva
+  const upPool = pool.filter((p) => p.grade > 2), upResidual = upPool.length ? mean(upPool.map((p) => p.hr - predict(p.vgap))) : null;
+  let upPosSessions = 0;
+  for (const al of perSession) { const up = al.filter((p) => p.grade > 2); if (up.length) { const r = mean(up.map((p) => p.hr - predict(p.vgap))); if (r != null && r > 0) upPosSessions++; } }
+  const upShown = rows[3].show || rows[4].show;
+  let label = "Sem subida suficiente para avaliar";
+  if (upShown && upResidual != null) {
+    if (upResidual > 1 && upPosSessions >= 3) label = "Subida custa mais que o modelo GAP prevê";
+    else if (Math.abs(upResidual) <= 1) label = "GAP calibrado para o atleta";
+    else label = "Subida: resíduo " + (upResidual >= 0 ? "+" : "") + upResidual.toFixed(1) + " bpm";
+  }
+  return { ok: true, rows, fit: { a: fit.a, b: fit.b, r2: Math.round(fit.r2 * 100) / 100, n: fit.n }, nSessions: perSession.length, upPosSessions, upResidual: upResidual != null ? Math.round(upResidual * 10) / 10 : null, label };
+}
+
+// --- 14) retenção: mantém o stream só nas sessões mais recentes -----------
 // Remove w.stream (mantém agregados/resumo) das sessões além de keepRecent com stream.
 export function pruneStreams(workouts, keepRecent = 20) {
   const withStream = (workouts || []).filter((w) => w && w.stream).sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));

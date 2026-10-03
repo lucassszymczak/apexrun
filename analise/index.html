@@ -819,6 +819,28 @@ function decoupleMatrix(cardiacPct,mechPct,opts){var o={neutralPct:2,cardiacThre
   if(drift&&!strideFell)return"Deriva cardiovascular (calor/hidratação/duração)";if(drift&&strideFell)return"Fadiga global";if(!drift&&!strideFell)return"Sessão sob controle";return"Passada cedeu sem custo cardíaco — forma/força";}
 function paceRefSuggest(workouts){var vals=(workouts||[]).filter(function(w){return w&&w.paceGap&&w.paceGap.paceSec!=null&&w.paceGap.confidence!=="Dados insuficientes";}).map(function(w){return w.paceGap.paceSec;});if(vals.length<2)return null;return Math.round(median(vals)/5)*5;}
 function downgradeConf(conf){var order=["Alta","Moderada","Baixa","Dados insuficientes"],i=order.indexOf(conf);return i<0||i>=order.length-1?conf:order[i+1];}
+// Perfil de inclinação (3.6) — exploratório. Modelo FC~v_GAP nas planas; resíduo por faixa.
+function gradeBandIdx(g){if(g<=-5)return 0;if(g<-2)return 1;if(g<=2)return 2;if(g<=5)return 3;return 4;}
+function capArr(arr,max){if(arr.length<=max)return arr;var step=arr.length/max,out=[];for(var i=0;i<arr.length;i+=step)out.push(arr[Math.floor(i)]);return out;}
+function gradeProfile(sessions,opts){var o={lagSec:0,flatGrade:2,minMinPerBand:3,maxFit:500};if(opts)for(var kk in opts)o[kk]=opts[kk];
+  var BANDS=["<−5%","−5 a −2%","±2%","2 a 5%",">5%"];function mean(a){return a.length?a.reduce(function(s,x){return s+x;},0)/a.length:null;}
+  var perSession=[],pool=[];
+  for(var si=0;si<sessions.length;si++){var s=sessions[si];if(!s||!s.length)continue;var dt=sampleDt(s),lagIdx=Math.round(o.lagSec/dt),al=[];
+    for(var i=0;i<s.length;i++){var a=s[i],j=i+lagIdx;if(!a.valid||a.vgap==null||a.grade==null)continue;var hr=(j<s.length&&s[j]&&s[j].valid&&s[j].hr!=null)?s[j].hr:null;if(hr==null)continue;var smp={vgap:a.vgap,hr:hr,spm:a.spm,grade:a.grade,dt:dt};al.push(smp);pool.push(smp);}
+    if(al.length)perSession.push(al);}
+  var flat=pool.filter(function(p){return Math.abs(p.grade)<=o.flatGrade;});
+  if(flat.length<20)return{ok:false,reason:"poucas amostras planas",nSessions:perSession.length};
+  var flatCap=capArr(flat,o.maxFit),fit=theilSen(flatCap.map(function(p){return p.vgap;}),flatCap.map(function(p){return p.hr;}));
+  if(!fit)return{ok:false,reason:"regressão falhou",nSessions:perSession.length};
+  function predict(vg){return fit.a+fit.b*vg;}
+  var agg=BANDS.map(function(){return{res:[],spm:[],mps:[],sec:0};});
+  for(var k=0;k<pool.length;k++){var p=pool[k],A=agg[gradeBandIdx(p.grade)];A.res.push(p.hr-predict(p.vgap));if(p.spm!=null&&p.spm>0){A.spm.push(p.spm);A.mps.push(p.vgap*60/p.spm);}A.sec+=p.dt;}
+  var rows=BANDS.map(function(b,i){var A=agg[i],min=Math.round(A.sec/60*10)/10;return{band:b,residual:A.res.length?Math.round(mean(A.res)*10)/10:null,spm:A.spm.length?Math.round(mean(A.spm)):null,mPerStep:A.mps.length?Math.round(mean(A.mps)*1000)/1000:null,minutes:min,show:min>=o.minMinPerBand};});
+  var upPool=pool.filter(function(p){return p.grade>2;}),upResidual=upPool.length?mean(upPool.map(function(p){return p.hr-predict(p.vgap);})):null,upPosSessions=0;
+  for(var m=0;m<perSession.length;m++){var up=perSession[m].filter(function(p){return p.grade>2;});if(up.length){var r=mean(up.map(function(p){return p.hr-predict(p.vgap);}));if(r!=null&&r>0)upPosSessions++;}}
+  var upShown=rows[3].show||rows[4].show,label="Sem subida suficiente para avaliar";
+  if(upShown&&upResidual!=null){if(upResidual>1&&upPosSessions>=3)label="Subida custa mais que o modelo GAP prevê";else if(Math.abs(upResidual)<=1)label="GAP calibrado para o atleta";else label="Subida: resíduo "+(upResidual>=0?"+":"")+upResidual.toFixed(1)+" bpm";}
+  return{ok:true,rows:rows,fit:{a:fit.a,b:fit.b,r2:Math.round(fit.r2*100)/100,n:fit.n},nSessions:perSession.length,upPosSessions:upPosSessions,upResidual:upResidual!=null?Math.round(upResidual*10)/10:null,label:label};}
 // computa os KPIs por amostra a partir dos records normalizados (corrida)
 function computeStreamKpis(records,a){
   var pp=preprocess(records);
@@ -1515,6 +1537,29 @@ function renderPainel(v){
     }
 
     v.appendChild(grid1);
+  }
+
+  // ---- PERFIL DE INCLINAÇÃO (3.6) · exploratório ----
+  var easyStream=easyRuns(runs).filter(function(w){return w.stream;}).sort(byDateAsc);
+  if(easyStream.length>=2){
+    var last6=easyStream.slice(-6).map(function(w){return expandStream(w.stream);});
+    var gp=gradeProfile(last6,{lagSec:ml.lagSec});
+    if(gp.ok){
+      var shown=gp.rows.filter(function(r){return r.show;});
+      if(shown.length){
+        v.appendChild(sectionTitle("Perfil de inclinação · como o relevo mexe na sua FC"));
+        var gcard=card("Resíduo de FC por faixa de inclinação","exploratório","perfil-incl");
+        var gp2=el("div");gp2.style.cssText="margin-top:6px";gp2.innerHTML='<span class="pill">'+esc(gp.label)+'</span> <span class="sub">modelo FC = '+gp.fit.a.toFixed(0)+' + '+gp.fit.b.toFixed(1)+'·v_GAP · R² '+gp.fit.r2.toFixed(2)+' · '+gp.nSessions+' sessões fáceis</span>';
+        gcard.appendChild(gp2);
+        gcard.appendChild(chartBox(barChart({bars:shown.map(function(r){return{label:r.band,y:r.residual,extra:(r.spm?r.spm+" spm · ":"")+r.minutes+" min",color:r.residual>1?"var(--crit)":r.residual<-1?"var(--good)":"var(--warn)"};}),yfmt:function(vv){return(vv>0?"+":"")+vv.toFixed(1)+" bpm";},zeroLine:true})));
+        var gt=el("div");gt.style.cssText="overflow:auto;margin-top:8px";
+        var gtbl=el("table");var gh='<thead><tr><th>Faixa</th><th class="num">Resíduo</th><th class="num">Cadência</th><th class="num">Passada</th><th class="num">Min</th></tr></thead><tbody>';
+        shown.forEach(function(r){gh+='<tr><td>'+esc(r.band)+'</td><td class="num"'+(r.residual>1?' style="color:var(--crit)"':r.residual<-1?' style="color:var(--good)"':'')+'>'+(r.residual>0?"+":"")+r.residual.toFixed(1)+' bpm</td><td class="num">'+(r.spm||"—")+'</td><td class="num">'+(r.mPerStep!=null?r.mPerStep.toFixed(3)+" m":"—")+'</td><td class="num">'+r.minutes+'</td></tr>';});
+        gh+='</tbody>';gtbl.innerHTML=gh;gt.appendChild(gtbl);gcard.appendChild(gt);
+        gcard.appendChild(hint("Modelo pessoal FC ~ velocidade-GAP ajustado nas <b>amostras planas</b> (|inclinação| ≤2%) das últimas 6 sessões fáceis. O resíduo é quanto sua FC real (defasada) fica <b>acima (+)</b> ou <b>abaixo (−)</b> do que o GAP prevê, por faixa de inclinação. <b>Exploratório</b> — nunca mexe nos coeficientes do GAP, só reporta. Faixas com &lt;3 min não aparecem."));
+        v.appendChild(gcard);
+      }
+    }
   }
 
   // ---- PAINEL GERAL (hero tiles) ----
@@ -2285,6 +2330,7 @@ var KPI_DOCS=[
  {cat:"Motor",key:"arvore-ef",name:"Árvore da Eficiência (decomposição do EF)",conf:"média",formula:"m/batimento = (passos/batimento) × (m/passo)\nm/batimento = v_GAP×60 ÷ FC (= EF×60)\npassos/batimento = spm ÷ FC · m/passo = v_GAP×60 ÷ spm\nΔln(m/bat) = Δln(passos/bat) + Δln(m/passo) vs. média das 3 anteriores",desc:"Abre o EF em duas alavancas: <b>quantos passos você dá por batimento</b> (cardio-mecânico) e <b>quanto cada passo avança</b> (passada-GAP). Usa as médias das amostras válidas da sessão, então a identidade fecha exata. A decomposição em log diz que fração da variação do EF veio da cadência e que fração veio da passada. Rótulos: cadência↑ e EF estável = <i>passada encurtou sem custo (ganho mecânico)</i>; cadência↑ e EF↑ = <i>economia</i>; cadência↑ e EF↓ = <i>cadência com custo — revisar</i>; cadência estável e EF↑ = <i>motor: mais passada na mesma FC</i>. <b>Confiança: Moderada</b> — a identidade é exata, a interpretação é exploratória. <b>Sobreposição:</b> é o EF por outro ângulo; não é um KPI novo de economia, e sim o <i>porquê</i> dele mudar.",fields:"stream 1 Hz: velocidade-GAP, FC, cadência (spm)"},
  {cat:"Motor",key:"decoupling-mec",name:"Decoupling mecânico (passada)",conf:"média",formula:"mecânico% = (passada-GAP_1ª_metade − passada-GAP_2ª_metade) ÷ 1ª × 100\n(só sessões ≥40 min de tempo válido)",desc:"O irmão mecânico do decoupling cardíaco: quanto a <b>passada-GAP (m/passo)</b> encurta entre a 1ª e a 2ª metade. <b>Positivo = passada caiu no fim (fadiga mecânica).</b> Cruzado com o cardíaco vira uma matriz: FC sobe + passada estável → <i>deriva cardiovascular</i> (calor/hidratação/duração); ambos cedem → <i>fadiga global</i>; ambos estáveis → <i>sessão sob controle</i>. <b>Confiança: Moderada</b> (Exploratória com &lt;3 sessões). <b>Sobreposição:</b> complementa o decoupling cardíaco — um olha o coração, o outro a mecânica; juntos separam calor de fadiga real.",fields:"stream 1 Hz: velocidade-GAP, cadência; decoupling cardíaco (splits com FC)"},
  {cat:"Mecânica",key:"cad-ref",name:"Cadência @ ritmo-ref",conf:"média",formula:"mediana do spm nas amostras com pace-GAP em RITMO_REF ± 15 s/km (min 5 min)\nadesão = % do tempo em movimento com spm entre 170 e 176\nRITMO_REF = mediana do pace-GAP das sessões fáceis, arredondada a 5 s/km",desc:"Cadência comparada <b>sempre no mesmo ritmo</b> (não no mesmo esforço): remove o efeito de correr mais rápido/devagar. Mostra também a <b>adesão</b> — quanto do tempo você passou na faixa-alvo 170–176 spm. Linhas de referência: <b>meta 173</b>, baseline 168. <b>Confiança:</b> Alta ≥10 min no ritmo-ref · Moderada 5–10 min · Dados insuficientes &lt;5 min. <b>Sobreposição:</b> a Cadência média (seção Mecânica) é bruta; esta fixa o ritmo para comparar maçãs com maçãs. <b>Fonte:</b> Heiderscheit et al., 2011, Med Sci Sports Exerc 43(2):296–302.",fields:"stream 1 Hz: cadência (spm), velocidade-GAP"},
+ {cat:"Mecânica",key:"perfil-incl",name:"Perfil de inclinação (resíduo de FC)",conf:"exploratório",formula:"modelo pessoal: FC ≈ a + b·v_GAP (Theil-Sen) nas amostras planas (|grade|≤2%) das últimas 6 sessões fáceis\nresíduo = FC real (defasada) − FC prevista, agregado por faixa: <−5% · −5 a −2% · ±2% · 2 a 5% · >5%",desc:"Indicador <b>exploratório</b>: compara a sua FC real com a que o modelo GAP prevê, faixa a faixa de inclinação. <b>Resíduo positivo em subida</b> = subir custa mais do que o GAP (Minetti) assume para você; <b>≈0</b> = o GAP está calibrado para o seu caso. Por faixa mostra resíduo (bpm), cadência, passada-GAP e minutos (mínimo 3 min para exibir). <b>Nunca</b> altera os coeficientes do GAP automaticamente — só reporta, para você decidir. <b>Sobreposição:</b> o GAP (Carga) assume custos fixos de subida/descida; este perfil mede o <i>seu</i> desvio em relação a eles. Precisa de ao menos 2 sessões fáceis com stream; usa a defasagem de FC do ciclo (3.3).",fields:"stream 1 Hz de várias sessões: FC, velocidade-GAP, inclinação, cadência"},
  {cat:"Motor",name:"Decoupling (pace:FC)",conf:"alta",formula:"decoupling% = (EF_1ª_metade − EF_2ª_metade) ÷ EF_1ª_metade × 100",desc:"Quanto a relação pace÷FC se deteriora entre a 1ª e a 2ª metade. <b>&lt;5% base sólida · 5–8% limítrofe · &gt;8% investigar.</b> Negativo nos longões = você fica mais eficiente no fim (closer).",fields:"splits com FC por km, ou metades manuais"},
  {cat:"Motor",name:"VO₂máx",conf:"média",formula:"estimativa de relógio/TECP (erro ~5–10%)",desc:"O tamanho bruto do motor aeróbico. Homem 30–39: <b>bom 36–42 · excelente 43–52</b>. O EF é o quanto você aproveita desse teto.",fields:"informado por você"},
  {cat:"Motor",name:"Custo cardíaco do km",conf:"média",formula:"custo_km = FC_média_do_km ÷ velocidade_GAP_do_km",desc:"O inverso do EF, por km: revela qual trecho foi caro (subida? fadiga?). <b>Menor e mais estável = esforço melhor distribuído.</b>",fields:"splits por km"},
