@@ -158,6 +158,36 @@ ok("paceRefSuggest arredonda a 5 s/km", S.paceRefSuggest([{ paceGap: { paceSec: 
 ok("downgradeConf Alta→Moderada", S.downgradeConf("Alta") === "Moderada", S.downgradeConf("Alta"));
 ok("downgradeConf não passa de Dados insuficientes", S.downgradeConf("Dados insuficientes") === "Dados insuficientes", S.downgradeConf("Dados insuficientes"));
 
+console.log("\n== Perfil de inclinação (3.6) ==");
+// 3 sessões: FC = 100 + 16,2·v_GAP no plano; em subida (>2%) um custo EXTRA de +6 bpm.
+function hillSession(seed) {
+  const s = [];
+  for (let t = 0; t <= 3000; t++) {
+    // grade em ondas (plano/subida/descida) e v_GAP variando (sinal p/ a regressão)
+    const g = 6 * Math.sin((t + seed) / 180);
+    const vg = 2.8 + 0.4 * Math.sin(t / 50);
+    const extra = g > 2 ? 6 : 0;                  // subida custa mais que o modelo prevê
+    const hr = 100 + 16.2 * vg + extra + (g < -2 ? -2 : 0);
+    s.push({ t, vgap: vg, hr: hr, spm: 172, grade: Math.round(g * 10) / 10, valid: t >= 600 });
+  }
+  return s;
+}
+const gp = S.gradeProfile([hillSession(0), hillSession(400), hillSession(800)], { lagSec: 0 });
+ok("perfil calculado (regressão nas planas)", gp.ok && gp.fit && gp.fit.n > 0, gp.ok ? ("a=" + gp.fit.a.toFixed(1) + " b=" + gp.fit.b.toFixed(1) + " n=" + gp.fit.n) : gp.reason);
+ok("faixa ±2% ≈ resíduo 0", gp.ok && Math.abs(gp.rows[2].residual) <= 1.5, gp.ok && gp.rows[2].residual + " bpm");
+ok("subida >5% tem resíduo positivo (custa mais)", gp.ok && gp.rows[4].residual != null && gp.rows[4].residual > 2, gp.ok && gp.rows[4].residual + " bpm");
+ok("rótulo: subida custa mais que o GAP prevê", gp.ok && gp.label === "Subida custa mais que o modelo GAP prevê", gp.ok && gp.label + " (" + gp.upPosSessions + " sessões)");
+ok("faixa exige ≥3 min para exibir", gp.ok && gp.rows[2].show === true, gp.ok && JSON.stringify(gp.rows.map(function (r) { return r.show; })));
+// GAP calibrado: sem custo extra em subida → resíduo ≈ 0
+function flatModelSession(seed) {
+  const s = [];
+  for (let t = 0; t <= 3000; t++) { const g = 6 * Math.sin((t + seed) / 180), vg = 2.8 + 0.4 * Math.sin(t / 50), hr = 100 + 16.2 * vg; s.push({ t, vgap: vg, hr: hr, spm: 172, grade: Math.round(g * 10) / 10, valid: t >= 600 }); }
+  return s;
+}
+const gp2 = S.gradeProfile([flatModelSession(0), flatModelSession(400), flatModelSession(800)], { lagSec: 0 });
+ok("sem custo extra → 'GAP calibrado para o atleta'", gp2.ok && gp2.label === "GAP calibrado para o atleta", gp2.ok && gp2.label);
+ok("poucas amostras planas → ok:false", S.gradeProfile([[{ t: 0, vgap: 2.8, hr: 150, grade: 0, valid: true }]]).ok === false, String(S.gradeProfile([[{ t: 0, vgap: 2.8, hr: 150, grade: 0, valid: true }]]).ok));
+
 console.log("\n== retenção de streams ==");
 const ws = [];
 for (let i = 0; i < 25; i++) ws.push({ id: "w" + i, date: "2026-" + String(1 + (i % 9)).padStart(2, "0") + "-" + String(1 + (i % 27)).padStart(2, "0"), stream: { s: [1] } });

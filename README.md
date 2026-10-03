@@ -90,6 +90,13 @@ Implementa o **Livro de Fórmulas Apex** direto no front, com o visual
   de FC** vira parâmetro do ciclo (mediana das sessões válidas; com <3 sessões, a
   confiança de Pace-GAP e decoupling mecânico é rebaixada). Cards em "Foco atual",
   fichas no Livro de Fórmulas e coluna extra na auditoria.
+- **Perfil de inclinação (exploratório):** ajusta um **modelo pessoal** `FC ≈ a +
+  b·v_GAP` (Theil-Sen) com as amostras **planas** (|inclinação| ≤2%) das últimas 6
+  sessões fáceis e mede o **resíduo de FC** por faixa de inclinação (`<−5% · −5 a
+  −2% · ±2% · 2 a 5% · >5%`). Resíduo positivo em subida = subir custa mais do que
+  o GAP assume para você; ≈0 = GAP calibrado. Barras + tabela (resíduo, cadência,
+  passada, minutos; mínimo 3 min por faixa). **Nunca** altera os coeficientes do
+  GAP — só reporta.
 - **Recuperação (Apple Watch):** aba dedicada com **Diário** (sono, FC de
   repouso, HRV/SDNN, VO₂máx, ânimo) — preenchido à mão ou **importando o
   `export.xml` do app Saúde** (lido em pedaços no navegador; extrai só essas 4
