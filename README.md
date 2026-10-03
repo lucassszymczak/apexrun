@@ -97,6 +97,17 @@ Implementa o **Livro de Fórmulas Apex** direto no front, com o visual
   o GAP assume para você; ≈0 = GAP calibrado. Barras + tabela (resíduo, cadência,
   passada, minutos; mínimo 3 min por faixa). **Nunca** altera os coeficientes do
   GAP — só reporta.
+- **Clima automático (Open-Meteo) + IMP · Índice do Motor Padronizado:** ao importar
+  um `.FIT` com GPS, o app busca no **Open-Meteo** (pelo GPS inicial + horário)
+  temperatura, ponto de orvalho, umidade e vento — client-side, nunca usa o sensor
+  de pulso do relógio — e classifica a sessão (padrão 8–18 °C e orvalho ≤14; etiquetas
+  calor/frio/úmido/vento/fora da base). O **IMP** mede a velocidade-GAP a **145 bpm,
+  no plano, em clima padrão** como índice (baseline das 3 primeiras = 100). No card
+  "Foco atual" ele vira o indicador principal, com a linha **IMP (padrão)** × **Todas
+  as condições** (Pace-GAP@145 em índice) — a distância é o **custo do contexto**.
+  Sessões fora do padrão não entram no IMP (o Pace-GAP@145 continua). Botão para
+  **buscar clima** de sessões antigas. Nenhum dado pessoal sai do aparelho além de
+  coordenada + data/hora, e só quando há GPS.
 - **Recuperação (Apple Watch):** aba dedicada com **Diário** (sono, FC de
   repouso, HRV/SDNN, VO₂máx, ânimo) — preenchido à mão ou **importando o
   `export.xml` do app Saúde** (lido em pedaços no navegador; extrai só essas 4

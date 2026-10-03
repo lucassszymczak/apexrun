@@ -841,6 +841,40 @@ function gradeProfile(sessions,opts){var o={lagSec:0,flatGrade:2,minMinPerBand:3
   var upShown=rows[3].show||rows[4].show,label="Sem subida suficiente para avaliar";
   if(upShown&&upResidual!=null){if(upResidual>1&&upPosSessions>=3)label="Subida custa mais que o modelo GAP prevê";else if(Math.abs(upResidual)<=1)label="GAP calibrado para o atleta";else label="Subida: resíduo "+(upResidual>=0?"+":"")+upResidual.toFixed(1)+" bpm";}
   return{ok:true,rows:rows,fit:{a:fit.a,b:fit.b,r2:Math.round(fit.r2*100)/100,n:fit.n},nSessions:perSession.length,upPosSessions:upPosSessions,upResidual:upResidual!=null?Math.round(upResidual*10)/10:null,label:label};}
+// --- Clima (Open-Meteo) — espelha analise/weather.mjs (puro + fetch no navegador) ---
+function weatherUrl(geo,when,archive){var d=when instanceof Date?when:new Date(when),date=d.toISOString().slice(0,10);
+  var base=archive?"https://archive-api.open-meteo.com/v1/archive":"https://api.open-meteo.com/v1/forecast";
+  var lat=Math.round(geo.lat*1e4)/1e4,lon=Math.round(geo.lon*1e4)/1e4;
+  return base+"?latitude="+lat+"&longitude="+lon+"&start_date="+date+"&end_date="+date+"&hourly=temperature_2m,dew_point_2m,relative_humidity_2m,wind_speed_10m&timezone=UTC";}
+function pickHour(hourly,when){if(!hourly||!hourly.time||!hourly.time.length)return null;var d=when instanceof Date?when:new Date(when),target=d.getTime(),best=-1,bestDiff=Infinity;
+  for(var i=0;i<hourly.time.length;i++){var t=Date.parse(hourly.time[i]+"Z");if(isNaN(t))continue;var diff=Math.abs(t-target);if(diff<bestDiff){bestDiff=diff;best=i;}}
+  if(best<0||bestDiff>3*3600*1000)return null;function g(k){return hourly[k]&&hourly[k][best]!=null?hourly[k][best]:null;}
+  var dew=g("dew_point_2m")!=null?g("dew_point_2m"):g("dewpoint_2m");
+  return{tempC:g("temperature_2m"),dewC:dew,rh:g("relative_humidity_2m"),windKmh:g("wind_speed_10m"),hour:hourly.time[best]};}
+function climateTags(w,opts){var o={tempLo:8,tempHi:18,dewMax:14,windMax:20,altMax:200,baseAlt:null,alt:null};if(opts)for(var kk in opts)o[kk]=opts[kk];
+  var tags=[],inStandard=false;
+  if(w&&w.tempC!=null){inStandard=w.tempC>=o.tempLo&&w.tempC<=o.tempHi&&(w.dewC==null||w.dewC<=o.dewMax);
+    if(w.tempC>o.tempHi)tags.push("calor");if(w.tempC<o.tempLo)tags.push("frio");if(w.dewC!=null&&w.dewC>o.dewMax)tags.push("úmido");if(w.windKmh!=null&&w.windKmh>o.windMax)tags.push("vento");}
+  if(o.alt!=null&&o.baseAlt!=null&&Math.abs(o.alt-o.baseAlt)>o.altMax)tags.push("fora da base");
+  return{tags:tags,inStandard:inStandard};}
+function climateOpts(a,geo){a=a||{};return{tempLo:a.climTempLo!=null?a.climTempLo:8,tempHi:a.climTempHi!=null?a.climTempHi:18,dewMax:a.climDewMax!=null?a.climDewMax:14,windMax:a.windMax!=null?a.windMax:20,altMax:200,baseAlt:a.baseAltM!=null?a.baseAltM:null,alt:geo&&geo.alt!=null?geo.alt:null};}
+function fetchWeather(geo,when,a){
+  if(!geo||geo.lat==null||geo.lon==null||typeof fetch==="undefined")return Promise.resolve(null);
+  function tryOne(archive){var ctrl=typeof AbortController!=="undefined"?new AbortController():null,timer=ctrl?setTimeout(function(){ctrl.abort();},8000):null;
+    return fetch(weatherUrl(geo,when,archive),ctrl?{signal:ctrl.signal}:{}).then(function(r){if(!r||!r.ok)return null;return r.json();}).then(function(j){var h=j?pickHour(j.hourly,when):null;return h&&h.tempC!=null?Object.assign(h,{source:archive?"open-meteo/archive":"open-meteo/forecast"}):null;}).catch(function(){return null;}).then(function(x){if(timer)clearTimeout(timer);return x;});}
+  var ageDays=(Date.now()-(when instanceof Date?when:new Date(when)).getTime())/86400000;
+  return tryOne(ageDays>80).then(function(h){return h||tryOne(ageDays<=80);}).then(function(h){if(!h)return null;var c=climateTags(h,climateOpts(a,geo));return Object.assign(h,{tags:c.tags,inStandard:c.inStandard});});}
+// --- IMP Fase 1 — espelha analise/stream.mjs ---
+function impSample(samples,opts){var o={fcRef:145,band:3,lagSec:0,plano:2,win:[10,30]};if(opts)for(var kk in opts)o[kk]=opts[kk];
+  var w0=o.win[0]*60,w1=o.win[1]*60,dt=sampleDt(samples),lagIdx=Math.round(o.lagSec/dt),vg=[];
+  for(var i=0;i<samples.length;i++){var s=samples[i],j=i+lagIdx;if(!s.valid||s.vgap==null||s.grade==null||Math.abs(s.grade)>o.plano||s.t<w0||s.t>w1)continue;
+    var hr=(j<samples.length&&samples[j]&&samples[j].valid&&samples[j].hr!=null)?samples[j].hr:null;if(hr==null||Math.abs(hr-o.fcRef)>o.band)continue;vg.push(s.vgap);}
+  var minInBand=Math.round((vg.length*dt)/60*10)/10;if(minInBand<5)return{vPadrao:null,minInBand:minInBand,confidence:"Dados insuficientes"};
+  return{vPadrao:median(vg),minInBand:minInBand,confidence:minInBand>=8?"Moderada":"Baixa"};}
+function impBaseline(workouts,qualifies){var q=(workouts||[]).filter(function(w){return w&&w.imp&&w.imp.vPadrao!=null&&(qualifies?qualifies(w):true);}).sort(function(a,b){return a.date<b.date?-1:a.date>b.date?1:0;});
+  var first3=q.slice(0,3);if(first3.length<3)return{vBaseline:null,n:first3.length};
+  return{vBaseline:first3.reduce(function(s,w){return s+w.imp.vPadrao;},0)/first3.length,n:3,dates:first3.map(function(w){return w.date;})};}
+function impIndex(vPadrao,vBaseline){if(vPadrao==null||!vBaseline)return null;return Math.round((100*vPadrao/vBaseline)*10)/10;}
 // computa os KPIs por amostra a partir dos records normalizados (corrida)
 function computeStreamKpis(records,a){
   var pp=preprocess(records);
@@ -850,7 +884,8 @@ function computeStreamKpis(records,a){
   var eff=sessionEff(pp.samples);
   var mech=mechDecoupling(pp.samples);
   var cadAdh=cadenceAtPace(pp.samples,{paceRef:null}).adherencePct; // adesão 170–176 (independe do PACE_REF)
-  return{quality:pp.quality,hrLagSec:lag.lagSec,paceGap:pg,eff:eff,mech:mech,cadAdherencePct:cadAdh,stream:reduceStream(pp.samples,3)};
+  var imp=impSample(pp.samples,{fcRef:fcRef,band:bandFc,lagSec:lag.lagSec}); // IMP Fase 1 (v_padrao)
+  return{quality:pp.quality,hrLagSec:lag.lagSec,paceGap:pg,eff:eff,mech:mech,cadAdherencePct:cadAdh,imp:imp,stream:reduceStream(pp.samples,3)};
 }
 
 // modalidade a partir do sport do FIT: ciclismo → bike (cross-training), resto → corrida
@@ -881,7 +916,7 @@ function fitMessagesToWorkout(messages){
   var kcal=fitNum(session.totalCalories)!=null?Math.round(session.totalCalories):null;
   var te=fitNum(session.totalTrainingEffect);
   // GPS inicial (para clima futuro) e KPIs por amostra — só corrida com trajeto
-  var geo=null;for(var gi=0;gi<records.length;gi++){if(records[gi].lat!=null&&records[gi].lon!=null){geo={lat:Math.round(records[gi].lat*1e5)/1e5,lon:Math.round(records[gi].lon*1e5)/1e5};break;}}
+  var geo=null;for(var gi=0;gi<records.length;gi++){if(records[gi].lat!=null&&records[gi].lon!=null){geo={lat:Math.round(records[gi].lat*1e5)/1e5,lon:Math.round(records[gi].lon*1e5)/1e5,alt:fitNum(records[gi].alt)!=null?Math.round(records[gi].alt):null};break;}}
   var sk=null;if(!isBk){try{sk=computeStreamKpis(records,(typeof state!=="undefined"&&state.athlete)||null);}catch(e){sk=null;}}
   return{
     date:fitISODate(startDate)||new Date().toISOString().slice(0,10),
@@ -906,6 +941,8 @@ function fitMessagesToWorkout(messages){
     eff:sk?sk.eff:null,
     mech:sk?sk.mech:null,
     cadAdherencePct:sk?sk.cadAdherencePct:null,
+    imp:sk?sk.imp:null,
+    weather:null,
     sport:session.sport||null
   };
 }
@@ -966,14 +1003,35 @@ function handleFitFile(file){
       var decoder=new SDK.Decoder(stream);
       var res=decoder.read();
       var w=fitMessagesToWorkout(res.messages);
-      openModal(null,w,true);
       var extra=w.modal==="bike"?("🚴 bike"+(w.indoor?" indoor":"")+(w.kcal?" · "+w.kcal+" kcal":"")):((w.splits?w.splits.length+" splits · ":"")+(w.sport?w.sport:""));
-      toast(("bike"===w.modal?"Bike":"Treino")+" lido do .FIT — confira e salve"+(extra?" ("+extra+")":""));
+      // clima automático (Open-Meteo): só corrida com GPS; melhor esforço, não bloqueia
+      var when=w.date?new Date(w.date+"T12:00:00Z"):new Date();
+      if(w.geo&&w.geo.lat!=null){var st=(res.messages.sessionMesgs&&res.messages.sessionMesgs[0]&&res.messages.sessionMesgs[0].startTime);if(st instanceof Date)when=st;}
+      var needWeather=w.modal!=="bike"&&w.geo&&w.geo.lat!=null;
+      if(needWeather)toast("Buscando clima do treino…");
+      return (needWeather?fetchWeather(w.geo,when,(typeof state!=="undefined"&&state.athlete)||null):Promise.resolve(null)).then(function(wx){
+        w.weather=wx||null;
+        openModal(null,w,true);
+        toast(("bike"===w.modal?"Bike":"Treino")+" lido do .FIT — confira e salve"+(extra?" ("+extra+")":""));
+      });
     });
   }).catch(function(err){
     console.error(err);
     alert("Não foi possível ler o .FIT.\n\n"+(err&&err.message?err.message:err)+"\n\nSe for a primeira vez, confira a conexão (o leitor é carregado da internet). Você ainda pode inserir os dados manualmente.");
   });
+}
+// busca clima das corridas que têm GPS mas ainda não têm clima (backfill sob demanda)
+function backfillWeather(btn){
+  var pend=state.workouts.filter(function(w){return isRun(w)&&w.geo&&w.geo.lat!=null&&!w.weather;});
+  if(!pend.length)return;
+  if(btn){btn.disabled=true;btn.textContent="Buscando clima…";}
+  var i=0,done=0;
+  function next(){
+    if(i>=pend.length){if(done){touch();save();scheduleSync();}render();toast(done?("Clima obtido em "+done+" de "+pend.length+" sessão(ões)."):"Clima indisponível agora — tente de novo com conexão.");return;}
+    var w=pend[i++],when=new Date(w.date+"T12:00:00Z");
+    fetchWeather(w.geo,when,state.athlete).then(function(wx){if(wx){w.weather=wx;done++;}}).catch(function(){}).then(function(){setTimeout(next,250);});
+  }
+  next();
 }
 
 /* ============================================================================
@@ -984,6 +1042,7 @@ var DEFAULT_ATHLETE={
   name:"Lucas",city:"Guarapuava/PR",fcRep:67,fcMax:198,fcMaxProv:true,vo2:39.4,weight:82,age:34,
   cadenceTarget:173,efBaseline:0.0139,efGainPct:6.5,decouplingTarget:7,weeklyTargetKm:35,sessionsTarget:3,
   bikeFcMax:186,bikeZones:[123,138,145,167,179], // zonas do Garmin (bike): início Z1..Z5 em bpm
+  baseAltM:1120,climTempLo:8,climTempHi:18,climDewMax:14,windMax:20, // Guarapuava ~1120 m · PADRÃO_CLIMA
   cycleName:"Base & Pace",cycleWeeks:10,
   alert:"⚠ PAUSA PROTETORA · sensibilidade na tíbia direita (08/09). Corrida suspensa; foco em reforço estrutural, bike e reab. Baseline 5K (6:21) segue como marco zero."
 };
@@ -1453,12 +1512,48 @@ function renderPainel(v){
   var ml=medianLag(easyR);               // 3.3 — defasagem mediana (parâmetro)
   var lagLow=ml.n<3;                      // <3 sessões válidas → rebaixa 3.1 e 3.5
   var paceRef=paceRefSuggest(easyR.length?easyR:runs);
+  // IMP (Fase 1): baseline = média de v_padrao das 3 primeiras sessões no padrão (conf≥Moderada)
+  function impQual(w){return w.imp&&w.imp.vPadrao!=null&&w.imp.confidence==="Moderada"&&w.weather&&w.weather.inStandard;}
+  var impBl=impBaseline(runs,impQual);
+  var needWeatherN=runs.filter(function(w){return w.geo&&w.geo.lat!=null&&!w.weather;}).length;
   if(pgRuns.length||effHist.length||streamRuns.length){
     v.appendChild(sectionTitle("Foco atual"));
     var grid1=el("div","grid g-2");
 
-    // 1) Pace-GAP @ FC_REF ---------------------------------------------------
-    if(pgRuns.length){
+    // 1) IMP (quando há baseline) ou Pace-GAP @ FC_REF -----------------------
+    if(impBl.vBaseline){
+      var impTl=pgRuns.map(function(w){
+        var inStd=w.weather&&w.weather.inStandard,yImp=(inStd&&w.imp&&w.imp.vPadrao!=null)?impIndex(w.imp.vPadrao,impBl.vBaseline):null;
+        var yAll=w.paceGap&&w.paceGap.vGap!=null?impIndex(w.paceGap.vGap,impBl.vBaseline):null;
+        return{date:w.date,label:fmtDate(w.date),yImp:yImp,yAll:yAll,w:w};
+      });
+      var impPts=impTl.map(function(p){return{label:p.label,y:p.yImp,extra:p.w.weather?(Math.round(p.w.weather.tempC)+"°C"):""};});
+      var allPts=impTl.map(function(p){return{label:p.label,y:p.yAll,extra:p.w.weather&&p.w.weather.tags&&p.w.weather.tags.length?p.w.weather.tags.join(" · "):"todas as condições"};});
+      var impWithIdx=impTl.filter(function(p){return p.yImp!=null;});
+      var lastImp=impWithIdx.length?impWithIdx[impWithIdx.length-1]:null;
+      var impPrev3=impWithIdx.slice(-4,-1).map(function(p){return p.yImp;});
+      var impMa3=impPrev3.length?impPrev3.reduce(function(s,x){return s+x;},0)/impPrev3.length:null;
+      var impDelta=(lastImp&&impMa3)?lastImp.yImp-impMa3:null;
+      // custo do contexto: IMP médio (padrão) − índice médio nas sessões fora do padrão
+      var meanImp=impWithIdx.length?mean(impWithIdx.map(function(p){return p.yImp;})):null;
+      var outIdx=impTl.filter(function(p){return p.yAll!=null&&!(p.w.weather&&p.w.weather.inStandard);}).map(function(p){return p.yAll;});
+      var custo=(meanImp!=null&&outIdx.length)?meanImp-mean(outIdx):null;
+      var impConf=lastImp?(lastImp.w.imp.confidence):"Dados insuficientes";
+      var impCard=card("IMP · Índice do Motor Padronizado",confMap[impConf]||"média","imp");
+      var ivr=el("div");ivr.style.cssText="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-top:8px";
+      ivr.innerHTML='<div style="font-size:34px;font-weight:800;letter-spacing:-.02em;line-height:1">'+(lastImp?lastImp.yImp.toFixed(0):"—")+'<small style="font-size:15px;color:var(--ink-2);font-weight:600"> índice</small></div>'+
+        (lastImp?'<span class="sub">≈ '+paceStr(1000/lastImp.w.imp.vPadrao)+'/km no padrão</span>':'')+
+        (impDelta!=null?'<span class="delta '+(impDelta>=0.5?"up":impDelta<=-0.5?"down":"flat")+'">'+(impDelta>0?"▲ +":impDelta<0?"▼ ":"→ ")+impDelta.toFixed(1)+' vs média 3</span>':'');
+      impCard.appendChild(ivr);
+      impCard.appendChild(chartBox(lineChart({series:[
+        {name:"IMP (padrão)",points:impPts,colorVar:seriesColor(1)},
+        {name:"Todas as condições",points:allPts,colorVar:seriesColor(5)}
+      ],yfmt:function(vv){return vv.toFixed(0);},target:{y:100,label:"baseline 100"}})));
+      impCard.appendChild(hint("Velocidade-GAP a <b>"+fcRef+" bpm em terreno plano e clima padrão</b> (8–18 °C, orvalho ≤14), como índice (baseline das 3 primeiras = 100). A linha <b>Todas as condições</b> é o Pace-GAP@145 no mesmo índice; a distância entre as duas é o <b>custo do contexto</b>"+(custo!=null?' — hoje ~<b>'+custo.toFixed(0)+' pts</b> fora do padrão':'')+". Sessões fora do padrão não entram no IMP (mas o Pace-GAP continua)."+(impBl.n<3?"":" Baseline: "+impBl.dates.map(fmtDate).join(", ")+".")));
+      if(needWeatherN){var bw=el("button","btn sm");bw.style.marginTop="10px";bw.textContent="🌤 Buscar clima de "+needWeatherN+" sessão(ões)";bw.onclick=function(){backfillWeather(bw);};impCard.appendChild(bw);}
+      grid1.appendChild(impCard);
+    }
+    else if(pgRuns.length){
       var pgPts=pgRuns.map(function(w){return{label:fmtDate(w.date),y:w.paceGap.paceSec,extra:w.paceGap.confidence};});
       var last=pgRuns[pgRuns.length-1].paceGap;
       var prev3=pgPts.slice(-4,-1).map(function(p){return p.y;});
@@ -1800,16 +1895,18 @@ function renderPainel(v){
   if(aud.length){
     var ac2=card("Auditoria das sessões (.FIT)","alta");
     var at=el("div");at.style.cssText="overflow:auto;margin-top:8px";
-    var t2=el("table");t2.innerHTML='<thead><tr><th>Data</th><th class="num">Válidos</th><th class="num">Excl.</th><th class="num">Defas.</th><th>Pace-GAP@145</th><th class="num">Mec.</th><th>Motivos</th></tr></thead>';
+    var t2=el("table");t2.innerHTML='<thead><tr><th>Data</th><th class="num">Válidos</th><th class="num">Excl.</th><th class="num">Defas.</th><th>Pace-GAP@145</th><th class="num">Mec.</th><th>Clima</th><th>Motivos</th></tr></thead>';
     var tb2=el("tbody");
     aud.slice(0,16).forEach(function(w){var q=w.quality,pg=w.paceGap,mot=[];for(var rk in q.reasons)mot.push(rk);
       var mv=w.mech&&w.mech.pct!=null?(w.mech.pct>0?"+":"")+w.mech.pct.toFixed(1)+"%":"—";
+      var cl=w.weather?(Math.round(w.weather.tempC)+"° "+(w.weather.inStandard?"<span class=\"sub\">padrão</span>":"<span class=\"sub\" style=\"color:var(--warn)\">fora</span>")):(w.geo&&w.geo.lat!=null?'<span class="sub">—</span>':'<span class="sub">s/GPS</span>');
       var r=el("tr");r.innerHTML='<td>'+fmtDateFull(w.date)+'</td>'+
         '<td class="num">'+q.validMin+' min</td>'+
         '<td class="num"'+(q.excludedPct>20?' style="color:var(--crit)"':'')+'>'+q.excludedPct+'%</td>'+
         '<td class="num">'+(w.hrLagSec!=null?w.hrLagSec+"s":"—")+'</td>'+
         '<td>'+(pg&&pg.paceSec?paceStr(pg.paceSec)+" <span class=\"sub\">"+pg.confidence+"</span>":(pg?pg.confidence:"—"))+(w.streamPruned?' <span class="sub">(resumido)</span>':'')+'</td>'+
         '<td class="num"'+(w.mech&&w.mech.pct>2?' style="color:var(--crit)"':'')+'>'+mv+'</td>'+
+        '<td>'+cl+'</td>'+
         '<td class="sub">'+esc(mot.slice(0,3).join(" · ")||"—")+'</td>';
       tb2.appendChild(r);});
     t2.appendChild(tb2);at.appendChild(t2);ac2.appendChild(at);
@@ -2326,6 +2423,7 @@ function renderForca(v){
 /* -------- KPIs (referência) -------- */
 var KPI_DOCS=[
  {cat:"Motor",name:"Pace-GAP @ FC_REF (145)",conf:"alta*",formula:"mediana da velocidade-GAP nas amostras com FC (defasada) em 145±3 bpm, min 10–45\nfallback: regressão robusta (Theil-Sen) FC ~ v_GAP, lida em 145 — só interpola, nunca extrapola",desc:"Na <b>mesma FC</b>, quanto pace de plano você produz. É o comparador do treino guiado por FC — o pace bruto deixou de comparar em terreno ondulado. <b>Menor = melhor.</b> Confiança: <b>Alta ≥15 min</b> na banda · <b>Moderada 8–15 min</b> ou regressão (R²≥0,5) · <b>Baixa</b> · <b>Dados insuficientes</b> se 145 estiver fora da faixa de FC observada. Contexto exibido sem correção: temperatura, elevação e duração. <b>Limitações:</b> precisa do stream por amostra do .FIT (reimporte treinos antigos); indoor/sem FC não entra. <b>Sobreposição com outros KPIs:</b> o EF mede economia em qualquer intensidade (a FC tem intercepto); o Pace-GAP@145 fixa a FC e remove esse viés — são complementares. <b>Fonte:</b> Vesterinen et al., 2014, J Strength Cond Res 28(4):902–908.",fields:"stream 1 Hz do .FIT: FC, velocidade, altitude (grade via GAP)"},
+ {cat:"Motor",key:"imp",name:"IMP · Índice do Motor Padronizado",conf:"média",formula:"v_padrao = mediana da velocidade-GAP nas amostras PLANAS (|grade|≤2%), min 10–30, com FC (defasada) em 145±3, em sessão de clima padrão (8–18 °C e orvalho ≤14)\nIMP = 100 × v_padrao ÷ v_baseline\nbaseline = média das 3 primeiras sessões no padrão (conf ≥ Moderada) → 100 (congelado)",desc:"Tira a condição da jogada: mede o motor a <b>145 bpm, no plano, em clima padrão</b>, como um índice (baseline = 100). <b>Sobe = motor melhor.</b> Sessões <b>fora do padrão</b> (calor, úmido, fora da base) não entram — ficam só no Pace-GAP@145. No gráfico, a linha <b>Todas as condições</b> é o Pace-GAP@145 no mesmo índice; a distância para o IMP é o <b>custo do contexto</b> (quanto o calor/altitude te tiram). <b>Confiança:</b> Moderada ≥8 min · Baixa 5–8 min · Dados insuficientes &lt;5 min (IMP nunca passa de Moderada na Fase 1). <b>Clima:</b> buscado automaticamente no Open-Meteo pelo GPS inicial + horário — nunca usa o sensor de pulso do relógio. <b>Sobreposição:</b> o Pace-GAP@145 mede o motor em qualquer condição; o IMP fixa também o clima e o terreno. <b>Fonte:</b> Vesterinen et al., 2014/2017.",fields:"stream 1 Hz (plano, 145±3) + clima do Open-Meteo (GPS + horário)"},
  {cat:"Motor",name:"Efficiency Factor (EF)",conf:"alta",formula:"EF = velocidade_GAP (m/s) ÷ FC_média (bpm)",desc:"Quanta velocidade você entrega por batimento. <b>Sobe = motor mais eficiente.</b> Compare sempre rodagens fáceis parecidas; a régua é você vs. você. Alvo: partir de ~0,0139 e subir +5 a +8%.",fields:"velocidade-GAP, FC média"},
  {cat:"Motor",key:"arvore-ef",name:"Árvore da Eficiência (decomposição do EF)",conf:"média",formula:"m/batimento = (passos/batimento) × (m/passo)\nm/batimento = v_GAP×60 ÷ FC (= EF×60)\npassos/batimento = spm ÷ FC · m/passo = v_GAP×60 ÷ spm\nΔln(m/bat) = Δln(passos/bat) + Δln(m/passo) vs. média das 3 anteriores",desc:"Abre o EF em duas alavancas: <b>quantos passos você dá por batimento</b> (cardio-mecânico) e <b>quanto cada passo avança</b> (passada-GAP). Usa as médias das amostras válidas da sessão, então a identidade fecha exata. A decomposição em log diz que fração da variação do EF veio da cadência e que fração veio da passada. Rótulos: cadência↑ e EF estável = <i>passada encurtou sem custo (ganho mecânico)</i>; cadência↑ e EF↑ = <i>economia</i>; cadência↑ e EF↓ = <i>cadência com custo — revisar</i>; cadência estável e EF↑ = <i>motor: mais passada na mesma FC</i>. <b>Confiança: Moderada</b> — a identidade é exata, a interpretação é exploratória. <b>Sobreposição:</b> é o EF por outro ângulo; não é um KPI novo de economia, e sim o <i>porquê</i> dele mudar.",fields:"stream 1 Hz: velocidade-GAP, FC, cadência (spm)"},
  {cat:"Motor",key:"decoupling-mec",name:"Decoupling mecânico (passada)",conf:"média",formula:"mecânico% = (passada-GAP_1ª_metade − passada-GAP_2ª_metade) ÷ 1ª × 100\n(só sessões ≥40 min de tempo válido)",desc:"O irmão mecânico do decoupling cardíaco: quanto a <b>passada-GAP (m/passo)</b> encurta entre a 1ª e a 2ª metade. <b>Positivo = passada caiu no fim (fadiga mecânica).</b> Cruzado com o cardíaco vira uma matriz: FC sobe + passada estável → <i>deriva cardiovascular</i> (calor/hidratação/duração); ambos cedem → <i>fadiga global</i>; ambos estáveis → <i>sessão sob controle</i>. <b>Confiança: Moderada</b> (Exploratória com &lt;3 sessões). <b>Sobreposição:</b> complementa o decoupling cardíaco — um olha o coração, o outro a mecânica; juntos separam calor de fadiga real.",fields:"stream 1 Hz: velocidade-GAP, cadência; decoupling cardíaco (splits com FC)"},
@@ -2535,7 +2633,7 @@ function openModal(id,prefill,fromFit){
   var s=w||prefill||null; // fonte dos valores
   modalExtras={hrHist:s&&s.hrHist?s.hrHist:null,sport:s&&s.sport?s.sport:null,bikeRpm:s&&s.bikeRpm!=null?s.bikeRpm:null,trainingEffect:s&&s.trainingEffect!=null?s.trainingEffect:null,
     stream:s&&s.stream?s.stream:null,quality:s&&s.quality?s.quality:null,paceGap:s&&s.paceGap?s.paceGap:null,hrLagSec:s&&s.hrLagSec!=null?s.hrLagSec:null,geo:s&&s.geo?s.geo:null,
-    eff:s&&s.eff?s.eff:null,mech:s&&s.mech?s.mech:null,cadAdherencePct:s&&s.cadAdherencePct!=null?s.cadAdherencePct:null};
+    eff:s&&s.eff?s.eff:null,mech:s&&s.mech?s.mech:null,cadAdherencePct:s&&s.cadAdherencePct!=null?s.cadAdherencePct:null,imp:s&&s.imp?s.imp:null,weather:s&&s.weather?s.weather:null};
   var modal=s&&s.modal?s.modal:(s&&isBike(s)?"bike":"corrida");
   $("#modalTitle").textContent=w?"Editar treino":(fromFit?"Revisar treino do .FIT":"Novo treino");
   $("#fitBanner").style.display=fromFit?"flex":"none";
@@ -2548,6 +2646,12 @@ function openModal(id,prefill,fromFit){
         (!q.hasHR?' · <b>sem FC</b>':'')+(!q.hasCad?' · <b>sem cadência</b>':'')+(!q.hasAlt?' · <b>sem altitude</b>':'')+
         (s.paceGap&&s.paceGap.paceSec?' · Pace-GAP@145 '+paceStr(s.paceGap.paceSec)+'/km ('+s.paceGap.confidence+')':(s.paceGap?' · Pace-GAP@145: '+s.paceGap.confidence:''))+
         (motivos.length?'<br><span class="sub">Excluído: '+esc(motivos.slice(0,4).join(" · "))+'</span>':'')+'</div>';}
+    var wline="";
+    if(s&&s.modal!=="bike"&&s.geo&&s.geo.lat!=null){
+      if(s.weather){var wx=s.weather;wline='<div style="margin-top:6px;font-size:12.5px;color:var(--ink-2)">🌤 '+(wx.tempC!=null?Math.round(wx.tempC)+'°C':'—')+(wx.dewC!=null?' · orvalho '+Math.round(wx.dewC)+'°':'')+(wx.windKmh!=null?' · vento '+Math.round(wx.windKmh)+' km/h':'')+' · '+(wx.inStandard?'<b>dentro do padrão</b> (entra no IMP)':'<b>fora do padrão</b> (IMP não calcula; Pace-GAP continua)')+(wx.tags&&wx.tags.length?' · '+esc(wx.tags.join(" · ")):'')+' <span class="sub">('+esc(wx.source||"open-meteo")+')</span></div>';}
+      else wline='<div style="margin-top:6px;font-size:12.5px;color:var(--ink-2)">🌤 Clima não obtido agora (sem conexão?). Dá para buscar depois no Painel.</div>';
+    }
+    qline+=wline;
     $("#fitBanner").innerHTML='<span class="bi">⬆</span><div>'+(modal==="bike"
     ?'<b>Bike lida do .FIT.</b> Tempo, FC, zonas e calorias já entraram — a bike vai para a <b>carga (TRIMP) e a forma</b>. Confira o <b>Tipo</b> e, se quiser, o <b>esforço (RPE)</b>.'
     :'<b>Treino lido do .FIT.</b> Os dados do relógio já entraram (distância, FC, cadência, elevação e splits). Confirme o <b>Tipo</b> e preencha em <b>Percepção &amp; recuperação</b> o que o relógio não grava — <b>esforço (RPE), sono e dor</b>.')+qline+'</div>';}
@@ -2647,6 +2751,8 @@ function saveModal(){
     eff:isBk?null:(modalExtras.eff||null),
     mech:isBk?null:(modalExtras.mech||null),
     cadAdherencePct:isBk?null:(modalExtras.cadAdherencePct!=null?modalExtras.cadAdherencePct:null),
+    imp:isBk?null:(modalExtras.imp||null),
+    weather:modalExtras.weather||null,
     geo:modalExtras.geo||null,
     updatedAt:new Date().toISOString()
   };

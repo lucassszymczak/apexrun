@@ -188,6 +188,34 @@ const gp2 = S.gradeProfile([flatModelSession(0), flatModelSession(400), flatMode
 ok("sem custo extra → 'GAP calibrado para o atleta'", gp2.ok && gp2.label === "GAP calibrado para o atleta", gp2.ok && gp2.label);
 ok("poucas amostras planas → ok:false", S.gradeProfile([[{ t: 0, vgap: 2.8, hr: 150, grade: 0, valid: true }]]).ok === false, String(S.gradeProfile([[{ t: 0, vgap: 2.8, hr: 150, grade: 0, valid: true }]]).ok));
 
+console.log("\n== IMP Fase 1 (índice do motor padronizado) ==");
+// 20 min planos a 145±3, v_GAP 2,78; só min 10–30 contam
+function impSteady(vg) {
+  const s = [];
+  for (let t = 0; t <= 2000; t++) { const inWin = t >= 600 && t <= 1800; s.push({ t, vgap: vg, hr: inWin ? 145 : 160, spm: 172, grade: 0, valid: true }); }
+  return s;
+}
+const imp = S.impSample(impSteady(2.78), { fcRef: 145, band: 3, lagSec: 0 });
+ok("v_padrao = mediana do v_GAP plano @145", near(imp.vPadrao, 2.78, 1e-9), imp.vPadrao && imp.vPadrao.toFixed(3));
+ok("confiança Moderada (≥8 min)", imp.confidence === "Moderada", imp.confidence + " · " + imp.minInBand + " min");
+// amostras em subida (|grade|>2) NÃO entram no IMP
+const impHill = S.impSample((function () { const s = []; for (let t = 0; t <= 2000; t++) { const inWin = t >= 600 && t <= 1800; s.push({ t, vgap: 2.78, hr: inWin ? 145 : 160, spm: 172, grade: 8, valid: true }); } return s; })());
+ok("subida (|grade|>2) → Dados insuficientes", impHill.confidence === "Dados insuficientes", impHill.confidence);
+// <5 min na banda → insuficiente
+const impShort = S.impSample((function () { const s = []; for (let t = 0; t <= 2000; t++) { const inWin = t >= 600 && t <= 780; s.push({ t, vgap: 2.78, hr: inWin ? 145 : 160, spm: 172, grade: 0, valid: true }); } return s; })());
+ok("<5 min @145 → Dados insuficientes", impShort.confidence === "Dados insuficientes", impShort.minInBand + " min");
+// baseline = média de v_padrao das 3 primeiras qualificadas → índice 100
+const impWs = [
+  { date: "2026-08-01", imp: { vPadrao: 2.70, confidence: "Moderada" }, std: true },
+  { date: "2026-08-05", imp: { vPadrao: 2.80, confidence: "Moderada" }, std: true },
+  { date: "2026-08-09", imp: { vPadrao: 2.90, confidence: "Moderada" }, std: true },
+  { date: "2026-08-12", imp: { vPadrao: 3.00, confidence: "Moderada" }, std: true },
+];
+const bl = S.impBaseline(impWs, function (w) { return w.std && w.imp.confidence !== "Baixa"; });
+ok("baseline = média das 3 primeiras (2,80)", near(bl.vBaseline, 2.80, 1e-9), bl.vBaseline && bl.vBaseline.toFixed(3));
+ok("índice 100 no baseline, >100 quando melhora", S.impIndex(2.80, bl.vBaseline) === 100 && S.impIndex(3.00, bl.vBaseline) > 100, S.impIndex(3.00, bl.vBaseline));
+ok("baseline exige 3 sessões (senão null)", S.impBaseline(impWs.slice(0, 2)).vBaseline === null, String(S.impBaseline(impWs.slice(0, 2)).vBaseline));
+
 console.log("\n== retenção de streams ==");
 const ws = [];
 for (let i = 0; i < 25; i++) ws.push({ id: "w" + i, date: "2026-" + String(1 + (i % 9)).padStart(2, "0") + "-" + String(1 + (i % 27)).padStart(2, "0"), stream: { s: [1] } });
