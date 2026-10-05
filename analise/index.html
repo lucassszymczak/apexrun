@@ -258,6 +258,22 @@ svg.chart{width:100%;height:auto;display:block;overflow:visible}
 .kbig small{font-size:15px;color:var(--muted);font-weight:500;font-family:var(--sans)}
 .ksub{font-size:12.5px;color:var(--ink-2);margin-bottom:4px}
 .ksub b{color:var(--ink)}
+/* escala "você está aqui" (referência de faixa) */
+.scwrap{margin-top:28px;margin-bottom:2px}
+.scbar{position:relative;display:flex;gap:2px;height:9px}
+.scbar i{height:9px;border-radius:2px}
+.scmk{position:absolute;top:-4px;width:2px;height:17px;background:var(--ink);border-radius:2px;transform:translateX(-1px)}
+.sccap{position:absolute;bottom:15px;transform:translateX(-50%);font-family:var(--head);font-weight:700;font-size:10px;background:var(--ink);color:var(--plane);padding:2px 8px;border-radius:999px;white-space:nowrap}
+.sccap::after{content:"";position:absolute;left:50%;top:100%;transform:translateX(-50%);border:4px solid transparent;border-top-color:var(--ink)}
+.sclabs{display:flex;gap:2px;margin-top:8px}
+.sclabs span{font-size:9px;color:var(--muted);text-align:center;line-height:1.15}
+/* "o que fazer pra evoluir" (treino · força · rotina) */
+.todo2{margin-top:16px;border-top:1px solid var(--line);padding-top:12px}
+.todo2 .th2{font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--accent);margin-bottom:6px}
+.todo2 .trw{display:flex;gap:10px;padding:5px 0;font-size:12.5px;line-height:1.5}
+.todo2 .trw .tic2{flex:0 0 22px;font-size:15px;text-align:center}
+.todo2 .trw .ttx b{color:var(--ink)}
+.todo2 .trw .ttx .thh{display:block;font-weight:700;font-family:var(--head);font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.03em}
 /* ponto/barra em destaque quando tocado/selecionado */
 svg.chart circle.pt-active{r:6.5;stroke-width:3}
 svg.chart path.pt-active,svg.chart rect.pt-active{filter:brightness(1.12)}
@@ -1331,6 +1347,36 @@ function niceScale(min,max){
   var ticks=[];for(var v=nmin;v<=nmax+step/2;v+=step)ticks.push(+v.toFixed(6));
   return{min:nmin,max:nmax,ticks:ticks};
 }
+// escala "você está aqui": cfg={min,max,val,valText,segs:[{to,label,c}]}
+function scaleWidget(cfg){
+  if(cfg==null||cfg.val==null)return "";
+  var span=(cfg.max-cfg.min)||1,prev=cfg.min,bar="",labs="";
+  cfg.segs.forEach(function(s){var w=(s.to-prev)/span*100;bar+='<i style="flex:0 0 '+w.toFixed(2)+'%;background:'+s.c+'"></i>';labs+='<span style="flex:0 0 '+w.toFixed(2)+'%">'+esc(s.label)+'</span>';prev=s.to;});
+  var pos=clamp((cfg.val-cfg.min)/span,0,1)*100,cap=clamp(pos,10,90);
+  return '<div class="scwrap"><div class="scbar">'+bar+'<span class="scmk" style="left:'+pos.toFixed(1)+'%"></span><span class="sccap" style="left:'+cap.toFixed(1)+'%">você · '+esc(cfg.valText)+'</span></div><div class="sclabs">'+labs+'</div></div>';
+}
+// "o que fazer pra evoluir": rows=[[ícone, título, texto], ...]
+function todoHTML(rows){
+  if(!rows||!rows.length)return "";
+  return '<div class="todo2"><div class="th2">O que fazer pra evoluir</div>'+rows.map(function(r){
+    return '<div class="trw"><div class="tic2">'+r[0]+'</div><div class="ttx"><span class="thh">'+esc(r[1])+'</span>'+r[2]+'</div></div>';
+  }).join("")+'</div>';
+}
+function richBlock(html){var e=el("div");if(html)e.innerHTML=html;return e;}
+// passos acionáveis por indicador (surgem no "Entenda"); chave = data-info do card/tile
+var KPI_TODO={
+ efficiency:[["🏃","No treino","Rodagens fáceis constantes (Z1–Z2) e cadência ~173 constroem economia."],["💪","Força","Força 2×/semana e drills melhoram a economia de corrida."],["📆","Rotina","Compare rodagens fáceis parecidas; a régua é você vs. você."]],
+ decoupling:[["🏃","No treino","Longões fáceis e constantes (Z2) ensinam o motor a não cair no fim."],["💪","Força","Core e posterior firmes seguram a técnica quando o cansaço chega."],["🥤","Rotina","Água + carboidrato nos longos evitam a queda por combustível."]],
+ trimp:[["🔁","No treino","Alterne puxado e leve; suba ~10%/semana e descarregue a cada 3–4."],["💪","Força","Força aumenta sua tolerância à carga sem precisar de mais km."],["🛌","Rotina","Depois de um dia alto, priorize sono e comida — é onde a carga vira ganho."]],
+ form:[["📅","No treino","Fase de carga pede paciência: não empilhe qualidade; agende uma descarga."],["💪","Força","Mantenha força leve pra sustentar a técnica sob fadiga."],["🏁","Rotina","Pra uma prova, deixe o TSB subir pra perto de zero/positivo antes."]],
+ ac:[["📈","No treino","Suba no máximo ~10%/semana; evite pular de volume após uma pausa."],["💪","Força","Base de força deixa você aguentar mais carga com menos risco de lesão."],["⚠️","Rotina","Acima de 1,5, segure a semana e durma mais."]],
+ vo2:[["🏃","No treino","Intervalados fortes (ex.: 5×3 min em Z4–Z5) são o que mais sobe o VO₂máx."],["💪","Força","Economia melhor (força + cadência) faz render mais com o mesmo VO₂."],["📆","Rotina","Base aeróbica grande e peso saudável elevam o número ao longo dos meses."]],
+ hrv:[["🟢","No treino","HRV acima do seu normal = verde pra qualidade; bem abaixo = troque por fácil."],["🧘","Corpo","Respiração lenta e mobilidade ajudam o tônus de recuperação."],["🛌","Rotina","Sono regular, menos álcool e jantar mais cedo elevam a HRV com o tempo."]],
+ cadência:[["🎵","No treino","Metrônomo a ~173 spm em trechos fáceis até virar natural."],["💪","Força","Pliometria leve e mobilidade de quadril encurtam a passada com eficiência."],["📈","Rotina","Suba ~5% por vez; o sinal certo é FC menor no mesmo pace."]],
+ gap:[["⛰️","No treino","Treine em relevo variado; o GAP deixa esses treinos comparáveis."],["🐢","No treino","Largue conservador em subida e aproveite as descidas com técnica."],["📊","Rotina","Compare o GAP (não o pace bruto) entre terrenos diferentes."]],
+ hill:[["⛰️","No treino","Tiros em subida (6–10×30–60s) constroem força específica."],["💪","Força","Agachamento e panturrilha melhoram a potência de subida."],["🧗","Rotina","Inclua rotas com rampa 1–2×/semana quando a tíbia permitir."]],
+ distribution:[["🟢","No treino","Proteja o fácil de verdade (Z1–Z2); evite o Z3 cinzento."],["⚡","No treino","Concentre a intensidade numa fatia pequena e bem feita."],["📊","Rotina","Mire ~80% fácil / 20% forte no volume semanal."]]
+};
 // LINE CHART: opts={series:[{name,colorVar,points:[{label,y,extra}]}], yfmt, ylabel, target:{y,label}, xlabels, reverseY}
 function lineChart(opts){
   var series=opts.series.filter(function(s){return s.points&&s.points.length;});
@@ -1492,7 +1538,8 @@ function makeCardsCollapsible(root){
 function _norm(s){return (s||"").toString().toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"");}
 var EXTRA_DOCS={
   baseline:{name:"Baseline 5K",conf:"alta",formula:"marco zero do ciclo (teste ou prova de ~5 km mais recente)",desc:"Seu ponto de partida de referência: o pace (e o GAP) do 5K que ancora as comparações e as projeções de prova. <b>Objetivo: melhorar o pace no mesmo esforço ao longo do ciclo.</b>",fields:"teste/prova de ~5 km"},
-  fcrep:{name:"FC de repouso",conf:"média",formula:"menor FC em repouso (do Apple Watch) — média/mediana do período",desc:"Termômetro de recuperação e adaptação. <b>Tendência de queda = adaptando bem; subida de +3 a +5 bpm sobre o seu normal = fadiga/estresse — considere aliviar.</b> É individual: compare com você mesmo.",fields:"FC de repouso (Apple Watch) ou informado"}
+  fcrep:{name:"FC de repouso",conf:"média",formula:"menor FC em repouso (do Apple Watch) — média/mediana do período",desc:"Termômetro de recuperação e adaptação. <b>Tendência de queda = adaptando bem; subida de +3 a +5 bpm sobre o seu normal = fadiga/estresse — considere aliviar.</b> É individual: compare com você mesmo.",fields:"FC de repouso (Apple Watch) ou informado"},
+  hrv:{name:"HRV (SDNN)",conf:"média",formula:"SDNN (ms) do Apple Watch · comparado ao seu baseline do período",desc:"A variação entre batimentos: <b>maior/estável = sistema nervoso mais recuperado</b>. O que importa é a <b>tendência vs. você</b>, não o número cru. Acima do seu normal = verde para qualidade; bem abaixo = priorize um dia fácil.",fields:"HRV SDNN (Apple Watch) ou informado"}
 };
 function kpiDoc(key){
   if(EXTRA_DOCS[key])return EXTRA_DOCS[key];
@@ -1511,6 +1558,8 @@ function openInfo(key){
   h+='<div class="info-sec"><span class="k">O que é</span><p>'+doc.desc+'</p></div>';
   if(doc.formula)h+='<div class="info-sec"><span class="k">Cálculo &amp; referências</span><pre>'+esc(doc.formula)+'</pre></div>';
   if(doc.fields)h+='<div class="info-sec"><span class="k">De onde vem o dado</span><p>'+esc(doc.fields)+'</p></div>';
+  var _todo=(typeof KPI_TODO!=="undefined")&&KPI_TODO[key];
+  if(_todo)h+=todoHTML(_todo);
   box.innerHTML=h;bg.appendChild(box);
   function close(){if(bg.parentNode)document.body.removeChild(bg);document.removeEventListener("keydown",onKey);if(_infoLastFocus&&_infoLastFocus.focus){try{_infoLastFocus.focus();}catch(e){}}}
   function onKey(e){if(e.key==="Escape")close();}
@@ -1875,6 +1924,8 @@ function renderPainel(v){
   motor.appendChild(efCard);
   var decCard=card("Decoupling · resistência aeróbica","alta","decoupling");
   decCard.appendChild(chartBox(barChart({bars:decPts,yfmt:function(v){return v.toFixed(1)+"%";},threshold:{y:7,label:"alvo <7%"},zeroLine:true})));
+  var _decLast=decPts&&decPts.length?decPts[decPts.length-1].y:null;
+  if(_decLast!=null)decCard.appendChild(richBlock(scaleWidget({min:0,max:12,val:Math.max(0,_decLast),valText:_decLast.toFixed(1).replace(".",",")+"%",segs:[{to:5,label:"Sólido",c:"var(--good)"},{to:8,label:"Limítrofe",c:"var(--warn)"},{to:12,label:"Investigar",c:"var(--crit)"}]})));
   decCard.appendChild(hint("Decoupling negativo nos longões = closer comprovado (fica mais eficiente na 2ª metade). &lt;5% = base sólida; &gt;8% = investigar."));
   motor.appendChild(decCard);
   v.appendChild(motor);
@@ -1904,6 +1955,7 @@ function renderPainel(v){
     {name:"Fitness (CTL)",points:fit.map(function(f){return{label:fmtDate(f.date),y:f.ctl};}),colorVar:seriesColor(1)},
     {name:"Fatigue (ATL)",points:fit.map(function(f){return{label:fmtDate(f.date),y:f.atl};}),colorVar:seriesColor(2)}
   ],yfmt:function(v){return Math.round(v)+"";}})));
+  if(tsb!=null)formCard.appendChild(richBlock(scaleWidget({min:-30,max:15,val:tsb,valText:(tsb>0?"+":"")+tsb.toFixed(0),segs:[{to:-10,label:"Treino pesado",c:"var(--warn)"},{to:5,label:"Equilibrado",c:"var(--good)"},{to:15,label:"Fresco",c:"var(--trend)"}]})));
   formCard.appendChild(hint("Form (TSB) atual: <b>"+(tsb!=null?(tsb>0?"+":"")+tsb.toFixed(1):"—")+"</b> — "+tsbState(tsb)+". Fitness = capacidade adquirida; Fatigue = cansaço; Form = frescor resultante."));
   carga.appendChild(formCard);
   v.appendChild(carga);
@@ -1987,10 +2039,10 @@ function renderPainel(v){
 
   var intel2=el("div","grid g-4");
   // A:C
-  var acCard=el("div","card tile");
-  acCard.innerHTML='<div class="lab">▦ Razão aguda:crônica</div><div class="val">'+(ac?ac.ratio.toFixed(2):"—")+'</div>'+
+  var acCard=el("div","card tile has-info");acCard.setAttribute("data-info","ac");acCard.setAttribute("aria-label","Sobre: Razão aguda:crônica");
+  acCard.innerHTML='<div class="lab">▦ Razão aguda:crônica<span class="info-dot" aria-hidden="true">ⓘ</span></div><div class="val">'+(ac?ac.ratio.toFixed(2):"—")+'</div>'+
     '<div class="note">'+(ac?zoneBadge(ac.zone):"acumula ~4 semanas")+'</div>';
-  if(ac){var acm=el("div","meter");acm.innerHTML='<i style="width:'+clamp(ac.ratio/2*100,4,100)+'%;background:'+(ac.ratio<0.8?"var(--muted)":ac.ratio<=1.3?"var(--good)":ac.ratio<=1.5?"var(--warn)":"var(--crit)")+'"></i>';acCard.appendChild(acm);acCard.appendChild(hint("Sweet spot 0,8–1,3 = carga sustentável."));}
+  if(ac){acCard.appendChild(richBlock(scaleWidget({min:0.5,max:2,val:ac.ratio,valText:ac.ratio.toFixed(2).replace(".",","),segs:[{to:0.8,label:"Destreino",c:"var(--muted)"},{to:1.3,label:"Seguro",c:"var(--good)"},{to:1.5,label:"Atenção",c:"var(--warn)"},{to:2,label:"Risco",c:"var(--crit)"}]})));acCard.appendChild(hint("Sweet spot 0,8–1,3 = carga sustentável. Toque para ver o que fazer."));}
   intel2.appendChild(acCard);
   // 80/20 (tempo REAL em zona quando há .FIT)
   var polCard=el("div","card tile");
@@ -2003,8 +2055,9 @@ function renderPainel(v){
   conCard.appendChild(hint("Consistência &gt; heroísmo — maior preditor de evolução. Alvo ≥85%."));
   intel2.appendChild(conCard);
   // VO2 (automático do Apple Watch quando há diário)
-  var vo2Card=el("div","card tile");var vb=vo2Band(vo2Eff);
-  vo2Card.innerHTML='<div class="lab">◉ VO₂máx</div><div class="val">'+(vo2Eff||"—")+'<small> ml/kg</small></div><div class="note">'+(vb?bandBadge(vb)+(vo2Last?" · Apple Watch "+fmtDate(vo2Last.date):" (homem 30–39)"):"")+'</div>';
+  var vo2Card=el("div","card tile has-info");vo2Card.setAttribute("data-info","vo2");vo2Card.setAttribute("aria-label","Sobre: VO₂máx");var vb=vo2Band(vo2Eff);
+  vo2Card.innerHTML='<div class="lab">◉ VO₂máx<span class="info-dot" aria-hidden="true">ⓘ</span></div><div class="val">'+(vo2Eff||"—")+'<small> ml/kg</small></div><div class="note">'+(vb?bandBadge(vb)+(vo2Last?" · Apple Watch "+fmtDate(vo2Last.date):" (homem 30–39)"):"")+'</div>';
+  if(vo2Eff!=null)vo2Card.appendChild(richBlock(scaleWidget({min:30,max:55,val:vo2Eff,valText:(""+vo2Eff).replace(".",","),segs:[{to:36,label:"Abaixo",c:"var(--warn)"},{to:42,label:"Bom",c:"var(--good)"},{to:52,label:"Excelente",c:"var(--trend)"},{to:55,label:"Elite",c:"var(--accent)"}]})));
   vo2Card.appendChild(hint("Bom 36–42 · excelente 43–52. É o tamanho do motor; o EF é o quanto você aproveita dele."));
   intel2.appendChild(vo2Card);
   // performance trend
@@ -2390,7 +2443,9 @@ function renderRecuperacao(v){
   var recT=el("div","card tile");recT.innerHTML='<div class="lab">🌙 Recovery Status</div><div class="val" style="font-size:22px">'+rec.label+'</div><div class="note">score '+rec.score+'</div>';var rm=el("div","meter");rm.innerHTML='<i style="width:'+rec.score+'%;background:'+recCol+'"></i>';recT.appendChild(rm);tiles.appendChild(recT);
   tiles.appendChild(tile({lab:"😴 Sono (última noite)",val:sleepL?sleepL.value:"—",unit:"h",note:sleepL?fmtDate(sleepL.date):"—"}));
   tiles.appendChild(tile({lab:"♥ FC repouso",val:restTr?restTr.latest:"—",unit:"bpm",note:restTr&&restTr.deltaAbs!=null?(restTr.deltaAbs<=0?'<span class="delta up">▼ '+Math.abs(restTr.deltaAbs).toFixed(0)+'</span> vs base (bom)':'<span class="delta down">▲ '+restTr.deltaAbs.toFixed(0)+'</span> vs base'):"—"}));
-  tiles.appendChild(tile({lab:"💓 HRV (SDNN)",val:hrvTr?hrvTr.latest:"—",unit:"ms",note:hrvTr&&hrvTr.deltaPct!=null?(hrvTr.deltaPct>=0?'<span class="delta up">▲ '+hrvTr.deltaPct.toFixed(0)+'%</span> vs base':'<span class="delta down">▼ '+Math.abs(hrvTr.deltaPct).toFixed(0)+'%</span> vs base'):"—"}));
+  var hrvTile=tile({lab:"💓 HRV (SDNN)",val:hrvTr?hrvTr.latest:"—",unit:"ms",note:hrvTr&&hrvTr.deltaPct!=null?(hrvTr.deltaPct>=0?'<span class="delta up">▲ '+hrvTr.deltaPct.toFixed(0)+'%</span> vs base':'<span class="delta down">▼ '+Math.abs(hrvTr.deltaPct).toFixed(0)+'%</span> vs base'):"—",info:"hrv"});
+  if(hrvTr&&hrvTr.deltaPct!=null)hrvTile.appendChild(richBlock(scaleWidget({min:-30,max:30,val:hrvTr.deltaPct,valText:(hrvTr.deltaPct>=0?"+":"")+hrvTr.deltaPct.toFixed(0)+"%",segs:[{to:-10,label:"Abaixo",c:"var(--warn)"},{to:10,label:"No seu normal",c:"var(--good)"},{to:30,label:"Acima",c:"var(--trend)"}]})));
+  tiles.appendChild(hrvTile);
   v.appendChild(tiles);
   v.appendChild(hint("<b>FC repouso</b> caindo e <b>HRV</b> subindo ao longo do ciclo = recuperação e base melhorando. <b>HRV</b> abaixo do seu normal + <b>FC repouso</b> acima = sinal de recuar."));
 
@@ -2630,14 +2685,14 @@ var KPI_DOCS=[
  {cat:"Mecânica",key:"cad-ref",name:"Cadência @ ritmo-ref",conf:"média",formula:"mediana do spm nas amostras com pace-GAP em RITMO_REF ± 15 s/km (min 5 min)\nadesão = % do tempo em movimento com spm entre 170 e 176\nRITMO_REF = mediana do pace-GAP das sessões fáceis, arredondada a 5 s/km",desc:"Cadência comparada <b>sempre no mesmo ritmo</b> (não no mesmo esforço): remove o efeito de correr mais rápido/devagar. Mostra também a <b>adesão</b> — quanto do tempo você passou na faixa-alvo 170–176 spm. Linhas de referência: <b>meta 173</b>, baseline 168. <b>Confiança:</b> Alta ≥10 min no ritmo-ref · Moderada 5–10 min · Dados insuficientes &lt;5 min. <b>Sobreposição:</b> a Cadência média (seção Mecânica) é bruta; esta fixa o ritmo para comparar maçãs com maçãs. <b>Fonte:</b> Heiderscheit et al., 2011, Med Sci Sports Exerc 43(2):296–302.",fields:"stream 1 Hz: cadência (spm), velocidade-GAP"},
  {cat:"Mecânica",key:"perfil-incl",name:"Perfil de inclinação (resíduo de FC)",conf:"exploratório",formula:"modelo pessoal: FC ≈ a + b·v_GAP (Theil-Sen) nas amostras planas (|grade|≤2%) das últimas 6 sessões fáceis\nresíduo = FC real (defasada) − FC prevista, agregado por faixa: <−5% · −5 a −2% · ±2% · 2 a 5% · >5%",desc:"Indicador <b>exploratório</b>: compara a sua FC real com a que o modelo GAP prevê, faixa a faixa de inclinação. <b>Resíduo positivo em subida</b> = subir custa mais do que o GAP (Minetti) assume para você; <b>≈0</b> = o GAP está calibrado para o seu caso. Por faixa mostra resíduo (bpm), cadência, passada-GAP e minutos (mínimo 3 min para exibir). <b>Nunca</b> altera os coeficientes do GAP automaticamente — só reporta, para você decidir. <b>Sobreposição:</b> o GAP (Carga) assume custos fixos de subida/descida; este perfil mede o <i>seu</i> desvio em relação a eles. Precisa de ao menos 2 sessões fáceis com stream; usa a defasagem de FC do ciclo (3.3).",fields:"stream 1 Hz de várias sessões: FC, velocidade-GAP, inclinação, cadência"},
  {cat:"Motor",name:"Decoupling (pace:FC)",conf:"alta",formula:"decoupling% = (EF_1ª_metade − EF_2ª_metade) ÷ EF_1ª_metade × 100",desc:"Quanto a relação pace÷FC se deteriora entre a 1ª e a 2ª metade. <b>&lt;5% base sólida · 5–8% limítrofe · &gt;8% investigar.</b> Negativo nos longões = você fica mais eficiente no fim (closer).",fields:"splits com FC por km, ou metades manuais"},
- {cat:"Motor",name:"VO₂máx",conf:"média",formula:"estimativa de relógio/TECP (erro ~5–10%)",desc:"O tamanho bruto do motor aeróbico. Homem 30–39: <b>bom 36–42 · excelente 43–52</b>. O EF é o quanto você aproveita desse teto.",fields:"informado por você"},
+ {cat:"Motor",key:"vo2",name:"VO₂máx",conf:"média",formula:"estimativa de relógio/TECP (erro ~5–10%)",desc:"O tamanho bruto do motor aeróbico. Homem 30–39: <b>bom 36–42 · excelente 43–52</b>. O EF é o quanto você aproveita desse teto.",fields:"informado por você"},
  {cat:"Motor",name:"Custo cardíaco do km",conf:"média",formula:"custo_km = FC_média_do_km ÷ velocidade_GAP_do_km",desc:"O inverso do EF, por km: revela qual trecho foi caro (subida? fadiga?). <b>Menor e mais estável = esforço melhor distribuído.</b>",fields:"splits por km"},
  {cat:"Motor",name:"Hill / Climb Performance",conf:"baixa",formula:"efic. = velocidade real na subida ÷ prevista pelo GAP",desc:"Como você se sai nas subidas: perda de velocidade por % de rampa e FC extra. <b>Perder menos que o previsto = força de subida melhorando.</b> Ativo com splits que tragam Δelevação por km.",fields:"splits com Δelevação por km"},
  {cat:"Mecânica",name:"Cadência",conf:"alta",formula:"cadência = passos_de_um_pé × 2",desc:"Passos por minuto. Cadência maior encurta a passada e costuma baixar a FC no mesmo pace. Alvo ~173 spm. <b>Sinal de ouro: mesmo pace, cadência maior, FC menor.</b>",fields:"cadence"},
  {cat:"Mecânica",name:"Pacing Strategy",conf:"média",formula:"Δ = (pace_2ª − pace_1ª) ÷ pace_1ª",desc:"Classifica como você distribuiu o esforço: even / negative split / positive split. <b>Você é closer</b> — largar conservador e fechar forte é sua arma.",fields:"splits por km"},
  {cat:"Mecânica",name:"Pace Stability",conf:"média",formula:"desvio-padrão do pace-GAP entre os km",desc:"Quanto você mantém o ritmo planejado. Menor variação = melhor controle.",fields:"splits por km"},
  {cat:"Carga",name:"Carga interna (TRIMP)",conf:"alta",formula:"FCr = (FC−FCrep)÷(FCmáx−FCrep)\nTRIMP = Σ(min × FCr × 0,64·e^(1,92·FCr))",desc:"A dose fisiológica da sessão via FC — melhor que distância para comparar treinos. Padrão certo é ondulado: sobe ~10%/semana, descarga a cada 3–4.",fields:"FC média, duração, FC repouso, FCmáx"},
- {cat:"Carga",name:"Razão aguda:crônica (A:C)",conf:"média",formula:"A:C = carga_aguda(7d) ÷ carga_crônica(28d média semanal)",desc:"Detecta salto de carga. <b>0,8–1,3 sweet spot · 1,3–1,5 atenção · &gt;1,5 risco.</b> É sobre a variação da sua carga, não um valor absoluto.",fields:"TRIMP diário (≥4 semanas)"},
+ {cat:"Carga",key:"ac",name:"Razão aguda:crônica (A:C)",conf:"média",formula:"A:C = carga_aguda(7d) ÷ carga_crônica(28d média semanal)",desc:"Detecta salto de carga. <b>0,8–1,3 sweet spot · 1,3–1,5 atenção · &gt;1,5 risco.</b> É sobre a variação da sua carga, não um valor absoluto.",fields:"TRIMP diário (≥4 semanas)"},
  {cat:"Carga",name:"GAP · Ritmo ajustado à inclinação",conf:"alta*",formula:"subida: +3,5% de custo por +1%\ndescida: −1,5% de crédito por −1%\naplicar km a km · nunca elevação líquida",desc:"Traduz seu pace num terreno ondulado para o equivalente no plano. Base de quase todos os KPIs (EF, decoupling e pace usam a velocidade-GAP).",fields:"altitude/Δelev por km, distância"},
  {cat:"Forma",name:"Fitness / Fatigue / Form (CTL·ATL·TSB)",conf:"média",formula:"CTL = média exp. da carga, 42 dias\nATL = média exp. da carga, 7 dias\nTSB = CTL_ontem − ATL_ontem",desc:"Fitness (capacidade), Fatigue (cansaço) e Form (frescor). <b>TSB &gt;+5 fresco · −10 a +5 equilibrado · −10 a −30 treino pesado.</b>",fields:"TRIMP diário acumulado"},
  {cat:"Forma",name:"Aderência ao polarizado (80/20)",conf:"alta",formula:"% fácil = tempo em Z1–Z2 ÷ tempo total (alvo ~80)",desc:"% do tempo em zona fácil vs. forte, com <b>tempo REAL em zona</b> quando o .FIT traz o histograma de FC. <b>Abaixo de 75% = treinando forte demais no volume.</b>",fields:"histograma de FC do .FIT (ou FC média)"},
