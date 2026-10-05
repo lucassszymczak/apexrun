@@ -248,12 +248,16 @@ svg.chart{width:100%;height:auto;display:block;overflow:visible}
 .legend span{display:inline-flex;align-items:center;gap:6px}
 .legend i{width:12px;height:3px;border-radius:2px;display:inline-block}
 .legend i.dot{width:9px;height:9px;border-radius:50%}
-.tooltip{position:fixed;pointer-events:none;background:var(--ink);color:var(--plane);font-size:12px;
-  padding:7px 10px;border-radius:8px;transform:translate(-50%,-118%);white-space:nowrap;z-index:60;opacity:0;transition:opacity .08s;
-  box-shadow:0 4px 14px rgba(0,0,0,.25);font-variant-numeric:tabular-nums;line-height:1.4}
+.tooltip{position:fixed;pointer-events:none;background:var(--surface);color:var(--ink);border:1px solid var(--line);font-size:12.5px;
+  padding:8px 11px;border-radius:11px;transform:translate(-50%,-128%);white-space:nowrap;z-index:60;opacity:0;transition:opacity .1s;
+  box-shadow:0 12px 28px -8px rgba(0,0,0,.5);font-family:var(--head);font-variant-numeric:tabular-nums;line-height:1.5}
 .tooltip.show{opacity:1}
-.tooltip b{color:#fff}
-:root[data-theme="dark"] .tooltip{background:#000;color:#eee}
+.tooltip b{color:var(--accent);font-weight:700}
+/* número grande "Pontos" + sub-linha de economia (cartão do EF) */
+.kbig{font-family:var(--head);font-weight:700;font-size:34px;line-height:1;color:var(--accent);margin:6px 0 3px;letter-spacing:-.01em;font-variant-numeric:tabular-nums}
+.kbig small{font-size:15px;color:var(--muted);font-weight:500;font-family:var(--sans)}
+.ksub{font-size:12.5px;color:var(--ink-2);margin-bottom:4px}
+.ksub b{color:var(--ink)}
 /* ponto/barra em destaque quando tocado/selecionado */
 svg.chart circle.pt-active{r:6.5;stroke-width:3}
 svg.chart path.pt-active,svg.chart rect.pt-active{filter:brightness(1.12)}
@@ -1851,7 +1855,8 @@ function renderPainel(v){
   var hero=el("div","grid g-4");
   var baseline5k=ws.filter(function(w){return w.type==="teste"||w.type==="prova";}).find(function(w){return Math.abs(w.distKm-5)<0.6;});
   hero.appendChild(tile({lab:"★ Baseline 5K",ico:"",val:baseline5k?paceStr(baseline5k.durationSec/baseline5k.distKm):"—",unit:"/km",note:baseline5k?fmtDate(baseline5k.date)+" · marco zero · GAP "+paceStr(computeGap(baseline5k).gapPace):"registre um teste",conf:null,info:"baseline"}));
-  hero.appendChild(tile({lab:"◈ EF fácil (base)",val:latestEF?latestEF.toFixed(4):"—",note:efDelta!=null?deltaHtml(efDelta)+" desde o 1º":"meta +"+a.efGainPct+"% no ciclo",conf:"alta",info:"efficiency"}));
+  var _efPtsV=latestEF!=null?(latestEF*1000).toFixed(1).replace(".",","):null;
+  hero.appendChild(tile({lab:"◈ Economia do motor",val:_efPtsV||"—",unit:_efPtsV?"pts":"",note:(efDelta!=null?"economia "+deltaHtml(efDelta):"meta +"+a.efGainPct+"%")+(latestEF!=null?" · EF "+latestEF.toFixed(4):""),conf:"alta",info:"efficiency"}));
   hero.appendChild(tile({lab:"⚡ Cadência",val:latestCad?latestCad:"—",unit:"spm",note:"meta ~"+a.cadenceTarget+(latestCad?" · faltam "+Math.max(0,a.cadenceTarget-latestCad):""),conf:"alta",info:"cadência"}));
   var fcRepNote=restTr&&restTr.baseline!=null
     ?(restTr.deltaAbs<=0?'<span class="delta up">▼ '+Math.abs(restTr.deltaAbs).toFixed(0)+'</span> vs base':'<span class="delta down">▲ '+restTr.deltaAbs.toFixed(0)+'</span> vs base')+' · do Apple Watch'
@@ -1862,9 +1867,11 @@ function renderPainel(v){
   // ---- MOTOR: EF + decoupling ----
   v.appendChild(sectionTitle("Motor aeróbico · EF & decoupling"));
   var motor=el("div","grid g-2");
-  var efCard=card("Efficiency Factor · o KPI central","alta","efficiency");
-  efCard.appendChild(chartBox(lineChart({series:[{name:"EF fácil",points:efPts}],yfmt:function(v){return v.toFixed(4);},target:{y:efTarget,label:"meta "+efTarget.toFixed(4)}})));
-  efCard.appendChild(hint("Sobe = motor mais econômico. A régua é você mesmo: EF de hoje vs. 6 semanas atrás."+(trend?" Tendência "+trend.arrow+" "+deltaHtml(trend.deltaPct)+".":"")));
+  var efCard=card("Efficiency Factor · economia do motor","alta","efficiency");
+  if(latestEF!=null){var efH=el("div");efH.innerHTML='<div class="kbig">'+(latestEF*1000).toFixed(1).replace(".",",")+'<small> pts</small></div>'+
+    '<div class="ksub">economia '+(efDelta!=null?deltaHtml(efDelta)+" vs. o 1º":"—")+' · <b>EF '+latestEF.toFixed(4)+'</b></div>';efCard.appendChild(efH);}
+  efCard.appendChild(chartBox(lineChart({series:[{name:"Pontos",points:efPts}],yfmt:function(v){return (v*1000).toFixed(1).replace(".",",");},target:{y:efTarget,label:"meta "+(efTarget*1000).toFixed(1).replace(".",",")+" pts"}})));
+  efCard.appendChild(hint("<b>Pontos = o EF ×1000</b> (sem os zeros). Sobe = motor mais econômico. A régua é você mesmo: hoje vs. 6 semanas atrás."+(trend?" Tendência "+trend.arrow+" "+deltaHtml(trend.deltaPct)+".":"")));
   motor.appendChild(efCard);
   var decCard=card("Decoupling · resistência aeróbica","alta","decoupling");
   decCard.appendChild(chartBox(barChart({bars:decPts,yfmt:function(v){return v.toFixed(1)+"%";},threshold:{y:7,label:"alvo <7%"},zeroLine:true})));
