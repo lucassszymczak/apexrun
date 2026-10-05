@@ -232,6 +232,24 @@ textarea{resize:vertical;min-height:64px;font-family:var(--mono);font-size:12.5p
 .manual-block h4 span{color:var(--muted);font-weight:600;text-transform:none;letter-spacing:0}
 .manual-block .pain-check{display:flex;align-items:center;gap:8px;margin-top:12px;font-size:13.5px;font-weight:600;color:var(--ink-2)}
 .manual-block.flash{animation:flashManual 1.3s ease}
+/* bloco "noite anterior" (sono vinculado ao treino + prontidão do dia) */
+.sleep-info{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:11px 13px;margin-bottom:12px}
+.sleep-info .si-top{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.sleep-info .si-moon{font-size:17px}
+.sleep-info .si-h{font-family:var(--head);font-weight:700;font-size:16px}
+.sleep-info .si-h small{font-size:12px;color:var(--muted);font-weight:500;font-family:var(--sans);margin-left:3px}
+.sleep-info .si-src{margin-left:auto;font-size:10px;font-weight:700;padding:2px 8px;border-radius:999px;border:1px solid var(--line)}
+.sleep-info .si-src.apple{color:var(--good);border-color:color-mix(in srgb,var(--good) 40%,transparent);background:color-mix(in srgb,var(--good) 13%,transparent)}
+.sleep-info .si-src.manual{color:var(--muted);background:var(--surface-2)}
+.sleep-info .si-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}
+.sleep-info .si-chip{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:700;font-family:var(--head);padding:3px 9px;border-radius:999px;border:1px solid var(--line);background:var(--surface-2)}
+.sleep-info .si-chip.good{color:var(--good);border-color:color-mix(in srgb,var(--good) 40%,transparent);background:color-mix(in srgb,var(--good) 12%,transparent)}
+.sleep-info .si-chip.warn{color:var(--warn);border-color:color-mix(in srgb,var(--warn) 40%,transparent);background:color-mix(in srgb,var(--warn) 12%,transparent)}
+.sleep-info .si-chip.crit{color:var(--crit);border-color:color-mix(in srgb,var(--crit) 40%,transparent);background:color-mix(in srgb,var(--crit) 12%,transparent)}
+.sleep-info .si-read{font-size:12.5px;color:var(--ink-2);margin-top:10px;line-height:1.5}
+.sleep-info .si-read b{color:var(--ink)}
+.sleep-info .si-foot{font-size:10.5px;color:var(--muted);margin-top:8px;display:flex;align-items:flex-start;gap:6px}
+.sleep-info .si-foot i{width:5px;height:5px;border-radius:50%;background:var(--trend);flex:0 0 auto;margin-top:6px}
 @keyframes flashManual{0%,100%{box-shadow:none}25%{box-shadow:0 0 0 3px var(--accent-soft)}}
 /* diálogo de escolha (duplicata) */
 .choice-bg{position:fixed;inset:0;background:rgba(10,8,6,.5);z-index:60;display:flex;align-items:center;justify-content:center;padding:20px}
@@ -481,6 +499,7 @@ tbody tr{transition:background-color .12s ease}
       </div>
       <div class="manual-block" id="manualBlock">
         <h4>Percepção &amp; recuperação <span>— só você sabe; o relógio não grava</span></h4>
+        <div class="sleep-info" id="sleepInfo" style="display:none"></div>
         <div class="grid g-3">
           <div class="field"><label>Esforço · RPE (0–10) <span class="hint">0 muito leve · 10 máximo</span></label><input type="number" id="f_rpe" min="0" max="10" inputmode="numeric" placeholder="ex.: 4"></div>
           <div class="field"><label>Sono na véspera (h)</label><input type="number" id="f_sleep" step="0.5" inputmode="decimal" placeholder="7.5"></div>
@@ -1251,12 +1270,37 @@ function save(){try{localStorage.setItem(LS_KEY,JSON.stringify({athlete:state.at
 function sortedWorkouts(){return state.workouts.slice().sort(function(a,b){return a.date<b.date?-1:a.date>b.date?1:0;});}
 function sortedDaily(){return (state.daily||[]).slice().sort(function(a,b){return a.date<b.date?-1:a.date>b.date?1:0;});}
 // mescla entradas diárias (do Saúde ou manuais) por data, sem perder campos
+// ---- Apple Saúde: sono da NOITE ANTERIOR por treino + prontidão do dia ----
+function _dailyByDate(){var m={};(state.daily||[]).forEach(function(d){if(d&&d.date)m[d.date]=d;});return m;}
+// vincula a cada treino o sono da noite que terminou na manhã do treino (daily[date]).
+// Só preenche onde está vazio OU onde a fonte já é "apple" (nunca sobrescreve o manual).
+function linkSleepToWorkouts(){
+  var m=_dailyByDate(),n=0;
+  (state.workouts||[]).forEach(function(w){
+    if(!w||!w.date)return;
+    var d=m[w.date];
+    if(d&&d.sleepH!=null&&(w.sleepH==null||w.sleepH===""||w.sleepSrc==="apple")){
+      if(w.sleepH!==d.sleepH||w.sleepSrc!=="apple"){w.sleepH=d.sleepH;w.sleepSrc="apple";n++;}
+    }
+  });
+  return n;
+}
+// prontidão/forma "daquele dia" do treino, recalculada com o sono da véspera
+function workoutDayReadiness(w){
+  if(!w||!w.date)return null;
+  var fitArr=[];try{fitArr=fitnessSeries(state.workouts,state.athlete)||[];}catch(e){}
+  var tsbAt=null;for(var i=0;i<fitArr.length;i++){if(fitArr[i].date===w.date){tsbAt=fitArr[i].tsb;break;}}
+  var sh=(w.sleepH!=null&&w.sleepH!=="")?+w.sleepH:null;
+  var rd=readiness({tsb:tsbAt,sleepH:sh,soreness:w.soreness,pain:w.pain});
+  return {rd:rd,tsb:tsbAt,sleepH:sh};
+}
 function mergeDaily(rows){
   state.daily=state.daily||[];
   var byDate={};state.daily.forEach(function(e){byDate[e.date]=e;});
   var added=0,updated=0;
   rows.forEach(function(r){if(!r.date)return;r.updatedAt=new Date().toISOString();if(byDate[r.date]){var e=byDate[r.date];["restingHR","hrv","vo2","sleepH","sleepQuality","mood","note"].forEach(function(k){if(r[k]!=null&&r[k]!=="")e[k]=r[k];});e.updatedAt=r.updatedAt;updated++;}else{byDate[r.date]=r;state.daily.push(r);added++;}});
-  return{added:added,updated:updated};
+  var linked=linkSleepToWorkouts();
+  return{added:added,updated:updated,linked:linked};
 }
 
 /* ============================================================================
@@ -2898,6 +2942,32 @@ function applyModalMode(){
   $("#l_dist").innerHTML=isBk?'Distância (km) <span class="hint">opcional na indoor</span>':'Distância (km)';
   $("#modalSave").textContent=isBk?"Salvar bike":"Salvar treino";
 }
+// bloco "noite anterior" no detalhe do treino: sono vinculado + prontidão do dia + leitura
+function renderSleepInfo(w){
+  var si=$("#sleepInfo");if(!si)return;
+  if(!w||!w.date||isBike(w)){si.style.display="none";si.innerHTML="";return;}
+  var day=_dailyByDate()[w.date];
+  var sh=(w.sleepH!=null&&w.sleepH!=="")?+w.sleepH:(day&&day.sleepH!=null?+day.sleepH:null);
+  if(sh==null){
+    si.style.display="";
+    si.innerHTML='<div class="si-top"><span class="si-moon">🌙</span><span class="si-h" style="font-size:13px;color:var(--muted)">Sem dado de sono da véspera</span></div>'+
+      '<div class="si-read">Importe o Apple Saúde (aba Recuperação) ou preencha o sono abaixo — a prontidão deste dia recalcula sozinha.</div>';
+    return;
+  }
+  var src=(w.sleepSrc==="apple"||(w.sleepH==null&&day&&day.sleepH!=null))?"apple":"manual";
+  var wr=workoutDayReadiness(Object.assign({},w,{sleepH:sh}));
+  var sleeps=(state.daily||[]).map(function(d){return d.sleepH;}).filter(function(x){return x!=null;});
+  var norm=sleeps.length?mean(sleeps):7.3,low=sh<norm-0.6;
+  var read=low
+    ? 'Você dormiu <b>'+sh.toFixed(1).replace(".",",")+'h</b> na véspera deste treino — abaixo do seu normal (~'+norm.toFixed(1).replace(".",",")+'h). É <b>contexto</b> pra ler o treino com justiça: FC um pouco mais alta e economia menor são esperadas.'
+    : 'Você dormiu <b>'+sh.toFixed(1).replace(".",",")+'h</b> na véspera — na média (~'+norm.toFixed(1).replace(".",",")+'h). Boa base de recuperação para o esforço do dia.';
+  var html='<div class="si-top"><span class="si-moon">🌙</span><span class="si-h">'+sh.toFixed(1).replace(".",",")+' h<small>· noite anterior</small></span><span class="si-src '+src+'">'+(src==="apple"?"Apple Saúde":"você")+'</span></div>';
+  if(wr&&wr.rd){var bc=wr.rd.score>=80?"good":wr.rd.score>=60?"warn":"crit";
+    html+='<div class="si-chips"><span class="si-chip '+bc+'">⚡ Prontidão '+wr.rd.score+' · '+wr.rd.band+'</span></div>';}
+  html+='<div class="si-read">'+read+'</div>';
+  html+='<div class="si-foot"><i></i><span>Prontidão <b>deste dia</b> recalculada com este sono'+(wr&&wr.tsb!=null?' · forma TSB '+(wr.tsb>0?"+":"")+wr.tsb.toFixed(0):"")+'.</span></div>';
+  si.style.display="";si.innerHTML=html;
+}
 function openModal(id,prefill,fromFit){
   editingId=id||null;
   var w=id?state.workouts.find(function(x){return x.id===id;}):null;
@@ -2948,6 +3018,7 @@ function openModal(id,prefill,fromFit){
   $("#f_temp").value=s&&s.temp!=null?s.temp:"";
   $("#f_terrain").value=s&&s.terrain?s.terrain:"";
   $("#f_sleep").value=s&&s.sleepH!=null?s.sleepH:"";
+  renderSleepInfo(w);
   $("#f_sore").value=s&&s.soreness!=null?s.soreness:"";
   $("#f_dec").value=s&&s.decouplingPct!=null?s.decouplingPct:"";
   $("#f_notes").value=s&&s.notes?s.notes:"";
@@ -3011,6 +3082,7 @@ function saveModal(){
     kcal:kcal,
     trainingEffect:isBk?(modalExtras.trainingEffect||null):null,
     sleepH:$("#f_sleep").value!==""?+$("#f_sleep").value:null,
+    sleepSrc:(function(){var sv=$("#f_sleep").value!==""?+$("#f_sleep").value:null;if(sv==null)return null;var d=_dailyByDate()[$("#f_date").value];return (d&&d.sleepH!=null&&Math.abs(sv-d.sleepH)<0.05)?"apple":"manual";})(),
     soreness:$("#f_sore").value!==""?+$("#f_sore").value:null,
     decouplingPct:isBk?null:($("#f_dec").value!==""?+$("#f_dec").value:null),
     notes:$("#f_notes").value.trim()||null,
@@ -3061,7 +3133,7 @@ function saveModal(){
   state.workouts.push(w);
   finalizeSave("Treino registrado");
 }
-function finalizeSave(msg){try{pruneStreams(state.workouts,20);}catch(e){}touch();save();scheduleSync();closeModal();toast(msg);currentTab="painel";setActiveTab();render();}
+function finalizeSave(msg){try{pruneStreams(state.workouts,20);}catch(e){}try{linkSleepToWorkouts();}catch(e){}touch();save();scheduleSync();closeModal();toast(msg);currentTab="painel";setActiveTab();render();}
 function askChoice(title,message,choices){
   return new Promise(function(resolve){
     var bg=el("div","choice-bg");
@@ -3170,6 +3242,7 @@ window.addEventListener("unhandledrejection",function(e){showFatal(e&&e.reason&&
     document.addEventListener("click",function(e){if(!(e.target.closest&&e.target.closest("svg.chart")))tipHide();});
     window.addEventListener("scroll",function(){tipHide();},{passive:true});
     if(state.seeded){save();delete state.seeded;}
+    try{if(linkSleepToWorkouts()>0)save();}catch(e){}
     render();
     layoutRail();window.addEventListener("resize",layoutRail);
     // sincroniza ao abrir (puxa o que veio de outro aparelho e reenvia a união)
