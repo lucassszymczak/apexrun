@@ -2481,6 +2481,15 @@ function weeklyLesson(wk,a,wkDaily){
 }
 
 /* -------- RECUPERAÇÃO (sono, FC repouso, HRV, VO₂ — Apple Watch) -------- */
+// apaga os dados do Apple Saúde (diário de recuperação + sono vinculado por treino)
+function clearHealthData(){
+  var nDaily=(state.daily||[]).length,nSleep=(state.workouts||[]).filter(function(w){return w&&w.sleepSrc==="apple";}).length;
+  if(!nDaily&&!nSleep){alert("Não há dados do Apple Saúde para excluir.");return;}
+  if(!confirm("Excluir os dados do Apple Saúde?\n\n• "+nDaily+" dia(s) de recuperação (sono, FC repouso, HRV, VO₂)\n• "+nSleep+" treino(s) com sono vindo do Apple Saúde (o sono digitado à mão é mantido)\n\nSeus treinos (distância, FC, cadência, splits) NÃO são afetados. Esta ação não pode ser desfeita."))return;
+  state.daily=[];
+  (state.workouts||[]).forEach(function(w){if(w&&w.sleepSrc==="apple"){w.sleepH=null;w.sleepSrc=null;w.updatedAt=new Date().toISOString();}});
+  touch();save();scheduleSync();toast("Dados do Apple Saúde excluídos");render();
+}
 function renderRecuperacao(v){
   var a=state.athlete,daily=sortedDaily();
   var head=el("div");head.innerHTML='<h2 style="font-size:20px">Recuperação</h2><div class="sub" style="margin-bottom:14px">O que o Apple Watch mede fora da corrida — sono, FC de repouso, HRV e VO₂máx — alimentando Readiness, Recovery Status e VO₂.</div>';
@@ -2494,6 +2503,10 @@ function renderRecuperacao(v){
   hrow.appendChild(impBtn);
   var quick=el("span","sub");quick.innerHTML="ou preencha o dia manualmente abaixo (lendo no app Saúde/Watch).";
   hrow.appendChild(quick);
+  var delBtn=el("button","btn danger sm",'🗑 Excluir dados do Apple Saúde');delBtn.style.marginLeft="auto";
+  delBtn.title="Apaga o diário de recuperação (sono, FC repouso, HRV, VO₂) e o sono vinculado aos treinos. Não afeta seus treinos.";
+  delBtn.onclick=clearHealthData;
+  hrow.appendChild(delBtn);
   how.appendChild(hrow);
   how.appendChild(hint("No iPhone: app <b>Saúde</b> → foto de perfil → <b>Exportar todos os dados de saúde</b> → gera um <b>export.zip</b>. Descompacte e escolha o <b>export.xml</b> aqui. Extraio só FC de repouso, sono, HRV (SDNN) e VO₂máx; o resto é ignorado."));
   v.appendChild(how);
