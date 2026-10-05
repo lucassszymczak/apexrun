@@ -67,10 +67,21 @@ Implementa o **Livro de Fórmulas Apex** direto no front, com o visual
   "o mais novo vence" em conflitos, com **tombstones** para propagar exclusões.
   Requer aplicar a migração `supabase/migrations/*_analise_sync.sql` uma vez.
   Sem as chaves públicas no build, a sync fica desligada e tudo roda local.
-- **Pace-GAP @ FC_REF (145) — treino guiado por FC:** ao importar um `.FIT` de
-  corrida, o app reamostra o stream a **1 Hz**, calcula a **grade** (altitude
-  suavizada em janela ~50 m) e a **velocidade-GAP por amostra** (reusa o Minetti),
-  aplica as **exclusões** (<1,5 m/s, caminhada, 1os 10 min, saltos de FC, lacunas)
+- **Pré-processamento (pausa × lacuna × gravação inteligente):** o `.FIT` é
+  reamostrado a **1 Hz em tempo de movimento**. **Pausas** (eventos timer stop/start
+  ou trecho sem avanço de distância) saem do eixo; **lacunas de gravação** coerentes
+  (velocidade implícita dentro de ±30% dos vizinhos) são **interpoladas até 30 s**
+  (LACUNA_MAX); lacunas maiores ou saltos incoerentes viram **inválidas**. Se a
+  mediana do intervalo entre records passar de 1,5 s, a sessão é marcada **"gravação
+  inteligente"** e a confiança dos KPIs cai um nível (sem excluir dados). As
+  exclusões valem **só para os KPIs por amostra** — distância, tempo, TRIMP, splits
+  e médias usam a sessão inteira, descontando apenas as pausas. O banner de revisão
+  discrimina pausas, lacunas interpoladas, lacunas inválidas, 1os 10 min, min válidos,
+  min na banda 145±3 e a FC mediana.
+- **Pace-GAP @ FC_REF (145) — treino guiado por FC:** sobre esse stream, calcula a
+  **grade** (altitude suavizada em janela ~50 m) e a **velocidade-GAP por amostra**
+  (reusa o Minetti), aplica as **exclusões** (<1,5 m/s, caminhada, 1os 10 min,
+  saltos de FC)
   e mede o **Pace-GAP@145**: a mediana da velocidade-GAP quando a FC (defasada por
   correlação cruzada) fica em 145±3 bpm — *na mesma FC, quanto pace de plano você
   produz*. Confiança Alta/Moderada/Baixa (fallback por regressão robusta que **só
@@ -100,8 +111,11 @@ Implementa o **Livro de Fórmulas Apex** direto no front, com o visual
 - **Clima automático (Open-Meteo) + IMP · Índice do Motor Padronizado:** ao importar
   um `.FIT` com GPS, o app busca no **Open-Meteo** (pelo GPS inicial + horário)
   temperatura, ponto de orvalho, umidade e vento — client-side, nunca usa o sensor
-  de pulso do relógio — e classifica a sessão (padrão 8–18 °C e orvalho ≤14; etiquetas
-  calor/frio/úmido/vento/fora da base). O **IMP** mede a velocidade-GAP a **145 bpm,
+  de pulso do relógio. Atividades com **mais de 5 dias** usam o endpoint **histórico
+  (archive)**; recentes usam os **dados passados** do horário da corrida (nunca
+  previsão). Grava a **fonte** e o **horário local (UTC−3)** consultados. Classifica
+  a sessão (padrão 8–18 °C e orvalho ≤14; etiquetas **acima/abaixo da faixa-padrão**,
+  úmido, vento, fora da base — o rótulo "calor" fica para um limiar a definir). O **IMP** mede a velocidade-GAP a **145 bpm,
   no plano, em clima padrão** como índice (baseline das 3 primeiras = 100). No card
   "Foco atual" ele vira o indicador principal, com a linha **IMP (padrão)** × **Todas
   as condições** (Pace-GAP@145 em índice) — a distância é o **custo do contexto**.

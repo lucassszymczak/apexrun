@@ -19,17 +19,43 @@ ok("inclinação ≈ 2", near(ts.b, 2, 1e-9), ts.b);
 ok("intercepto ≈ 3", near(ts.a, 3, 1e-9), ts.a);
 ok("R² ≈ 1", near(ts.r2, 1, 1e-9), ts.r2.toFixed(3));
 
-console.log("\n== reamostragem 1 Hz + lacunas ==");
+console.log("\n== reamostragem 1 Hz (tempo de movimento) ==");
 const recs = [
   { t: 0, dist: 0, speed: 2.5, hr: 120, alt: 1000, cad: 84 },
   { t: 2, dist: 5, speed: 2.5, hr: 122, alt: 1000, cad: 84 },   // intervalo 2 s → interpola
   { t: 4, dist: 10, speed: 2.5, hr: 124, alt: 1000, cad: 84 },
-  { t: 12, dist: 30, speed: 2.5, hr: 140, alt: 1001, cad: 84 }, // lacuna 8 s → marcar
+  { t: 12, dist: 30, speed: 2.5, hr: 140, alt: 1001, cad: 84 }, // lacuna 8 s, movendo → interpola
 ];
-const rs = S.resampleHz(recs, 1, 5);
-ok("reamostrou a 1 Hz (13 amostras, t 0..12)", rs.length === 13, rs.length);
+const rsOut = S.resampleHz(recs, { lacunaMaxS: 30 });
+const rs = rsOut.samples;
+ok("reamostrou a 1 Hz (~13 amostras, t 0..12)", rs.length === 13, rs.length);
 ok("interpola FC no passo de 2 s (t=1 → 121)", near(rs[1].hr, 121, 1e-6), rs[1].hr);
-ok("lacuna >5 s marcada (gap=true entre 4 e 12)", rs.slice(5, 12).some((x) => x.gap), rs.filter((x) => x.gap).length + " amostras gap");
+ok("lacuna de gravação ≤30 s é interpolada (não invalidada)", rsOut.meta.invalidSec === 0 && rsOut.meta.interpSec >= 8, "interp " + rsOut.meta.interpSec + "s · inval " + rsOut.meta.invalidSec + "s");
+
+console.log("\n== pausa × lacuna × inválida (§1 da correção) ==");
+// gravação inteligente: records a cada 4 s, movendo o tempo todo, SEM pausa
+const smartRun = [];
+for (let k = 0; k <= 150; k++) smartRun.push({ t: k * 4, dist: 2.7 * k * 4, speed: 2.7, hr: 150, alt: 1000, cad: 86 });
+const smartPP = S.preprocess(smartRun);
+ok("detecta gravação inteligente (mediana do intervalo > 1,5 s)", smartPP.quality.smart === true && smartPP.quality.medianDt === 4, "mediana " + smartPP.quality.medianDt + "s");
+ok("gravação inteligente sem pausas → ~zero lacunas inválidas", smartPP.quality.invalidGapSec === 0, smartPP.quality.invalidGapSec + "s inválidos");
+ok("lacunas de gravação são interpoladas", smartPP.quality.interpSec > 0, smartPP.quality.interpSec + "s interpolados");
+// pausa real por evento timer stop/start (t 100–160) → excluída do eixo
+const pausedRun = [];
+for (let t = 0; t <= 400; t++) { if (t > 100 && t < 160) continue; pausedRun.push({ t, dist: 2.6 * (t <= 100 ? t : t - 59), speed: 2.6, hr: 150, alt: 1000, cad: 86 }); }
+const pw = S.pauseWindows([{ t: 100, type: "stop" }, { t: 160, type: "start" }]);
+ok("pauseWindows lê stop/start", pw.length === 1 && pw[0][0] === 100 && pw[0][1] === 160, JSON.stringify(pw));
+const pausedPP = S.preprocess(pausedRun, { pauses: pw });
+ok("pausa real (timer stop) continua excluída", pausedPP.quality.pauseSec >= 55, pausedPP.quality.pauseSec + "s de pausa");
+ok("tempo de movimento não conta a pausa", Math.abs(pausedPP.quality.movingSec - 341) <= 3, pausedPP.quality.movingSec + "s movendo");
+// lacuna > 30 s (movendo) → inválida
+const longGap = [{ t: 0, dist: 0, speed: 2.7, hr: 150, alt: 1000, cad: 86 }, { t: 45, dist: 2.7 * 45, speed: 2.7, hr: 150, alt: 1000, cad: 86 }, { t: 46, dist: 2.7 * 46, speed: 2.7, hr: 150, alt: 1000, cad: 86 }];
+const longPP = S.resampleHz(longGap, { lacunaMaxS: 30 });
+ok("lacuna > LACUNA_MAX (45 s) → inválida", longPP.meta.invalidSec >= 40 && longPP.meta.interpSec === 0, "inval " + longPP.meta.invalidSec + "s");
+// salto incoerente de distância (teleporte) → inválida
+const jump = [{ t: 0, dist: 0, speed: 2.7, hr: 150, alt: 1000, cad: 86 }, { t: 5, dist: 500, speed: 2.7, hr: 150, alt: 1000, cad: 86 }, { t: 6, dist: 503, speed: 2.7, hr: 150, alt: 1000, cad: 86 }];
+const jumpPP = S.resampleHz(jump, { lacunaMaxS: 30 });
+ok("salto incoerente de distância → inválido", jumpPP.meta.invalidSec > 0, "inval " + jumpPP.meta.invalidSec + "s");
 
 console.log("\n== grade em janela de ~50 m ==");
 // subida constante 5%: alt = dist × 0.05, dist cresce 2.5 m/s
@@ -55,6 +81,9 @@ ok("trecho parado (<1,5 m/s) excluído", pp.samples.filter((s) => s.t >= 1200 &&
 ok("caminhada (spm<140) excluída", pp.samples.filter((s) => s.t >= 1300 && s.t < 1360).every((s) => !s.valid), "caminhada fora");
 ok("motivos de exclusão listados", Object.keys(pp.quality.reasons).length >= 3, Object.keys(pp.quality.reasons).join(", "));
 ok("relatório de minutos válidos > 0", pp.quality.validMin > 20, pp.quality.validMin + " min");
+ok("qualidade discrimina pausa/interp/inválida", pp.quality.pauseSec === 0 && pp.quality.invalidGapSec === 0 && typeof pp.quality.interpSec === "number", JSON.stringify({ p: pp.quality.pauseSec, i: pp.quality.interpSec, inv: pp.quality.invalidGapSec }));
+ok("FC mediana dos minutos válidos ≈ 150", Math.abs(pp.quality.medianHrValid - 150) <= 1, pp.quality.medianHrValid + " bpm");
+ok("sessão a 1 Hz não é marcada como inteligente", pp.quality.smart === false, "mediana " + pp.quality.medianDt + "s");
 
 console.log("\n== stream reduzido: round-trip ==");
 const red = S.reduceStream(pp.samples, 3);

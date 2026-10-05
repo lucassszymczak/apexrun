@@ -44,8 +44,9 @@ export function climateTags(w, opts = {}) {
   let inStandard = false;
   if (w && w.tempC != null) {
     inStandard = w.tempC >= o.tempLo && w.tempC <= o.tempHi && (w.dewC == null || w.dewC <= o.dewMax);
-    if (w.tempC > o.tempHi) tags.push("calor");
-    if (w.tempC < o.tempLo) tags.push("frio");
+    // "calor" removido — classificação neutra até definir um limiar de calor
+    if (w.tempC > o.tempHi) tags.push("acima da faixa-padrão");
+    if (w.tempC < o.tempLo) tags.push("abaixo da faixa-padrão");
     if (w.dewC != null && w.dewC > o.dewMax) tags.push("úmido");
     if (w.windKmh != null && w.windKmh > o.windMax) tags.push("vento");
   }
@@ -71,10 +72,16 @@ export async function fetchWeather(geo, when, opts = {}) {
       return h && h.tempC != null ? Object.assign(h, { source: archive ? "open-meteo/archive" : "open-meteo/forecast" }) : null;
     } catch (e) { return null; } finally { if (timer) clearTimeout(timer); }
   };
-  const ageDays = (Date.now() - (when instanceof Date ? when : new Date(when)).getTime()) / 86400000;
-  let h = await tryOne(ageDays > 80);        // antigo → archive primeiro
-  if (!h) h = await tryOne(ageDays <= 80);   // fallback no outro endpoint
+  const whenD = when instanceof Date ? when : new Date(when);
+  const ageDays = (Date.now() - whenD.getTime()) / 86400000;
+  // >5 dias → dados históricos (archive, ERA5). Recentes → dados PASSADOS do horário
+  // da corrida no endpoint forecast (nunca previsão — a data já ocorreu).
+  let h = await tryOne(ageDays > 5);
+  if (!h) h = await tryOne(ageDays <= 5);
   if (!h) return null;
   const c = climateTags(h, opts);
-  return Object.assign(h, { tags: c.tags, inStandard: c.inStandard });
+  // horário local da consulta (America/Sao_Paulo, UTC−3) para auditoria
+  const loc = new Date(whenD.getTime() - 3 * 3600 * 1000);
+  const localTime = loc.toISOString().slice(0, 16).replace("T", " ") + " (UTC−3)";
+  return Object.assign(h, { tags: c.tags, inStandard: c.inStandard, localTime });
 }
