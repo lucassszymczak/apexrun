@@ -26,30 +26,72 @@ export function vGap(speed, gradePct) {
   return speed * gradeCostMult(gradePct);
 }
 
-// --- 1) reamostragem para 1 Hz --------------------------------------------
-// records: [{t(s), dist(m), speed(m/s), hr, alt(m), cad}]. Interpola lacunas ≤maxGap;
-// lacunas maiores marcam o trecho como inválido (campo gap=true nas amostras criadas).
-export function resampleHz(records, hz = 1, maxGapS = 5) {
+// --- 1) modo de gravação + pausas -----------------------------------------
+// O 920XT pode gravar em modo "inteligente" (intervalos irregulares). A mediana
+// do intervalo entre records revela o modo; >smartThresholdS = gravação inteligente.
+export function recordingMode(records, smartThresholdS = 1.5) {
   const recs = (records || []).filter((r) => r && num(r.t) != null).sort((a, b) => a.t - b.t);
-  if (recs.length < 2) return [];
-  const step = 1 / hz, t0 = recs[0].t, tN = recs[recs.length - 1].t;
-  const out = [];
-  let j = 0;
-  const fields = ["dist", "speed", "hr", "alt", "cad"];
-  for (let t = t0; t <= tN + 1e-6; t += step) {
-    while (j < recs.length - 1 && recs[j + 1].t <= t) j++;
-    const a = recs[j], b = recs[Math.min(j + 1, recs.length - 1)];
-    const span = b.t - a.t;
-    const bigGap = span > maxGapS && t > a.t + 1e-6 && t < b.t - 1e-6;
-    const f = span > 0 ? clamp((t - a.t) / span, 0, 1) : 0;
-    const s = { t: Math.round((t - t0) * 1000) / 1000, gap: bigGap };
-    for (const k of fields) {
-      const va = num(a[k]), vb = num(b[k]);
-      s[k] = va == null ? vb : vb == null ? va : va + (vb - va) * f;
-    }
-    out.push(s);
+  const dts = [];
+  for (let i = 1; i < recs.length; i++) { const d = recs[i].t - recs[i - 1].t; if (d > 0) dts.push(d); }
+  const medianDt = dts.length ? median(dts) : 1;
+  return { medianDt, smart: medianDt > smartThresholdS };
+}
+// Janelas de PAUSA (segundos absolutos) a partir dos eventos timer stop/start do .FIT.
+export function pauseWindows(events) {
+  const evs = (events || []).filter((e) => e && num(e.t) != null).sort((a, b) => a.t - b.t);
+  const wins = []; let openStop = null;
+  for (const e of evs) {
+    if (e.type === "stop") { if (openStop == null) openStop = e.t; }
+    else if (e.type === "start") { if (openStop != null) { wins.push([openStop, e.t]); openStop = null; } }
   }
-  return out;
+  return wins;
+}
+
+// --- 2) reamostragem para 1 Hz em TEMPO DE MOVIMENTO ----------------------
+// PAUSA (evento timer stop/start, ou lacuna sem avanço de distância) → removida do eixo.
+// LACUNA DE GRAVAÇÃO (timer rodando, distância avançando, velocidade implícita dentro
+//   de ±impliedTol dos vizinhos) → interpola FC/vel/alt/cad até lacunaMaxS.
+// Lacuna acima de lacunaMaxS, ou salto incoerente de distância → inválida (descartada).
+// Retorna {samples, meta:{pauseSec, interpSec, invalidSec, movingSec}}.
+export function resampleHz(records, opts = {}) {
+  const o = Object.assign({ hz: 1, lacunaMaxS: 30, impliedTol: 0.3, pauseGapS: 3, pauseMaxSpeed: 0.3, pauses: [] }, opts);
+  const recs = (records || []).filter((r) => r && num(r.t) != null).sort((a, b) => a.t - b.t);
+  const step = 1 / o.hz, meta = { pauseSec: 0, interpSec: 0, invalidSec: 0, movingSec: 0 };
+  if (recs.length < 2) return { samples: [], meta };
+  const pw = (o.pauses || []).map((p) => [p[0], p[1]]);
+  const fields = ["dist", "speed", "hr", "alt", "cad"];
+  const inPauseWin = (ta, tb) => { const c = (ta + tb) / 2; return pw.some((w) => c >= w[0] - 1 && c <= w[1] + 1); };
+  const lerp = (a, b, f, k) => { const va = num(a[k]), vb = num(b[k]); return va == null ? vb : vb == null ? va : va + (vb - va) * f; };
+  const out = []; let movT = 0;
+  for (let i = 0; i < recs.length - 1; i++) {
+    const a = recs[i], b = recs[i + 1], dt = b.t - a.t;
+    if (dt <= 0) continue;
+    const dd = (num(a.dist) != null && num(b.dist) != null) ? b.dist - a.dist : null;
+    const vimp = dd != null ? dd / dt : null;
+    const sp = [a.speed, b.speed].filter((x) => num(x) != null);
+    const vnb = sp.length ? sp.reduce((s, x) => s + x, 0) / sp.length : vimp;
+    const isPause = inPauseWin(a.t, b.t) || (dt > o.pauseGapS && ((vimp != null && vimp < o.pauseMaxSpeed) || (dd != null && dd < 1)));
+    let cls;
+    if (isPause) cls = "pause";
+    else if (dt <= step + 1e-6) cls = "normal";
+    else if (dt <= o.lacunaMaxS && (vimp == null || vnb == null || Math.abs(vimp - vnb) <= o.impliedTol * Math.max(vnb, 0.3))) cls = "interp";
+    else cls = "invalid";
+    if (cls === "pause") { meta.pauseSec += dt; continue; }
+    if (cls === "invalid") { meta.invalidSec += dt; movT += dt; continue; }
+    if (cls === "interp") meta.interpSec += dt;
+    const steps = Math.max(1, Math.round(dt / step));
+    for (let s = 0; s < steps; s++) {
+      const f = s / steps, smp = { t: Math.round((movT + s * step) * 1000) / 1000, interp: cls === "interp" };
+      for (const k of fields) smp[k] = lerp(a, b, f, k);
+      out.push(smp);
+    }
+    movT += dt;
+  }
+  const last = recs[recs.length - 1], lf = { t: Math.round(movT * 1000) / 1000, interp: false };
+  for (const k of fields) lf[k] = num(last[k]);
+  out.push(lf);
+  meta.movingSec = movT;
+  return { samples: out, meta };
 }
 
 // --- 2) altitude suavizada + grade em janela de ~winM metros --------------
@@ -80,47 +122,49 @@ export function gradeSeries(samples, winM = 50, clipPct = 25) {
   return grade;
 }
 
-// --- 3) pré-processamento: exclusões (§2) + relatório de qualidade --------
-// opts: {firstMin=10, minSpeed=1.5, walkSpm=140, hrJump=15, gradeRegLimit=15}
+// --- 3) pré-processamento: exclusões (só do subconjunto de KPIs) + qualidade
+// As exclusões aqui valem SOMENTE para os KPIs por amostra. Distância, tempo, TRIMP,
+// splits e médias da sessão usam a sessão inteira (descontando só as pausas) — isso é
+// feito fora daqui, nos builders do .FIT. opts aceita pauses (de pauseWindows) e eventos.
 export function preprocess(records, opts = {}) {
-  const o = Object.assign({ hz: 1, maxGapS: 5, winM: 50, firstMin: 10, minSpeed: 1.5, walkSpm: 140, hrJump: 15, gradeRegLimit: 15 }, opts);
-  const rs = resampleHz(records, o.hz, o.maxGapS);
-  const grade = gradeSeries(rs, o.winM);
-  const hasHR = rs.some((s) => s.hr != null);
-  const hasCad = rs.some((s) => s.cad != null);
-  const hasAlt = rs.some((s) => s.alt != null);
+  const o = Object.assign({ hz: 1, lacunaMaxS: 30, smartThresholdS: 1.5, impliedTol: 0.3, pauseGapS: 3, pauseMaxSpeed: 0.3, pauses: [], winM: 50, firstMin: 10, minSpeed: 1.5, walkSpm: 140, hrJump: 15, gradeRegLimit: 15 }, opts);
+  const mode = recordingMode(records, o.smartThresholdS);
+  const rs = resampleHz(records, o), raw = rs.samples, meta = rs.meta;
+  const grade = gradeSeries(raw, o.winM);
+  const hasHR = raw.some((s) => s.hr != null);
+  const hasCad = raw.some((s) => s.cad != null);
+  const hasAlt = raw.some((s) => s.alt != null);
   const reasons = {};
   const bump = (k) => { reasons[k] = (reasons[k] || 0) + 1; };
   const samples = [];
-  let prevHr = null, prevT = null;
-  for (let i = 0; i < rs.length; i++) {
-    const r = rs[i], spm = toSpm(r.cad), g = grade[i];
-    const s = { t: r.t, spd: r.speed != null ? Math.round(r.speed * 1000) / 1000 : null, grade: g != null ? Math.round(g * 10) / 10 : null, hr: r.hr != null ? Math.round(r.hr) : null, spm: spm, vgap: vGap(r.speed, g), valid: true, inReg: true };
-    // artefato de FC: salto > hrJump bpm/s
+  let prevHr = null, prevT = null, firstMinSec = 0;
+  for (let i = 0; i < raw.length; i++) {
+    const r = raw[i], spm = toSpm(r.cad), g = grade[i];
+    const s = { t: r.t, spd: r.speed != null ? Math.round(r.speed * 1000) / 1000 : null, grade: g != null ? Math.round(g * 10) / 10 : null, hr: r.hr != null ? Math.round(r.hr) : null, spm: spm, vgap: vGap(r.speed, g), valid: true, inReg: true, interp: !!r.interp };
     let hrArt = false;
-    if (s.hr != null && prevHr != null && prevT != null) {
-      const dt = r.t - prevT;
-      if (dt > 0 && Math.abs(s.hr - prevHr) / dt > o.hrJump) hrArt = true;
-    }
+    if (s.hr != null && prevHr != null && prevT != null) { const dt = r.t - prevT; if (dt > 0 && Math.abs(s.hr - prevHr) / dt > o.hrJump) hrArt = true; }
     if (s.hr != null) { prevHr = s.hr; prevT = r.t; }
-    if (r.gap) { s.valid = false; bump("lacuna>5s"); }
-    if (r.t < o.firstMin * 60) { s.valid = false; bump("primeiros " + o.firstMin + " min"); }
+    if (r.t < o.firstMin * 60) { s.valid = false; bump("primeiros " + o.firstMin + " min"); firstMinSec++; }
     if (s.spd != null && s.spd < o.minSpeed) { s.valid = false; bump("parado/<" + o.minSpeed + " m/s"); }
     if (spm != null && spm < o.walkSpm) { s.valid = false; bump("caminhada (spm<" + o.walkSpm + ")"); }
     if (hrArt) { s.valid = false; bump("artefato de FC"); }
     if (s.hr == null) { s.valid = false; bump("sem FC"); }
-    // |grade|>limite: fora só das regressões (continua nos cálculos gerais)
     if (g != null && Math.abs(g) > o.gradeRegLimit) s.inReg = false;
     samples.push(s);
   }
-  const total = samples.length;
-  const validN = samples.filter((s) => s.valid).length;
-  const excludedPct = total ? Math.round((1 - validN / total) * 1000) / 10 : 100;
+  const movingSec = samples.length;
+  const validArr = samples.filter((s) => s.valid);
+  const validN = validArr.length;
+  const excludedPct = movingSec ? Math.round((1 - validN / movingSec) * 1000) / 10 : 100;
+  const hrValid = validArr.map((s) => s.hr).filter((x) => x != null);
+  const medianHrValid = hrValid.length ? Math.round(median(hrValid)) : null;
   const quality = {
-    totalSec: total, validSec: validN, validMin: Math.round(validN / 60 * 10) / 10,
+    movingSec, pauseSec: Math.round(meta.pauseSec), interpSec: Math.round(meta.interpSec), invalidGapSec: Math.round(meta.invalidSec),
+    firstMinSec, validSec: validN, validMin: Math.round(validN / 60 * 10) / 10,
     excludedPct, reasons, hasHR, hasCad, hasAlt,
-    // §8: dado fraco → não persistir calado
-    needsConfirm: !hasHR || !hasCad || !hasAlt || excludedPct > 20,
+    smart: mode.smart, medianDt: Math.round(mode.medianDt * 10) / 10, medianHrValid,
+    // dado fraco → não persistir calado (também se houver lacuna inválida relevante)
+    needsConfirm: !hasHR || !hasCad || !hasAlt || excludedPct > 20 || meta.invalidSec > 60,
   };
   return { samples, grade, quality };
 }

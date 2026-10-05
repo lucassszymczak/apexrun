@@ -683,12 +683,14 @@ function fitAscentDescent(records){
   return{up:Math.round(up),down:Math.round(down)};
 }
 // histograma de FC (bpm -> segundos), para tempo real em zona
+// histograma de FC (bpm → segundos). Usa a sessão inteira; lacunas de gravação até
+// ~30 s (LACUNA_MAX) contam como tempo em zona, lacunas/pausas maiores são descontadas.
 function fitHrHist(records){
   var hist={},any=false;
   for(var i=0;i<records.length;i++){
     var r=records[i];if(r.hr==null)continue;any=true;
     var dt=i<records.length-1?records[i+1].t-r.t:1;
-    if(!(dt>0)||dt>10)dt=1;
+    if(!(dt>0)||dt>30)dt=1;
     var k=Math.round(r.hr);hist[k]=(hist[k]||0)+dt;
   }
   return any?hist:null;
@@ -700,20 +702,40 @@ function fitHrHist(records){
 ============================================================================ */
 function strSpm(cad){if(cad==null)return null;return cad<130?Math.round(cad*2):Math.round(cad);}
 function vGap(speed,grade){if(speed==null||grade==null)return null;return speed*gradeCostMult(grade);}
-function resampleHz(records,hz,maxGapS){
-  hz=hz||1;maxGapS=maxGapS||5;
+function recordingMode(records,smartThresholdS){smartThresholdS=smartThresholdS||1.5;
+  var recs=(records||[]).filter(function(r){return r&&fitNum(r.t)!=null;}).sort(function(a,b){return a.t-b.t;}),dts=[];
+  for(var i=1;i<recs.length;i++){var d=recs[i].t-recs[i-1].t;if(d>0)dts.push(d);}
+  var medianDt=dts.length?median(dts):1;return{medianDt:medianDt,smart:medianDt>smartThresholdS};}
+function pauseWindows(events){var evs=(events||[]).filter(function(e){return e&&fitNum(e.t)!=null;}).sort(function(a,b){return a.t-b.t;}),wins=[],openStop=null;
+  for(var i=0;i<evs.length;i++){var e=evs[i];if(e.type==="stop"){if(openStop==null)openStop=e.t;}else if(e.type==="start"){if(openStop!=null){wins.push([openStop,e.t]);openStop=null;}}}
+  return wins;}
+function resampleHz(records,opts){
+  var o={hz:1,lacunaMaxS:30,impliedTol:0.3,pauseGapS:3,pauseMaxSpeed:0.3,pauses:[]};if(opts)for(var kk in opts)o[kk]=opts[kk];
   var recs=(records||[]).filter(function(r){return r&&fitNum(r.t)!=null;}).sort(function(a,b){return a.t-b.t;});
-  if(recs.length<2)return [];
-  var step=1/hz,t0=recs[0].t,tN=recs[recs.length-1].t,out=[],j=0,fields=["dist","speed","hr","alt","cad"];
-  for(var t=t0;t<=tN+1e-6;t+=step){
-    while(j<recs.length-1&&recs[j+1].t<=t)j++;
-    var a=recs[j],b=recs[Math.min(j+1,recs.length-1)],span=b.t-a.t;
-    var bigGap=span>maxGapS&&t>a.t+1e-6&&t<b.t-1e-6;
-    var f=span>0?clamp((t-a.t)/span,0,1):0,s={t:Math.round((t-t0)*1000)/1000,gap:bigGap};
-    for(var k=0;k<fields.length;k++){var fk=fields[k],va=fitNum(a[fk]),vb=fitNum(b[fk]);s[fk]=va==null?vb:(vb==null?va:va+(vb-va)*f);}
-    out.push(s);
+  var step=1/o.hz,meta={pauseSec:0,interpSec:0,invalidSec:0,movingSec:0};
+  if(recs.length<2)return{samples:[],meta:meta};
+  var pw=(o.pauses||[]).map(function(p){return[p[0],p[1]];}),fields=["dist","speed","hr","alt","cad"];
+  function inPauseWin(ta,tb){var c=(ta+tb)/2;for(var i=0;i<pw.length;i++)if(c>=pw[i][0]-1&&c<=pw[i][1]+1)return true;return false;}
+  function lerp(a,b,f,k){var va=fitNum(a[k]),vb=fitNum(b[k]);return va==null?vb:(vb==null?va:va+(vb-va)*f);}
+  var out=[],movT=0;
+  for(var i=0;i<recs.length-1;i++){
+    var a=recs[i],b=recs[i+1],dt=b.t-a.t;if(dt<=0)continue;
+    var dd=(fitNum(a.dist)!=null&&fitNum(b.dist)!=null)?b.dist-a.dist:null,vimp=dd!=null?dd/dt:null;
+    var sp=[a.speed,b.speed].filter(function(x){return fitNum(x)!=null;}),vnb=sp.length?sp.reduce(function(s,x){return s+x;},0)/sp.length:vimp;
+    var isPause=inPauseWin(a.t,b.t)||(dt>o.pauseGapS&&((vimp!=null&&vimp<o.pauseMaxSpeed)||(dd!=null&&dd<1))),cls;
+    if(isPause)cls="pause";
+    else if(dt<=step+1e-6)cls="normal";
+    else if(dt<=o.lacunaMaxS&&(vimp==null||vnb==null||Math.abs(vimp-vnb)<=o.impliedTol*Math.max(vnb,0.3)))cls="interp";
+    else cls="invalid";
+    if(cls==="pause"){meta.pauseSec+=dt;continue;}
+    if(cls==="invalid"){meta.invalidSec+=dt;movT+=dt;continue;}
+    if(cls==="interp")meta.interpSec+=dt;
+    var steps=Math.max(1,Math.round(dt/step));
+    for(var s2=0;s2<steps;s2++){var f=s2/steps,smp={t:Math.round((movT+s2*step)*1000)/1000,interp:cls==="interp"};for(var k=0;k<fields.length;k++)smp[fields[k]]=lerp(a,b,f,fields[k]);out.push(smp);}
+    movT+=dt;
   }
-  return out;
+  var last=recs[recs.length-1],lf={t:Math.round(movT*1000)/1000,interp:false};for(var k2=0;k2<fields.length;k2++)lf[fields[k2]]=fitNum(last[fields[k2]]);out.push(lf);
+  meta.movingSec=movT;return{samples:out,meta:meta};
 }
 function gradeSeries(samples,winM,clipPct){
   winM=winM||50;clipPct=clipPct||25;var n=samples.length,grade=[];for(var q=0;q<n;q++)grade.push(null);
@@ -730,20 +752,20 @@ function gradeSeries(samples,winM,clipPct){
   return grade;
 }
 function preprocess(records,opts){
-  var o={hz:1,maxGapS:5,winM:50,firstMin:10,minSpeed:1.5,walkSpm:140,hrJump:15,gradeRegLimit:15};
+  var o={hz:1,lacunaMaxS:30,smartThresholdS:1.5,impliedTol:0.3,pauseGapS:3,pauseMaxSpeed:0.3,pauses:[],winM:50,firstMin:10,minSpeed:1.5,walkSpm:140,hrJump:15,gradeRegLimit:15};
   if(opts)for(var kk in opts)o[kk]=opts[kk];
-  var rs=resampleHz(records,o.hz,o.maxGapS),grade=gradeSeries(rs,o.winM);
-  var hasHR=rs.some(function(s){return s.hr!=null;}),hasCad=rs.some(function(s){return s.cad!=null;}),hasAlt=rs.some(function(s){return s.alt!=null;});
-  var reasons={},samples=[],prevHr=null,prevT=null;
+  var mode=recordingMode(records,o.smartThresholdS);
+  var rsOut=resampleHz(records,o),raw=rsOut.samples,meta=rsOut.meta,grade=gradeSeries(raw,o.winM);
+  var hasHR=raw.some(function(s){return s.hr!=null;}),hasCad=raw.some(function(s){return s.cad!=null;}),hasAlt=raw.some(function(s){return s.alt!=null;});
+  var reasons={},samples=[],prevHr=null,prevT=null,firstMinSec=0;
   function bump(k){reasons[k]=(reasons[k]||0)+1;}
-  for(var i=0;i<rs.length;i++){
-    var r=rs[i],spm=strSpm(r.cad),g=grade[i];
-    var s={t:r.t,spd:r.speed!=null?Math.round(r.speed*1000)/1000:null,grade:g!=null?Math.round(g*10)/10:null,hr:r.hr!=null?Math.round(r.hr):null,spm:spm,vgap:vGap(r.speed,g),valid:true,inReg:true};
+  for(var i=0;i<raw.length;i++){
+    var r=raw[i],spm=strSpm(r.cad),g=grade[i];
+    var s={t:r.t,spd:r.speed!=null?Math.round(r.speed*1000)/1000:null,grade:g!=null?Math.round(g*10)/10:null,hr:r.hr!=null?Math.round(r.hr):null,spm:spm,vgap:vGap(r.speed,g),valid:true,inReg:true,interp:!!r.interp};
     var hrArt=false;
     if(s.hr!=null&&prevHr!=null&&prevT!=null){var dt=r.t-prevT;if(dt>0&&Math.abs(s.hr-prevHr)/dt>o.hrJump)hrArt=true;}
     if(s.hr!=null){prevHr=s.hr;prevT=r.t;}
-    if(r.gap){s.valid=false;bump("lacuna>5s");}
-    if(r.t<o.firstMin*60){s.valid=false;bump("primeiros "+o.firstMin+" min");}
+    if(r.t<o.firstMin*60){s.valid=false;bump("primeiros "+o.firstMin+" min");firstMinSec++;}
     if(s.spd!=null&&s.spd<o.minSpeed){s.valid=false;bump("parado/<"+o.minSpeed+" m/s");}
     if(spm!=null&&spm<o.walkSpm){s.valid=false;bump("caminhada (spm<"+o.walkSpm+")");}
     if(hrArt){s.valid=false;bump("artefato de FC");}
@@ -751,9 +773,13 @@ function preprocess(records,opts){
     if(g!=null&&Math.abs(g)>o.gradeRegLimit)s.inReg=false;
     samples.push(s);
   }
-  var total=samples.length,validN=samples.filter(function(s){return s.valid;}).length;
-  var excludedPct=total?Math.round((1-validN/total)*1000)/10:100;
-  var quality={totalSec:total,validSec:validN,validMin:Math.round(validN/60*10)/10,excludedPct:excludedPct,reasons:reasons,hasHR:hasHR,hasCad:hasCad,hasAlt:hasAlt,needsConfirm:(!hasHR||!hasCad||!hasAlt||excludedPct>20)};
+  var movingSec=samples.length,validArr=samples.filter(function(s){return s.valid;}),validN=validArr.length;
+  var excludedPct=movingSec?Math.round((1-validN/movingSec)*1000)/10:100;
+  var hrValid=validArr.map(function(s){return s.hr;}).filter(function(x){return x!=null;}),medianHrValid=hrValid.length?Math.round(median(hrValid)):null;
+  var quality={movingSec:movingSec,pauseSec:Math.round(meta.pauseSec),interpSec:Math.round(meta.interpSec),invalidGapSec:Math.round(meta.invalidSec),
+    firstMinSec:firstMinSec,validSec:validN,validMin:Math.round(validN/60*10)/10,excludedPct:excludedPct,reasons:reasons,hasHR:hasHR,hasCad:hasCad,hasAlt:hasAlt,
+    smart:mode.smart,medianDt:Math.round(mode.medianDt*10)/10,medianHrValid:medianHrValid,
+    needsConfirm:(!hasHR||!hasCad||!hasAlt||excludedPct>20||meta.invalidSec>60)};
   return{samples:samples,grade:grade,quality:quality};
 }
 function reduceStream(samples,everyS){everyS=everyS||3;var s=[],next=0;for(var i=0;i<samples.length;i++){var x=samples[i];if(x.t+1e-9>=next){s.push({t:Math.round(x.t),spd:x.spd,grade:x.grade,hr:x.hr,spm:x.spm,v:x.valid?1:0});next=x.t+everyS;}}return{everyS:everyS,n:s.length,s:s};}
@@ -854,7 +880,7 @@ function pickHour(hourly,when){if(!hourly||!hourly.time||!hourly.time.length)ret
 function climateTags(w,opts){var o={tempLo:8,tempHi:18,dewMax:14,windMax:20,altMax:200,baseAlt:null,alt:null};if(opts)for(var kk in opts)o[kk]=opts[kk];
   var tags=[],inStandard=false;
   if(w&&w.tempC!=null){inStandard=w.tempC>=o.tempLo&&w.tempC<=o.tempHi&&(w.dewC==null||w.dewC<=o.dewMax);
-    if(w.tempC>o.tempHi)tags.push("calor");if(w.tempC<o.tempLo)tags.push("frio");if(w.dewC!=null&&w.dewC>o.dewMax)tags.push("úmido");if(w.windKmh!=null&&w.windKmh>o.windMax)tags.push("vento");}
+    if(w.tempC>o.tempHi)tags.push("acima da faixa-padrão");if(w.tempC<o.tempLo)tags.push("abaixo da faixa-padrão");if(w.dewC!=null&&w.dewC>o.dewMax)tags.push("úmido");if(w.windKmh!=null&&w.windKmh>o.windMax)tags.push("vento");}
   if(o.alt!=null&&o.baseAlt!=null&&Math.abs(o.alt-o.baseAlt)>o.altMax)tags.push("fora da base");
   return{tags:tags,inStandard:inStandard};}
 function climateOpts(a,geo){a=a||{};return{tempLo:a.climTempLo!=null?a.climTempLo:8,tempHi:a.climTempHi!=null?a.climTempHi:18,dewMax:a.climDewMax!=null?a.climDewMax:14,windMax:a.windMax!=null?a.windMax:20,altMax:200,baseAlt:a.baseAltM!=null?a.baseAltM:null,alt:geo&&geo.alt!=null?geo.alt:null};}
@@ -862,8 +888,10 @@ function fetchWeather(geo,when,a){
   if(!geo||geo.lat==null||geo.lon==null||typeof fetch==="undefined")return Promise.resolve(null);
   function tryOne(archive){var ctrl=typeof AbortController!=="undefined"?new AbortController():null,timer=ctrl?setTimeout(function(){ctrl.abort();},8000):null;
     return fetch(weatherUrl(geo,when,archive),ctrl?{signal:ctrl.signal}:{}).then(function(r){if(!r||!r.ok)return null;return r.json();}).then(function(j){var h=j?pickHour(j.hourly,when):null;return h&&h.tempC!=null?Object.assign(h,{source:archive?"open-meteo/archive":"open-meteo/forecast"}):null;}).catch(function(){return null;}).then(function(x){if(timer)clearTimeout(timer);return x;});}
-  var ageDays=(Date.now()-(when instanceof Date?when:new Date(when)).getTime())/86400000;
-  return tryOne(ageDays>80).then(function(h){return h||tryOne(ageDays<=80);}).then(function(h){if(!h)return null;var c=climateTags(h,climateOpts(a,geo));return Object.assign(h,{tags:c.tags,inStandard:c.inStandard});});}
+  var whenD=when instanceof Date?when:new Date(when),ageDays=(Date.now()-whenD.getTime())/86400000;
+  return tryOne(ageDays>5).then(function(h){return h||tryOne(ageDays<=5);}).then(function(h){if(!h)return null;var c=climateTags(h,climateOpts(a,geo));
+    var loc=new Date(whenD.getTime()-3*3600*1000),localTime=loc.toISOString().slice(0,16).replace("T"," ")+" (UTC−3)";
+    return Object.assign(h,{tags:c.tags,inStandard:c.inStandard,localTime:localTime});});}
 // --- IMP Fase 1 — espelha analise/stream.mjs ---
 function impSample(samples,opts){var o={fcRef:145,band:3,lagSec:0,plano:2,win:[10,30]};if(opts)for(var kk in opts)o[kk]=opts[kk];
   var w0=o.win[0]*60,w1=o.win[1]*60,dt=sampleDt(samples),lagIdx=Math.round(o.lagSec/dt),vg=[];
@@ -922,8 +950,8 @@ function alignForModel(samples,lagSec){var dt=sampleDt(samples),lagIdx=Math.roun
   for(var i=0;i<samples.length;i++){var s=samples[i],j=i+lagIdx;if(!s.valid||s.vgap==null)continue;var hr=(j<samples.length&&samples[j]&&samples[j].valid&&samples[j].hr!=null)?samples[j].hr:null;if(hr==null)continue;out.push({vgap:s.vgap,hr:hr,minute:s.t/60});}
   return out;}
 // computa os KPIs por amostra a partir dos records normalizados (corrida)
-function computeStreamKpis(records,a){
-  var pp=preprocess(records);
+function computeStreamKpis(records,a,pauses){
+  var pp=preprocess(records,{pauses:pauses||[]});
   var lag=hrLag(pp.samples,90);
   var fcRef=(a&&a.fcRef)||145,bandFc=(a&&a.bandFc)||3;
   var pg=paceGapAtHR(pp.samples,{fcRef:fcRef,band:bandFc,lagSec:lag.lagSec,win:[10,45]});
@@ -931,6 +959,12 @@ function computeStreamKpis(records,a){
   var mech=mechDecoupling(pp.samples);
   var cadAdh=cadenceAtPace(pp.samples,{paceRef:null}).adherencePct; // adesão 170–176 (independe do PACE_REF)
   var imp=impSample(pp.samples,{fcRef:fcRef,band:bandFc,lagSec:lag.lagSec}); // IMP Fase 1 (v_padrao)
+  pp.quality.minInBand=pg?pg.minInBand:0; // §2: minutos na banda 145±3
+  // §1: gravação inteligente → rebaixa a confiança dos KPIs um nível (sem excluir dados)
+  if(pp.quality.smart){
+    if(pg)pg.confidence=downgradeConf(pg.confidence);
+    if(imp&&imp.confidence)imp.confidence=downgradeConf(imp.confidence);
+  }
   return{quality:pp.quality,hrLagSec:lag.lagSec,paceGap:pg,eff:eff,mech:mech,cadAdherencePct:cadAdh,imp:imp,stream:reduceStream(pp.samples,3)};
 }
 
@@ -963,7 +997,11 @@ function fitMessagesToWorkout(messages){
   var te=fitNum(session.totalTrainingEffect);
   // GPS inicial (para clima futuro) e KPIs por amostra — só corrida com trajeto
   var geo=null;for(var gi=0;gi<records.length;gi++){if(records[gi].lat!=null&&records[gi].lon!=null){geo={lat:Math.round(records[gi].lat*1e5)/1e5,lon:Math.round(records[gi].lon*1e5)/1e5,alt:fitNum(records[gi].alt)!=null?Math.round(records[gi].alt):null};break;}}
-  var sk=null;if(!isBk){try{sk=computeStreamKpis(records,(typeof state!=="undefined"&&state.athlete)||null);}catch(e){sk=null;}}
+  // pausas pelos eventos timer stop/start do .FIT (segundos absolutos, mesma escala de record.t)
+  var fitEvents=(messages.eventMesgs||[]).filter(function(e){return e&&(e.event==="timer"||e.event==null)&&e.timestamp instanceof Date;}).map(function(e){
+    var et=(e.eventType||"").toString().toLowerCase();return{t:e.timestamp.getTime()/1000,type:/stop/.test(et)?"stop":(/start/.test(et)?"start":null)};}).filter(function(e){return e.type;});
+  var pauses=pauseWindows(fitEvents);
+  var sk=null;if(!isBk){try{sk=computeStreamKpis(records,(typeof state!=="undefined"&&state.athlete)||null,pauses);}catch(e){sk=null;}}
   return{
     date:fitISODate(startDate)||new Date().toISOString().slice(0,10),
     modal:modal,
@@ -1078,6 +1116,31 @@ function backfillWeather(btn){
     fetchWeather(w.geo,when,state.athlete).then(function(wx){if(wx){w.weather=wx;done++;}}).catch(function(){}).then(function(){setTimeout(next,250);});
   }
   next();
+}
+// §5: recalcula os KPIs das sessões que ainda têm stream + refaz as etiquetas de clima,
+// imprime a auditoria antes/depois no console e avisa quais sessões precisam de reimport.
+// A correção de pausa/lacuna/gravação inteligente usa os records brutos do .FIT (não
+// persistidos) — por isso só vale de fato ao REIMPORTAR cada arquivo.
+function recalcKpis(){
+  var a=state.athlete,runs=state.workouts.filter(isRun),before=[],after=[],need=[];
+  function row(w){return{data:w.date,pace:(w.paceGap&&w.paceGap.paceSec)?paceStr(w.paceGap.paceSec):"—",conf:w.paceGap?w.paceGap.confidence:"—",mec:(w.mech&&w.mech.pct!=null)?w.mech.pct+"%":"—",valMin:w.quality?w.quality.validMin:null};}
+  runs.forEach(function(w){
+    if(w.weather&&w.weather.tempC!=null){var c=climateTags(w.weather,climateOpts(a,w.geo));w.weather.tags=c.tags;w.weather.inStandard=c.inStandard;}
+    if(w.stream){
+      before.push(row(w));
+      var samples=expandStream(w.stream),lag=w.hrLagSec!=null?w.hrLagSec:0,fcRef=a.fcRef||145,band=a.bandFc||3;
+      w.paceGap=paceGapAtHR(samples,{fcRef:fcRef,band:band,lagSec:lag,win:[10,45]});
+      w.eff=sessionEff(samples);w.mech=mechDecoupling(samples);w.imp=impSample(samples,{fcRef:fcRef,band:band,lagSec:lag});
+      if(w.quality){w.quality.minInBand=w.paceGap?w.paceGap.minInBand:0;if(w.quality.smart){if(w.paceGap)w.paceGap.confidence=downgradeConf(w.paceGap.confidence);if(w.imp&&w.imp.confidence)w.imp.confidence=downgradeConf(w.imp.confidence);}}
+      after.push(row(w));
+    }else if(w.quality||w.streamPruned){need.push(w.date);}
+  });
+  try{console.log("AUDITORIA — ANTES");console.table(before);console.log("AUDITORIA — DEPOIS");console.table(after);}catch(e){}
+  try{pruneStreams(state.workouts,20);}catch(e){}touch();save();scheduleSync();render();
+  var msg=after.length?(after.length+" sessão(ões) recalculada(s) do stream."):"Nenhuma sessão com stream para recalcular agora.";
+  if(need.length)msg+="\n\n⚠ "+need.length+" sessão(ões) sem records brutos salvos — REIMPORTE o .FIT para aplicar a correção de pausa/lacuna:\n"+need.sort().join(", ");
+  msg+="\n\nObs.: a correção de pausa × lacuna × gravação inteligente usa os records brutos do .FIT (não ficam salvos). Ela passa a valer ao reimportar cada arquivo. A auditoria antes/depois está no console (F12).";
+  alert(msg);
 }
 
 /* ============================================================================
@@ -2011,6 +2074,8 @@ function renderPainel(v){
       tb2.appendChild(r);});
     t2.appendChild(tb2);at.appendChild(t2);ac2.appendChild(at);
     ac2.appendChild(hint("Transparência do pré-processamento: minutos válidos, % excluído, defasagem de FC usada, Pace-GAP e decoupling mecânico por sessão. &gt;20% excluído (e passada caindo &gt;2%) aparecem em vermelho. Defasagem de FC do ciclo: <b>"+ml.lagSec+"s</b> (mediana de "+ml.n+" sessão(ões) válida(s))"+(lagLow?" — <b>&lt;3 sessões</b>, então Pace-GAP e decoupling mecânico entram com confiança rebaixada (3.3).":".")+" Sessões antigas podem aparecer como <b>(resumido)</b> — o stream por amostra é mantido só nas mais recentes."));
+    var rc=el("button","btn ghost sm");rc.style.marginTop="10px";rc.textContent="↻ Recalcular KPIs";rc.title="Recalcula do stream e refaz as etiquetas de clima; lista o que precisa reimportar";rc.onclick=function(){recalcKpis();};ac2.appendChild(rc);
+    ac2.appendChild(hint("A correção de <b>pausa × lacuna × gravação inteligente</b> usa os <b>records brutos</b> do .FIT — que <b>não ficam salvos</b> (só um stream reduzido). Por isso ela passa a valer ao <b>reimportar</b> cada arquivo. O botão acima recalcula o que dá a partir do stream e aponta o que precisa de reimport."));
     v.appendChild(ac2);
   }
 }
@@ -2742,15 +2807,18 @@ function openModal(id,prefill,fromFit){
   if(fromFit){
     var qline="";
     if(s&&s.quality){var q=s.quality;var motivos=[];for(var rk in q.reasons)motivos.push(rk+" ("+q.reasons[rk]+"s)");
+      function hm(sec){return sec>=60?(Math.round(sec/6)/10)+" min":sec+" s";}
       qline='<div style="margin-top:8px;font-size:12.5px;'+(q.needsConfirm?'color:var(--crit)':'color:var(--ink-2)')+'">'+
         (q.needsConfirm?'⚠ <b>Confira antes de salvar:</b> ':'✓ ')+
-        q.validMin+' min válidos · '+q.excludedPct+'% excluído'+
+        '<b>'+q.validMin+' min válidos</b>'+(q.minInBand!=null?' · '+q.minInBand+' min na banda 145±3':'')+(q.medianHrValid!=null?' · FC mediana '+q.medianHrValid+' bpm':'')+
+        (q.smart?' · <b style="color:var(--warn)">gravação inteligente</b> (confiança −1)':'')+
         (!q.hasHR?' · <b>sem FC</b>':'')+(!q.hasCad?' · <b>sem cadência</b>':'')+(!q.hasAlt?' · <b>sem altitude</b>':'')+
         (s.paceGap&&s.paceGap.paceSec?' · Pace-GAP@145 '+paceStr(s.paceGap.paceSec)+'/km ('+s.paceGap.confidence+')':(s.paceGap?' · Pace-GAP@145: '+s.paceGap.confidence:''))+
+        '<br><span class="sub">Pausas '+hm(q.pauseSec||0)+' · lacunas interpoladas '+hm(q.interpSec||0)+' · lacunas inválidas '+hm(q.invalidGapSec||0)+' · 1os 10 min '+hm(q.firstMinSec||0)+' · '+q.excludedPct+'% excluído dos KPIs</span>'+
         (motivos.length?'<br><span class="sub">Excluído: '+esc(motivos.slice(0,4).join(" · "))+'</span>':'')+'</div>';}
     var wline="";
     if(s&&s.modal!=="bike"&&s.geo&&s.geo.lat!=null){
-      if(s.weather){var wx=s.weather;wline='<div style="margin-top:6px;font-size:12.5px;color:var(--ink-2)">🌤 '+(wx.tempC!=null?Math.round(wx.tempC)+'°C':'—')+(wx.dewC!=null?' · orvalho '+Math.round(wx.dewC)+'°':'')+(wx.windKmh!=null?' · vento '+Math.round(wx.windKmh)+' km/h':'')+' · '+(wx.inStandard?'<b>dentro do padrão</b> (entra no IMP)':'<b>fora do padrão</b> (IMP não calcula; Pace-GAP continua)')+(wx.tags&&wx.tags.length?' · '+esc(wx.tags.join(" · ")):'')+' <span class="sub">('+esc(wx.source||"open-meteo")+')</span></div>';}
+      if(s.weather){var wx=s.weather;wline='<div style="margin-top:6px;font-size:12.5px;color:var(--ink-2)">🌤 '+(wx.tempC!=null?Math.round(wx.tempC)+'°C':'—')+(wx.dewC!=null?' · orvalho '+Math.round(wx.dewC)+'°':'')+(wx.windKmh!=null?' · vento '+Math.round(wx.windKmh)+' km/h':'')+' · '+(wx.inStandard?'<b>dentro do padrão</b> (entra no IMP)':'<b>fora do padrão</b> (IMP não calcula; Pace-GAP continua)')+(wx.tags&&wx.tags.length?' · '+esc(wx.tags.join(" · ")):'')+' <span class="sub">('+esc(wx.source||"open-meteo")+(wx.localTime?" · "+esc(wx.localTime):"")+')</span></div>';}
       else wline='<div style="margin-top:6px;font-size:12.5px;color:var(--ink-2)">🌤 Clima não obtido agora (sem conexão?). Dá para buscar depois no Painel.</div>';
     }
     qline+=wline;
