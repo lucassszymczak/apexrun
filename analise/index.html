@@ -1,53 +1,61 @@
 <!doctype html>
-<html lang="pt-BR" data-theme="light">
+<html lang="pt-BR" data-theme="dark">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Apex · Análise de Corrida</title>
 <meta name="description" content="Registre seus treinos de corrida e veja os KPIs do Livro de Fórmulas Apex — EF, GAP, decoupling, TRIMP, forma (CTL/ATL/TSB), score e prontidão — evoluindo ao longo do ciclo." />
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔥</text></svg>" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=DM+Sans:wght@400;500;700&display=swap" />
 <style>
 /* ====================== DESIGN SYSTEM — RUN PERFORMANCE // HEAT ============ */
 :root{
   color-scheme: light;
-  --plane:#f3f1ec; --surface:#ffffff; --surface-2:#faf8f4; --surface-3:#f2efe9;
-  --ink:#1a1512; --ink-2:#5f584e; --muted:#726b62; --line:#e7e1d8; --line-2:#efeae2;
-  --accent:#ef5a2b; --accent-2:#d81f2c; --accent-ink:#ffffff; --accent-soft:#fdeee7;
-  --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a; --s4:#c98500; --s5:#c14d80; --s6:#4a3aa7; --s7:#008300; --s8:#e34948;
-  --good:#0ca30c; --warn:#c98500; --serious:#ec835a; --crit:#d03b3b;
-  --shadow:0 1px 2px rgba(26,21,18,.05), 0 6px 20px rgba(26,21,18,.06);
-  --radius:14px; --radius-sm:10px;
+  --plane:#eef1f4; --surface:#ffffff; --surface-2:#f6f8fb; --surface-3:#eef1f4;
+  --ink:#1a1d21; --ink-2:#5b636d; --muted:#737b85; --line:#dde2e8; --line-2:#e8ecf1;
+  --accent:#c9820a; --accent-2:#b5560a; --accent-ink:#ffffff; --accent-soft:#fdebc8;
+  --trend:#0f9e8e; --lime:#0f9e8e;
+  --s1:#2a78d6; --s2:#eb6834; --s3:#0f9e8e; --s4:#c98500; --s5:#c14d80; --s6:#4a3aa7; --s7:#008300; --s8:#e34948;
+  --good:#0f9e8e; --warn:#b8730a; --serious:#ec835a; --crit:#d03b3b;
+  --shadow:0 1px 2px rgba(26,21,18,.05), 0 10px 30px rgba(26,21,18,.07);
+  --radius:20px; --radius-sm:12px;
   --grid:#e6e1d8; --axis:#c9c3b8;
   --mono:"SFMono-Regular",ui-monospace,"JetBrains Mono",Menlo,Consolas,monospace;
-  --sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --sans:"DM Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --head:"Space Grotesk","DM Sans",system-ui,sans-serif;
 }
 :root[data-theme="dark"]{
   color-scheme: dark;
-  --plane:#0c0c0c; --surface:#1a1a19; --surface-2:#201f1d; --surface-3:#262523;
-  --ink:#f6f3ee; --ink-2:#c3c2b7; --muted:#8f887c; --line:#2c2c2a; --line-2:#232321;
-  --accent:#ff6a3d; --accent-2:#ff4d4d; --accent-ink:#1a1512; --accent-soft:#2a1c15;
-  --s1:#3987e5; --s2:#eb6834; --s3:#199e70; --s4:#e0a01f; --s5:#d55181; --s6:#9085e9; --s7:#20a020; --s8:#e66767;
-  --good:#0ca30c; --warn:#e0a01f; --serious:#ec835a; --crit:#e05555;
-  --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 26px rgba(0,0,0,.5);
-  --grid:#2a2a28; --axis:#3a3a37;
+  --plane:#0f1216; --surface:#1a1f26; --surface-2:#20262f; --surface-3:#262d37;
+  --ink:#eef1f5; --ink-2:#94a0ad; --muted:#7d8894; --line:#27303a; --line-2:#222a33;
+  --accent:#fbbf24; --accent-2:#f59e0b; --accent-ink:#0c0f13; --accent-soft:#3a2f12;
+  --trend:#9bff57; --lime:#9bff57;
+  --s1:#3987e5; --s2:#fbbf24; --s3:#2dd4bf; --s4:#e0a01f; --s5:#d55181; --s6:#9085e9; --s7:#4ade80; --s8:#e66767;
+  --good:#2dd4bf; --warn:#f0b24a; --serious:#ec835a; --crit:#f06060;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 12px 32px rgba(0,0,0,.55);
+  --grid:#242b34; --axis:#36404b;
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
     color-scheme: dark;
-    --plane:#0c0c0c; --surface:#1a1a19; --surface-2:#201f1d; --surface-3:#262523;
-    --ink:#f6f3ee; --ink-2:#c3c2b7; --muted:#8f887c; --line:#2c2c2a; --line-2:#232321;
-    --accent:#ff6a3d; --accent-2:#ff4d4d; --accent-ink:#1a1512; --accent-soft:#2a1c15;
-    --s1:#3987e5; --s2:#eb6834; --s3:#199e70; --s4:#e0a01f; --s5:#d55181; --s6:#9085e9; --s7:#20a020; --s8:#e66767;
-    --good:#0ca30c; --warn:#e0a01f; --serious:#ec835a; --crit:#e05555;
-    --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 26px rgba(0,0,0,.5);
-    --grid:#2a2a28; --axis:#3a3a37;
+    --plane:#0f1216; --surface:#1a1f26; --surface-2:#20262f; --surface-3:#262d37;
+    --ink:#eef1f5; --ink-2:#94a0ad; --muted:#7d8894; --line:#27303a; --line-2:#222a33;
+    --accent:#fbbf24; --accent-2:#f59e0b; --accent-ink:#0c0f13; --accent-soft:#3a2f12;
+    --trend:#9bff57; --lime:#9bff57;
+    --s1:#3987e5; --s2:#fbbf24; --s3:#2dd4bf; --s4:#e0a01f; --s5:#d55181; --s6:#9085e9; --s7:#4ade80; --s8:#e66767;
+    --good:#2dd4bf; --warn:#f0b24a; --serious:#ec835a; --crit:#f06060;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 12px 32px rgba(0,0,0,.55);
+    --grid:#242b34; --axis:#36404b;
   }
 }
 *{box-sizing:border-box}
 html,body{margin:0;padding:0}
 body{background:var(--plane);color:var(--ink);font-family:var(--sans);line-height:1.5;
   -webkit-font-smoothing:antialiased;font-size:15px;padding-bottom:60px}
-h1,h2,h3,h4{margin:0;font-weight:700;letter-spacing:-.01em}
+h1,h2,h3,h4{margin:0;font-weight:700;letter-spacing:-.01em;font-family:var(--head)}
+.tnum,.big,.val{font-family:var(--head);font-variant-numeric:tabular-nums}
 a{color:var(--accent)}
 button{font-family:inherit}
 .tnum{font-variant-numeric:tabular-nums}
