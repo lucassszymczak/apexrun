@@ -53,7 +53,7 @@
 *{box-sizing:border-box}
 html,body{margin:0;padding:0}
 body{background:var(--plane);color:var(--ink);font-family:var(--sans);line-height:1.5;
-  -webkit-font-smoothing:antialiased;font-size:15px;padding-bottom:60px}
+  -webkit-font-smoothing:antialiased;font-size:15px;padding-bottom:74px}
 h1,h2,h3,h4{margin:0;font-weight:700;letter-spacing:-.01em;font-family:var(--head)}
 .tnum,.big,.val{font-family:var(--head);font-variant-numeric:tabular-nums}
 a{color:var(--accent)}
@@ -77,15 +77,33 @@ header.top{position:sticky;top:0;z-index:30;background:color-mix(in srgb,var(--p
   width:34px;height:34px;display:grid;place-items:center;cursor:pointer;font-size:15px}
 .icon-btn:hover{border-color:var(--accent);color:var(--accent)}
 
-/* ---- nav ---- */
-nav.tabs{max-width:1120px;margin:0 auto;padding:0 16px;display:flex;gap:4px;overflow-x:auto}
-nav.tabs button{background:none;border:none;padding:12px 14px;font-size:13.5px;font-weight:600;color:var(--muted);
-  cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;display:flex;align-items:center;gap:7px}
+/* ---- nav: barra inferior (celular) · trilho lateral (PC) ---- */
+nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:45;display:flex;gap:2px;margin:0;max-width:none;overflow:visible;
+  background:color-mix(in srgb,var(--surface) 90%,transparent);backdrop-filter:saturate(1.4) blur(12px);
+  border-top:1px solid var(--line);padding:6px 6px;padding-bottom:calc(6px + env(safe-area-inset-bottom,0px))}
+nav.tabs button{flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+  background:none;border:none;border-radius:12px;padding:6px 3px;cursor:pointer;color:var(--muted);font-weight:600}
+nav.tabs .tic{font-size:18px;line-height:1}
+nav.tabs .tlb{font-size:9px;letter-spacing:.01em;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 nav.tabs button:hover{color:var(--ink)}
-nav.tabs button.active{color:var(--ink);border-bottom-color:var(--accent)}
+nav.tabs button.active{color:var(--accent);background:var(--accent-soft)}
+nav.tabs button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+@media(min-width:900px){
+  nav.tabs{top:var(--topH,62px);right:auto;bottom:0;width:234px;flex-direction:column;gap:4px;overflow-y:auto;
+    border-top:none;border-right:1px solid var(--line);background:var(--surface);backdrop-filter:none;padding:16px 12px 24px}
+  nav.tabs button{flex:0 0 auto;flex-direction:row;justify-content:flex-start;gap:12px;padding:11px 13px;width:100%;position:relative}
+  nav.tabs .tic{font-size:18px;width:22px;text-align:center}
+  nav.tabs .tlb{font-size:14px;max-width:none}
+  nav.tabs button.active::before{content:"";position:absolute;left:3px;top:50%;transform:translateY(-50%);width:3px;height:20px;border-radius:2px;background:var(--accent)}
+}
 
 /* ---- layout ---- */
 main{max-width:1120px;margin:0 auto;padding:18px 16px 40px}
+@media(min-width:900px){
+  main{margin-left:234px;margin-right:auto;max-width:1040px;padding-top:22px}
+  .top-in{max-width:none}
+  body{padding-bottom:40px}
+}
 .grid{display:grid;gap:14px}
 .g-2{grid-template-columns:repeat(2,1fr)} .g-3{grid-template-columns:repeat(3,1fr)} .g-4{grid-template-columns:repeat(4,1fr)}
 @media(max-width:860px){.g-3,.g-4{grid-template-columns:repeat(2,1fr)}}
@@ -390,16 +408,16 @@ tbody tr{transition:background-color .12s ease}
     <input type="file" id="fitFile" accept=".fit,.FIT" hidden />
     <input type="file" id="healthFile" accept=".xml" hidden />
   </div>
-  <nav class="tabs" id="tabs" role="tablist" aria-label="Seções da análise">
-    <button data-tab="painel" id="tab-painel" role="tab" aria-selected="true" aria-controls="view" tabindex="0" class="active">📊 Painel</button>
-    <button data-tab="treinos" id="tab-treinos" role="tab" aria-selected="false" aria-controls="view" tabindex="-1">🏃 Treinos</button>
-    <button data-tab="relatorio" id="tab-relatorio" role="tab" aria-selected="false" aria-controls="view" tabindex="-1">🗒️ Relatório semanal</button>
-    <button data-tab="recuperacao" id="tab-recuperacao" role="tab" aria-selected="false" aria-controls="view" tabindex="-1">🌙 Recuperação</button>
-    <button data-tab="forca" id="tab-forca" role="tab" aria-selected="false" aria-controls="view" tabindex="-1">💪 Força &amp; Canela</button>
-    <button data-tab="kpis" id="tab-kpis" role="tab" aria-selected="false" aria-controls="view" tabindex="-1">📚 KPIs</button>
-    <button data-tab="config" id="tab-config" role="tab" aria-selected="false" aria-controls="view" tabindex="-1">⚙️ Config</button>
-  </nav>
 </header>
+<nav class="tabs" id="tabs" role="tablist" aria-label="Seções da análise">
+    <button data-tab="painel" id="tab-painel" role="tab" aria-selected="true" aria-controls="view" tabindex="0" class="active"><span class="tic" aria-hidden="true">📊</span><span class="tlb">Painel</span></button>
+    <button data-tab="treinos" id="tab-treinos" role="tab" aria-selected="false" aria-controls="view" tabindex="-1"><span class="tic" aria-hidden="true">🏃</span><span class="tlb">Treinos</span></button>
+    <button data-tab="relatorio" id="tab-relatorio" role="tab" aria-selected="false" aria-controls="view" tabindex="-1"><span class="tic" aria-hidden="true">🗒️</span><span class="tlb">Relatório</span></button>
+    <button data-tab="recuperacao" id="tab-recuperacao" role="tab" aria-selected="false" aria-controls="view" tabindex="-1"><span class="tic" aria-hidden="true">🌙</span><span class="tlb">Recuperação</span></button>
+    <button data-tab="forca" id="tab-forca" role="tab" aria-selected="false" aria-controls="view" tabindex="-1"><span class="tic" aria-hidden="true">💪</span><span class="tlb">Força</span></button>
+    <button data-tab="kpis" id="tab-kpis" role="tab" aria-selected="false" aria-controls="view" tabindex="-1"><span class="tic" aria-hidden="true">📚</span><span class="tlb">KPIs</span></button>
+    <button data-tab="config" id="tab-config" role="tab" aria-selected="false" aria-controls="view" tabindex="-1"><span class="tic" aria-hidden="true">⚙️</span><span class="tlb">Config</span></button>
+  </nav>
 
 <main id="view" role="tabpanel" aria-labelledby="tab-painel" tabindex="-1"><noscript><div style="max-width:640px;margin:40px auto;padding:20px;border:1px solid #e7a; border-radius:14px;background:#fff;color:#1a1512;font-family:system-ui,sans-serif;line-height:1.5"><b>Este app precisa de JavaScript.</b><br>Você provavelmente abriu o arquivo na pré-visualização do iPhone (app Arquivos ou Mail), que não executa o app. Abra o arquivo por um navegador de verdade — <b>Safari</b> ou <b>Chrome</b> — ou use o link hospedado que o desenvolvedor enviar.</div></noscript></main>
 
@@ -3022,6 +3040,8 @@ function toast(msg){
   t.textContent=msg;t.style.opacity="1";clearTimeout(toastT);toastT=setTimeout(function(){t.style.opacity="0";},1800);
 }
 function setActiveTab(){$("#tabs").querySelectorAll("button").forEach(function(b){var on=b.dataset.tab===currentTab;b.classList.toggle("active",on);b.setAttribute("aria-selected",on?"true":"false");b.tabIndex=on?0:-1;});var v=$("#view");if(v)v.setAttribute("aria-labelledby","tab-"+currentTab);}
+// altura do cabeçalho → posiciona o topo do trilho lateral (PC)
+function layoutRail(){try{var t=document.querySelector("header.top");if(t)document.documentElement.style.setProperty("--topH",t.offsetHeight+"px");}catch(e){}}
 
 /* ============================================================================
    INIT
@@ -3073,6 +3093,7 @@ window.addEventListener("unhandledrejection",function(e){showFatal(e&&e.reason&&
     window.addEventListener("scroll",function(){tipHide();},{passive:true});
     if(state.seeded){save();delete state.seeded;}
     render();
+    layoutRail();window.addEventListener("resize",layoutRail);
     // sincroniza ao abrir (puxa o que veio de outro aparelho e reenvia a união)
     if(syncEnabled())setTimeout(function(){syncNow(true);},300);
   }catch(err){showFatal(err&&err.message?err.message:err);}
