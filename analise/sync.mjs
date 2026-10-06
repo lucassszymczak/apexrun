@@ -67,6 +67,25 @@ export function mergeDaily(ad = [], bd = []) {
   return [...byDate.values()].sort((x, y) => (x.date < y.date ? -1 : 1));
 }
 
+// Prova-alvo (Maratona): objeto único; o mais novo (updatedAt) vence.
+export function mergeRace(ar, br) {
+  if (!ar) return br || null;
+  if (!br) return ar || null;
+  return ts(ar.updatedAt) >= ts(br.updatedAt) ? ar : br;
+}
+
+// Semanas planejadas: objeto indexado por chave ISO (ex.: "2026-W41").
+// União por chave; em conflito, a semana com `updatedAt` mais novo vence (inteira).
+export function mergePlanWeeks(ap = {}, bp = {}) {
+  const out = {};
+  for (const k of Object.keys(ap || {})) out[k] = ap[k];
+  for (const k of Object.keys(bp || {})) {
+    const cur = out[k];
+    if (!cur || ts(bp[k] && bp[k].updatedAt) >= ts(cur.updatedAt)) out[k] = bp[k];
+  }
+  return out;
+}
+
 export function mergeStates(a, b) {
   a = a || {}; b = b || {};
   const deleted = mergeDeleted(a.deleted, b.deleted);
@@ -76,8 +95,10 @@ export function mergeStates(a, b) {
   const athlete = ts(aAthlete.updatedAt) >= ts(bAthlete.updatedAt)
     ? (a.athlete || b.athlete || {})
     : (b.athlete || a.athlete || {});
+  const race = mergeRace(a.race, b.race);
+  const planWeeks = mergePlanWeeks(a.planWeeks, b.planWeeks);
   const updatedAt = new Date(Math.max(ts(a.updatedAt), ts(b.updatedAt))).toISOString();
-  return { athlete, workouts, daily, deleted, updatedAt };
+  return { athlete, workouts, daily, deleted, race, planWeeks, updatedAt };
 }
 
 // Código de sincronização legível e de alta entropia (~65 bits): apex-XXXX-XXXX-XXXX.
