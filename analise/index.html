@@ -406,6 +406,49 @@ svg.chart{cursor:pointer}
 .steps{display:grid;gap:8px;margin-top:8px}
 .steps .st{display:grid;grid-template-columns:26px 1fr;gap:10px;font-size:13.5px;align-items:start}
 .steps .st b{width:24px;height:24px;border-radius:7px;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center;font-size:12px;font-weight:800}
+/* ---- Força: layout limpo (resumo + seções recolhíveis + exercícios tap-to-expand) ---- */
+.fc-head h2{font-size:20px}
+.fc-head .sub{margin:4px 0 14px}
+.fc-alert{margin-bottom:14px}
+.fc-over{margin-bottom:14px}
+.fc-phase{display:flex;gap:6px;margin-top:12px}
+.fc-phase button{flex:1;background:var(--surface-2);border:1px solid var(--line);color:var(--ink-2);border-radius:10px;padding:9px 6px;font-family:var(--head);font-weight:700;font-size:12px;cursor:pointer}
+.fc-phase button:hover{border-color:var(--accent);color:var(--accent)}
+.fc-phase button.on{background:var(--accent-soft);border-color:transparent;color:var(--accent)}
+details.fc-why{margin-top:12px}
+details.fc-why>summary{cursor:pointer;list-style:none;font-size:12.5px;font-weight:600;color:var(--accent)}
+details.fc-why>summary::-webkit-details-marker{display:none}
+details.fc-why>summary::before{content:"▸ ";color:var(--muted)}
+details.fc-why[open]>summary::before{content:"▾ "}
+.fc-why-b{font-size:12.5px;color:var(--ink-2);line-height:1.55;margin-top:8px}
+.fc-sub{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-2);margin:16px 2px 2px}
+details.fc-sec{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);margin-top:12px;overflow:hidden}
+details.fc-sec>summary{list-style:none;cursor:pointer;padding:15px 16px;display:flex;align-items:center;gap:9px;font-family:var(--head);font-weight:700;font-size:14.5px;color:var(--ink)}
+details.fc-sec>summary::-webkit-details-marker{display:none}
+details.fc-sec>summary::after{content:"▾";margin-left:auto;color:var(--muted);transition:transform .2s ease}
+details.fc-sec[open]>summary{border-bottom:1px solid var(--line)}
+details.fc-sec[open]>summary::after{transform:rotate(180deg)}
+.fc-st{font-family:var(--head);font-weight:700;font-size:11px;color:var(--accent);background:var(--accent-soft);border-radius:6px;padding:2px 7px}
+.fc-sec-b{padding:14px 16px 16px}
+.fc-sec-b .why:first-child,.fc-sec-b .fc-sub:first-child{margin-top:0}
+details.fc-ex{border:1px solid var(--line);border-radius:12px;background:var(--surface-2);margin-top:8px;overflow:hidden}
+details.fc-ex.key{border-color:color-mix(in srgb,var(--s6) 45%,transparent);box-shadow:inset 3px 0 0 var(--s6)}
+details.fc-ex>summary{list-style:none;cursor:pointer;padding:11px 12px;display:flex;align-items:center;gap:10px}
+details.fc-ex>summary::-webkit-details-marker{display:none}
+.fx-num{width:22px;height:22px;border-radius:50%;background:var(--surface-3);color:var(--ink-2);font-family:var(--head);font-weight:700;font-size:11px;display:grid;place-items:center;flex:none}
+details.fc-ex.key .fx-num{background:color-mix(in srgb,var(--s6) 22%,transparent);color:var(--s6)}
+.fx-nm{flex:1;min-width:0;font-size:13.5px;font-weight:600;line-height:1.3}
+.fx-nm small{display:block;color:var(--muted);font-size:11px;font-weight:400;margin-top:1px}
+.fx-rp{font-family:var(--head);font-weight:700;font-size:12px;color:var(--ink-2);flex:none;white-space:nowrap}
+.fx-flagline{display:block;margin-top:5px}
+.fc-ex .ex-flag{margin-top:0;font-size:9px;padding:2px 7px}
+.fx-chev{color:var(--muted);flex:none;transition:transform .2s ease}
+details.fc-ex[open] .fx-chev{transform:rotate(180deg)}
+.fx-b{padding:2px 12px 12px 44px;display:grid;gap:9px}
+.fx-blk{font-size:12.5px;line-height:1.5;color:var(--ink-2)}
+.fx-blk b{display:block;font-size:10px;text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px}
+.fx-blk.s b{color:var(--s3)}.fx-blk.e b{color:var(--s5)}.fx-blk.r b{color:var(--accent)}
+@media(prefers-reduced-motion:reduce){details.fc-sec>summary::after,.fx-chev{transition:none}}
 a:focus-visible,button:focus-visible,summary:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
 
 /* ---- acessibilidade ---- */
@@ -3353,70 +3396,85 @@ function fcWeekGrid(days){
   return g;
 }
 function fcExGrid(list){var g=el("div","grid g-2");g.style.marginTop="12px";list.forEach(function(ex){g.appendChild(fcExCard(ex));});return g;}
-function fcSubhead(txt){var e=el("div");e.style.cssText="font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-2);margin:18px 2px 2px";e.textContent=txt;return e;}
+function fcSubhead(txt){var e=el("div","fc-sub");e.textContent=txt;return e;}
+var _fcPhase=1; // Força: fase mostrada no resumo da semana
+function fcSection(summaryHtml){var d=el("details","fc-sec");var s=el("summary");s.innerHTML=summaryHtml;d.appendChild(s);var b=el("div","fc-sec-b");d.appendChild(b);return {d:d,b:b};}
+function fcNote(html){var e=el("div","why");e.style.marginTop="0";e.innerHTML=html;return e;}
+function fcExDetails(ex){
+  var d=el("details","fc-ex"+(ex.flag==="key"?" key":""));
+  var flag=ex.flagText?'<span class="ex-flag '+(ex.flag==="key"?"key":"novo")+'">'+esc(ex.flagText)+'</span>':'';
+  var s=el("summary");
+  s.innerHTML='<span class="fx-num">'+ex.n+'</span><span class="fx-nm">'+esc(ex.nome)+(ex.detalhe?'<small>'+esc(ex.detalhe)+'</small>':'')+(flag?'<span class="fx-flagline">'+flag+'</span>':'')+'</span>'+
+    '<span class="fx-rp">'+esc(ex.reps)+'</span><span class="fx-chev" aria-hidden="true">▾</span>';
+  d.appendChild(s);
+  var b=el("div","fx-b");
+  b.innerHTML='<div class="fx-blk s"><b>Onde sentir</b>'+esc(ex.sentir)+'</div>'+
+    '<div class="fx-blk e"><b>Evolução · exercício</b>'+esc(ex.evoEx)+'</div>'+
+    '<div class="fx-blk r"><b>Evolução · corrida</b>'+esc(ex.evoCorrida)+'</div>';
+  d.appendChild(b);return d;}
 function renderForca(v){
-  var head=el("div");head.innerHTML='<h2 style="font-size:22px">Força &amp; Canela</h2><div class="sub" style="margin-bottom:14px">Reforço estrutural + protocolo de canela — página de consulta do programa.</div>';
+  var head=el("div","fc-head");
+  head.innerHTML='<h2>💪 Força &amp; Canela</h2><div class="sub">Reforço estrutural + protocolo de canela — seu programa de consulta.</div>';
   v.appendChild(head);
 
-  // Alerta clínico
+  // Alerta clínico (sempre visível)
   var al=el("div","fc-alert");
   al.innerHTML='<h3>⚠ Alerta clínico</h3>'+
-    '<p>Sensibilidade na borda medial interna da tíbia, desconforto localizado à palpação, estagnada. Tratada como <b>estresse tibial medial inicial (sintomático)</b>, não prevenção.</p>'+
-    '<div class="rule"><b>Regra da canela:</b> dor durante corrida/exercício ≤ 2/10 e não piorar em 24 h. A canela só progride de carga quando a palpação melhorar; até lá, tudo leve e bipodal.</div>'+
-    '<div class="rule"><b>Sinal para avaliação presencial:</b> se virar um ponto único milimétrico que dói ao pular num pé só, ou não melhorar em 10–14 dias apesar do ajuste de cadência e redução de impacto → descartar fratura por estresse com imagem.</div>';
+    '<p>Sensibilidade na borda medial interna da tíbia, à palpação, estagnada. Tratada como <b>estresse tibial medial inicial (sintomático)</b>, não prevenção.</p>'+
+    '<div class="rule"><b>Regra da canela:</b> dor na corrida/exercício ≤ 2/10 e sem piorar em 24 h. Só progride de carga quando a palpação melhorar; até lá, tudo leve e bipodal.</div>'+
+    '<div class="rule"><b>Avaliação presencial:</b> se virar ponto único milimétrico que dói ao pular num pé só, ou não melhorar em 10–14 dias apesar do ajuste → descartar fratura por estresse com imagem.</div>';
   v.appendChild(al);
 
-  // Seção 01 — quando encaixar a força
-  v.appendChild(sectionTitle("01 · Quando encaixar a força"));
-  var rule=el("div","why");rule.style.marginTop="0";rule.innerHTML='<b>Regra:</b> força pesada de pernas nunca na véspera do longo de sábado. Canela é diária, entra depois de correr e não conta como carga que atrapalha.';
-  v.appendChild(rule);
-  var legend='<div class="tag-legend"><span><i style="background:var(--s3)"></i>corrida</span><span><i style="background:var(--s6)"></i>Força A</span><span><i style="background:var(--s5)"></i>Força B</span><span><i style="background:var(--muted)"></i>Canela</span></div>';
-  var f1=el("div","card");f1.style.marginTop="12px";
-  f1.innerHTML='<h3>Fase 1 · Semanas 1–4 <span class="badge lo" style="margin-left:auto">corre Qua + Sáb</span></h3>';
-  f1.appendChild(fcWeekGrid(FC_FASE1));
-  var lg1=el("div");lg1.innerHTML=legend;f1.appendChild(lg1);
-  var w1=el("div","why");w1.innerHTML='<b>Por quê:</b> segunda dá margem antes de quarta; quinta longe de sábado; sexta livre = pernas descansadas para o longo. Nenhum treino de perna na véspera do sábado.';f1.appendChild(w1);
-  v.appendChild(f1);
-  var f2=el("div","card");f2.style.marginTop="14px";
-  f2.innerHTML='<h3>Fase 2 · Semana 5+ <span class="badge lo" style="margin-left:auto">corre Ter + Qui + Sáb</span></h3>';
-  f2.appendChild(fcWeekGrid(FC_FASE2));
-  var lg2=el("div");lg2.innerHTML=legend;f2.appendChild(lg2);
-  var w2=el("div","why");w2.innerHTML='<b>Por quê:</b> "dias difíceis difíceis, dias fáceis fáceis" — força junto da corrida em ter/qui preserva seg/qua/sex como recuperação real. Ordem no dia: corre primeiro, força depois. Se a tíbia/pernas reclamarem na quinta, o Circuito B pode ir para um dia leve (exceção — não sobrecarrega perna nem tíbia). Nunca sacrifique o sábado.';f2.appendChild(w2);
-  v.appendChild(f2);
+  // Resumo da semana (com troca de fase) — absorve o "quando encaixar"
+  var ov=el("div","card fc-over");
+  var runsLabel=_fcPhase===1?"corre Qua + Sáb":"corre Ter + Qui + Sáb";
+  ov.innerHTML='<h3>🗓️ Sua semana <span class="badge lo" style="margin-left:auto">'+runsLabel+'</span></h3>'+
+    '<div class="fc-phase"><button type="button" data-ph="1" class="'+(_fcPhase===1?"on":"")+'">Fase 1 · sem 1–4</button>'+
+    '<button type="button" data-ph="2" class="'+(_fcPhase===2?"on":"")+'">Fase 2 · sem 5+</button></div>';
+  ov.appendChild(fcWeekGrid(_fcPhase===1?FC_FASE1:FC_FASE2));
+  var lg=el("div");lg.innerHTML='<div class="tag-legend"><span><i style="background:var(--s3)"></i>corrida</span><span><i style="background:var(--s6)"></i>Força A</span><span><i style="background:var(--s5)"></i>Força B</span><span><i style="background:var(--muted)"></i>Canela</span></div>';ov.appendChild(lg);
+  var rule=el("div","why");rule.innerHTML='<b>Regra de ouro:</b> força pesada de pernas <b>nunca na véspera</b> do longo de sábado. Canela é <b>diária</b>, depois de correr. No dia: <b>corre primeiro, força depois</b>.';ov.appendChild(rule);
+  var why=el("details","fc-why");why.innerHTML='<summary>Por que esses dias?</summary><div class="fc-why-b">'+(_fcPhase===1?'Segunda dá margem antes de quarta; quinta longe de sábado; sexta livre = pernas descansadas para o longo. Nenhum treino de perna na véspera do sábado.':'“Dias difíceis difíceis, dias fáceis fáceis” — força junto da corrida em ter/qui preserva seg/qua/sex como recuperação real. Se a tíbia reclamar na quinta, o Circuito B pode ir para um dia leve (exceção). Nunca sacrifique o sábado.')+'</div>';ov.appendChild(why);
+  v.appendChild(ov);
 
-  // Seção 02 — treino de força completo
-  v.appendChild(sectionTitle("02 · Treino de força completo"));
-  var n2=el("div","why");n2.style.marginTop="0";n2.innerHTML='<b>Nota:</b> carga em que as últimas 2 reps são difíceis mas com técnica perfeita. Descanso 60–90 s. Cada exercício: <b>Nome — Reps — Onde sentir — Evolução (Exercício / Corrida)</b>.';v.appendChild(n2);
-  v.appendChild(fcSubhead("Circuito A — cadeia posterior, unilateral e quadril"));
-  v.appendChild(fcExGrid(FC_CIRCUITO_A));
-  v.appendChild(fcSubhead("Bloco quadril / glúteo médio — correção principal"));
-  v.appendChild(fcExGrid(FC_QUADRIL));
-  v.appendChild(fcSubhead("Circuito B — empurrar / puxar / core"));
-  v.appendChild(fcExGrid(FC_CIRCUITO_B));
+  // 02 — treino de força (recolhido)
+  var s2=fcSection('💪 <span class="fc-st">02</span> Treino de força completo');
+  s2.b.appendChild(fcNote('Carga em que as <b>últimas 2 reps</b> são difíceis, mas com técnica perfeita. Descanso 60–90 s. <b>Toque num exercício</b> para ver onde sentir e como evoluir.'));
+  s2.b.appendChild(fcSubhead("Circuito A — cadeia posterior e quadril"));
+  FC_CIRCUITO_A.forEach(function(ex){s2.b.appendChild(fcExDetails(ex));});
+  s2.b.appendChild(fcSubhead("Quadril / glúteo médio — correção principal"));
+  FC_QUADRIL.forEach(function(ex){s2.b.appendChild(fcExDetails(ex));});
+  s2.b.appendChild(fcSubhead("Circuito B — empurrar / puxar / core"));
+  FC_CIRCUITO_B.forEach(function(ex){s2.b.appendChild(fcExDetails(ex));});
+  v.appendChild(s2.d);
 
-  // Seção 03 — canela
-  v.appendChild(sectionTitle("03 · Treino específico de canela (sintomática)"));
-  var n3=el("div","why");n3.style.marginTop="0";n3.innerHTML='<b>Nota:</b> baixa carga, diária. Excêntrico de panturrilha + tibial anterior + pé/tornozelo. Sem dor durante. Gelo 10–15 min após correr se houver sensibilidade.';v.appendChild(n3);
-  v.appendChild(fcExGrid(FC_CANELA));
-  var cut=el("div","cut-box");cut.style.marginTop="14px";
-  cut.innerHTML='<span class="cb-label">Cortado por ora</span>Toe raises com impacto e progressões em degrau — voltam quando a palpação melhorar. Na fase sintomática, a panturrilha do Circuito A também fica bipodal; evite o búlgaro se ele reproduzir a sensibilidade.';
-  v.appendChild(cut);
+  // 03 — canela (recolhido)
+  var s3=fcSection('🦵 <span class="fc-st">03</span> Canela (sintomática)');
+  s3.b.appendChild(fcNote('Baixa carga, <b>diária</b>. Excêntrico de panturrilha + tibial anterior + pé/tornozelo. Sem dor durante. Gelo 10–15 min após correr se houver sensibilidade.'));
+  FC_CANELA.forEach(function(ex){s3.b.appendChild(fcExDetails(ex));});
+  var cut=el("div","cut-box");cut.style.marginTop="12px";
+  cut.innerHTML='<span class="cb-label">Cortado por ora</span>Toe raises com impacto e progressões em degrau — voltam quando a palpação melhorar. Na fase sintomática, a panturrilha do Circuito A fica bipodal; evite o búlgaro se reproduzir a sensibilidade.';
+  s3.b.appendChild(cut);
+  v.appendChild(s3.d);
 
-  // Seção 04 — progredir
-  v.appendChild(sectionTitle("04 · Como progredir"));
-  var p4=el("div","card");
-  p4.innerHTML='<div class="sub" style="margin-bottom:6px">Carga fixa vira sub-estímulo em 3–4 semanas. Quando completar todas as séries com a última rep ainda com técnica boa e sem falhar, suba um degrau no treino seguinte, nesta ordem:</div>';
+  // 04 — progredir (recolhido)
+  var s4=fcSection('📈 <span class="fc-st">04</span> Como progredir');
+  s4.b.appendChild(fcNote('Carga fixa vira sub-estímulo em 3–4 semanas. Ao completar todas as séries com a última rep ainda com boa técnica, suba um degrau — nesta ordem:'));
   var steps=el("div","steps");
-  [["1","Mais repetições (3×8 → 3×10 → 3×12)"],["2","Elástico mais forte (leve → médio → forte)"],["3","Progressão de dificuldade (bipodal → unipodal → em degrau)"]].forEach(function(s){var e=el("div","st");e.innerHTML='<b>'+s[0]+'</b><span>'+esc(s[1])+'</span>';steps.appendChild(e);});
-  p4.appendChild(steps);
-  var c4=el("div","why");c4.innerHTML='<b>A canela tem regra própria:</b> só progride quando a palpação melhorar; até lá, leve e bipodal.';p4.appendChild(c4);
-  v.appendChild(p4);
+  [["1","Mais repetições (3×8 → 3×10 → 3×12)"],["2","Elástico mais forte (leve → médio → forte)"],["3","Dificuldade (bipodal → unipodal → degrau)"]].forEach(function(s){var e=el("div","st");e.innerHTML='<b>'+s[0]+'</b><span>'+esc(s[1])+'</span>';steps.appendChild(e);});
+  s4.b.appendChild(steps);
+  var c4=el("div","why");c4.style.marginTop="12px";c4.innerHTML='<b>A canela tem regra própria:</b> só progride quando a palpação melhorar; até lá, leve e bipodal.';s4.b.appendChild(c4);
+  v.appendChild(s4.d);
 
-  // Seção 05 — está funcionando?
-  v.appendChild(sectionTitle("05 · Como saber que está funcionando na corrida"));
+  // 05 — funcionando? (recolhido)
+  var s5=fcSection('✅ <span class="fc-st">05</span> Como saber que está funcionando');
   var win=el("div","win-box");
-  win.innerHTML='<span class="wb-label">O marcador real</span>Ao longo de 4–6 semanas com a base fixa de 5+5+10 (ou 5+10): os 10 km de sábado terminam com <b>FC mais baixa no mesmo pace</b>, ou <b>pace melhor na mesma FC</b> — e panturrilha/tíbia reclamando menos no fim. Um único treino ruim não desmente; o que conta é o padrão repetido.';
-  v.appendChild(win);
+  win.innerHTML='<span class="wb-label">O marcador real</span>Ao longo de 4–6 semanas com a base fixa: os 10 km de sábado terminam com <b>FC mais baixa no mesmo pace</b> (ou <b>pace melhor na mesma FC</b>), e panturrilha/tíbia reclamando menos. Um treino ruim não desmente — conta o padrão repetido.';
+  s5.b.appendChild(win);
+  v.appendChild(s5.d);
+
+  // troca de fase
+  Array.prototype.forEach.call(v.querySelectorAll(".fc-phase button"),function(b){b.onclick=function(){_fcPhase=+b.getAttribute("data-ph");render();};});
 }
 
 /* -------- KPIs (referência) -------- */
