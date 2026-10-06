@@ -516,6 +516,33 @@ tbody tr{transition:background-color .12s ease}
 .m-realized b{color:var(--ink);font-family:var(--head)}
 .m-est .val{color:var(--ink-2)}
 @media (max-width:420px){.m-form{grid-template-columns:1fr}}
+/* builder de treino estruturado + status/adesão */
+.m-form2{margin-top:12px;padding-top:12px;border-top:1px dashed var(--line)}
+.m-stephead{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);margin:12px 0 8px}
+.m-steps{display:flex;flex-direction:column;gap:8px}
+.m-step{background:var(--surface-2);border:1px solid var(--line);border-radius:12px;padding:10px}
+.m-step.rep{border-color:color-mix(in srgb,var(--accent) 40%,var(--line));background:color-mix(in srgb,var(--accent) 5%,var(--surface-2))}
+.m-step-h{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.m-step-n{width:20px;height:20px;border-radius:50%;background:var(--surface-3);color:var(--muted);font-family:var(--head);font-weight:700;font-size:11px;display:grid;place-items:center;flex:none}
+.m-step.rep .m-step-n{background:var(--accent);color:var(--accent-ink)}
+.m-steplabel,.m-seglabel{flex:1;min-width:0}
+.m-rep{display:flex;align-items:center;gap:6px;flex:1;font-family:var(--head);font-weight:700;font-size:13px;color:var(--ink)}
+.m-reptimes{width:54px;flex:none;text-align:center;padding:6px 4px}
+.m-seg-g{display:flex;gap:6px;align-items:center;margin-top:6px}
+.m-seg-g>input,.m-seg-g>select{min-width:0;padding:8px 8px}
+.m-seg-g>input[data-f="dur"]{flex:1.1}.m-seg-g>input[data-f="km"]{flex:.9}.m-seg-g>select{flex:1}
+.m-mini{background:var(--surface);border:1px solid var(--line);color:var(--ink-2);border-radius:8px;padding:5px 9px;font-size:12px;cursor:pointer;flex:none;line-height:1.2}
+.m-mini:hover{border-color:var(--accent);color:var(--accent)}
+.m-mini.rmstep{margin-left:auto}
+.m-mini.addseg{margin-top:8px;font-size:11.5px}
+.m-stepbtns{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.m-srow{padding-left:8px}
+.m-srow.st-done{box-shadow:inset 3px 0 0 var(--good)}
+.m-srow.st-adapt{box-shadow:inset 3px 0 0 var(--accent)}
+.m-srow.st-partial{box-shadow:inset 3px 0 0 var(--warn)}
+.m-srow.st-miss{box-shadow:inset 3px 0 0 var(--crit)}
+.m-an{display:block;font-size:11px;margin-top:3px;font-weight:600}
+.m-an.done{color:var(--good)}.m-an.adapt{color:var(--accent)}.m-an.partial{color:var(--warn)}.m-an.miss{color:var(--crit)}.m-an.plan{color:var(--muted)}
 </style>
 </head>
 <body>
@@ -2425,13 +2452,32 @@ function sectionTitle(t){return el("h2","section-title",esc(t));}
 ============================================================================ */
 var maratonaWeekOffset=0;  // 0 = semana atual (navegável dentro do bloco)
 var _mEditRace=false;      // formulário de editar meta aberto
-var _mFormOpen=false;      // formulário de treino aberto
-var _mEditId=null;         // id da sessão em edição
+var _mForm=null;           // formulário de treino: {mode:'add'|'edit', id, draft}
 var M_DOW=["Seg","Ter","Qua","Qui","Sex","Sáb","Dom"];
 var M_MON=["JAN","FEV","MAR","ABR","MAI","JUN","JUL","AGO","SET","OUT","NOV","DEZ"];
 var M_MONL=["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"];
 var M_ZONES=["Z1","Z2","Z3","Z4","Z5"];
 var M_ZDESC={Z1:"muito leve",Z2:"fácil (base)",Z3:"moderado",Z4:"forte",Z5:"máximo"};
+// tipos de treino programado (estruturado = fartlek/qualidade, com passos)
+var M_TYPES=[
+  {k:"rodagem",label:"Rodagem",emoji:"🏃",zone:"Z2"},
+  {k:"longao",label:"Longão",emoji:"🛣️",zone:"Z2"},
+  {k:"regenerativo",label:"Regenerativo",emoji:"💤",zone:"Z1"},
+  {k:"tempo",label:"Tempo / Limiar",emoji:"🔥",zone:"Z3"},
+  {k:"fartlek",label:"Fartlek",emoji:"⚡",zone:"Z3",structured:true},
+  {k:"intervalado",label:"Qualidade / Intervalado",emoji:"🎯",zone:"Z4",structured:true},
+  {k:"forca",label:"Força",emoji:"💪",zone:"",noRun:true},
+  {k:"descanso",label:"Descanso",emoji:"😴",zone:"",noRun:true,rest:true}
+];
+var M_ADAPT=[{k:"esteira",label:"Esteira"},{k:"bike",label:"Bike indoor"},{k:"outro",label:"Outro"}];
+function mType(k){for(var i=0;i<M_TYPES.length;i++)if(M_TYPES[i].k===k)return M_TYPES[i];return M_TYPES[0];}
+function mIsStructured(s){return !!mType(s.type).structured;}
+function mAdaptLabel(k){for(var i=0;i<M_ADAPT.length;i++)if(M_ADAPT[i].k===k)return M_ADAPT[i].label;return k||"alterado";}
+function mParseClock(str){if(str==null)return null;str=(""+str).trim();if(!str)return null;
+  if(str.indexOf(":")>=0){var p=str.split(":").map(Number);if(p.some(isNaN))return null;return p[0]*60+(p[1]||0);}
+  var m=parseFloat(str.replace(",","."));if(isNaN(m))return null;return Math.round(m*60);}
+function mClock(sec){if(sec==null)return"";var m=Math.floor(sec/60),s=Math.round(sec%60);return m+":"+mPad2(s);}
+function mZoneOpts(sel){var o='<option value=""'+(!sel?" selected":"")+'>—</option>';M_ZONES.forEach(function(z){o+='<option value="'+z+'"'+(sel===z?" selected":"")+'>'+z+'</option>';});return o;}
 function mPad2(n){return (n<10?"0":"")+n;}
 function mIsoLocal(d){return d.getFullYear()+"-"+mPad2(d.getMonth()+1)+"-"+mPad2(d.getDate());}
 function mAddDays(d,n){var x=new Date(d.getTime());x.setDate(x.getDate()+n);return x;}
@@ -2456,10 +2502,167 @@ function mZoneColor(z){var m={Z1:"var(--s1)",Z2:"var(--good)",Z3:"var(--accent)"
 function mZoneTag(z){var m={Z1:["color-mix(in srgb,var(--s1) 20%,transparent)","var(--s1)"],Z2:["color-mix(in srgb,var(--good) 20%,transparent)","var(--good)"],
   Z3:["var(--accent)","var(--accent-ink)"],Z4:["color-mix(in srgb,var(--serious) 24%,transparent)","var(--serious)"],Z5:["color-mix(in srgb,var(--crit) 24%,transparent)","var(--crit)"]};
   return m[z]||["var(--surface-3)","var(--muted)"];}
+function mSessSteps(s){return (s.steps&&s.steps.length)?s.steps:[];}
+function mSessMinutes(s){
+  if(mIsStructured(s)){var sec=0;mSessSteps(s).forEach(function(st){
+    if(st.rep){var t=st.times||1;(st.segs||[]).forEach(function(g){sec+=t*(g.durSec||0);});}else sec+=st.durSec||0;});
+    return sec?sec/60:null;}
+  return (s.durMin!=null&&s.durMin!=="")?+s.durMin:null;}
+function mSessKm(s){
+  if(mIsStructured(s)){var km=0,any=false;mSessSteps(s).forEach(function(st){
+    if(st.rep){var t=st.times||1;(st.segs||[]).forEach(function(g){if(g.distKm){km+=t*g.distKm;any=true;}});}
+    else if(st.distKm){km+=st.distKm;any=true;}});return any?km:null;}
+  return (s.distKm!=null&&s.distKm!=="")?+s.distKm:null;}
+function mSessZoneSecs(s){var acc={Z1:0,Z2:0,Z3:0,Z4:0,Z5:0};
+  if(mIsStructured(s)){mSessSteps(s).forEach(function(st){
+    if(st.rep){var t=st.times||1;(st.segs||[]).forEach(function(g){if(M_ZONES.indexOf(g.zone)>=0)acc[g.zone]+=t*(g.durSec||0);});}
+    else if(M_ZONES.indexOf(st.zone)>=0)acc[st.zone]+=st.durSec||0;});}
+  else if(M_ZONES.indexOf(s.zone)>=0)acc[s.zone]+=((+s.durMin||30)*60);
+  return acc;}
+function mPeakZone(s){var z=mSessZoneSecs(s),best=null,bv=0;M_ZONES.forEach(function(k){if(z[k]>bv){bv=z[k];best=k;}});return best;}
 function mZoneMix(sessions){var acc={Z1:0,Z2:0,Z3:0,Z4:0,Z5:0},tot=0;
-  (sessions||[]).forEach(function(s){if(!s||M_ZONES.indexOf(s.zone)<0)return;var w=(s.durMin&&s.durMin>0)?s.durMin:30;acc[s.zone]+=w;tot+=w;});
-  if(!tot)return null;var out={};M_ZONES.forEach(function(z){out[z]=Math.round(acc[z]/tot*100);});return out;}
-function mSessDetail(s){var p=[];if(s.durMin)p.push(s.durMin+" min");if(s.distKm)p.push(mKmTxt(s.distKm)+" km");return p.join(" · ");}
+  (sessions||[]).forEach(function(s){var z=mSessZoneSecs(s);M_ZONES.forEach(function(k){acc[k]+=z[k];tot+=z[k];});});
+  if(!tot)return null;var out={};M_ZONES.forEach(function(k){out[k]=Math.round(acc[k]/tot*100);});return out;}
+function mSessSummary(s){
+  if(mIsStructured(s)){return mSessSteps(s).map(function(st){
+    if(st.rep)return (st.times||1)+"×("+(st.segs||[]).map(function(g){return mClock(g.durSec)+(g.zone?" "+g.zone:"");}).join(" / ")+")";
+    return mClock(st.durSec)+(st.zone?" "+st.zone:"");}).join(" · ");}
+  var p=[],mins=mSessMinutes(s);if(mins)p.push(Math.round(mins)+" min");
+  if(s.distKm)p.push(mKmTxt(s.distKm)+" km");if(M_ZONES.indexOf(s.zone)>=0)p.push(s.zone);
+  return p.join(" · ");}
+function mSessDate(info,s){return mIsoLocal(mAddDays(info.monday,(s.dow||1)-1));}
+function mWorkoutById(id){var ws=state.workouts||[];for(var i=0;i<ws.length;i++)if(ws[i].id===id)return ws[i];return null;}
+// vincula o treino realizado (importado) ao programado por dia; devolve true se mudou algo
+function mLinkWeek(info,sessions){
+  if(!sessions||!sessions.length)return false;
+  var byDate={};(state.workouts||[]).forEach(function(w){if(w&&w.date)(byDate[w.date]=byDate[w.date]||[]).push(w);});
+  var used={},changed=false;
+  sessions.forEach(function(s){if(s.linkedWorkoutId)used[s.linkedWorkoutId]=true;});
+  sessions.forEach(function(s){
+    if(mType(s.type).noRun)return;
+    if(s.linkedWorkoutId){if(mWorkoutById(s.linkedWorkoutId))return;s.linkedWorkoutId=null;changed=true;}
+    var cands=(byDate[mSessDate(info,s)]||[]).filter(function(w){return !used[w.id];});
+    if(cands.length){s.linkedWorkoutId=cands[0].id;used[cands[0].id]=true;changed=true;}
+  });
+  return changed;}
+function mSessStatus(s,info){
+  var w=s.linkedWorkoutId?mWorkoutById(s.linkedWorkoutId):null;
+  if(s.adapt&&s.adapt.modal)return "adapted";
+  if(w)return (isBike(w)&&!mType(s.type).noRun)?"adapted":"done";
+  if(s.done)return "done";
+  var today=new Date();today.setHours(0,0,0,0);
+  if(!mType(s.type).rest&&info.sunday<today)return "missed";
+  return "planned";}
+var M_STATUS={done:["✓ Cumprido","done"],adapted:["↺ Adaptado","adapt"],partial:["◧ Parcial","partial"],missed:["✗ Não cumprido","miss"],planned:["⏳ Programado","plan"]};
+// breve análise planejado × realizado
+function mAnalyze(s,info){
+  var st=mSessStatus(s,info),w=s.linkedWorkoutId?mWorkoutById(s.linkedWorkoutId):null;
+  var planMin=mSessMinutes(s),planKm=mSessKm(s),planTxt=[];
+  if(planMin)planTxt.push(Math.round(planMin)+" min");if(planKm)planTxt.push(mKmTxt(planKm)+" km");
+  if(!w){
+    if(st==="adapted")return {cls:"adapt",label:M_STATUS.adapted[0],txt:(s.adapt?mAdaptLabel(s.adapt.modal):"alterado")+(s.adapt&&s.adapt.note?" · "+s.adapt.note:"")};
+    if(st==="done")return {cls:"done",label:M_STATUS.done[0],txt:"marcado como feito"};
+    if(st==="missed")return {cls:"miss",label:M_STATUS.missed[0],txt:"sem treino vinculado"};
+    return null;
+  }
+  var actMin=w.durationSec?w.durationSec/60:null,actKm=w.distKm||null,actTxt=[];
+  if(actMin)actTxt.push(Math.round(actMin)+" min");if(actKm)actTxt.push(mKmTxt(actKm)+" km");
+  var adapted=(isBike(w)&&!mType(s.type).noRun)||!!(s.adapt&&s.adapt.modal);
+  var label=M_STATUS.done[0],cls="done";
+  var base=planKm||planMin,act=planKm?actKm:actMin;
+  if(base&&act){var r=act/base;if(r<0.85){label=M_STATUS.partial[0];cls="partial";}else if(r>1.15){label="✓ Acima do previsto";cls="done";}}
+  if(adapted){label=M_STATUS.adapted[0];cls="adapt";}
+  var note=(planTxt.length?"plan "+planTxt.join(" · "):"")+(actTxt.length?" · feito "+actTxt.join(" · "):"");
+  if(s.adapt&&s.adapt.modal)note=mAdaptLabel(s.adapt.modal)+(s.adapt.note?" ("+s.adapt.note+")":"")+" · "+note;
+  else if(isBike(w))note="feito de bike · "+note;
+  return {cls:cls,label:label,txt:note};}
+// rascunho do formulário
+function mDowToday(){return ((new Date().getDay()+6)%7)+1;}
+function mNewDraft(){return {dow:(maratonaWeekOffset===0?mDowToday():2),type:"rodagem",title:"",zone:"Z2",durMin:null,distKm:null,steps:[],adapt:null};}
+function mSeedSteps(){return [
+  {rep:false,label:"Aquecimento",durSec:1200,distKm:null,zone:"Z2"},
+  {rep:true,times:5,segs:[{label:"Forte",durSec:120,distKm:null,zone:"Z4"},{label:"Recuperação",durSec:60,distKm:null,zone:"Z2"}]},
+  {rep:false,label:"Desaquecimento",durSec:600,distKm:null,zone:"Z2"}];}
+function mCloneSession(s){try{return JSON.parse(JSON.stringify(s));}catch(e){return Object.assign({},s);}}
+function mZoneOptsDesc(sel){var o='<option value=""'+(!sel?" selected":"")+'>—</option>';M_ZONES.forEach(function(z){o+='<option value="'+z+'"'+(sel===z?" selected":"")+'>'+z+' · '+M_ZDESC[z]+'</option>';});return o;}
+function mSegHtml(i,j,g,canRm){
+  return '<div class="m-seg" data-seg="'+j+'">'+
+    '<input class="m-seglabel" data-f="label" value="'+esc(g.label||"")+'" placeholder="Segmento">'+
+    '<div class="m-seg-g">'+
+      '<input data-f="dur" value="'+mClock(g.durSec)+'" placeholder="mm:ss" inputmode="numeric">'+
+      '<input data-f="km" type="number" step="0.1" value="'+(g.distKm!=null?g.distKm:"")+'" placeholder="km">'+
+      '<select data-f="zone">'+mZoneOpts(g.zone)+'</select>'+
+      (canRm?'<button class="m-mini rmseg" data-rmseg="'+i+'-'+j+'" type="button" title="Remover segmento">✕</button>':'')+
+    '</div></div>';}
+function mStepsHtml(steps){
+  return (steps||[]).map(function(st,i){
+    if(st.rep){
+      var multi=(st.segs||[]).length>1;
+      var segs=(st.segs||[]).map(function(g,j){return mSegHtml(i,j,g,multi);}).join("");
+      return '<div class="m-step rep" data-step="'+i+'">'+
+        '<div class="m-step-h"><span class="m-step-n">'+(i+1)+'</span>'+
+        '<span class="m-rep">🔁 Repetir <input class="m-reptimes" data-f="times" type="number" min="1" value="'+(st.times||1)+'">×</span>'+
+        '<button class="m-mini rmstep" data-rmstep="'+i+'" type="button" title="Remover bloco">🗑</button></div>'+
+        segs+'<button class="m-mini addseg" data-addseg="'+i+'" type="button">+ segmento</button></div>';}
+    return '<div class="m-step" data-step="'+i+'">'+
+      '<div class="m-step-h"><span class="m-step-n">'+(i+1)+'</span>'+
+      '<input class="m-steplabel" data-f="label" value="'+esc(st.label||"")+'" placeholder="Passo (ex.: Aquecimento)">'+
+      '<button class="m-mini rmstep" data-rmstep="'+i+'" type="button" title="Remover">🗑</button></div>'+
+      '<div class="m-seg-g">'+
+        '<input data-f="dur" value="'+mClock(st.durSec)+'" placeholder="mm:ss" inputmode="numeric">'+
+        '<input data-f="km" type="number" step="0.1" value="'+(st.distKm!=null?st.distKm:"")+'" placeholder="km">'+
+        '<select data-f="zone">'+mZoneOpts(st.zone)+'</select>'+
+      '</div></div>';}).join("");}
+function mBuildForm(){
+  var d=_mForm.draft,isEd=_mForm.mode==="edit",t=mType(d.type),struct=!!t.structured,rest=!!t.rest;
+  var dayOpts="";for(var dd=1;dd<=7;dd++)dayOpts+='<option value="'+dd+'"'+(d.dow===dd?" selected":"")+'>'+M_DOW[dd-1]+'</option>';
+  var typeOpts=M_TYPES.map(function(x){return '<option value="'+x.k+'"'+(d.type===x.k?" selected":"")+'>'+x.emoji+' '+x.label+'</option>';}).join("");
+  var adOpts='<option value="">— não alterado —</option>'+M_ADAPT.map(function(x){return '<option value="'+x.k+'"'+(d.adapt&&d.adapt.modal===x.k?" selected":"")+'>'+x.label+'</option>';}).join("");
+  var wrap=el("div","m-form2");
+  var html='<div class="m-form">'+
+    '<div><label>Dia</label><select id="msDay">'+dayOpts+'</select></div>'+
+    '<div><label>Tipo de treino</label><select id="msType">'+typeOpts+'</select></div>'+
+    '<div class="f-wide"><label>Observação (opcional)</label><input id="msTitle" placeholder="Ex.: pista, progressivo, foco técnica" value="'+esc(d.title||"")+'"></div></div>';
+  if(struct){
+    html+='<div class="m-stephead">Estrutura do treino</div><div class="m-steps" id="msSteps">'+mStepsHtml(d.steps)+'</div>'+
+      '<div class="m-stepbtns"><button class="btn ghost sm" id="msAddStep" type="button">➕ passo</button>'+
+      '<button class="btn ghost sm" id="msAddRep" type="button">🔁 bloco repetir</button></div>';
+  }else if(!rest){
+    html+='<div class="m-form"><div><label>Zona de FC</label><select id="msZone">'+mZoneOptsDesc(d.zone)+'</select></div>'+
+      '<div><label>Duração (min)</label><input id="msMin" type="number" step="5" value="'+(d.durMin!=null?d.durMin:"")+'"></div>'+
+      '<div><label>Distância (km)</label><input id="msKm" type="number" step="0.5" value="'+(d.distKm!=null?d.distKm:"")+'"></div></div>';
+  }
+  html+='<div class="m-form" style="margin-top:10px"><div><label>Alteração (clima/local)</label><select id="msAdaptModal">'+adOpts+'</select></div>'+
+    '<div><label>Nota da alteração</label><input id="msAdaptNote" placeholder="Ex.: chuva → esteira" value="'+esc(d.adapt&&d.adapt.note?d.adapt.note:"")+'"></div></div>';
+  html+='<div style="display:flex;gap:8px;margin-top:12px"><button class="btn sm" id="msSave" type="button">'+(isEd?"Salvar":"Adicionar")+'</button><button class="btn ghost sm" id="msCancel" type="button">Cancelar</button></div>';
+  wrap.innerHTML=html;return wrap;}
+// lê o formulário aberto de volta para o rascunho (preserva o que foi digitado entre re-renders)
+function mHarvest(v){
+  if(!_mForm)return;var d=_mForm.draft,g=function(id){return $("#"+id,v);};
+  if(g("msDay"))d.dow=parseInt(g("msDay").value,10)||1;
+  if(g("msType"))d.type=g("msType").value||"rodagem";
+  if(g("msTitle"))d.title=g("msTitle").value||"";
+  var t=mType(d.type);
+  if(t.structured){
+    Array.prototype.forEach.call(v.querySelectorAll("#msSteps > .m-step"),function(row){
+      var i=+row.getAttribute("data-step"),st=d.steps[i];if(!st)return;
+      if(st.rep){
+        var tv=row.querySelector('[data-f="times"]');if(tv)st.times=parseInt(tv.value,10)||1;
+        (st.segs||[]).forEach(function(gg,j){var base=row.querySelector('.m-seg[data-seg="'+j+'"]');if(!base)return;
+          var l=base.querySelector('[data-f="label"]'),du=base.querySelector('[data-f="dur"]'),km=base.querySelector('[data-f="km"]'),zo=base.querySelector('[data-f="zone"]');
+          if(l)gg.label=l.value;if(du)gg.durSec=mParseClock(du.value);if(km){var k=parseFloat(km.value);gg.distKm=isNaN(k)?null:k;}if(zo)gg.zone=zo.value;});
+      }else{
+        var l2=row.querySelector('[data-f="label"]'),du2=row.querySelector('[data-f="dur"]'),km2=row.querySelector('[data-f="km"]'),zo2=row.querySelector('[data-f="zone"]');
+        if(l2)st.label=l2.value;if(du2)st.durSec=mParseClock(du2.value);if(km2){var k2=parseFloat(km2.value);st.distKm=isNaN(k2)?null:k2;}if(zo2)st.zone=zo2.value;
+      }
+    });
+  }else if(!t.rest){
+    if(g("msZone"))d.zone=g("msZone").value||"";
+    if(g("msMin")){var m=parseFloat(g("msMin").value);d.durMin=isNaN(m)?null:m;}
+    if(g("msKm")){var k3=parseFloat(g("msKm").value);d.distKm=isNaN(k3)?null:k3;}
+  }
+  if(g("msAdaptModal")){var am=g("msAdaptModal").value;d.adapt=am?{modal:am,note:(g("msAdaptNote")?g("msAdaptNote").value:"")}:null;}
+}
 function mEnsureWk(key){if(!state.planWeeks)state.planWeeks={};if(!state.planWeeks[key])state.planWeeks[key]={week:key,sessions:[],updatedAt:new Date().toISOString()};return state.planWeeks[key];}
 function mTouchWk(wk){wk.updatedAt=new Date().toISOString();touch();save();scheduleSync();}
 function mTile(o){var e=el("div","card tile");var h='<div class="lab">'+o.lab+'</div><div class="val">'+o.val+(o.unit?'<small> '+o.unit+'</small>':'')+'</div>';
@@ -2532,11 +2735,11 @@ function renderMaratona(v){
   grid.appendChild(mTile({lab:"🛡️ Salto de carga",val:(acR!=null?acR.toFixed(2).replace(".",","):"—"),note:"A:C — carga aguda ÷ crônica",badge:acBand?'<span class="badge '+acBand[1]+'">'+acBand[0]+'</span>':""}));
   v.appendChild(grid);
 
-  /* ---- SEMANA PROGRAMADA (input do usuário) + ADESÃO ---- */
-  // limita a navegação ao bloco [1..N]
+  /* ---- SEMANA PROGRAMADA (input) + VÍNCULO + ADESÃO ---- */
   if(blk){var minOff=1-blk.cur,maxOff=blk.N-blk.cur;if(maratonaWeekOffset<minOff)maratonaWeekOffset=minOff;if(maratonaWeekOffset>maxOff)maratonaWeekOffset=maxOff;}
   var info=mWeekInfo(maratonaWeekOffset);
   var wk=state.planWeeks&&state.planWeeks[info.key];
+  if(wk&&mLinkWeek(info,wk.sessions))save(); // vincula treinos importados aos programados (por dia)
   var sessions=wk&&wk.sessions?wk.sessions.slice().sort(function(x,y){return (x.dow||0)-(y.dow||0);}):[];
   var viewWkNum=blk?(blk.cur+maratonaWeekOffset):null;
   var canPrev=!blk||(blk.cur+maratonaWeekOffset)>1;
@@ -2547,24 +2750,27 @@ function renderMaratona(v){
     '<div class="m-wknav"><button id="mPrev" type="button" '+(canPrev?"":"disabled")+' aria-label="Semana anterior">‹</button>'+
     '<div class="m-wklab">'+(viewWkNum!=null?"Semana "+viewWkNum+" de "+blk.N:"Semana")+'<small>'+mWeekRange(info)+(maratonaWeekOffset===0?" · esta semana":"")+'</small></div>'+
     '<button id="mNext" type="button" '+(canNext?"":"disabled")+' aria-label="Próxima semana">›</button></div>';
-  // adesão
-  if(sessions.length){
-    var done=sessions.filter(function(s){return s.done;}).length, pct=Math.round(done/sessions.length*100);
+  // adesão (cumpridos = feitos + adaptados; descanso não conta)
+  var trainS=sessions.filter(function(s){return !mType(s.type).rest;});
+  if(trainS.length){
+    var okN=trainS.filter(function(s){var st=mSessStatus(s,info);return st==="done"||st==="adapted";}).length,pct=Math.round(okN/trainS.length*100);
     h+='<div class="m-adh"><div class="m-adhbar"><i style="width:'+pct+'%"></i></div><span class="m-adhpct" style="color:'+(pct>=80?"var(--good)":pct>=50?"var(--accent)":"var(--muted)")+'">'+pct+'%</span></div>'+
-      '<div class="sub" style="margin:-4px 0 10px">'+done+' de '+sessions.length+' cumpridos</div>';
+      '<div class="sub" style="margin:-4px 0 10px">'+okN+' de '+trainS.length+' cumpridos</div>';
   }
-  // lista
   if(sessions.length){
     h+='<div class="m-sess">';
     sessions.forEach(function(s){
-      var tag=mZoneTag(s.zone),det=mSessDetail(s);
-      h+='<div class="m-srow'+(s.done?" done":"")+'">'+
+      var t=mType(s.type),pz=mPeakZone(s)||s.zone,tag=mZoneTag(pz),sum=mSessSummary(s),an=mAnalyze(s,info),st=mSessStatus(s,info);
+      h+='<div class="m-srow st-'+st+'">'+
         '<span class="m-day">'+(M_DOW[(s.dow||1)-1]||"")+'</span>'+
-        '<span class="m-what"><b>'+esc(s.title||"Treino")+'</b>'+(det?'<small>'+esc(det)+'</small>':"")+'</span>'+
-        '<span class="m-zt" style="background:'+tag[0]+';color:'+tag[1]+'">'+(M_ZONES.indexOf(s.zone)>=0?s.zone:"—")+'</span>'+
-        '<span class="m-sact"><button class="chk'+(s.done?" on":"")+'" data-id="'+s.id+'" title="Marcar como cumprido">✓</button>'+
-        '<button class="ed" data-id="'+s.id+'" title="Editar">✏</button>'+
-        '<button class="rm" data-id="'+s.id+'" title="Remover">🗑</button></span>'+
+        '<span class="m-what"><b>'+t.emoji+' '+esc(t.label)+(s.title?' · '+esc(s.title):'')+'</b>'+
+          (sum?'<small>'+esc(sum)+'</small>':"")+
+          (an?'<small class="m-an '+an.cls+'">'+esc(an.label)+(an.txt?' — '+esc(an.txt):'')+'</small>':"")+'</span>'+
+        '<span class="m-zt" style="background:'+tag[0]+';color:'+tag[1]+'">'+(M_ZONES.indexOf(pz)>=0?pz:(t.structured?"★":"—"))+'</span>'+
+        '<span class="m-sact">'+
+          (t.noRun?'':'<button class="chk'+(st==="done"||st==="adapted"?" on":"")+'" data-id="'+s.id+'" type="button" title="Marcar como feito">✓</button>')+
+          '<button class="ed" data-id="'+s.id+'" type="button" title="Editar / adaptar">✏</button>'+
+          '<button class="rm" data-id="'+s.id+'" type="button" title="Remover">🗑</button></span>'+
         '</div>';
     });
     h+='</div>';
@@ -2572,28 +2778,13 @@ function renderMaratona(v){
     h+='<div class="sub" style="padding:10px 0 2px">Nenhum treino inserido nesta semana. Toque em <b>➕ adicionar treino</b> e lance o que foi programado no seu app.</div>';
   }
   pw.innerHTML=h;
-  // form de treino / botão adicionar
-  if(_mFormOpen){
-    var ed=_mEditId?sessions.filter(function(s){return s.id===_mEditId;})[0]:null;
-    var dayOpts="";for(var dd=1;dd<=7;dd++)dayOpts+='<option value="'+dd+'"'+((ed&&ed.dow===dd)||(!ed&&dd===2)?" selected":"")+'>'+M_DOW[dd-1]+'</option>';
-    var zOpts='<option value="">—</option>';M_ZONES.forEach(function(z){zOpts+='<option value="'+z+'"'+(ed&&ed.zone===z?" selected":"")+'>'+z+' · '+M_ZDESC[z]+'</option>';});
-    var form=el("div","m-form");
-    form.innerHTML='<div><label>Dia</label><select id="msDay">'+dayOpts+'</select></div>'+
-      '<div><label>Zona de FC</label><select id="msZone">'+zOpts+'</select></div>'+
-      '<div class="f-wide"><label>O que foi programado</label><input id="msTitle" placeholder="Ex.: Rodagem fácil, Longão, 6×800 m" value="'+esc(ed?ed.title||"":"")+'"></div>'+
-      '<div><label>Duração (min)</label><input id="msMin" type="number" step="5" value="'+(ed&&ed.durMin?ed.durMin:"")+'"></div>'+
-      '<div><label>Distância (km)</label><input id="msKm" type="number" step="0.5" value="'+(ed&&ed.distKm?ed.distKm:"")+'"></div>'+
-      '<div class="f-wide" style="display:flex;gap:8px;margin-top:2px"><button class="btn sm" id="msSave" type="button">'+(ed?"Salvar":"Adicionar")+'</button><button class="btn ghost sm" id="msCancel" type="button">Cancelar</button></div>';
-    pw.appendChild(form);
-  }else{
-    var addBtn=el("button","btn ghost sm","➕ adicionar treino");addBtn.id="mAddBtn";addBtn.type="button";addBtn.style.marginTop="12px";
-    pw.appendChild(addBtn);
-  }
+  if(_mForm){pw.appendChild(mBuildForm());}
+  else{var addBtn=el("button","btn ghost sm","➕ adicionar treino");addBtn.id="mAddBtn";addBtn.type="button";addBtn.style.marginTop="12px";pw.appendChild(addBtn);}
   // realizado (dos importados)
   var wkRuns=runs.filter(function(w){return isoWeekKey(w.date)===info.key;});
   var realKm=wkRuns.reduce(function(s,w){return s+(w.distKm||0);},0);
   var real=el("div","m-realized");
-  real.innerHTML='📥 <span>Realizado (importado): <b>'+wkRuns.length+'</b> corrida(s) · <b>'+mKmTxt(realKm)+' km</b>. Marque ✓ os treinos que você cumpriu pra acompanhar a adesão.</span>';
+  real.innerHTML='📥 <span>Realizado nesta semana (importado): <b>'+wkRuns.length+'</b> corrida(s) · <b>'+mKmTxt(realKm)+' km</b>. Ao importar, o app vincula ao treino do mesmo dia e analisa a adesão.</span>';
   pw.appendChild(real);
   v.appendChild(pw);
 
@@ -2650,23 +2841,37 @@ function renderMaratona(v){
       r.updatedAt=new Date().toISOString();state.race=r;_mEditRace=false;touch();save();scheduleSync();toast("Meta atualizada");render();};
     var cc=$("#mrCancel",v);if(cc)cc.onclick=function(){_mEditRace=false;render();};
   }
-  var pv=$("#mPrev",v);if(pv&&canPrev)pv.onclick=function(){maratonaWeekOffset--;_mFormOpen=false;_mEditId=null;render();};
-  var nx=$("#mNext",v);if(nx&&canNext)nx.onclick=function(){maratonaWeekOffset++;_mFormOpen=false;_mEditId=null;render();};
-  var ab=$("#mAddBtn",v);if(ab)ab.onclick=function(){_mFormOpen=true;_mEditId=null;render();};
-  var ms=$("#msSave",v);if(ms)ms.onclick=function(){
-    var title=($("#msTitle",v).value||"").trim();if(!title){alert("Descreva o treino programado.");return;}
-    var dow=parseInt($("#msDay",v).value,10)||1, zone=$("#msZone",v).value||"";
-    var min=parseInt($("#msMin",v).value,10); if(isNaN(min)||min<=0)min=null;
-    var km=parseFloat($("#msKm",v).value); if(isNaN(km)||km<=0)km=null;
-    var w2=mEnsureWk(info.key);
-    if(_mEditId){var s0=w2.sessions.filter(function(s){return s.id===_mEditId;})[0];if(s0){s0.title=title;s0.dow=dow;s0.zone=zone;s0.durMin=min;s0.distKm=km;}}
-    else{w2.sessions.push({id:uid(),dow:dow,title:title,zone:zone,durMin:min,distKm:km,done:false});}
-    mTouchWk(w2);_mFormOpen=false;_mEditId=null;render();};
-  var mc=$("#msCancel",v);if(mc)mc.onclick=function(){_mFormOpen=false;_mEditId=null;render();};
+  var pv=$("#mPrev",v);if(pv&&canPrev)pv.onclick=function(){maratonaWeekOffset--;_mForm=null;render();};
+  var nx=$("#mNext",v);if(nx&&canNext)nx.onclick=function(){maratonaWeekOffset++;_mForm=null;render();};
+  var ab=$("#mAddBtn",v);if(ab)ab.onclick=function(){_mForm={mode:"add",draft:mNewDraft()};render();};
+  if(_mForm){
+    var ty=$("#msType",v);if(ty)ty.onchange=function(){mHarvest(v);if(mType(_mForm.draft.type).structured&&!(_mForm.draft.steps&&_mForm.draft.steps.length))_mForm.draft.steps=mSeedSteps();render();};
+    var as=$("#msAddStep",v);if(as)as.onclick=function(){mHarvest(v);_mForm.draft.steps.push({rep:false,label:"",durSec:null,distKm:null,zone:"Z2"});render();};
+    var ar=$("#msAddRep",v);if(ar)ar.onclick=function(){mHarvest(v);_mForm.draft.steps.push({rep:true,times:5,segs:[{label:"Forte",durSec:null,distKm:null,zone:"Z4"},{label:"Recuperação",durSec:null,distKm:null,zone:"Z2"}]});render();};
+    Array.prototype.forEach.call(v.querySelectorAll("[data-rmstep]"),function(b){b.onclick=function(){mHarvest(v);_mForm.draft.steps.splice(+b.getAttribute("data-rmstep"),1);render();};});
+    Array.prototype.forEach.call(v.querySelectorAll("[data-addseg]"),function(b){b.onclick=function(){mHarvest(v);var st=_mForm.draft.steps[+b.getAttribute("data-addseg")];if(st&&st.segs)st.segs.push({label:"",durSec:null,distKm:null,zone:"Z2"});render();};});
+    Array.prototype.forEach.call(v.querySelectorAll("[data-rmseg]"),function(b){b.onclick=function(){mHarvest(v);var p=b.getAttribute("data-rmseg").split("-"),st=_mForm.draft.steps[+p[0]];if(st&&st.segs&&st.segs.length>1)st.segs.splice(+p[1],1);render();};});
+    var ms=$("#msSave",v);if(ms)ms.onclick=function(){
+      mHarvest(v);var d=_mForm.draft,t=mType(d.type);
+      if(t.structured&&!(d.steps&&d.steps.length)){alert("Adicione ao menos um passo ao treino.");return;}
+      var w2=mEnsureWk(info.key);
+      var pay={dow:d.dow,type:d.type,title:(d.title||"").trim(),
+        zone:(t.structured||t.rest)?"":(d.zone||""),
+        durMin:(t.structured||t.rest)?null:d.durMin,
+        distKm:(t.structured||t.rest)?null:d.distKm,
+        steps:t.structured?d.steps:[],
+        adapt:(d.adapt&&d.adapt.modal)?{modal:d.adapt.modal,note:(d.adapt.note||"")}:null};
+      if(_mForm.mode==="edit"){var s0=w2.sessions.filter(function(s){return s.id===_mForm.id;})[0];if(s0)Object.assign(s0,pay);}
+      else{pay.id=uid();pay.done=false;pay.linkedWorkoutId=null;w2.sessions.push(pay);}
+      mTouchWk(w2);_mForm=null;render();};
+    var mc=$("#msCancel",v);if(mc)mc.onclick=function(){_mForm=null;render();};
+  }
   Array.prototype.forEach.call(v.querySelectorAll(".m-sact .chk"),function(b){b.onclick=function(){
     var w2=state.planWeeks[info.key];if(!w2)return;var s0=w2.sessions.filter(function(s){return s.id===b.getAttribute("data-id");})[0];
     if(s0){s0.done=!s0.done;mTouchWk(w2);render();}};});
-  Array.prototype.forEach.call(v.querySelectorAll(".m-sact .ed"),function(b){b.onclick=function(){_mEditId=b.getAttribute("data-id");_mFormOpen=true;render();};});
+  Array.prototype.forEach.call(v.querySelectorAll(".m-sact .ed"),function(b){b.onclick=function(){
+    var w2=state.planWeeks[info.key];if(!w2)return;var s0=w2.sessions.filter(function(s){return s.id===b.getAttribute("data-id");})[0];
+    if(s0){_mForm={mode:"edit",id:s0.id,draft:mCloneSession(s0)};if(!_mForm.draft.steps)_mForm.draft.steps=[];render();}};});
   Array.prototype.forEach.call(v.querySelectorAll(".m-sact .rm"),function(b){b.onclick=function(){
     var w2=state.planWeeks[info.key];if(!w2)return;w2.sessions=w2.sessions.filter(function(s){return s.id!==b.getAttribute("data-id");});mTouchWk(w2);render();};});
 }
