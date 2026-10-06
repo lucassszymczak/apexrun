@@ -543,6 +543,12 @@ tbody tr{transition:background-color .12s ease}
 .m-srow.st-miss{box-shadow:inset 3px 0 0 var(--crit)}
 .m-an{display:block;font-size:11px;margin-top:3px;font-weight:600}
 .m-an.done{color:var(--good)}.m-an.adapt{color:var(--accent)}.m-an.partial{color:var(--warn)}.m-an.miss{color:var(--crit)}.m-an.plan{color:var(--muted)}
+/* importar print / colar texto */
+.m-import{margin-bottom:12px;padding-bottom:12px;border-bottom:1px dashed var(--line)}
+.m-imp-btns{display:flex;gap:8px;flex-wrap:wrap}
+.m-imp-status{font-size:12px;color:var(--muted);margin-top:8px}
+.m-imp-status:empty{margin-top:0}
+#mImpText{width:100%;font-family:var(--sans);resize:vertical}
 </style>
 </head>
 <body>
@@ -2453,6 +2459,8 @@ function sectionTitle(t){return el("h2","section-title",esc(t));}
 var maratonaWeekOffset=0;  // 0 = semana atual (navegável dentro do bloco)
 var _mEditRace=false;      // formulário de editar meta aberto
 var _mForm=null;           // formulário de treino: {mode:'add'|'edit', id, draft}
+var _mPasteOpen=false;     // caixa de colar texto aberta
+var _mTessP=null,_mOcrBusy=false; // OCR (Tesseract) carregado sob demanda
 var M_DOW=["Seg","Ter","Qua","Qui","Sex","Sáb","Dom"];
 var M_MON=["JAN","FEV","MAR","ABR","MAI","JUN","JUL","AGO","SET","OUT","NOV","DEZ"];
 var M_MONL=["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"];
@@ -2619,7 +2627,16 @@ function mBuildForm(){
   var typeOpts=M_TYPES.map(function(x){return '<option value="'+x.k+'"'+(d.type===x.k?" selected":"")+'>'+x.emoji+' '+x.label+'</option>';}).join("");
   var adOpts='<option value="">— não alterado —</option>'+M_ADAPT.map(function(x){return '<option value="'+x.k+'"'+(d.adapt&&d.adapt.modal===x.k?" selected":"")+'>'+x.label+'</option>';}).join("");
   var wrap=el("div","m-form2");
-  var html='<div class="m-form">'+
+  var imp="";
+  if(!isEd){
+    imp='<div class="m-import"><div class="m-imp-btns">'+
+      '<button class="btn ghost sm" id="mImpPhoto" type="button">📷 Importar print</button>'+
+      '<button class="btn ghost sm" id="mImpPaste" type="button">📋 Colar texto</button></div>'+
+      (_mPasteOpen?'<textarea id="mImpText" rows="4" style="margin-top:8px" placeholder="Cole o treino aqui — ex.: Aquecimento 20min @Z2 · Repetir 5× 2min @Z4 / 1min @Z2 · Desaquecimento 10min @Z2"></textarea><div style="margin-top:6px"><button class="btn sm" id="mImpRead" type="button">Ler texto</button></div>':'')+
+      '<div class="m-imp-status" id="mImpStatus"></div>'+
+      '<input type="file" id="mImgFile" accept="image/*" hidden></div>';
+  }
+  var html=imp+'<div class="m-form">'+
     '<div><label>Dia</label><select id="msDay">'+dayOpts+'</select></div>'+
     '<div><label>Tipo de treino</label><select id="msType">'+typeOpts+'</select></div>'+
     '<div class="f-wide"><label>Observação (opcional)</label><input id="msTitle" placeholder="Ex.: pista, progressivo, foco técnica" value="'+esc(d.title||"")+'"></div></div>';
@@ -2662,6 +2679,85 @@ function mHarvest(v){
     if(g("msKm")){var k3=parseFloat(g("msKm").value);d.distKm=isNaN(k3)?null:k3;}
   }
   if(g("msAdaptModal")){var am=g("msAdaptModal").value;d.adapt=am?{modal:am,note:(g("msAdaptNote")?g("msAdaptNote").value:"")}:null;}
+}
+// ---- LEITURA DE PRINT / TEXTO → passos estruturados (o usuário valida antes de salvar) ----
+// Entende o formato "Aquecimento 20:00 min @Z2 · Repetir 5 vezes · 2:00 @Z4 / 1:00 @Z2 · Desaquecimento 10:00 @Z2",
+// em uma linha ou em várias (rótulo numa linha, valor na seguinte).
+function mParsePlan(raw){
+  var out={type:null,steps:[],zone:null,durMin:null,distKm:null,adapt:null,title:""};
+  if(!raw)return out;
+  var text=(""+raw).replace(/\r/g,"\n");
+  var cut=text.search(/dados do treino|planejado|realizado|ritmo m[ée]dio|\bZP\b/i);
+  var head=cut>=0?text.slice(0,cut):text,totals=cut>=0?text.slice(cut):"";
+  var dT=totals.match(/dura[çc][aã]o[^0-9]*(\d{1,2}):(\d{2})/i);if(dT)out.durMin=(+dT[1])+(+dT[2])/60;
+  var kT=totals.match(/dist[aâ]ncia[^0-9]*(\d+(?:[.,]\d+)?)\s*km/i);if(kT)out.distKm=parseFloat(kT[1].replace(",","."));
+  var closers=/aquec|desaq|arrefec|volta\s*[aà]\s*calma|rodagem|long[aã]o|regenerativo/i;
+  var skip=/estrutura do treino|ar livre|esteira|zonas de ritmo|dados do treino/i;
+  function parseSeg(l){
+    var zone=null,zm=l.match(/z\s*([1-5])/i);if(zm)zone="Z"+zm[1];
+    var durSec=null,dm=l.match(/(\d{1,2}):(\d{2})/);
+    if(dm)durSec=(+dm[1])*60+(+dm[2]);
+    else{var mm=l.match(/(\d+(?:[.,]\d+)?)\s*min/i);if(mm)durSec=Math.round(parseFloat(mm[1].replace(",","."))*60);}
+    var distKm=null,km=l.match(/(\d+(?:[.,]\d+)?)\s*km/i);
+    if(km)distKm=parseFloat(km[1].replace(",","."));
+    else if(!dm){var me=l.match(/(\d{2,4})\s*m\b/i);if(me)distKm=(+me[1])/1000;}
+    var label=l.replace(/@?\s*z\s*[1-5].*/i,"").replace(/\d{1,2}:\d{2}.*/,"").replace(/\d+(?:[.,]\d+)?\s*(min|km|m)\b.*/i,"").replace(/[·|@:–—-]+\s*$/,"").trim();
+    label=label.replace(/^\d+[\).\s]*/,"").trim();
+    return {label:label,durSec:durSec,distKm:distKm,zone:zone,has:(zone!=null||durSec!=null||distKm!=null)};
+  }
+  var lines=head.split(/[\n·•|/]+/).map(function(l){return l.trim();}).filter(Boolean),cur=null,pending=null;
+  lines.forEach(function(l){
+    var tM=l.match(/(\d+)\s*(?:vez\w*|x|×)/i);
+    if(/repet/i.test(l)||tM){
+      var times=tM?parseInt(tM[1],10):(l.match(/repet\w*\s*(\d+)/i)?parseInt(l.match(/repet\w*\s*(\d+)/i)[1],10):1);if(!times)times=1;
+      cur={rep:true,times:times,segs:[]};out.steps.push(cur);pending=null;
+      var rest=l.replace(/.*?(?:vez\w*|×|x)\s*/i,"");if(rest===l)rest=l.replace(/repet\w*\s*\d+\s*/i,"");rest=rest.trim();
+      if(rest){var sg=parseSeg(rest);if(sg.has)cur.segs.push({label:sg.label,durSec:sg.durSec,distKm:sg.distKm,zone:sg.zone});}
+      return;
+    }
+    var seg=parseSeg(l),isCloser=closers.test(l);
+    if(!seg.has){if(isCloser)cur=null;var lbl=l.replace(/^\d+[\).\s]*/,"").trim();if(lbl&&!skip.test(lbl))pending=lbl;return;}
+    var label=seg.label||pending||"";
+    if(cur&&!isCloser&&!closers.test(label)){cur.segs.push({label:label,durSec:seg.durSec,distKm:seg.distKm,zone:seg.zone});}
+    else{cur=null;out.steps.push({rep:false,label:label,durSec:seg.durSec,distKm:seg.distKm,zone:seg.zone});}
+    pending=null;
+  });
+  out.steps=out.steps.filter(function(st){return st.rep?(st.segs&&st.segs.length):true;});
+  var hasRep=out.steps.some(function(st){return st.rep;});
+  if(hasRep)out.type="intervalado";
+  else if(out.steps.length>1)out.type="fartlek";
+  else if(out.steps.length===1){var s0=out.steps[0];out.type="rodagem";out.zone=s0.zone;if(s0.durSec)out.durMin=s0.durSec/60;if(s0.distKm)out.distKm=s0.distKm;out.steps=[];}
+  else out.type="rodagem";
+  return out;
+}
+function mApplyParse(text){
+  if(!_mForm)return;var d=mParsePlan(text),dr=_mForm.draft;
+  if(!d.type){toast("Não consegui entender o treino. Revise e edite à mão.");return;}
+  dr.type=d.type;
+  if(d.steps&&d.steps.length)dr.steps=d.steps;
+  if(!mType(dr.type).structured){if(d.zone)dr.zone=d.zone;if(d.durMin!=null)dr.durMin=Math.round(d.durMin);if(d.distKm!=null)dr.distKm=Math.round(d.distKm*10)/10;}
+  var n=mType(dr.type).structured?dr.steps.length:1;
+  toast("Lido: "+n+" passo(s) — revise e salve");render();
+}
+function mOcrStatus(msg,err){var n=document.getElementById("mImpStatus");if(n){n.textContent=msg||"";n.style.color=err?"var(--crit)":"var(--muted)";}}
+function mLoadTess(){
+  if(window.Tesseract)return Promise.resolve(window.Tesseract);
+  if(_mTessP)return _mTessP;
+  _mTessP=new Promise(function(res,rej){var s=document.createElement("script");
+    s.src="https://cdn.jsdelivr.net/npm/tesseract.js@4.1.1/dist/tesseract.min.js";s.async=true;
+    s.onload=function(){window.Tesseract?res(window.Tesseract):rej(new Error("OCR indisponível"));};
+    s.onerror=function(){_mTessP=null;rej(new Error("Falha ao carregar o leitor (precisa de internet)."));};
+    document.head.appendChild(s);});
+  return _mTessP;
+}
+function mRunOCR(file){
+  if(_mOcrBusy)return;_mOcrBusy=true;mOcrStatus("Carregando leitor…");
+  mLoadTess().then(function(T){mOcrStatus("Lendo a imagem… 0%");
+    return T.recognize(file,"por",{logger:function(m){if(m&&m.status==="recognizing text")mOcrStatus("Lendo a imagem… "+Math.round((m.progress||0)*100)+"%");}});
+  }).then(function(r){_mOcrBusy=false;var txt=(r&&r.data&&r.data.text)||"";
+    if(!txt.trim()){mOcrStatus("Não consegui ler texto da imagem. Tente uma foto mais nítida ou cole o texto.",true);return;}
+    mApplyParse(txt);
+  }).catch(function(e){_mOcrBusy=false;mOcrStatus((e&&e.message)||"Falha no OCR. Cole o texto como alternativa.",true);});
 }
 function mEnsureWk(key){if(!state.planWeeks)state.planWeeks={};if(!state.planWeeks[key])state.planWeeks[key]={week:key,sessions:[],updatedAt:new Date().toISOString()};return state.planWeeks[key];}
 function mTouchWk(wk){wk.updatedAt=new Date().toISOString();touch();save();scheduleSync();}
@@ -2843,8 +2939,12 @@ function renderMaratona(v){
   }
   var pv=$("#mPrev",v);if(pv&&canPrev)pv.onclick=function(){maratonaWeekOffset--;_mForm=null;render();};
   var nx=$("#mNext",v);if(nx&&canNext)nx.onclick=function(){maratonaWeekOffset++;_mForm=null;render();};
-  var ab=$("#mAddBtn",v);if(ab)ab.onclick=function(){_mForm={mode:"add",draft:mNewDraft()};render();};
+  var ab=$("#mAddBtn",v);if(ab)ab.onclick=function(){_mPasteOpen=false;_mForm={mode:"add",draft:mNewDraft()};render();};
   if(_mForm){
+    var ipPhoto=$("#mImpPhoto",v);if(ipPhoto)ipPhoto.onclick=function(){var f=$("#mImgFile",v);if(f)f.click();};
+    var imgF=$("#mImgFile",v);if(imgF)imgF.onchange=function(e){var f=e.target.files&&e.target.files[0];if(f){mHarvest(v);mRunOCR(f);}e.target.value="";};
+    var ipPaste=$("#mImpPaste",v);if(ipPaste)ipPaste.onclick=function(){mHarvest(v);_mPasteOpen=!_mPasteOpen;render();};
+    var ipRead=$("#mImpRead",v);if(ipRead)ipRead.onclick=function(){var t=$("#mImpText",v);mHarvest(v);if(t&&t.value.trim())mApplyParse(t.value);else mOcrStatus("Cole o texto do treino antes de ler.",true);};
     var ty=$("#msType",v);if(ty)ty.onchange=function(){mHarvest(v);if(mType(_mForm.draft.type).structured&&!(_mForm.draft.steps&&_mForm.draft.steps.length))_mForm.draft.steps=mSeedSteps();render();};
     var as=$("#msAddStep",v);if(as)as.onclick=function(){mHarvest(v);_mForm.draft.steps.push({rep:false,label:"",durSec:null,distKm:null,zone:"Z2"});render();};
     var ar=$("#msAddRep",v);if(ar)ar.onclick=function(){mHarvest(v);_mForm.draft.steps.push({rep:true,times:5,segs:[{label:"Forte",durSec:null,distKm:null,zone:"Z4"},{label:"Recuperação",durSec:null,distKm:null,zone:"Z2"}]});render();};
