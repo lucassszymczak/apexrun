@@ -446,6 +446,66 @@ tbody tr{transition:background-color .12s ease}
   .wk-table tr.year-row td{display:flex;align-items:baseline;gap:10px;border:none;background:transparent;padding:0}
   .wk-table tr.year-row td::before{display:none}
 }
+/* ===== MODO MARATONA ===== */
+.m-hero{border-radius:var(--radius);padding:20px 18px;color:#fff;position:relative;overflow:hidden;
+  background:radial-gradient(130% 120% at 85% -10%,color-mix(in srgb,var(--accent) 42%,#1a1f26),#12161c 62%);
+  border:1px solid color-mix(in srgb,var(--accent) 30%,var(--line))}
+.m-hero .m-eyebrow{font-family:var(--head);font-size:11px;font-weight:700;letter-spacing:.14em;color:var(--accent);text-transform:uppercase}
+.m-hero .m-edit{position:absolute;top:14px;right:14px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.16);color:#eaeef3;border-radius:9px;padding:5px 9px;font-size:12px;cursor:pointer;font-weight:600}
+.m-hero .m-edit:hover{background:rgba(255,255,255,.18)}
+.m-count{display:flex;align-items:baseline;gap:9px;margin-top:6px}
+.m-count .n{font-family:var(--head);font-weight:700;font-size:54px;line-height:.9;color:#fff;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.m-count .u{font-size:15px;color:#cfd6de;font-weight:600}
+.m-hsub{margin-top:8px;font-size:13.5px;color:#cfd6de}
+.m-hsub b{color:#fff}
+.m-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:13px}
+.m-chip{font-size:11.5px;font-weight:600;padding:4px 10px;border-radius:999px;background:rgba(255,255,255,.1);color:#eaeef3;border:1px solid rgba(255,255,255,.14)}
+.m-chip.on{background:var(--accent);color:var(--accent-ink);border-color:transparent;font-weight:700}
+.m-phd{display:flex;align-items:center;margin-bottom:11px}
+.m-phd .m-wk{margin-left:auto;font-size:12px;color:var(--ink-2)}
+.m-phd .m-wk b{color:var(--accent);font-family:var(--head)}
+.m-ptrack{display:flex;gap:4px}
+.m-pseg{height:34px;border-radius:9px;background:var(--surface-3);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;
+  font-family:var(--head);font-weight:700;font-size:11px;color:var(--muted);padding:0 4px;text-align:center}
+.m-pseg.done{background:color-mix(in srgb,var(--accent) 20%,var(--surface));color:var(--ink-2)}
+.m-pseg.on{background:linear-gradient(92deg,var(--accent),var(--accent-2));color:var(--accent-ink);border-color:transparent}
+.m-pnow{margin-top:10px;font-size:13px;color:var(--ink)}
+.m-zbar{display:flex;height:26px;border-radius:9px;overflow:hidden;border:1px solid var(--line-2);margin:8px 0 11px}
+.m-zbar>span{display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#0c0f13;font-family:var(--head)}
+.m-zleg{display:flex;flex-direction:column;gap:7px}
+.m-zrow{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--ink-2);min-width:0}
+.m-zrow .d{width:10px;height:10px;border-radius:3px;flex:none}
+.m-zrow .zp{margin-left:auto;font-family:var(--head);font-weight:700;color:var(--ink);flex:none}
+.m-wknav{display:flex;align-items:center;gap:8px;margin:2px 0 10px}
+.m-wknav button{background:var(--surface-2);border:1px solid var(--line);color:var(--ink-2);border-radius:9px;width:34px;height:32px;cursor:pointer;font-size:15px;flex:none}
+.m-wknav button:hover:not(:disabled){border-color:var(--accent);color:var(--accent)}
+.m-wknav button:disabled{opacity:.4;cursor:default}
+.m-wknav .m-wklab{flex:1;text-align:center;font-family:var(--head);font-weight:700;font-size:13.5px}
+.m-wknav .m-wklab small{display:block;font-family:var(--sans);font-weight:600;color:var(--muted);font-size:11px}
+.m-adh{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.m-adh .m-adhbar{flex:1;height:8px;border-radius:999px;background:var(--surface-3);overflow:hidden;border:1px solid var(--line-2)}
+.m-adh .m-adhbar>i{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,var(--trend),color-mix(in srgb,var(--trend) 55%,var(--accent)))}
+.m-adh .m-adhpct{font-family:var(--head);font-weight:700;font-size:14px;flex:none}
+.m-sess{display:flex;flex-direction:column;gap:2px}
+.m-srow{display:flex;align-items:center;gap:10px;padding:9px 2px;border-bottom:1px solid var(--line-2)}
+.m-srow:last-child{border-bottom:0}
+.m-day{font-family:var(--head);font-weight:700;font-size:11px;color:var(--muted);width:30px;flex:none;text-transform:uppercase}
+.m-what{flex:1;min-width:0;font-size:13.5px}
+.m-what small{display:block;color:var(--muted);font-size:11.5px}
+.m-srow.done .m-what{opacity:.72}
+.m-srow.done .m-what b{text-decoration:line-through;text-decoration-color:var(--muted)}
+.m-zt{font-size:10.5px;font-weight:700;font-family:var(--head);padding:3px 8px;border-radius:999px;flex:none}
+.m-sact{display:flex;gap:4px;flex:none}
+.m-sact button{background:none;border:1px solid var(--line);color:var(--ink-2);border-radius:8px;width:30px;height:30px;cursor:pointer;font-size:13px}
+.m-sact button.chk.on{background:color-mix(in srgb,var(--good) 18%,transparent);border-color:transparent;color:var(--good)}
+.m-sact button:hover{border-color:var(--accent);color:var(--accent)}
+.m-form{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:12px;padding-top:12px;border-top:1px dashed var(--line)}
+.m-form .f-wide{grid-column:1/-1}
+.m-form label{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.03em;display:block;margin-bottom:3px}
+.m-realized{font-size:12px;color:var(--ink-2);margin-top:10px;display:flex;gap:7px;align-items:flex-start}
+.m-realized b{color:var(--ink);font-family:var(--head)}
+.m-est .val{color:var(--ink-2)}
+@media (max-width:420px){.m-form{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -466,6 +526,7 @@ tbody tr{transition:background-color .12s ease}
 </header>
 <nav class="tabs" id="tabs" role="tablist" aria-label="Seções da análise">
     <button data-tab="painel" id="tab-painel" role="tab" aria-selected="true" aria-controls="view" tabindex="0" class="active"><span class="tic" aria-hidden="true">📊</span><span class="tlb">Painel</span></button>
+    <button data-tab="maratona" id="tab-maratona" role="tab" aria-selected="false" aria-controls="view" tabindex="-1"><span class="tic" aria-hidden="true">🏁</span><span class="tlb">Maratona</span></button>
     <button data-tab="treinos" id="tab-treinos" role="tab" aria-selected="false" aria-controls="view" tabindex="-1"><span class="tic" aria-hidden="true">🏃</span><span class="tlb">Treinos</span></button>
     <button data-tab="relatorio" id="tab-relatorio" role="tab" aria-selected="false" aria-controls="view" tabindex="-1"><span class="tic" aria-hidden="true">🗒️</span><span class="tlb">Relatório</span></button>
     <button data-tab="recuperacao" id="tab-recuperacao" role="tab" aria-selected="false" aria-controls="view" tabindex="-1"><span class="tic" aria-hidden="true">🌙</span><span class="tlb">Recuperação</span></button>
@@ -1238,6 +1299,11 @@ var DEFAULT_ATHLETE={
   cycleName:"Base & Pace",cycleWeeks:10,
   alert:"⚠ PAUSA PROTETORA · sensibilidade na tíbia direita (08/09). Corrida suspensa; foco em reforço estrutural, bike e reab. Baseline 5K (6:21) segue como marco zero."
 };
+// ---- Prova-alvo (Modo Maratona) ----
+// goal:"finish" = terminar bem (treino por zonas de FC, sem tempo-alvo).
+// startDate = início do bloco (define "semana X de N"); longRunTargetKm/peakKmTarget = metas editáveis.
+var DEFAULT_RACE={name:"Maratona",date:"2027-03-28",distKm:42.195,goal:"finish",startDate:"2026-10-06",longRunTargetKm:30,peakKmTarget:50,updatedAt:null};
+function defaultRace(){return Object.assign({},DEFAULT_RACE);}
 function seedWorkouts(){
   // Dados reais do dashboard/relatório (calibração Floripa + baseline).
   function mkSplits(arr){return arr.map(function(x){return{distKm:x[0],timeSec:x[1],hrAvg:x[2]!=null?x[2]:null,elevDeltaM:x[3]!=null?x[3]:null};});}
@@ -1269,12 +1335,12 @@ function seedDaily(){
 }
 var state=load();
 function load(){
-  try{var raw=localStorage.getItem(LS_KEY);if(raw){var p=JSON.parse(raw);return{athlete:Object.assign({},DEFAULT_ATHLETE,p.athlete||{}),workouts:p.workouts||[],daily:p.daily||[],deleted:p.deleted||[],updatedAt:p.updatedAt||null,lastSyncAt:p.lastSyncAt||null};}}catch(e){}
-  return{athlete:Object.assign({},DEFAULT_ATHLETE),workouts:seedWorkouts(),daily:seedDaily(),deleted:[],updatedAt:null,lastSyncAt:null,seeded:true};
+  try{var raw=localStorage.getItem(LS_KEY);if(raw){var p=JSON.parse(raw);return{athlete:Object.assign({},DEFAULT_ATHLETE,p.athlete||{}),workouts:p.workouts||[],daily:p.daily||[],deleted:p.deleted||[],race:p.race||defaultRace(),planWeeks:p.planWeeks||{},updatedAt:p.updatedAt||null,lastSyncAt:p.lastSyncAt||null};}}catch(e){}
+  return{athlete:Object.assign({},DEFAULT_ATHLETE),workouts:seedWorkouts(),daily:seedDaily(),deleted:[],race:defaultRace(),planWeeks:{},updatedAt:null,lastSyncAt:null,seeded:true};
 }
 // marca o momento da última mudança local (usado pelo merge "mais novo vence")
 function touch(){state.updatedAt=new Date().toISOString();}
-function save(){try{localStorage.setItem(LS_KEY,JSON.stringify({athlete:state.athlete,workouts:state.workouts,daily:state.daily,deleted:state.deleted||[],updatedAt:state.updatedAt,lastSyncAt:state.lastSyncAt}));}catch(e){}}
+function save(){try{localStorage.setItem(LS_KEY,JSON.stringify({athlete:state.athlete,workouts:state.workouts,daily:state.daily,deleted:state.deleted||[],race:state.race||null,planWeeks:state.planWeeks||{},updatedAt:state.updatedAt,lastSyncAt:state.lastSyncAt}));}catch(e){}}
 function sortedWorkouts(){return state.workouts.slice().sort(function(a,b){return a.date<b.date?-1:a.date>b.date?1:0;});}
 function sortedDaily(){return (state.daily||[]).slice().sort(function(a,b){return a.date<b.date?-1:a.date>b.date?1:0;});}
 // mescla entradas diárias (do Saúde ou manuais) por data, sem perder campos
@@ -1354,9 +1420,11 @@ function syncStripEmpty(o){var out={};for(var k in o)if(o[k]!=null&&o[k]!=="")ou
 function syncMergeDeleted(a,b){var m={};(a||[]).concat(b||[]).forEach(function(d){if(d&&d.id){if(!m[d.id]||syncTs(d.at)>syncTs(m[d.id].at))m[d.id]={id:d.id,at:d.at};}});return Object.keys(m).map(function(k){return m[k];});}
 function syncMergeWorkouts(aw,bw,deleted){var byId={};(aw||[]).concat(bw||[]).forEach(function(w){if(w&&w.id){if(!byId[w.id]||syncTs(w.updatedAt)>=syncTs(byId[w.id].updatedAt))byId[w.id]=w;}});var tomb={};(deleted||[]).forEach(function(d){tomb[d.id]=syncTs(d.at);});var out=[];for(var id in byId){var w=byId[id];if(tomb[id]!=null&&tomb[id]>=syncTs(w.updatedAt))continue;out.push(w);}return out.sort(function(x,y){return x.date<y.date?-1:x.date>y.date?1:0;});}
 function syncMergeDaily(ad,bd){var byDate={};(ad||[]).concat(bd||[]).forEach(function(r){if(!r||!r.date)return;var prev=byDate[r.date];if(!prev){byDate[r.date]=r;return;}var newer=syncTs(r.updatedAt)>=syncTs(prev.updatedAt)?r:prev,older=newer===r?prev:r;byDate[r.date]=Object.assign({},syncStripEmpty(older),syncStripEmpty(newer));});return Object.keys(byDate).map(function(k){return byDate[k];}).sort(function(x,y){return x.date<y.date?-1:1;});}
-function syncMergeStates(a,b){a=a||{};b=b||{};var deleted=syncMergeDeleted(a.deleted,b.deleted);var workouts=syncMergeWorkouts(a.workouts,b.workouts,deleted);var daily=syncMergeDaily(a.daily,b.daily);var aa=a.athlete||{},ba=b.athlete||{};var athlete=syncTs(aa.updatedAt)>=syncTs(ba.updatedAt)?(a.athlete||b.athlete||{}):(b.athlete||a.athlete||{});var updatedAt=new Date(Math.max(syncTs(a.updatedAt),syncTs(b.updatedAt))).toISOString();return{athlete:athlete,workouts:workouts,daily:daily,deleted:deleted,updatedAt:updatedAt};}
-function currentPayload(){return{athlete:state.athlete,workouts:state.workouts,daily:state.daily||[],deleted:state.deleted||[],updatedAt:state.updatedAt||new Date().toISOString()};}
-function applyMerged(m){state.athlete=Object.assign({},DEFAULT_ATHLETE,m.athlete||state.athlete);state.workouts=m.workouts||[];state.daily=m.daily||[];state.deleted=m.deleted||[];state.updatedAt=m.updatedAt;delete state.seeded;try{pruneStreams(state.workouts,20);}catch(e){}save();}
+function syncMergeRace(ar,br){if(!ar)return br||null;if(!br)return ar||null;return syncTs(ar.updatedAt)>=syncTs(br.updatedAt)?ar:br;}
+function syncMergePlanWeeks(ap,bp){ap=ap||{};bp=bp||{};var out={};for(var k in ap)out[k]=ap[k];for(var j in bp){var cur=out[j];if(!cur||syncTs(bp[j]&&bp[j].updatedAt)>=syncTs(cur.updatedAt))out[j]=bp[j];}return out;}
+function syncMergeStates(a,b){a=a||{};b=b||{};var deleted=syncMergeDeleted(a.deleted,b.deleted);var workouts=syncMergeWorkouts(a.workouts,b.workouts,deleted);var daily=syncMergeDaily(a.daily,b.daily);var aa=a.athlete||{},ba=b.athlete||{};var athlete=syncTs(aa.updatedAt)>=syncTs(ba.updatedAt)?(a.athlete||b.athlete||{}):(b.athlete||a.athlete||{});var race=syncMergeRace(a.race,b.race);var planWeeks=syncMergePlanWeeks(a.planWeeks,b.planWeeks);var updatedAt=new Date(Math.max(syncTs(a.updatedAt),syncTs(b.updatedAt))).toISOString();return{athlete:athlete,workouts:workouts,daily:daily,deleted:deleted,race:race,planWeeks:planWeeks,updatedAt:updatedAt};}
+function currentPayload(){return{athlete:state.athlete,workouts:state.workouts,daily:state.daily||[],deleted:state.deleted||[],race:state.race||null,planWeeks:state.planWeeks||{},updatedAt:state.updatedAt||new Date().toISOString()};}
+function applyMerged(m){state.athlete=Object.assign({},DEFAULT_ATHLETE,m.athlete||state.athlete);state.workouts=m.workouts||[];state.daily=m.daily||[];state.deleted=m.deleted||[];if(m.race!==undefined)state.race=m.race||state.race;if(m.planWeeks!==undefined)state.planWeeks=m.planWeeks||{};state.updatedAt=m.updatedAt;delete state.seeded;try{pruneStreams(state.workouts,20);}catch(e){}save();}
 function syncStatusHtml(){var s=_syncStatus;var map={idle:["—",""],syncing:["🔄 sincronizando…","var(--muted)"],ok:["✓ sincronizado"+(state.lastSyncAt?" · "+new Date(state.lastSyncAt).toLocaleString("pt-BR",{hour:"2-digit",minute:"2-digit"}):""),"var(--good)"],err:["⚠ "+(s.msg||"falha"),"var(--crit)"]};var m=map[s.state]||map.idle;return '<span style="color:'+(m[1]||"var(--muted)")+'">'+esc(m[0])+'</span>';}
 function setSyncStatus(st,msg){_syncStatus={state:st,msg:msg||""};var el2=document.getElementById("syncStatus");if(el2)el2.innerHTML=syncStatusHtml();}
 function syncPull(){var code=getSyncCode();return syncHashId(code).then(function(id){return sbRpc("analise_sync_get",{p_sync_id:id});}).then(function(rows){return rows&&rows[0]?rows[0]:null;});}
@@ -1669,6 +1737,7 @@ function render(){
   $("#athleteName").textContent=state.athlete.name||"Atleta";
   $("#athleteInitial").textContent=(state.athlete.name||"A").trim().charAt(0).toUpperCase();
   if(currentTab==="painel")renderPainel(v);
+  else if(currentTab==="maratona")renderMaratona(v);
   else if(currentTab==="treinos")renderTreinos(v);
   else if(currentTab==="relatorio")renderRelatorio(v);
   else if(currentTab==="recuperacao")renderRecuperacao(v);
@@ -2336,6 +2405,259 @@ function timelineEl(ws){
 
 /* -------- helper builders -------- */
 function sectionTitle(t){return el("h2","section-title",esc(t));}
+/* ============================================================================
+   MODO MARATONA — prova-alvo, fases, semana programada (input do usuário),
+   adesão vs. treinos importados, zonas da semana e evolução. Reaproveita o
+   motor (fitnessSeries, acuteChronic, Riegel) — não recalcula nada.
+============================================================================ */
+var maratonaWeekOffset=0;  // 0 = semana atual (navegável dentro do bloco)
+var _mEditRace=false;      // formulário de editar meta aberto
+var _mFormOpen=false;      // formulário de treino aberto
+var _mEditId=null;         // id da sessão em edição
+var M_DOW=["Seg","Ter","Qua","Qui","Sex","Sáb","Dom"];
+var M_MON=["JAN","FEV","MAR","ABR","MAI","JUN","JUL","AGO","SET","OUT","NOV","DEZ"];
+var M_MONL=["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"];
+var M_ZONES=["Z1","Z2","Z3","Z4","Z5"];
+var M_ZDESC={Z1:"muito leve",Z2:"fácil (base)",Z3:"moderado",Z4:"forte",Z5:"máximo"};
+function mPad2(n){return (n<10?"0":"")+n;}
+function mIsoLocal(d){return d.getFullYear()+"-"+mPad2(d.getMonth()+1)+"-"+mPad2(d.getDate());}
+function mAddDays(d,n){var x=new Date(d.getTime());x.setDate(x.getDate()+n);return x;}
+function mMonday(d){var x=new Date(d.getTime());x.setHours(0,0,0,0);var wd=(x.getDay()+6)%7;x.setDate(x.getDate()-wd);return x;}
+function mDateBR(iso){if(!iso)return"—";var d=new Date(iso+"T00:00:00");return d.getDate()+" "+M_MON[d.getMonth()]+" "+d.getFullYear();}
+function mKmTxt(km){if(km==null)return"—";var r=Math.round(km*10)/10;return (r%1===0?r.toFixed(0):r.toFixed(1)).replace(".",",");}
+function mWeekInfo(offset){var mon=mMonday(mAddDays(new Date(),offset*7)),sun=mAddDays(mon,6);
+  return {monday:mon,sunday:sun,key:isoWeekKey(mIsoLocal(mon)),monIso:mIsoLocal(mon),sunIso:mIsoLocal(sun)};}
+function mWeekRange(info){var m=info.monday,s=info.sunday;
+  var same=m.getMonth()===s.getMonth();
+  return m.getDate()+(same?"":" "+M_MONL[m.getMonth()])+"–"+s.getDate()+" "+M_MONL[s.getMonth()];}
+function mDaysToRace(race){if(!race||!race.date)return null;var r=new Date(race.date+"T00:00:00"),n=new Date();n.setHours(0,0,0,0);return Math.ceil((r-n)/86400000);}
+function mBlock(race){var days=mDaysToRace(race);if(days==null)return null;var wkToGo=Math.max(0,Math.ceil(days/7));var N=wkToGo;
+  if(race.startDate){var s=new Date(race.startDate+"T00:00:00"),r=new Date(race.date+"T00:00:00");var tot=Math.round((r-s)/86400000/7);if(tot>N)N=tot;}
+  if(N<1)N=1;var cur=N-wkToGo+1;if(cur<1)cur=1;if(cur>N)cur=N;return {days:days,wkToGo:wkToGo,N:N,cur:cur};}
+function mPhase(wkToGo){
+  if(wkToGo<=3)return{k:"taper",name:"Taper",emoji:"🟠",desc:"Reduz o volume e mantém as pernas leves. Chegar descansado e inteiro.",idx:3};
+  if(wkToGo<=8)return{k:"peak",name:"Pico",emoji:"🟡",desc:"Longões mais altos e ritmo de prova por FC. Fase de carga máxima.",idx:2};
+  if(wkToGo<=16)return{k:"build",name:"Construção",emoji:"🟢",desc:"Sobe o longão e o volume semanal, ainda majoritariamente em Z2.",idx:1};
+  return{k:"base",name:"Base aeróbica",emoji:"🔵",desc:"Construir volume fácil e consistência em Z1–Z2. Sem pressa, sem dor.",idx:0};}
+function mZoneColor(z){var m={Z1:"var(--s1)",Z2:"var(--good)",Z3:"var(--accent)",Z4:"var(--serious)",Z5:"var(--crit)"};return m[z]||"var(--surface-3)";}
+function mZoneTag(z){var m={Z1:["color-mix(in srgb,var(--s1) 20%,transparent)","var(--s1)"],Z2:["color-mix(in srgb,var(--good) 20%,transparent)","var(--good)"],
+  Z3:["var(--accent)","var(--accent-ink)"],Z4:["color-mix(in srgb,var(--serious) 24%,transparent)","var(--serious)"],Z5:["color-mix(in srgb,var(--crit) 24%,transparent)","var(--crit)"]};
+  return m[z]||["var(--surface-3)","var(--muted)"];}
+function mZoneMix(sessions){var acc={Z1:0,Z2:0,Z3:0,Z4:0,Z5:0},tot=0;
+  (sessions||[]).forEach(function(s){if(!s||M_ZONES.indexOf(s.zone)<0)return;var w=(s.durMin&&s.durMin>0)?s.durMin:30;acc[s.zone]+=w;tot+=w;});
+  if(!tot)return null;var out={};M_ZONES.forEach(function(z){out[z]=Math.round(acc[z]/tot*100);});return out;}
+function mSessDetail(s){var p=[];if(s.durMin)p.push(s.durMin+" min");if(s.distKm)p.push(mKmTxt(s.distKm)+" km");return p.join(" · ");}
+function mEnsureWk(key){if(!state.planWeeks)state.planWeeks={};if(!state.planWeeks[key])state.planWeeks[key]={week:key,sessions:[],updatedAt:new Date().toISOString()};return state.planWeeks[key];}
+function mTouchWk(wk){wk.updatedAt=new Date().toISOString();touch();save();scheduleSync();}
+function mTile(o){var e=el("div","card tile");var h='<div class="lab">'+o.lab+'</div><div class="val">'+o.val+(o.unit?'<small> '+o.unit+'</small>':'')+'</div>';
+  if(o.meter!=null)h+='<div class="meter" style="margin-top:9px"><i style="width:'+Math.max(0,Math.min(100,o.meter))+'%"></i></div>';
+  if(o.note)h+='<div class="note" style="margin-top:6px">'+o.note+'</div>';
+  if(o.badge)h+='<div style="margin-top:7px">'+o.badge+'</div>';e.innerHTML=h;return e;}
+
+function renderMaratona(v){
+  if(!state.race)state.race=defaultRace();
+  var race=state.race, a=state.athlete, ws=sortedWorkouts(), runs=runsOnly(ws);
+  var blk=mBlock(race), phase=blk?mPhase(blk.wkToGo):null;
+
+  /* ---- HERO ---- */
+  var hero=el("div","m-hero");
+  var goalTxt=race.goal==="finish"?"Terminar bem":(race.goal||"—");
+  hero.innerHTML='<button class="m-edit" id="mEditBtn" type="button">⚙ editar meta</button>'+
+    '<div class="m-eyebrow">◈ Missão · '+esc(race.name||"Prova")+'</div>'+
+    '<div class="m-count"><span class="n">'+(blk?blk.days:"—")+'</span><span class="u">dias</span></div>'+
+    '<div class="m-hsub">'+(blk?blk.wkToGo+" semanas · ":"")+'<b>'+mDateBR(race.date)+'</b> · '+mKmTxt(race.distKm)+' km</div>'+
+    '<div class="m-chips"><span class="m-chip on">🎯 '+esc(goalTxt)+'</span>'+(race.goal==="finish"?'<span class="m-chip">❤️ por zonas de FC</span>':'')+'</div>';
+  v.appendChild(hero);
+
+  /* ---- EDIT META FORM ---- */
+  if(_mEditRace){
+    var ef=el("div","card");
+    ef.innerHTML='<h3>⚙ Editar meta da prova</h3>'+
+      '<div class="m-form" style="border-top:0;padding-top:4px">'+
+      '<div class="f-wide"><label>Nome da prova</label><input id="mrName" value="'+esc(race.name||"")+'"></div>'+
+      '<div><label>Data</label><input id="mrDate" type="date" value="'+esc(race.date||"")+'"></div>'+
+      '<div><label>Distância (km)</label><input id="mrDist" type="number" step="0.1" value="'+(race.distKm||"")+'"></div>'+
+      '<div><label>Meta de longão (km)</label><input id="mrLong" type="number" step="1" value="'+(race.longRunTargetKm||"")+'"></div>'+
+      '<div><label>Pico de volume (km/sem)</label><input id="mrPeak" type="number" step="1" value="'+(race.peakKmTarget||"")+'"></div>'+
+      '<div class="f-wide" style="display:flex;gap:8px;margin-top:4px"><button class="btn sm" id="mrSave" type="button">Salvar</button><button class="btn ghost sm" id="mrCancel" type="button">Cancelar</button></div>'+
+      '</div>'+
+      '<div class="sub" style="margin-top:8px">Objetivo: <b>terminar bem</b>, treinando por zonas de FC (sem tempo-alvo).</div>';
+    v.appendChild(ef);
+  }
+
+  /* ---- PHASE BAR ---- */
+  if(blk){
+    var pc=el("div","card");
+    var spans=[Math.max(1,blk.N-16),8,5,3],names=["Base","Construção","Pico","Taper"];
+    var segs="";for(var i=0;i<4;i++){var cls=i===phase.idx?"on":(i<phase.idx?"done":"");segs+='<div class="m-pseg '+cls+'" style="flex:'+spans[i]+'">'+names[i]+'</div>';}
+    pc.innerHTML='<div class="m-phd"><h3>🎯 Fase atual</h3><span class="m-wk">Semana <b>'+blk.cur+'</b> de '+blk.N+'</span></div>'+
+      '<div class="m-ptrack">'+segs+'</div>'+
+      '<div class="m-pnow">'+phase.emoji+' <b>'+phase.name+'</b> — '+phase.desc+'</div>';
+    v.appendChild(pc);
+  }
+
+  /* ---- TILES (dados reais do motor) ---- */
+  var fit=[];try{fit=fitnessSeries(ws,a)||[];}catch(e){}
+  var ctl=fit.length?fit[fit.length-1].ctl:null;
+  var ctlPrev=fit.length>7?fit[fit.length-8].ctl:(fit.length?fit[0].ctl:null);
+  var ctlArrow=(ctl!=null&&ctlPrev!=null)?(ctl>ctlPrev+0.5?" ↑":ctl<ctlPrev-0.5?" ↓":" →"):"";
+  var ac=null;try{ac=acuteChronic(ws,a);}catch(e){}
+  var acR=ac?ac.ratio:null;
+  var acBand=acR==null?null:(acR<0.8?["Destreino","lo"]:acR<=1.3?["Seguro","hi"]:acR<=1.5?["Atenção","mid"]:["Risco","lo"]);
+  // longão recente (últimos 49 dias; senão, maior do histórico)
+  var nowT=Date.now(),maxLongRecent=0,maxLongAll=0;
+  runs.forEach(function(w){var dk=w.distKm||0;if(dk>maxLongAll)maxLongAll=dk;var age=(nowT-new Date(w.date+"T00:00:00"))/86400000;if(age<=49&&dk>maxLongRecent)maxLongRecent=dk;});
+  var maxLong=maxLongRecent||maxLongAll;
+  // volume da semana atual (corrida)
+  var curKey=mWeekInfo(0).key;
+  var curKm=runs.filter(function(w){return isoWeekKey(w.date)===curKey;}).reduce(function(s,w){return s+(w.distKm||0);},0);
+  var longTarget=race.longRunTargetKm||30, peakTarget=race.peakKmTarget||50;
+  var grid=el("div","grid g-2");
+  grid.appendChild(mTile({lab:"🏃 Longão",val:mKmTxt(maxLong),unit:"km",meter:maxLong/longTarget*100,note:"meta <b>"+longTarget+" km</b>"}));
+  grid.appendChild(mTile({lab:"📊 Volume / sem",val:mKmTxt(curKm),unit:"km",meter:curKm/peakTarget*100,note:"pico <b>~"+peakTarget+" km</b>"}));
+  grid.appendChild(mTile({lab:"📈 Forma (CTL)",val:(ctl!=null?Math.round(ctl):"—")+(ctl!=null?'<small>'+ctlArrow+'</small>':""),note:"condicionamento acumulado"}));
+  grid.appendChild(mTile({lab:"🛡️ Salto de carga",val:(acR!=null?acR.toFixed(2).replace(".",","):"—"),note:"A:C — carga aguda ÷ crônica",badge:acBand?'<span class="badge '+acBand[1]+'">'+acBand[0]+'</span>':""}));
+  v.appendChild(grid);
+
+  /* ---- SEMANA PROGRAMADA (input do usuário) + ADESÃO ---- */
+  // limita a navegação ao bloco [1..N]
+  if(blk){var minOff=1-blk.cur,maxOff=blk.N-blk.cur;if(maratonaWeekOffset<minOff)maratonaWeekOffset=minOff;if(maratonaWeekOffset>maxOff)maratonaWeekOffset=maxOff;}
+  var info=mWeekInfo(maratonaWeekOffset);
+  var wk=state.planWeeks&&state.planWeeks[info.key];
+  var sessions=wk&&wk.sessions?wk.sessions.slice().sort(function(x,y){return (x.dow||0)-(y.dow||0);}):[];
+  var viewWkNum=blk?(blk.cur+maratonaWeekOffset):null;
+  var canPrev=!blk||(blk.cur+maratonaWeekOffset)>1;
+  var canNext=!blk||(blk.cur+maratonaWeekOffset)<blk.N;
+
+  var pw=el("div","card");
+  var h='<h3>🗓️ Treinos programados da semana</h3>'+
+    '<div class="m-wknav"><button id="mPrev" type="button" '+(canPrev?"":"disabled")+' aria-label="Semana anterior">‹</button>'+
+    '<div class="m-wklab">'+(viewWkNum!=null?"Semana "+viewWkNum+" de "+blk.N:"Semana")+'<small>'+mWeekRange(info)+(maratonaWeekOffset===0?" · esta semana":"")+'</small></div>'+
+    '<button id="mNext" type="button" '+(canNext?"":"disabled")+' aria-label="Próxima semana">›</button></div>';
+  // adesão
+  if(sessions.length){
+    var done=sessions.filter(function(s){return s.done;}).length, pct=Math.round(done/sessions.length*100);
+    h+='<div class="m-adh"><div class="m-adhbar"><i style="width:'+pct+'%"></i></div><span class="m-adhpct" style="color:'+(pct>=80?"var(--good)":pct>=50?"var(--accent)":"var(--muted)")+'">'+pct+'%</span></div>'+
+      '<div class="sub" style="margin:-4px 0 10px">'+done+' de '+sessions.length+' cumpridos</div>';
+  }
+  // lista
+  if(sessions.length){
+    h+='<div class="m-sess">';
+    sessions.forEach(function(s){
+      var tag=mZoneTag(s.zone),det=mSessDetail(s);
+      h+='<div class="m-srow'+(s.done?" done":"")+'">'+
+        '<span class="m-day">'+(M_DOW[(s.dow||1)-1]||"")+'</span>'+
+        '<span class="m-what"><b>'+esc(s.title||"Treino")+'</b>'+(det?'<small>'+esc(det)+'</small>':"")+'</span>'+
+        '<span class="m-zt" style="background:'+tag[0]+';color:'+tag[1]+'">'+(M_ZONES.indexOf(s.zone)>=0?s.zone:"—")+'</span>'+
+        '<span class="m-sact"><button class="chk'+(s.done?" on":"")+'" data-id="'+s.id+'" title="Marcar como cumprido">✓</button>'+
+        '<button class="ed" data-id="'+s.id+'" title="Editar">✏</button>'+
+        '<button class="rm" data-id="'+s.id+'" title="Remover">🗑</button></span>'+
+        '</div>';
+    });
+    h+='</div>';
+  }else{
+    h+='<div class="sub" style="padding:10px 0 2px">Nenhum treino inserido nesta semana. Toque em <b>➕ adicionar treino</b> e lance o que foi programado no seu app.</div>';
+  }
+  pw.innerHTML=h;
+  // form de treino / botão adicionar
+  if(_mFormOpen){
+    var ed=_mEditId?sessions.filter(function(s){return s.id===_mEditId;})[0]:null;
+    var dayOpts="";for(var dd=1;dd<=7;dd++)dayOpts+='<option value="'+dd+'"'+((ed&&ed.dow===dd)||(!ed&&dd===2)?" selected":"")+'>'+M_DOW[dd-1]+'</option>';
+    var zOpts='<option value="">—</option>';M_ZONES.forEach(function(z){zOpts+='<option value="'+z+'"'+(ed&&ed.zone===z?" selected":"")+'>'+z+' · '+M_ZDESC[z]+'</option>';});
+    var form=el("div","m-form");
+    form.innerHTML='<div><label>Dia</label><select id="msDay">'+dayOpts+'</select></div>'+
+      '<div><label>Zona de FC</label><select id="msZone">'+zOpts+'</select></div>'+
+      '<div class="f-wide"><label>O que foi programado</label><input id="msTitle" placeholder="Ex.: Rodagem fácil, Longão, 6×800 m" value="'+esc(ed?ed.title||"":"")+'"></div>'+
+      '<div><label>Duração (min)</label><input id="msMin" type="number" step="5" value="'+(ed&&ed.durMin?ed.durMin:"")+'"></div>'+
+      '<div><label>Distância (km)</label><input id="msKm" type="number" step="0.5" value="'+(ed&&ed.distKm?ed.distKm:"")+'"></div>'+
+      '<div class="f-wide" style="display:flex;gap:8px;margin-top:2px"><button class="btn sm" id="msSave" type="button">'+(ed?"Salvar":"Adicionar")+'</button><button class="btn ghost sm" id="msCancel" type="button">Cancelar</button></div>';
+    pw.appendChild(form);
+  }else{
+    var addBtn=el("button","btn ghost sm","➕ adicionar treino");addBtn.id="mAddBtn";addBtn.type="button";addBtn.style.marginTop="12px";
+    pw.appendChild(addBtn);
+  }
+  // realizado (dos importados)
+  var wkRuns=runs.filter(function(w){return isoWeekKey(w.date)===info.key;});
+  var realKm=wkRuns.reduce(function(s,w){return s+(w.distKm||0);},0);
+  var real=el("div","m-realized");
+  real.innerHTML='📥 <span>Realizado (importado): <b>'+wkRuns.length+'</b> corrida(s) · <b>'+mKmTxt(realKm)+' km</b>. Marque ✓ os treinos que você cumpriu pra acompanhar a adesão.</span>';
+  pw.appendChild(real);
+  v.appendChild(pw);
+
+  /* ---- ZONAS DA SEMANA (a partir das sessões inseridas) ---- */
+  var zc=el("div","card");
+  var mix=mZoneMix(sessions);
+  var zh='<h3>❤️ Zonas de FC da semana</h3>';
+  if(mix){
+    var bar="",leg="";
+    M_ZONES.forEach(function(z){if(mix[z]>0)bar+='<span style="flex:'+mix[z]+';background:'+mZoneColor(z)+'">'+(mix[z]>=10?z:"")+'</span>';
+      leg+='<div class="m-zrow"><span class="d" style="background:'+mZoneColor(z)+'"></span><b style="color:var(--ink);font-family:var(--head)">'+z+'</b> · '+M_ZDESC[z]+'<span class="zp">'+mix[z]+'%</span></div>';});
+    zh+='<div class="m-zbar">'+bar+'</div><div class="m-zleg">'+leg+'</div>'+
+      '<div class="sub" style="margin-top:10px">Calculado a partir dos treinos que você inseriu, ponderado pela duração.</div>';
+  }else{
+    zh+='<div class="sub" style="padding:10px 0 2px">Insira treinos com zona de FC na semana pra ver a distribuição aqui.</div>';
+  }
+  zc.innerHTML=zh;v.appendChild(zc);
+
+  /* ---- EVOLUÇÃO DO VOLUME (real) ---- */
+  var kmByWk={};runs.forEach(function(w){var k=isoWeekKey(w.date);kmByWk[k]=(kmByWk[k]||0)+(w.distKm||0);});
+  var wkeys=Object.keys(kmByWk).sort();
+  var bars=wkeys.slice(-16).map(function(k){return{label:k.replace(/^\d+-/,""),y:Math.round(kmByWk[k]*10)/10};});
+  var ec=el("div","card");
+  ec.innerHTML='<h3>📈 Evolução do volume</h3>';
+  if(bars.length){
+    ec.appendChild(chartBox(barChart({bars:bars,yfmt:function(x){return Math.round(x);},threshold:{y:peakTarget,label:"pico "+peakTarget+" km"}})));
+    ec.appendChild(hint("Volume semanal de corrida (km) <b>real</b>, por semana ISO. A linha tracejada é a meta de pico."));
+  }else ec.appendChild(hint("Importe ou registre corridas para ver a evolução do volume."));
+  v.appendChild(ec);
+
+  /* ---- ESTIMATIVA (discreta, só referência) ---- */
+  var anchor=bestAnchor(runs);
+  if(anchor){
+    var preds=racePredictions(anchor.distKm,anchor.durationSec);
+    var p42=preds.filter(function(p){return Math.abs(p.d-42.195)<1;})[0]||preds[preds.length-1];
+    var hh=Math.floor(p42.timeSec/3600),mm=Math.round((p42.timeSec%3600)/60);if(mm===60){mm=0;hh++;}
+    var est=el("div","card tile m-est");est.style.borderStyle="dashed";
+    est.innerHTML='<div class="lab">⏱️ Estimativa 42 km · só referência</div>'+
+      '<div class="val">~'+hh+'h'+mPad2(mm)+'</div>'+
+      '<div class="note">a partir do seu melhor esforço recente ('+esc(anchor.type||"âncora")+' · '+mKmTxt(anchor.distKm)+' km). Melhora com o treino — o foco é <b>terminar bem</b>, não o tempo.</div>';
+    v.appendChild(est);
+  }
+
+  /* ---- WIRING ---- */
+  var mb=$("#mEditBtn",v);if(mb)mb.onclick=function(){_mEditRace=!_mEditRace;render();};
+  if(_mEditRace){
+    var sv=$("#mrSave",v);if(sv)sv.onclick=function(){
+      var r=state.race||defaultRace();
+      r.name=($("#mrName",v).value||"Prova").trim();
+      r.date=$("#mrDate",v).value||r.date;
+      var dist=parseFloat($("#mrDist",v).value);if(!isNaN(dist)&&dist>0)r.distKm=dist;
+      var lr=parseFloat($("#mrLong",v).value);if(!isNaN(lr)&&lr>0)r.longRunTargetKm=lr;
+      var pk=parseFloat($("#mrPeak",v).value);if(!isNaN(pk)&&pk>0)r.peakKmTarget=pk;
+      r.updatedAt=new Date().toISOString();state.race=r;_mEditRace=false;touch();save();scheduleSync();toast("Meta atualizada");render();};
+    var cc=$("#mrCancel",v);if(cc)cc.onclick=function(){_mEditRace=false;render();};
+  }
+  var pv=$("#mPrev",v);if(pv&&canPrev)pv.onclick=function(){maratonaWeekOffset--;_mFormOpen=false;_mEditId=null;render();};
+  var nx=$("#mNext",v);if(nx&&canNext)nx.onclick=function(){maratonaWeekOffset++;_mFormOpen=false;_mEditId=null;render();};
+  var ab=$("#mAddBtn",v);if(ab)ab.onclick=function(){_mFormOpen=true;_mEditId=null;render();};
+  var ms=$("#msSave",v);if(ms)ms.onclick=function(){
+    var title=($("#msTitle",v).value||"").trim();if(!title){alert("Descreva o treino programado.");return;}
+    var dow=parseInt($("#msDay",v).value,10)||1, zone=$("#msZone",v).value||"";
+    var min=parseInt($("#msMin",v).value,10); if(isNaN(min)||min<=0)min=null;
+    var km=parseFloat($("#msKm",v).value); if(isNaN(km)||km<=0)km=null;
+    var w2=mEnsureWk(info.key);
+    if(_mEditId){var s0=w2.sessions.filter(function(s){return s.id===_mEditId;})[0];if(s0){s0.title=title;s0.dow=dow;s0.zone=zone;s0.durMin=min;s0.distKm=km;}}
+    else{w2.sessions.push({id:uid(),dow:dow,title:title,zone:zone,durMin:min,distKm:km,done:false});}
+    mTouchWk(w2);_mFormOpen=false;_mEditId=null;render();};
+  var mc=$("#msCancel",v);if(mc)mc.onclick=function(){_mFormOpen=false;_mEditId=null;render();};
+  Array.prototype.forEach.call(v.querySelectorAll(".m-sact .chk"),function(b){b.onclick=function(){
+    var w2=state.planWeeks[info.key];if(!w2)return;var s0=w2.sessions.filter(function(s){return s.id===b.getAttribute("data-id");})[0];
+    if(s0){s0.done=!s0.done;mTouchWk(w2);render();}};});
+  Array.prototype.forEach.call(v.querySelectorAll(".m-sact .ed"),function(b){b.onclick=function(){_mEditId=b.getAttribute("data-id");_mFormOpen=true;render();};});
+  Array.prototype.forEach.call(v.querySelectorAll(".m-sact .rm"),function(b){b.onclick=function(){
+    var w2=state.planWeeks[info.key];if(!w2)return;w2.sessions=w2.sessions.filter(function(s){return s.id!==b.getAttribute("data-id");});mTouchWk(w2);render();};});
+}
+
 function tile(o){
   var e=el("div","card tile"+(o.info?" has-info":""));
   var dot=o.info?'<span class="info-dot" aria-hidden="true">ⓘ</span>':'';
