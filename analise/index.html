@@ -77,25 +77,35 @@ header.top{position:sticky;top:0;z-index:30;background:color-mix(in srgb,var(--p
   width:34px;height:34px;display:grid;place-items:center;cursor:pointer;font-size:15px}
 .icon-btn:hover{border-color:var(--accent);color:var(--accent)}
 
-/* ---- nav: barra inferior (celular) · trilho lateral (PC) ---- */
-nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:45;display:flex;gap:2px;margin:0;max-width:none;overflow:visible;
-  background:color-mix(in srgb,var(--surface) 90%,transparent);backdrop-filter:saturate(1.4) blur(12px);
-  border-top:1px solid var(--line);padding:6px 6px;padding-bottom:calc(6px + env(safe-area-inset-bottom,0px))}
-nav.tabs button{flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
-  background:none;border:none;border-radius:12px;padding:6px 3px;cursor:pointer;color:var(--muted);font-weight:600}
-nav.tabs .tic{font-size:18px;line-height:1}
-nav.tabs .tlb{font-size:9px;letter-spacing:.01em;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* ---- nav: menu lateral que recolhe (celular, abre no ☰) · trilho fixo (PC) ---- */
+nav.tabs{position:fixed;top:0;left:0;bottom:0;z-index:60;width:min(80vw,286px);margin:0;max-width:none;
+  display:flex;flex-direction:column;gap:4px;overflow-y:auto;
+  background:var(--surface);border-right:1px solid var(--line);box-shadow:var(--shadow);
+  padding:10px 12px calc(16px + env(safe-area-inset-bottom,0px));padding-top:calc(10px + env(safe-area-inset-top,0px));
+  transform:translateX(-100%);visibility:hidden;transition:transform .22s ease,visibility .22s ease}
+body.nav-open nav.tabs{transform:translateX(0);visibility:visible}
+nav.tabs button{flex:0 0 auto;min-width:0;display:flex;flex-direction:row;align-items:center;justify-content:flex-start;gap:12px;
+  background:none;border:none;border-radius:12px;padding:12px 13px;width:100%;cursor:pointer;color:var(--ink-2);font-weight:600;position:relative}
+nav.tabs .tic{font-size:18px;width:22px;text-align:center;line-height:1}
+nav.tabs .tlb{font-size:14px;letter-spacing:.01em}
 nav.tabs button:hover{color:var(--ink)}
 nav.tabs button.active{color:var(--accent);background:var(--accent-soft)}
+nav.tabs button.active::before{content:"";position:absolute;left:3px;top:50%;transform:translateY(-50%);width:3px;height:20px;border-radius:2px;background:var(--accent)}
 nav.tabs button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.nav-head{display:flex;align-items:center;gap:8px;padding:2px 4px 8px;margin-bottom:4px;border-bottom:1px solid var(--line)}
+.nav-title{font-family:var(--head);font-weight:700;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.nav-x{margin-left:auto;background:var(--surface-2);border:1px solid var(--line);color:var(--ink-2);border-radius:9px;width:32px;height:32px;cursor:pointer;font-size:14px;flex:none}
+.nav-x:hover{border-color:var(--accent);color:var(--accent)}
+.nav-backdrop{position:fixed;inset:0;z-index:55;background:rgba(0,0,0,.5);opacity:0;visibility:hidden;transition:opacity .2s ease,visibility .2s ease}
+body.nav-open .nav-backdrop{opacity:1;visibility:visible}
 @media(min-width:900px){
-  nav.tabs{top:var(--topH,62px);right:auto;bottom:0;width:234px;flex-direction:column;gap:4px;overflow-y:auto;
-    border-top:none;border-right:1px solid var(--line);background:var(--surface);backdrop-filter:none;padding:16px 12px 24px}
-  nav.tabs button{flex:0 0 auto;flex-direction:row;justify-content:flex-start;gap:12px;padding:11px 13px;width:100%;position:relative}
-  nav.tabs .tic{font-size:18px;width:22px;text-align:center}
-  nav.tabs .tlb{font-size:14px;max-width:none}
-  nav.tabs button.active::before{content:"";position:absolute;left:3px;top:50%;transform:translateY(-50%);width:3px;height:20px;border-radius:2px;background:var(--accent)}
+  nav.tabs{top:var(--topH,62px);width:234px;transform:none;visibility:visible;box-shadow:none;z-index:40;padding:16px 12px 24px}
+  nav.tabs button{padding:11px 13px}
+  .nav-head{display:none}
+  .nav-backdrop{display:none}
+  #menuBtn{display:none}
 }
+@media(prefers-reduced-motion:reduce){nav.tabs,.nav-backdrop{transition:none}}
 
 /* ---- layout ---- */
 main{max-width:1120px;margin:0 auto;padding:18px 16px 40px}
@@ -511,6 +521,7 @@ tbody tr{transition:background-color .12s ease}
 <body>
 <header class="top">
   <div class="top-in">
+    <button class="icon-btn" id="menuBtn" type="button" aria-label="Abrir menu" aria-controls="tabs" aria-expanded="false" title="Menu">☰</button>
     <div class="brand">
       <h1 class="wordmark">🔥 RUN PERFORMANCE <span class="slash">//</span> <b>HEAT</b></h1>
       <small>Ciclo Base &amp; Pace · seus dados, seu ritmo, sua evolução</small>
@@ -525,6 +536,7 @@ tbody tr{transition:background-color .12s ease}
   </div>
 </header>
 <nav class="tabs" id="tabs" role="tablist" aria-label="Seções da análise">
+    <div class="nav-head"><span class="nav-title">Navegação</span><button class="nav-x" id="navClose" type="button" aria-label="Fechar menu">✕</button></div>
     <button data-tab="painel" id="tab-painel" role="tab" aria-selected="true" aria-controls="view" tabindex="0" class="active"><span class="tic" aria-hidden="true">📊</span><span class="tlb">Painel</span></button>
     <button data-tab="maratona" id="tab-maratona" role="tab" aria-selected="false" aria-controls="view" tabindex="-1"><span class="tic" aria-hidden="true">🏁</span><span class="tlb">Maratona</span></button>
     <button data-tab="treinos" id="tab-treinos" role="tab" aria-selected="false" aria-controls="view" tabindex="-1"><span class="tic" aria-hidden="true">🏃</span><span class="tlb">Treinos</span></button>
@@ -534,6 +546,7 @@ tbody tr{transition:background-color .12s ease}
     <button data-tab="kpis" id="tab-kpis" role="tab" aria-selected="false" aria-controls="view" tabindex="-1"><span class="tic" aria-hidden="true">📚</span><span class="tlb">KPIs</span></button>
     <button data-tab="config" id="tab-config" role="tab" aria-selected="false" aria-controls="view" tabindex="-1"><span class="tic" aria-hidden="true">⚙️</span><span class="tlb">Config</span></button>
   </nav>
+<div class="nav-backdrop" id="navBackdrop"></div>
 
 <main id="view" role="tabpanel" aria-labelledby="tab-painel" tabindex="-1"><noscript><div style="max-width:640px;margin:40px auto;padding:20px;border:1px solid #e7a; border-radius:14px;background:#fff;color:#1a1512;font-family:system-ui,sans-serif;line-height:1.5"><b>Este app precisa de JavaScript.</b><br>Você provavelmente abriu o arquivo na pré-visualização do iPhone (app Arquivos ou Mail), que não executa o app. Abra o arquivo por um navegador de verdade — <b>Safari</b> ou <b>Chrome</b> — ou use o link hospedado que o desenvolvedor enviar.</div></noscript></main>
 
@@ -3560,6 +3573,8 @@ function toast(msg){
 function setActiveTab(){$("#tabs").querySelectorAll("button").forEach(function(b){var on=b.dataset.tab===currentTab;b.classList.toggle("active",on);b.setAttribute("aria-selected",on?"true":"false");b.tabIndex=on?0:-1;});var v=$("#view");if(v)v.setAttribute("aria-labelledby","tab-"+currentTab);}
 // altura do cabeçalho → posiciona o topo do trilho lateral (PC)
 function layoutRail(){try{var t=document.querySelector("header.top");if(t)document.documentElement.style.setProperty("--topH",t.offsetHeight+"px");}catch(e){}}
+// menu lateral do celular (recolhe): abre/fecha e sincroniza o ☰
+function setNav(open){try{document.body.classList.toggle("nav-open",open);var mb=document.getElementById("menuBtn");if(mb)mb.setAttribute("aria-expanded",open?"true":"false");}catch(e){}}
 
 /* ============================================================================
    INIT
@@ -3578,7 +3593,7 @@ window.addEventListener("unhandledrejection",function(e){showFatal(e&&e.reason&&
     try{var th=localStorage.getItem("apex.theme");if(th)document.documentElement.setAttribute("data-theme",th);}catch(e){}
     var tabBtns=Array.prototype.slice.call($("#tabs").querySelectorAll("button"));
     tabBtns.forEach(function(b,i){
-      b.onclick=function(){currentTab=b.dataset.tab;setActiveTab();render();window.scrollTo(0,0);};
+      b.onclick=function(){currentTab=b.dataset.tab;setActiveTab();render();window.scrollTo(0,0);setNav(false);};
       // navegação por teclado no padrão ARIA tablist (setas / Home / End)
       b.onkeydown=function(e){
         var k=e.key,j=-1;
@@ -3590,6 +3605,11 @@ window.addEventListener("unhandledrejection",function(e){showFatal(e&&e.reason&&
         e.preventDefault();var t=tabBtns[j];currentTab=t.dataset.tab;setActiveTab();render();t.focus();
       };
     });
+    // menu lateral (celular): ☰ abre, ✕/fundo/Esc fecham
+    var _mnu=$("#menuBtn");if(_mnu)_mnu.onclick=function(){setNav(!document.body.classList.contains("nav-open"));};
+    var _ncl=$("#navClose");if(_ncl)_ncl.onclick=function(){setNav(false);};
+    var _nbd=$("#navBackdrop");if(_nbd)_nbd.onclick=function(){setNav(false);};
+    document.addEventListener("keydown",function(e){if(e.key==="Escape"&&document.body.classList.contains("nav-open"))setNav(false);});
     $("#themeBtn").onclick=function(){toggleTheme();render();};
     $("#exportBtn").onclick=exportData;
     $("#importBtn").onclick=function(){$("#importFile").click();};
