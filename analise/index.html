@@ -665,6 +665,15 @@ tbody tr{transition:background-color .12s ease}
         </div>
         <label class="pain-check"><input type="checkbox" id="f_pain" style="width:auto"> Dor articular / suspeita de lesão (aciona alerta de recuo)</label>
       </div>
+      <div class="manual-block" id="hydroBlock">
+        <h4>💧 Hidratação <span>— água ingerida, em ml</span></h4>
+        <div class="sleep-info" id="hydroInfo" style="display:none"></div>
+        <div class="grid g-3">
+          <div class="field"><label>Antes (ml)</label><input type="number" id="f_waterB" inputmode="numeric" placeholder="ex.: 300"></div>
+          <div class="field"><label>Durante (ml)</label><input type="number" id="f_waterD" inputmode="numeric" placeholder="ex.: 500"></div>
+          <div class="field"><label>Depois (ml)</label><input type="number" id="f_waterA" inputmode="numeric" placeholder="ex.: 400"></div>
+        </div>
+      </div>
       <div class="grid g-2" style="margin-top:12px">
         <div class="field run-only" style="grid-column:span 2">
           <label>Splits por km <span class="hint">1 linha por km — tempo[, FC][, Δelev m]. Ex.: <span class="kbd">6:36, 168, 12</span></span></label>
@@ -1777,7 +1786,8 @@ function _norm(s){return (s||"").toString().toLowerCase().normalize("NFD").repla
 var EXTRA_DOCS={
   baseline:{name:"Baseline 5K",conf:"alta",formula:"marco zero do ciclo (teste ou prova de ~5 km mais recente)",desc:"Seu ponto de partida de referência: o pace (e o GAP) do 5K que ancora as comparações e as projeções de prova. <b>Objetivo: melhorar o pace no mesmo esforço ao longo do ciclo.</b>",fields:"teste/prova de ~5 km"},
   fcrep:{name:"FC de repouso",conf:"média",formula:"menor FC em repouso (do Apple Watch) — média/mediana do período",desc:"Termômetro de recuperação e adaptação. <b>Tendência de queda = adaptando bem; subida de +3 a +5 bpm sobre o seu normal = fadiga/estresse — considere aliviar.</b> É individual: compare com você mesmo.",fields:"FC de repouso (Apple Watch) ou informado"},
-  hrv:{name:"HRV (SDNN)",conf:"média",formula:"SDNN (ms) do Apple Watch · comparado ao seu baseline do período",desc:"A variação entre batimentos: <b>maior/estável = sistema nervoso mais recuperado</b>. O que importa é a <b>tendência vs. você</b>, não o número cru. Acima do seu normal = verde para qualidade; bem abaixo = priorize um dia fácil.",fields:"HRV SDNN (Apple Watch) ou informado"}
+  hrv:{name:"HRV (SDNN)",conf:"média",formula:"SDNN (ms) do Apple Watch · comparado ao seu baseline do período",desc:"A variação entre batimentos: <b>maior/estável = sistema nervoso mais recuperado</b>. O que importa é a <b>tendência vs. você</b>, não o número cru. Acima do seu normal = verde para qualidade; bem abaixo = priorize um dia fácil.",fields:"HRV SDNN (Apple Watch) ou informado"},
+  hidratacao:{name:"Hidratação",conf:"média",formula:"taxa durante = água durante ÷ horas de treino (ml/h)\ntotal = antes + durante + depois",desc:"Quanta água você repõe <b>durante</b> o treino, por hora. Faixa prática: <b>400–900 ml/h</b> (ajuste por calor, suor e duração). <b>Abaixo de ~400 ml/h</b> em treino longo/quente, com decoupling alto, sugere desidratação contribuindo para a <b>deriva cardíaca</b>. Não substitui a sede nem orientação individual.",fields:"água antes/durante/depois (ml), informada no treino"}
 };
 function kpiDoc(key){
   if(EXTRA_DOCS[key])return EXTRA_DOCS[key];
@@ -2141,18 +2151,21 @@ function renderPainel(v){
   // ---- PAINEL GERAL (hero tiles) ----
   v.appendChild(sectionTitle("Painel geral · dados reais"));
   var hero=el("div","grid g-4");
+  var hydroRuns=runs.filter(hydroHas);var lastHydro=hydroRuns.length?hydroRuns[hydroRuns.length-1]:null;var hydroRate=lastHydro?hydroRateMlH(lastHydro):null;var hydroSt=hydroStatus(hydroRate);
   // ♥ FC repouso
   var fcRepNote=restTr&&restTr.baseline!=null
     ?(restTr.deltaAbs<=0?'<span class="delta up">▼ '+Math.abs(restTr.deltaAbs).toFixed(0)+'</span> vs base':'<span class="delta down">▲ '+restTr.deltaAbs.toFixed(0)+'</span> vs base')+' · do Apple Watch'
     :"reserva "+(a.fcMax-a.fcRep)+" bpm"+(a.fcMaxProv?" · FCmáx prov.":"");
   hero.appendChild(tile({lab:"♥ FC repouso",val:fcRepEff,unit:"bpm",note:fcRepNote,conf:null,info:"fcrep"}));
   // 🧊 Forma (TSB)
-  hero.appendChild(tile({lab:"🧊 Forma (TSB)",val:(tsb!=null?(tsb>0?"+":"")+Math.round(tsb):"—"),note:tsb!=null?tsbState(tsb):"registre treinos",conf:null}));
+  hero.appendChild(tile({lab:"🧊 Forma (TSB)",val:(tsb!=null?(tsb>0?"+":"")+Math.round(tsb):"—"),note:tsb!=null?tsbState(tsb):"registre treinos",conf:null,info:"form"}));
   // 📊 Volume 7 dias
   hero.appendChild(tile({lab:"📊 Volume 7d",val:weeklyKm?Math.round(weeklyKm):"—",unit:weeklyKm?"km":"",note:"média 4 sem "+(avgWeeklyKm?Math.round(avgWeeklyKm)+" km":"—"),conf:null}));
   // ⚡ Prontidão
   var _rdLab=rd&&rd.score!=null?(rd.score>=80?"ótima":rd.score>=60?"boa":rd.score>=40?"moderada":"baixa"):"—";
   hero.appendChild(tile({lab:"⚡ Prontidão",val:rd&&rd.score!=null?rd.score:"—",note:_rdLab,conf:null}));
+  // 💧 Água
+  hero.appendChild(tile({lab:"💧 Água",val:hydroRate!=null?Math.round(hydroRate):(lastHydro&&hydroTotal(lastHydro)!=null?hydroTotal(lastHydro):"—"),unit:hydroRate!=null?"ml/h":(lastHydro?"ml":""),note:lastHydro?((hydroSt?hydroSt.label:"total")+" · último"):"informe no treino",conf:null,info:"hidratacao"}));
   // ★ Baseline 5K (opcional — liga em Config)
   if(a.showBaseline5k){
     var baseline5k=ws.filter(function(w){return w.type==="teste"||w.type==="prova";}).find(function(w){return Math.abs(w.distKm-5)<0.6;});
@@ -2207,6 +2220,24 @@ function renderPainel(v){
   formCard.appendChild(hint("Form (TSB) atual: <b>"+(tsb!=null?(tsb>0?"+":"")+tsb.toFixed(1):"—")+"</b> — "+tsbState(tsb)+". Fitness = capacidade adquirida; Fatigue = cansaço; Form = frescor resultante."));
   carga.appendChild(formCard);
   v.appendChild(carga);
+
+  // ---- HIDRATAÇÃO ----
+  if(hydroRuns.length){
+    v.appendChild(sectionTitle("Hidratação · acompanhamento entre treinos"));
+    var hcard=card("Água durante o treino · ml/h","média","hidratacao");
+    if(hydroRate!=null){var _hh=el("div");_hh.innerHTML='<div class="kbig">'+Math.round(hydroRate)+'<small> ml/h</small></div><div class="ksub">último treino · total '+hydroTotal(lastHydro)+' ml</div>';hcard.appendChild(_hh);}
+    var hpts=hydroRuns.map(function(w){var r=hydroRateMlH(w);return r!=null?{label:fmtDate(w.date),y:Math.round(r),extra:(w.temp!=null?Math.round(w.temp)+"°C":"")}:null;}).filter(Boolean);
+    if(hpts.length)hcard.appendChild(chartBox(lineChart({series:[{name:"ml/h",points:hpts,colorVar:seriesColor(1)}],yfmt:function(v){return Math.round(v)+"";},target:{y:600,label:"alvo ~600"}})));
+    if(hydroRate!=null)hcard.appendChild(richBlock(scaleWidget({min:0,max:1200,val:hydroRate,valText:Math.round(hydroRate)+" ml/h",segs:[{to:400,label:"Baixa",c:"var(--warn)"},{to:900,label:"Adequada",c:"var(--good)"},{to:1200,label:"Alta",c:"var(--trend)"}]})));
+    var _dLast=null;try{if(lastHydro&&!isBike(lastHydro))_dLast=computeDecoupling(lastHydro);}catch(e){}
+    var hAn="Mire <b>400–900 ml/h</b> durante treinos longos/quentes. ";
+    if(hydroRate!=null&&hydroRate<400&&_dLast!=null&&_dLast>8)hAn+="No último treino, taxa baixa + decoupling "+_dLast.toFixed(1)+"%"+(lastHydro.temp!=null&&lastHydro.temp>=22?" e calor":"")+" sugerem <b>desidratação na deriva cardíaca</b>.";
+    else if(hydroSt&&hydroSt.label==="adequada")hAn+="Sua reposição está <b>adequada</b>.";
+    else if(hydroSt&&hydroSt.label==="baixa")hAn+="Sua reposição está <b>baixa</b> — aumente a água durante.";
+    else if(hydroSt&&hydroSt.label==="alta")hAn+="Reposição <b>alta</b> — bom no calor.";
+    hcard.appendChild(hint(hAn));
+    v.appendChild(hcard);
+  }
 
   // ---- BIKE & CROSS-TRAINING (sempre visível; convida a adicionar a 1ª bike) ----
   v.appendChild(sectionTitle("🚴 Bike & cross-training"));
@@ -3044,6 +3075,30 @@ function deltaHtml(pct){var cls=pct>0.5?"up":pct<-0.5?"down":"flat";var ar=pct>0
 function zoneBadge(z){var m={"sweet spot":"hi","baixa":"lo","atenção":"mid","risco":"lo"};return '<span class="badge '+(m[z]||"lo")+'">'+z+'</span>';}
 function bandBadge(b){var m={"bom":"hi","excelente":"hi","abaixo":"mid","superior":"hi"};return '<span class="badge '+(m[b]||"lo")+'">'+b+'</span>';}
 function tsbState(t){if(t==null)return"—";if(t>5)return"fresco (bom para teste/prova)";if(t>=-10)return"equilibrado";if(t>=-30)return"em treino pesado (normal na construção)";return"muito carregado";}
+// ---- HIDRATAÇÃO ----
+function hydroHas(w){return !!w&&(w.waterBefore!=null||w.waterDuring!=null||w.waterAfter!=null);}
+function hydroTotal(w){if(!hydroHas(w))return null;return (w.waterBefore||0)+(w.waterDuring||0)+(w.waterAfter||0);}
+function hydroRateMlH(w){if(!w||w.waterDuring==null||!w.durationSec)return null;return w.waterDuring/(w.durationSec/3600);}
+function hydroStatus(rate){if(rate==null)return null;if(rate<400)return{label:"baixa",c:"var(--warn)"};if(rate<=900)return{label:"adequada",c:"var(--good)"};return{label:"alta",c:"var(--trend)"};}
+function renderHydroInfo(w){
+  var box=document.getElementById("hydroInfo");if(!box)return;
+  if(!hydroHas(w)){box.style.display="none";box.innerHTML="";return;}
+  var tot=hydroTotal(w),rate=hydroRateMlH(w),st=hydroStatus(rate),dec=null;
+  try{if(!isBike(w))dec=computeDecoupling(w);}catch(e){}
+  var chips="";
+  if(rate!=null&&st)chips+='<span class="si-chip '+(st.label==="baixa"?"warn":"good")+'">'+Math.round(rate)+' ml/h · '+st.label+'</span>';
+  if(tot!=null)chips+='<span class="si-chip">total '+tot+' ml</span>';
+  var read;
+  if(rate!=null&&st){
+    if(rate<400&&dec!=null&&dec>8)read="⚠ <b>Taxa baixa</b> com <b>decoupling "+dec.toFixed(1)+"%</b>"+(w.temp!=null&&w.temp>=22?" e calor ("+Math.round(w.temp)+"°C)":"")+" — possível <b>desidratação</b> contribuindo para a deriva cardíaca. Beba mais nos próximos longos.";
+    else if(st.label==="baixa")read="Reposição <b>abaixo</b> do ideal pro esforço. Mire 400–900 ml/h em treinos longos/quentes.";
+    else if(st.label==="alta")read="Reposição <b>alta</b> — ótimo no calor; evite exagerar (desconforto gástrico).";
+    else read="Reposição <b>adequada</b> pro esforço. 👍";
+  }else read="Informe a água <b>durante</b> e a duração para calcular a taxa (ml/h).";
+  box.style.display="block";
+  box.innerHTML='<div class="si-top"><span class="si-moon">💧</span><span class="si-h">Hidratação <small>água ingerida</small></span></div>'+
+    (chips?'<div class="si-chips">'+chips+'</div>':'')+'<div class="si-read">'+read+'</div>';
+}
 function typeLabel(t){return{facil:"Fácil",longão:"Longão",tempo:"Tempo",limiar:"Limiar",intervalado:"Intervalado",regenerativo:"Regenerativo",teste:"Teste",prova:"Prova",bike:"Bike",bike_int:"Bike forte"}[t]||t;}
 function emptyState(){var e=el("div","empty");e.innerHTML='<div class="big">🏃</div><b>Nenhum treino ainda.</b><br>Importe um <b>.FIT</b> do relógio ou registre manualmente em <b>Treinos</b> — o painel se monta sozinho.';return e;}
 
@@ -3775,6 +3830,7 @@ function openModal(id,prefill,fromFit){
   $("#f_sleep").value=s&&s.sleepH!=null?s.sleepH:"";
   renderSleepInfo(w);
   $("#f_sore").value=s&&s.soreness!=null?s.soreness:"";
+  $("#f_waterB").value=s&&s.waterBefore!=null?s.waterBefore:"";$("#f_waterD").value=s&&s.waterDuring!=null?s.waterDuring:"";$("#f_waterA").value=s&&s.waterAfter!=null?s.waterAfter:"";renderHydroInfo(w);
   $("#f_dec").value=s&&s.decouplingPct!=null?s.decouplingPct:"";
   $("#f_notes").value=s&&s.notes?s.notes:"";
   $("#f_pain").checked=s?!!s.pain:false;
@@ -3833,6 +3889,7 @@ function saveModal(){
     gainM:$("#f_gain").value!==""?+$("#f_gain").value:null,
     lossM:$("#f_loss").value!==""?+$("#f_loss").value:null,
     rpe:$("#f_rpe").value!==""?+$("#f_rpe").value:null,temp:$("#f_temp").value!==""?+$("#f_temp").value:null,
+    waterBefore:$("#f_waterB").value!==""?+$("#f_waterB").value:null,waterDuring:$("#f_waterD").value!==""?+$("#f_waterD").value:null,waterAfter:$("#f_waterA").value!==""?+$("#f_waterA").value:null,
     terrain:$("#f_terrain").value.trim()||null,
     kcal:kcal,
     trainingEffect:isBk?(modalExtras.trainingEffect||null):null,
