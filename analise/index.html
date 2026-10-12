@@ -1381,7 +1381,7 @@ function recalcKpis(){
 var LS_KEY="apex.analise.v1";
 var DEFAULT_ATHLETE={
   name:"Lucas",city:"Guarapuava/PR",fcRep:67,fcMax:198,fcMaxProv:true,vo2:39.4,weight:82,age:34,
-  cadenceTarget:173,efBaseline:0.0139,efGainPct:6.5,decouplingTarget:7,weeklyTargetKm:35,sessionsTarget:3,
+  cadenceTarget:173,efBaseline:0.0139,efGainPct:6.5,decouplingTarget:7,weeklyTargetKm:35,sessionsTarget:3,showBaseline5k:false,
   bikeFcMax:186,bikeZones:[123,138,145,167,179], // zonas do Garmin (bike): início Z1..Z5 em bpm
   baseAltM:1120,climTempLo:8,climTempHi:18,climDewMax:14,windMax:20, // Guarapuava ~1120 m · PADRÃO_CLIMA
   motorStages:[{name:"Aquecimento",min:10,targetHr:null},{name:"135 bpm",min:6,targetHr:135},{name:"145 bpm",min:6,targetHr:145}], // Teste do Motor (estágios superiores liberam com a tíbia)
@@ -1953,8 +1953,8 @@ function renderPainel(v){
     v.appendChild(sectionTitle("Foco atual"));
     var grid1=el("div","grid g-2");
 
-    // 1) IMP (quando há baseline) ou Pace-GAP @ FC_REF -----------------------
-    if(impBl.vBaseline){
+    // 1) IMP / Pace-GAP@145 — DESATIVADOS (ritmo agora via "Ritmo Ajustado à Inclinação")
+    if(false){
       var impTl=pgRuns.map(function(w){
         var inStd=w.weather&&w.weather.inStandard;
         var yImp=p2on?(p2map[w.date]!=null?p2map[w.date]:null):((inStd&&w.imp&&w.imp.vPadrao!=null)?impIndex(w.imp.vPadrao,impBl.vBaseline):null);
@@ -2003,7 +2003,7 @@ function renderPainel(v){
         grid1.appendChild(hc);
       }
     }
-    else if(pgRuns.length){
+    else if(false){
       var pgPts=pgRuns.map(function(w){return{label:fmtDate(w.date),y:w.paceGap.paceSec,extra:w.paceGap.confidence};});
       var last=pgRuns[pgRuns.length-1].paceGap;
       var prev3=pgPts.slice(-4,-1).map(function(p){return p.y;});
@@ -2046,8 +2046,8 @@ function renderPainel(v){
       grid1.appendChild(efCard);
     }
 
-    // 3) Cadência @ PACE_REF (3.4) ------------------------------------------
-    if(streamRuns.length&&paceRef){
+    // 3) Cadência @ PACE_REF — DESATIVADO (consolidado no card "Cadência")
+    if(false){
       var lastSr=streamRuns[streamRuns.length-1];
       var cad=cadenceAtPace(expandStream(lastSr.stream),{paceRef:paceRef});
       var cadPts=streamRuns.map(function(w){var c=cadenceAtPace(expandStream(w.stream),{paceRef:paceRef});return c.spm!=null?{label:fmtDate(w.date),y:c.spm,extra:c.confidence}:null;}).filter(Boolean);
@@ -2141,15 +2141,23 @@ function renderPainel(v){
   // ---- PAINEL GERAL (hero tiles) ----
   v.appendChild(sectionTitle("Painel geral · dados reais"));
   var hero=el("div","grid g-4");
-  var baseline5k=ws.filter(function(w){return w.type==="teste"||w.type==="prova";}).find(function(w){return Math.abs(w.distKm-5)<0.6;});
-  hero.appendChild(tile({lab:"★ Baseline 5K",ico:"",val:baseline5k?paceStr(baseline5k.durationSec/baseline5k.distKm):"—",unit:"/km",note:baseline5k?fmtDate(baseline5k.date)+" · marco zero · GAP "+paceStr(computeGap(baseline5k).gapPace):"registre um teste",conf:null,info:"baseline"}));
-  var _efPtsV=latestEF!=null?(latestEF*1000).toFixed(1).replace(".",","):null;
-  hero.appendChild(tile({lab:"◈ Economia do motor",val:_efPtsV||"—",unit:_efPtsV?"pts":"",note:(efDelta!=null?"economia "+deltaHtml(efDelta):"meta +"+a.efGainPct+"%")+(latestEF!=null?" · EF "+latestEF.toFixed(4):""),conf:"alta",info:"efficiency"}));
-  hero.appendChild(tile({lab:"⚡ Cadência",val:latestCad?latestCad:"—",unit:"spm",note:"meta ~"+a.cadenceTarget+(latestCad?" · faltam "+Math.max(0,a.cadenceTarget-latestCad):""),conf:"alta",info:"cadência"}));
+  // ♥ FC repouso
   var fcRepNote=restTr&&restTr.baseline!=null
     ?(restTr.deltaAbs<=0?'<span class="delta up">▼ '+Math.abs(restTr.deltaAbs).toFixed(0)+'</span> vs base':'<span class="delta down">▲ '+restTr.deltaAbs.toFixed(0)+'</span> vs base')+' · do Apple Watch'
     :"reserva "+(a.fcMax-a.fcRep)+" bpm"+(a.fcMaxProv?" · FCmáx prov.":"");
   hero.appendChild(tile({lab:"♥ FC repouso",val:fcRepEff,unit:"bpm",note:fcRepNote,conf:null,info:"fcrep"}));
+  // 🧊 Forma (TSB)
+  hero.appendChild(tile({lab:"🧊 Forma (TSB)",val:(tsb!=null?(tsb>0?"+":"")+Math.round(tsb):"—"),note:tsb!=null?tsbState(tsb):"registre treinos",conf:null}));
+  // 📊 Volume 7 dias
+  hero.appendChild(tile({lab:"📊 Volume 7d",val:weeklyKm?Math.round(weeklyKm):"—",unit:weeklyKm?"km":"",note:"média 4 sem "+(avgWeeklyKm?Math.round(avgWeeklyKm)+" km":"—"),conf:null}));
+  // ⚡ Prontidão
+  var _rdLab=rd&&rd.score!=null?(rd.score>=80?"ótima":rd.score>=60?"boa":rd.score>=40?"moderada":"baixa"):"—";
+  hero.appendChild(tile({lab:"⚡ Prontidão",val:rd&&rd.score!=null?rd.score:"—",note:_rdLab,conf:null}));
+  // ★ Baseline 5K (opcional — liga em Config)
+  if(a.showBaseline5k){
+    var baseline5k=ws.filter(function(w){return w.type==="teste"||w.type==="prova";}).find(function(w){return Math.abs(w.distKm-5)<0.6;});
+    hero.appendChild(tile({lab:"★ Baseline 5K",val:baseline5k?paceStr(baseline5k.durationSec/baseline5k.distKm):"—",unit:"/km",note:baseline5k?fmtDate(baseline5k.date)+" · marco zero · GAP "+paceStr(computeGap(baseline5k).gapPace):"registre um teste",conf:null,info:"baseline"}));
+  }
   v.appendChild(hero);
 
   // ---- MOTOR: EF + decoupling ----
@@ -2172,12 +2180,13 @@ function renderPainel(v){
   // ---- MECÂNICA + GAP ----
   v.appendChild(sectionTitle("Mecânica & ritmo"));
   var mec=el("div","grid g-2");
-  var cadCard=card("Cadência média","alta","cadência");
+  var cadCard=card("Cadência","alta","cadência");
+  if(latestCad){var _ch=el("div");_ch.innerHTML='<div class="kbig">'+Math.round(latestCad)+'<small> spm</small></div><div class="ksub">meta '+a.cadenceTarget+(Math.round(latestCad)<a.cadenceTarget?' · faltam '+(a.cadenceTarget-Math.round(latestCad)):' · na meta ✓')+'</div>';cadCard.appendChild(_ch);}
   cadCard.appendChild(chartBox(lineChart({series:[{name:"Cadência",points:cadPts,colorVar:seriesColor(3)}],yfmt:function(v){return Math.round(v)+"";},target:{y:a.cadenceTarget,label:"meta "+a.cadenceTarget}})));
   cadCard.appendChild(hint("A alavanca de maior retorno: subir ~5% já traz ganho. Sinal de ouro: mesmo pace, cadência maior, FC menor."));
   mec.appendChild(cadCard);
-  var gapCard=card("Velocidade-GAP · Minetti assimétrico","alta","gap");
-  gapCard.appendChild(chartBox(lineChart({series:[{name:"Pace-GAP",points:gapPts,colorVar:seriesColor(2)}],yfmt:function(v){return paceStr(v);},reverseY:true})));
+  var gapCard=card("Ritmo Ajustado à Inclinação","alta","gap");
+  gapCard.appendChild(chartBox(lineChart({series:[{name:"Ritmo ajustado",points:gapPts,colorVar:seriesColor(2)}],yfmt:function(v){return paceStr(v);},reverseY:true})));
   gapCard.appendChild(hint("Pace ajustado à inclinação km a km (subida +3,5%/1%, descida −1,5%/1%). Torna sessões em relevos diferentes comparáveis. Menor = mais rápido."));
   mec.appendChild(gapCard);
   v.appendChild(mec);
@@ -2388,7 +2397,7 @@ function renderPainel(v){
   if(aud.length){
     var ac2=card("Auditoria das sessões (.FIT)","alta");
     var at=el("div");at.style.cssText="overflow:auto;margin-top:8px";
-    var t2=el("table");t2.innerHTML='<thead><tr><th>Data</th><th class="num">Válidos</th><th class="num">Excl.</th><th class="num">Defas.</th><th>Pace-GAP@145</th><th class="num">Mec.</th><th>Clima</th><th>Motivos</th></tr></thead>';
+    var t2=el("table");t2.innerHTML='<thead><tr><th>Data</th><th class="num">Válidos</th><th class="num">Excl.</th><th class="num">Defas.</th><th class="num">Mec.</th><th>Clima</th><th>Motivos</th></tr></thead>';
     var tb2=el("tbody");
     aud.slice(0,16).forEach(function(w){var q=w.quality,pg=w.paceGap,mot=[];for(var rk in q.reasons)mot.push(rk);
       var mv=w.mech&&w.mech.pct!=null?(w.mech.pct>0?"+":"")+w.mech.pct.toFixed(1)+"%":"—";
@@ -2396,14 +2405,13 @@ function renderPainel(v){
       var r=el("tr");r.innerHTML='<td>'+fmtDateFull(w.date)+'</td>'+
         '<td class="num">'+q.validMin+' min</td>'+
         '<td class="num"'+(q.excludedPct>20?' style="color:var(--crit)"':'')+'>'+q.excludedPct+'%</td>'+
-        '<td class="num">'+(w.hrLagSec!=null?w.hrLagSec+"s":"—")+'</td>'+
-        '<td>'+(pg&&pg.paceSec?paceStr(pg.paceSec)+" <span class=\"sub\">"+pg.confidence+"</span>":(pg?pg.confidence:"—"))+(w.streamPruned?' <span class="sub">(resumido)</span>':'')+'</td>'+
+        '<td class="num">'+(w.hrLagSec!=null?w.hrLagSec+"s":"—")+(w.streamPruned?' <span class="sub">(resumido)</span>':'')+'</td>'+
         '<td class="num"'+(w.mech&&w.mech.pct>2?' style="color:var(--crit)"':'')+'>'+mv+'</td>'+
         '<td>'+cl+'</td>'+
         '<td class="sub">'+esc(mot.slice(0,3).join(" · ")||"—")+'</td>';
       tb2.appendChild(r);});
     t2.appendChild(tb2);at.appendChild(t2);ac2.appendChild(at);
-    ac2.appendChild(hint("Transparência do pré-processamento: minutos válidos, % excluído, defasagem de FC usada, Pace-GAP e decoupling mecânico por sessão. &gt;20% excluído (e passada caindo &gt;2%) aparecem em vermelho. Defasagem de FC do ciclo: <b>"+ml.lagSec+"s</b> (mediana de "+ml.n+" sessão(ões) válida(s))"+(lagLow?" — <b>&lt;3 sessões</b>, então Pace-GAP e decoupling mecânico entram com confiança rebaixada (3.3).":".")+" Sessões antigas podem aparecer como <b>(resumido)</b> — o stream por amostra é mantido só nas mais recentes."));
+    ac2.appendChild(hint("Transparência do pré-processamento: minutos válidos, % excluído, defasagem de FC usada e decoupling mecânico por sessão. &gt;20% excluído (e passada caindo &gt;2%) aparecem em vermelho. Defasagem de FC do ciclo: <b>"+ml.lagSec+"s</b> (mediana de "+ml.n+" sessão(ões) válida(s))"+(lagLow?" — <b>&lt;3 sessões</b>, então o decoupling mecânico entra com confiança rebaixada (3.3).":".")+" Sessões antigas podem aparecer como <b>(resumido)</b> — o stream por amostra é mantido só nas mais recentes."));
     var rc=el("button","btn ghost sm");rc.style.marginTop="10px";rc.textContent="↻ Recalcular KPIs";rc.title="Recalcula do stream e refaz as etiquetas de clima; lista o que precisa reimportar";rc.onclick=function(){recalcKpis();};ac2.appendChild(rc);
     ac2.appendChild(hint("A correção de <b>pausa × lacuna × gravação inteligente</b> usa os <b>records brutos</b> do .FIT — que <b>não ficam salvos</b> (só um stream reduzido). Por isso ela passa a valer ao <b>reimportar</b> cada arquivo. O botão acima recalcula o que dá a partir do stream e aponta o que precisa de reimport."));
     v.appendChild(ac2);
@@ -3555,6 +3563,9 @@ function renderConfig(v){
   var fcp=el("label");fcp.style.cssText="display:flex;align-items:center;gap:8px;margin-top:12px;font-size:13.5px;font-weight:600;color:var(--ink-2)";
   fcp.innerHTML='<input type="checkbox" id="c_fcprov" style="width:auto" '+(a.fcMaxProv?"checked":"")+'> FCmáx ainda provisória (aguardando teste de campo)';
   c.appendChild(fcp);
+  var blp=el("label");blp.style.cssText="display:flex;align-items:center;gap:8px;margin-top:10px;font-size:13.5px;font-weight:600;color:var(--ink-2)";
+  blp.innerHTML='<input type="checkbox" id="c_showbl" style="width:auto" '+(a.showBaseline5k?"checked":"")+'> Mostrar o tile "Baseline 5K" no Painel';
+  c.appendChild(blp);
   var saveBtn=el("button","btn",'Salvar configuração');saveBtn.style.marginTop="16px";
   saveBtn.onclick=function(){
     a.name=$("#c_name").value.trim()||"Atleta";a.city=$("#c_city").value.trim();
@@ -3564,7 +3575,7 @@ function renderConfig(v){
     a.efBaseline=+$("#c_efb").value||a.efBaseline;a.efGainPct=+$("#c_efg").value||a.efGainPct;
     a.decouplingTarget=+$("#c_dec").value||a.decouplingTarget;a.weeklyTargetKm=+$("#c_wk").value||a.weeklyTargetKm;
     a.sessionsTarget=+$("#c_ses").value||a.sessionsTarget;a.cycleName=$("#c_cycle").value.trim()||a.cycleName;
-    a.alert=$("#c_alert").value.trim();a.fcMaxProv=$("#c_fcprov").checked;
+    a.alert=$("#c_alert").value.trim();a.fcMaxProv=$("#c_fcprov").checked;a.showBaseline5k=$("#c_showbl").checked;
     a.updatedAt=new Date().toISOString();touch();save();scheduleSync();toast("Configuração salva");render();
   };
   c.appendChild(saveBtn);
@@ -3731,12 +3742,12 @@ function openModal(id,prefill,fromFit){
         '<b>'+q.validMin+' min válidos</b>'+(q.minInBand!=null?' · '+q.minInBand+' min na banda 145±3':'')+(q.medianHrValid!=null?' · FC mediana '+q.medianHrValid+' bpm':'')+
         (q.smart?' · <b style="color:var(--warn)">gravação inteligente</b> (confiança −1)':'')+
         (!q.hasHR?' · <b>sem FC</b>':'')+(!q.hasCad?' · <b>sem cadência</b>':'')+(!q.hasAlt?' · <b>sem altitude</b>':'')+
-        (s.paceGap&&s.paceGap.paceSec?' · Pace-GAP@145 '+paceStr(s.paceGap.paceSec)+'/km ('+s.paceGap.confidence+')':(s.paceGap?' · Pace-GAP@145: '+s.paceGap.confidence:''))+
+        ''+
         '<br><span class="sub">Pausas '+hm(q.pauseSec||0)+' · lacunas interpoladas '+hm(q.interpSec||0)+' · lacunas inválidas '+hm(q.invalidGapSec||0)+' · 1os 10 min '+hm(q.firstMinSec||0)+' · '+q.excludedPct+'% excluído dos KPIs</span>'+
         (motivos.length?'<br><span class="sub">Excluído: '+esc(motivos.slice(0,4).join(" · "))+'</span>':'')+'</div>';}
     var wline="";
     if(s&&s.modal!=="bike"&&s.geo&&s.geo.lat!=null){
-      if(s.weather){var wx=s.weather;wline='<div style="margin-top:6px;font-size:12.5px;color:var(--ink-2)">🌤 '+(wx.tempC!=null?Math.round(wx.tempC)+'°C':'—')+(wx.dewC!=null?' · orvalho '+Math.round(wx.dewC)+'°':'')+(wx.windKmh!=null?' · vento '+Math.round(wx.windKmh)+' km/h':'')+' · '+(wx.inStandard?'<b>dentro do padrão</b> (entra no IMP)':'<b>fora do padrão</b> (IMP não calcula; Pace-GAP continua)')+(wx.tags&&wx.tags.length?' · '+esc(wx.tags.join(" · ")):'')+' <span class="sub">('+esc(wx.source||"open-meteo")+(wx.localTime?" · "+esc(wx.localTime):"")+')</span></div>';}
+      if(s.weather){var wx=s.weather;wline='<div style="margin-top:6px;font-size:12.5px;color:var(--ink-2)">🌤 '+(wx.tempC!=null?Math.round(wx.tempC)+'°C':'—')+(wx.dewC!=null?' · orvalho '+Math.round(wx.dewC)+'°':'')+(wx.windKmh!=null?' · vento '+Math.round(wx.windKmh)+' km/h':'')+' · '+(wx.inStandard?'<b>clima padrão</b>':'<b>fora do padrão</b>')+(wx.tags&&wx.tags.length?' · '+esc(wx.tags.join(" · ")):'')+' <span class="sub">('+esc(wx.source||"open-meteo")+(wx.localTime?" · "+esc(wx.localTime):"")+')</span></div>';}
       else wline='<div style="margin-top:6px;font-size:12.5px;color:var(--ink-2)">🌤 Clima não obtido agora (sem conexão?). Dá para buscar depois no Painel.</div>';
     }
     qline+=wline;
