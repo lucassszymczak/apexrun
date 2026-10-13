@@ -548,6 +548,17 @@ tbody tr{transition:background-color .12s ease}
 .m-pseg.done{background:color-mix(in srgb,var(--accent) 20%,var(--surface));color:var(--ink-2)}
 .m-pseg.on{background:linear-gradient(92deg,var(--accent),var(--accent-2));color:var(--accent-ink);border-color:transparent}
 .m-pnow{margin-top:10px;font-size:13px;color:var(--ink)}
+.m-end{border:1px solid color-mix(in srgb,var(--accent) 40%,var(--line));background:color-mix(in srgb,var(--accent) 8%,var(--surface))}
+.m-cyc{border:1px solid var(--line);border-radius:14px;padding:13px 14px;margin-top:11px;background:var(--surface-2)}
+.m-cyctop{display:flex;align-items:center;gap:8px}
+.m-cyctop b{font-family:var(--head);font-size:15px}
+.m-cyctag{margin-left:auto;font-size:11px;font-weight:700;color:var(--accent);background:color-mix(in srgb,var(--accent) 14%,transparent);padding:2px 9px;border-radius:999px}
+.m-cycsub{font-size:12px;color:var(--ink-2);margin-top:3px}
+.m-cycstats{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.m-cycstat{display:flex;flex-direction:column;gap:1px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:6px 11px;min-width:64px}
+.m-cycstat small{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.m-cycstat b{font-family:var(--head);font-size:14px;color:var(--ink)}
+.m-cycact{display:flex;gap:7px;flex-wrap:wrap;margin-top:11px}
 .m-zbar{display:flex;height:26px;border-radius:9px;overflow:hidden;border:1px solid var(--line-2);margin:8px 0 11px}
 .m-zbar>span{display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#0c0f13;font-family:var(--head)}
 .m-zleg{display:flex;flex-direction:column;gap:7px}
@@ -1425,8 +1436,21 @@ var DEFAULT_ATHLETE={
 // ---- Prova-alvo (Modo Maratona) ----
 // goal:"finish" = terminar bem (treino por zonas de FC, sem tempo-alvo).
 // startDate = início do bloco (define "semana X de N"); longRunTargetKm/peakKmTarget = metas editáveis.
-var DEFAULT_RACE={name:"Maratona",date:"2027-03-28",distKm:42.195,goal:"finish",startDate:"2026-10-06",longRunTargetKm:30,peakKmTarget:50,updatedAt:null};
+var DEFAULT_RACE={name:"Maratona",type:"maratona",date:"2027-03-28",distKm:42.195,goal:"finish",objective:"",startDate:"2026-10-06",longRunTargetKm:30,peakKmTarget:50,updatedAt:null};
 function defaultRace(){return Object.assign({},DEFAULT_RACE);}
+// Tipos de prova e modelo de fases — proporcional ao bloco (curva de volume), por tipo de prova.
+var RACE_TYPES={
+  maratona:{label:"Maratona",dist:42.195,longRunTargetKm:30,peakKmTarget:50,phases:[0.40,0.30,0.20,0.10]},
+  meia:{label:"Meia maratona",dist:21.0975,longRunTargetKm:18,peakKmTarget:35,phases:[0.35,0.30,0.25,0.10]},
+  custom:{label:"Personalizada",dist:null,longRunTargetKm:20,peakKmTarget:40,phases:[0.40,0.30,0.20,0.10]}
+};
+var PHASE_META=[
+  {k:"base",name:"Base aeróbica",emoji:"🔵",desc:"Construir volume fácil e consistência em Z1–Z2. Sem pressa, sem dor."},
+  {k:"build",name:"Construção",emoji:"🟢",desc:"Sobe o longão e o volume semanal, ainda majoritariamente em Z2."},
+  {k:"peak",name:"Pico",emoji:"🟡",desc:"Longões mais altos e ritmo de prova por FC. Fase de carga máxima."},
+  {k:"taper",name:"Taper",emoji:"🟠",desc:"Reduz o volume e mantém as pernas leves. Chegar descansado e inteiro."}
+];
+function raceTypeOf(race){return (race&&race.type&&RACE_TYPES[race.type])?race.type:"maratona";}
 function seedWorkouts(){
   // Dados reais do dashboard/relatório (calibração Floripa + baseline).
   function mkSplits(arr){return arr.map(function(x){return{distKm:x[0],timeSec:x[1],hrAvg:x[2]!=null?x[2]:null,elevDeltaM:x[3]!=null?x[3]:null};});}
@@ -1458,12 +1482,12 @@ function seedDaily(){
 }
 var state=load();
 function load(){
-  try{var raw=localStorage.getItem(LS_KEY);if(raw){var p=JSON.parse(raw);return{athlete:Object.assign({},DEFAULT_ATHLETE,p.athlete||{}),workouts:p.workouts||[],daily:p.daily||[],deleted:p.deleted||[],race:p.race||defaultRace(),planWeeks:p.planWeeks||{},updatedAt:p.updatedAt||null,lastSyncAt:p.lastSyncAt||null};}}catch(e){}
-  return{athlete:Object.assign({},DEFAULT_ATHLETE),workouts:seedWorkouts(),daily:seedDaily(),deleted:[],race:defaultRace(),planWeeks:{},updatedAt:null,lastSyncAt:null,seeded:true};
+  try{var raw=localStorage.getItem(LS_KEY);if(raw){var p=JSON.parse(raw);return{athlete:Object.assign({},DEFAULT_ATHLETE,p.athlete||{}),workouts:p.workouts||[],daily:p.daily||[],deleted:p.deleted||[],race:(p.race!==undefined?p.race:defaultRace()),races:p.races||[],planWeeks:p.planWeeks||{},updatedAt:p.updatedAt||null,lastSyncAt:p.lastSyncAt||null};}}catch(e){}
+  return{athlete:Object.assign({},DEFAULT_ATHLETE),workouts:seedWorkouts(),daily:seedDaily(),deleted:[],race:defaultRace(),races:[],planWeeks:{},updatedAt:null,lastSyncAt:null,seeded:true};
 }
 // marca o momento da última mudança local (usado pelo merge "mais novo vence")
 function touch(){state.updatedAt=new Date().toISOString();}
-function save(){try{localStorage.setItem(LS_KEY,JSON.stringify({athlete:state.athlete,workouts:state.workouts,daily:state.daily,deleted:state.deleted||[],race:state.race||null,planWeeks:state.planWeeks||{},updatedAt:state.updatedAt,lastSyncAt:state.lastSyncAt}));}catch(e){}}
+function save(){try{localStorage.setItem(LS_KEY,JSON.stringify({athlete:state.athlete,workouts:state.workouts,daily:state.daily,deleted:state.deleted||[],race:state.race||null,races:state.races||[],planWeeks:state.planWeeks||{},updatedAt:state.updatedAt,lastSyncAt:state.lastSyncAt}));}catch(e){}}
 function sortedWorkouts(){return state.workouts.slice().sort(function(a,b){return a.date<b.date?-1:a.date>b.date?1:0;});}
 function sortedDaily(){return (state.daily||[]).slice().sort(function(a,b){return a.date<b.date?-1:a.date>b.date?1:0;});}
 // mescla entradas diárias (do Saúde ou manuais) por data, sem perder campos
@@ -1546,8 +1570,8 @@ function syncMergeDaily(ad,bd){var byDate={};(ad||[]).concat(bd||[]).forEach(fun
 function syncMergeRace(ar,br){if(!ar)return br||null;if(!br)return ar||null;return syncTs(ar.updatedAt)>=syncTs(br.updatedAt)?ar:br;}
 function syncMergePlanWeeks(ap,bp){ap=ap||{};bp=bp||{};var out={};for(var k in ap)out[k]=ap[k];for(var j in bp){var cur=out[j];if(!cur||syncTs(bp[j]&&bp[j].updatedAt)>=syncTs(cur.updatedAt))out[j]=bp[j];}return out;}
 function syncMergeStates(a,b){a=a||{};b=b||{};var deleted=syncMergeDeleted(a.deleted,b.deleted);var workouts=syncMergeWorkouts(a.workouts,b.workouts,deleted);var daily=syncMergeDaily(a.daily,b.daily);var aa=a.athlete||{},ba=b.athlete||{};var athlete=syncTs(aa.updatedAt)>=syncTs(ba.updatedAt)?(a.athlete||b.athlete||{}):(b.athlete||a.athlete||{});var race=syncMergeRace(a.race,b.race);var planWeeks=syncMergePlanWeeks(a.planWeeks,b.planWeeks);var updatedAt=new Date(Math.max(syncTs(a.updatedAt),syncTs(b.updatedAt))).toISOString();return{athlete:athlete,workouts:workouts,daily:daily,deleted:deleted,race:race,planWeeks:planWeeks,updatedAt:updatedAt};}
-function currentPayload(){return{athlete:state.athlete,workouts:state.workouts,daily:state.daily||[],deleted:state.deleted||[],race:state.race||null,planWeeks:state.planWeeks||{},updatedAt:state.updatedAt||new Date().toISOString()};}
-function applyMerged(m){state.athlete=Object.assign({},DEFAULT_ATHLETE,m.athlete||state.athlete);state.workouts=m.workouts||[];state.daily=m.daily||[];state.deleted=m.deleted||[];if(m.race!==undefined)state.race=m.race||state.race;if(m.planWeeks!==undefined)state.planWeeks=m.planWeeks||{};state.updatedAt=m.updatedAt;delete state.seeded;try{pruneStreams(state.workouts,20);}catch(e){}save();}
+function currentPayload(){return{athlete:state.athlete,workouts:state.workouts,daily:state.daily||[],deleted:state.deleted||[],race:state.race||null,races:state.races||[],planWeeks:state.planWeeks||{},updatedAt:state.updatedAt||new Date().toISOString()};}
+function applyMerged(m){state.athlete=Object.assign({},DEFAULT_ATHLETE,m.athlete||state.athlete);state.workouts=m.workouts||[];state.daily=m.daily||[];state.deleted=m.deleted||[];if(m.race!==undefined)state.race=m.race||state.race;if(m.races!==undefined)state.races=m.races||[];if(m.planWeeks!==undefined)state.planWeeks=m.planWeeks||{};state.updatedAt=m.updatedAt;delete state.seeded;try{pruneStreams(state.workouts,20);}catch(e){}save();}
 function syncStatusHtml(){var s=_syncStatus;var map={idle:["—",""],syncing:["🔄 sincronizando…","var(--muted)"],ok:["✓ sincronizado"+(state.lastSyncAt?" · "+new Date(state.lastSyncAt).toLocaleString("pt-BR",{hour:"2-digit",minute:"2-digit"}):""),"var(--good)"],err:["⚠ "+(s.msg||"falha"),"var(--crit)"]};var m=map[s.state]||map.idle;return '<span style="color:'+(m[1]||"var(--muted)")+'">'+esc(m[0])+'</span>';}
 function setSyncStatus(st,msg){_syncStatus={state:st,msg:msg||""};var el2=document.getElementById("syncStatus");if(el2)el2.innerHTML=syncStatusHtml();}
 function syncPull(){var code=getSyncCode();return syncHashId(code).then(function(id){return sbRpc("analise_sync_get",{p_sync_id:id});}).then(function(rows){return rows&&rows[0]?rows[0]:null;});}
@@ -2669,11 +2693,73 @@ function mDaysToRace(race){if(!race||!race.date)return null;var r=new Date(race.
 function mBlock(race){var days=mDaysToRace(race);if(days==null)return null;var wkToGo=Math.max(0,Math.ceil(days/7));var N=wkToGo;
   if(race.startDate){var s=new Date(race.startDate+"T00:00:00"),r=new Date(race.date+"T00:00:00");var tot=Math.round((r-s)/86400000/7);if(tot>N)N=tot;}
   if(N<1)N=1;var cur=N-wkToGo+1;if(cur<1)cur=1;if(cur>N)cur=N;return {days:days,wkToGo:wkToGo,N:N,cur:cur};}
-function mPhase(wkToGo){
-  if(wkToGo<=3)return{k:"taper",name:"Taper",emoji:"🟠",desc:"Reduz o volume e mantém as pernas leves. Chegar descansado e inteiro.",idx:3};
-  if(wkToGo<=8)return{k:"peak",name:"Pico",emoji:"🟡",desc:"Longões mais altos e ritmo de prova por FC. Fase de carga máxima.",idx:2};
-  if(wkToGo<=16)return{k:"build",name:"Construção",emoji:"🟢",desc:"Sobe o longão e o volume semanal, ainda majoritariamente em Z2.",idx:1};
-  return{k:"base",name:"Base aeróbica",emoji:"🔵",desc:"Construir volume fácil e consistência em Z1–Z2. Sem pressa, sem dor.",idx:0};}
+function mPhaseFracs(race){return (RACE_TYPES[raceTypeOf(race)]||RACE_TYPES.maratona).phases;}
+// Fase proporcional ao bloco (não por limiar fixo de semanas): a posição no bloco (início→fim) define a fase,
+// com frações por tipo de prova (maratona 40/30/20/10, meia 35/30/25/10).
+function mPhase(blk,race){
+  var fr=mPhaseFracs(race);
+  var prog=(blk&&blk.N>0)?(blk.cur-0.5)/blk.N:1;
+  var cum=0,idx=fr.length-1;
+  for(var i=0;i<fr.length;i++){cum+=fr[i];if(prog<=cum+1e-9){idx=i;break;}}
+  var m=PHASE_META[idx];
+  return {k:m.k,name:m.name,emoji:m.emoji,desc:m.desc,idx:idx,fracs:fr};}
+// ---- Resumo / arquivamento de ciclos de prova ----
+function cycleRunsInRange(race){
+  var runs=runsOnly(sortedWorkouts()),s=race&&race.startDate,e=race&&race.date;
+  return runs.filter(function(w){return (!s||w.date>=s)&&(!e||w.date<=e);});
+}
+function cycleSummary(race){
+  if(!race)return null;
+  var inR=cycleRunsInRange(race);
+  var totalKm=0,maxLong=0;inR.forEach(function(w){totalKm+=(w.distKm||0);if((w.distKm||0)>maxLong)maxLong=w.distKm||0;});
+  function efOf(w){return (!isBike(w)&&w.distKm&&w.durationSec&&w.hrAvg)?(w.distKm*1000/w.durationSec)/w.hrAvg:null;}
+  var efRuns=inR.filter(function(w){return efOf(w)!=null;}).sort(function(a,b){return a.date<b.date?-1:1;});
+  var efStart=efRuns.length?efOf(efRuns[0]):null,efEnd=efRuns.length?efOf(efRuns[efRuns.length-1]):null;
+  var efDelta=(efStart&&efEnd)?(efEnd-efStart)/efStart*100:null;
+  var ctlEnd=null;try{var fit=fitnessSeries(sortedWorkouts(),state.athlete)||[];ctlEnd=fit.length?fit[fit.length-1].ctl:null;}catch(e){}
+  // adesão: sessões cumpridas vs programadas (não-descanso) nas semanas do ciclo
+  var okN=0,totN=0,weeksN=0;
+  Object.keys(state.planWeeks||{}).forEach(function(k){
+    var wk=state.planWeeks[k];if(!wk||!wk.sessions||!wk.sessions.length)return;
+    // só semanas cujo início cai dentro do ciclo
+    var mon=mWeekMonFromKey(k);if(mon){var iso=mIsoLocal(mon);if((race.startDate&&iso<race.startDate)||(race.date&&iso>race.date))return;}
+    var train=wk.sessions.filter(function(s){return !mType(s.type).rest;});if(!train.length)return;weeksN++;
+    train.forEach(function(s){totN++;if(s.done||s.linkedWorkoutId||(s.adapt&&s.adapt.modal))okN++;});
+  });
+  var adesao=totN?Math.round(okN/totN*100):null;
+  return {totalKm:totalKm,maxLong:maxLong,nRuns:inR.length,efStart:efStart,efEnd:efEnd,efDelta:efDelta,ctlEnd:ctlEnd,adesao:adesao,weeks:weeksN,okN:okN,totN:totN};
+}
+// monday de uma chave ISO (YYYY-Www), aproximada pela quinta-feira da semana
+function mWeekMonFromKey(key){var m=/^(\d{4})-W(\d{2})$/.exec(key||"");if(!m)return null;
+  var y=+m[1],w=+m[2];var simple=new Date(Date.UTC(y,0,1+(w-1)*7));var dow=(simple.getUTCDay()+6)%7;
+  var mon=new Date(simple);mon.setUTCDate(simple.getUTCDate()-dow+(dow<=3?0:7)-0);
+  // ajusta para a segunda da semana ISO
+  var thursday=new Date(simple);thursday.setUTCDate(simple.getUTCDate()-dow+3);
+  var monday=new Date(thursday);monday.setUTCDate(thursday.getUTCDate()-3);
+  return new Date(monday.getUTCFullYear(),monday.getUTCMonth(),monday.getUTCDate());}
+function cycleSummaryText(race,sum){
+  sum=sum||cycleSummary(race);var t=RACE_TYPES[raceTypeOf(race)];
+  var L=[];
+  L.push("🏁 "+(race.name||"Ciclo")+" · "+(t?t.label:"Prova"));
+  L.push((race.startDate?mDateBR(race.startDate):"—")+" → "+(race.date?mDateBR(race.date):"—")+" · "+mKmTxt(race.distKm)+" km");
+  if(race.objective)L.push("🎯 "+race.objective);
+  L.push("");
+  L.push("📊 Volume total: "+mKmTxt(sum.totalKm)+" km em "+sum.nRuns+" corridas");
+  L.push("🏃 Maior longão: "+mKmTxt(sum.maxLong)+" km");
+  if(sum.efStart!=null&&sum.efEnd!=null)L.push("⚙️ EF (economia): "+(sum.efStart*1000).toFixed(1).replace(".",",")+" → "+(sum.efEnd*1000).toFixed(1).replace(".",",")+(sum.efDelta!=null?" ("+(sum.efDelta>=0?"+":"")+sum.efDelta.toFixed(0)+"%)":""));
+  if(sum.ctlEnd!=null)L.push("📈 Forma final (CTL): "+Math.round(sum.ctlEnd));
+  if(sum.adesao!=null)L.push("✅ Adesão: "+sum.adesao+"% ("+sum.okN+"/"+sum.totN+" sessões, "+sum.weeks+" semanas)");
+  L.push("");
+  L.push("— RUN PERFORMANCE // HEAT");
+  return L.join("\n");
+}
+function archiveCycle(race){
+  if(!race)return;
+  var sum=cycleSummary(race);
+  if(!state.races)state.races=[];
+  state.races.unshift({race:Object.assign({},race),summary:sum,archivedAt:new Date().toISOString()});
+  if(state.races.length>24)state.races=state.races.slice(0,24);
+}
 function mZoneColor(z){var m={Z1:"var(--s1)",Z2:"var(--good)",Z3:"var(--accent)",Z4:"var(--serious)",Z5:"var(--crit)"};return m[z]||"var(--surface-3)";}
 function mZoneTag(z){var m={Z1:["color-mix(in srgb,var(--s1) 20%,transparent)","var(--s1)"],Z2:["color-mix(in srgb,var(--good) 20%,transparent)","var(--good)"],
   Z3:["var(--accent)","var(--accent-ink)"],Z4:["color-mix(in srgb,var(--serious) 24%,transparent)","var(--serious)"],Z5:["color-mix(in srgb,var(--crit) 24%,transparent)","var(--crit)"]};
@@ -2934,10 +3020,64 @@ function mTile(o){var e=el("div","card tile");var h='<div class="lab">'+o.lab+'<
   if(o.note)h+='<div class="note" style="margin-top:6px">'+o.note+'</div>';
   if(o.badge)h+='<div style="margin-top:7px">'+o.badge+'</div>';e.innerHTML=h;return e;}
 
+function textDownload(filename,txt){
+  if(window.claude&&typeof window.claude.use==="function"){
+    Promise.resolve(window.claude.use("downloads")).then(function(dl){
+      if(!dl){_blobTxt(filename,txt);return;}
+      dl.save({filename:filename,data:txt}).then(function(){toast("Resumo baixado");}).catch(function(err){if(!(err&&err.code==="declined"))_blobTxt(filename,txt);});
+    }).catch(function(){_blobTxt(filename,txt);});
+    return;
+  }
+  _blobTxt(filename,txt);
+}
+function _blobTxt(filename,txt){var b=new Blob([txt],{type:"text/plain"});var u=URL.createObjectURL(b);var a=document.createElement("a");a.href=u;a.download=filename;a.click();URL.revokeObjectURL(u);toast("Resumo baixado");}
+function shareCycleSummary(race,sum){
+  var txt=cycleSummaryText(race,sum);
+  try{navigator.clipboard.writeText(txt).then(function(){toast("Resumo copiado");},function(){prompt("Copie o resumo do ciclo:",txt);});}
+  catch(e){prompt("Copie o resumo do ciclo:",txt);}
+}
+// Estado "sem ciclo ativo"
+function renderNoCycle(v){
+  var c=el("div","card");
+  c.innerHTML='<h3>🏁 Nenhum ciclo ativo</h3>'+
+    '<div class="sub" style="margin:8px 0 12px">Comece um novo ciclo de prova em <b>Config → Novo ciclo de prova</b> (maratona, meia ou personalizada). O painel monta as fases automaticamente e acompanha o bloco até o dia da prova.</div>'+
+    '<button class="btn sm" id="mGoCfg" type="button">⚙ Ir para Config</button>';
+  v.appendChild(c);
+  var g=$("#mGoCfg",v);if(g)g.onclick=function(){currentTab="config";render();};
+  renderCiclosAnteriores(v);
+}
+// Lista de ciclos arquivados + exportar (item 8C + vii)
+function renderCiclosAnteriores(v){
+  var arr=state.races||[];if(!arr.length)return;
+  function stat(l,val){return '<span class="m-cycstat"><small>'+l+'</small><b>'+val+'</b></span>';}
+  var c=el("div","card");var h='<h3>📚 Ciclos anteriores</h3>';
+  arr.forEach(function(it,idx){
+    var r=it.race||{},s=it.summary||{},t=RACE_TYPES[raceTypeOf(r)];
+    h+='<div class="m-cyc">'+
+      '<div class="m-cyctop"><b>'+esc(r.name||"Ciclo")+'</b><span class="m-cyctag">'+esc(t?t.label:"Prova")+'</span></div>'+
+      '<div class="m-cycsub">'+(r.startDate?mDateBR(r.startDate):"—")+' → '+(r.date?mDateBR(r.date):"—")+' · '+mKmTxt(r.distKm)+' km'+(r.objective?' · 🎯 '+esc(r.objective):'')+'</div>'+
+      '<div class="m-cycstats">'+
+        stat("Volume",mKmTxt(s.totalKm||0)+" km")+
+        stat("Longão",mKmTxt(s.maxLong||0)+" km")+
+        (s.efDelta!=null?stat("EF",(s.efDelta>=0?"+":"")+Math.round(s.efDelta)+"%"):"")+
+        (s.ctlEnd!=null?stat("Forma",Math.round(s.ctlEnd)):"")+
+        (s.adesao!=null?stat("Adesão",s.adesao+"%"):"")+
+      '</div>'+
+      '<div class="m-cycact"><button class="btn ghost sm" data-exp="'+idx+'" type="button">📋 Copiar</button>'+
+        '<button class="btn ghost sm" data-dl="'+idx+'" type="button">⭳ .txt</button>'+
+        '<button class="btn ghost sm" data-del="'+idx+'" type="button">🗑</button></div>'+
+      '</div>';
+  });
+  c.innerHTML=h;v.appendChild(c);
+  Array.prototype.forEach.call(c.querySelectorAll("[data-exp]"),function(b){b.onclick=function(){var it=arr[+b.getAttribute("data-exp")];if(it)shareCycleSummary(it.race,it.summary);};});
+  Array.prototype.forEach.call(c.querySelectorAll("[data-dl]"),function(b){b.onclick=function(){var it=arr[+b.getAttribute("data-dl")];if(it)textDownload("ciclo-"+((it.race&&it.race.name)||"prova").toLowerCase().replace(/[^a-z0-9]+/g,"-")+".txt",cycleSummaryText(it.race,it.summary));};});
+  Array.prototype.forEach.call(c.querySelectorAll("[data-del]"),function(b){b.onclick=function(){var i=+b.getAttribute("data-del");if(confirm("Remover este ciclo arquivado?")){state.races.splice(i,1);touch();save();scheduleSync();render();}};});
+}
+
 function renderMaratona(v){
-  if(!state.race)state.race=defaultRace();
   var race=state.race, a=state.athlete, ws=sortedWorkouts(), runs=runsOnly(ws);
-  var blk=mBlock(race), phase=blk?mPhase(blk.wkToGo):null;
+  if(!race){ renderNoCycle(v); return; }
+  var blk=mBlock(race), phase=blk?mPhase(blk,race):null;
 
   /* ---- HERO ---- */
   var hero=el("div","m-hero");
@@ -2946,8 +3086,17 @@ function renderMaratona(v){
     '<div class="m-eyebrow">◈ Missão · '+esc(race.name||"Prova")+'</div>'+
     '<div class="m-count"><span class="n">'+(blk?blk.days:"—")+'</span><span class="u">dias</span></div>'+
     '<div class="m-hsub">'+(blk?blk.wkToGo+" semanas · ":"")+'<b>'+mDateBR(race.date)+'</b> · '+mKmTxt(race.distKm)+' km</div>'+
-    '<div class="m-chips"><span class="m-chip on">🎯 '+esc(goalTxt)+'</span>'+(race.goal==="finish"?'<span class="m-chip">❤️ por zonas de FC</span>':'')+'</div>';
+    '<div class="m-chips"><span class="m-chip on">🎯 '+esc(goalTxt)+'</span>'+(race.goal==="finish"?'<span class="m-chip">❤️ por zonas de FC</span>':'')+'<span class="m-chip">'+esc((RACE_TYPES[raceTypeOf(race)]||{}).label||"Prova")+'</span></div>';
   v.appendChild(hero);
+
+  /* ---- CICLO ENCERRADO (arquivar) ---- */
+  if(blk&&blk.days<0){
+    var over=Math.abs(blk.days),endBan=el("div","card m-end");
+    endBan.innerHTML='<h3>🏁 Ciclo encerrado</h3>'+
+      '<div class="sub" style="margin:6px 0 12px"><b>'+esc(race.name||"A prova")+'</b> foi há '+over+' dia'+(over===1?"":"s")+'. Arquive o ciclo para guardar o resumo (volume, longão, EF início↔fim, forma, adesão) e começar o próximo em <b>Config → Novo ciclo</b>.</div>'+
+      '<button class="btn sm" id="mArchiveBtn" type="button">📦 Arquivar ciclo com resumo</button>';
+    v.appendChild(endBan);
+  }
 
   /* ---- EDIT META FORM ---- */
   if(_mEditRace){
@@ -2968,8 +3117,8 @@ function renderMaratona(v){
   /* ---- PHASE BAR ---- */
   if(blk){
     var pc=el("div","card");
-    var spans=[Math.max(1,blk.N-16),8,5,3],names=["Base","Construção","Pico","Taper"];
-    var segs="";for(var i=0;i<4;i++){var cls=i===phase.idx?"on":(i<phase.idx?"done":"");segs+='<div class="m-pseg '+cls+'" style="flex:'+spans[i]+'">'+names[i]+'</div>';}
+    var fr=phase.fracs,names=["Base","Construção","Pico","Taper"];
+    var segs="";for(var i=0;i<4;i++){var cls=i===phase.idx?"on":(i<phase.idx?"done":"");var wkN=Math.max(1,Math.round(fr[i]*blk.N));segs+='<div class="m-pseg '+cls+'" style="flex:'+Math.max(1,Math.round(fr[i]*100))+'" title="'+names[i]+' · ~'+wkN+' sem ('+Math.round(fr[i]*100)+'%)">'+names[i]+'</div>';}
     pc.innerHTML='<div class="m-phd"><h3>🎯 Fase atual</h3><span class="m-wk">Semana <b>'+blk.cur+'</b> de '+blk.N+'</span></div>'+
       '<div class="m-ptrack">'+segs+'</div>'+
       '<div class="m-pnow">'+phase.emoji+' <b>'+phase.name+'</b> — '+phase.desc+'</div>';
@@ -3092,7 +3241,13 @@ function renderMaratona(v){
     v.appendChild(est);
   }
 
+  /* ---- CICLOS ANTERIORES ---- */
+  renderCiclosAnteriores(v);
+
   /* ---- WIRING ---- */
+  var mar=$("#mArchiveBtn",v);if(mar)mar.onclick=function(){
+    if(confirm("Arquivar \""+(race.name||"a prova")+"\" com resumo automático? Ele vai para Ciclos anteriores e o painel fica sem ciclo ativo (comece o próximo em Config).")){
+      archiveCycle(race);state.race=null;touch();save();scheduleSync();toast("Ciclo arquivado");render();}};
   var mb=$("#mEditBtn",v);if(mb)mb.onclick=function(){_mEditRace=!_mEditRace;render();};
   if(_mEditRace){
     var sv=$("#mrSave",v);if(sv)sv.onclick=function(){
@@ -3722,6 +3877,9 @@ function renderConfig(v){
   c.appendChild(saveBtn);
   v.appendChild(c);
 
+  // novo ciclo de prova (maratona / meia / personalizada)
+  v.appendChild(renderNewCycleCard());
+
   // zonas de FC da bike (limites em bpm do relógio)
   v.appendChild(renderBikeZonesCard());
 
@@ -3739,6 +3897,55 @@ function renderConfig(v){
   row.appendChild(exp);row.appendChild(imp);row.appendChild(reseed);row.appendChild(wipe);
   dm.appendChild(row);
   v.appendChild(dm);
+}
+function renderNewCycleCard(){
+  var active=state.race,today=mIsoLocal(new Date());
+  var c=el("div","card");c.style.marginTop="14px";
+  var opts=Object.keys(RACE_TYPES).map(function(k){return '<option value="'+k+'">'+RACE_TYPES[k].label+'</option>';}).join("");
+  c.innerHTML='<h3>🏁 Novo ciclo de prova</h3>'+
+    '<div class="sub" style="margin:8px 0 12px">As fases (Base · Construção · Pico · Taper) são montadas automaticamente por <b>proporção do bloco</b>, conforme o tipo de prova (maratona 40/30/20/10, meia 35/30/25/10).'+
+      (active?' Iniciar um novo ciclo <b>arquiva o atual</b> (“'+esc(active.name||"prova")+'”) com resumo.':'')+'</div>'+
+    '<div class="grid g-3">'+
+      '<div class="field"><label>Tipo</label><select id="nc_type">'+opts+'</select></div>'+
+      '<div class="field"><label>Nome da prova</label><input id="nc_name" placeholder="Ex.: Maratona de Curitiba"></div>'+
+      '<div class="field"><label>Distância <span class="hint">km</span></label><input id="nc_dist" type="number" step="0.001" inputmode="decimal"></div>'+
+      '<div class="field"><label>Início do bloco</label><input id="nc_start" type="date" value="'+today+'"></div>'+
+      '<div class="field"><label>Data da prova</label><input id="nc_end" type="date"></div>'+
+      '<div class="field"><label>Objetivo <span class="hint">livre</span></label><input id="nc_goal" placeholder="terminar bem por zonas de FC"></div>'+
+    '</div>'+
+    '<div id="nc_phase" class="sub" style="margin-top:10px;line-height:1.6"></div>'+
+    '<button class="btn sm" id="nc_go" type="button" style="margin-top:12px">▶ Iniciar ciclo</button>';
+  var tSel=c.querySelector("#nc_type"),dEl=c.querySelector("#nc_dist"),sEl=c.querySelector("#nc_start"),eEl=c.querySelector("#nc_end"),ph=c.querySelector("#nc_phase");
+  function applyType(){var t=RACE_TYPES[tSel.value]||RACE_TYPES.maratona;if(t.dist!=null)dEl.value=t.dist;preview();}
+  function preview(){
+    var fr=(RACE_TYPES[tSel.value]||RACE_TYPES.maratona).phases,names=["Base","Construção","Pico","Taper"];
+    var wks=null;if(sEl.value&&eEl.value){var s=new Date(sEl.value+"T00:00:00"),e=new Date(eEl.value+"T00:00:00");wks=Math.round((e-s)/86400000/7);}
+    if(wks!=null&&wks>0){
+      ph.innerHTML='Bloco de <b>'+wks+' semanas</b> → '+fr.map(function(x,i){return names[i]+' ~'+Math.max(1,Math.round(x*wks))+'sem';}).join(" · ");
+    }else{
+      ph.innerHTML='Fases: '+fr.map(function(x,i){return names[i]+' '+Math.round(x*100)+'%';}).join(" · ")+'. Preencha início e data para ver as semanas.';
+    }
+  }
+  tSel.onchange=applyType;c.addEventListener("input",preview);
+  applyType();
+  var go=c.querySelector("#nc_go");
+  go.onclick=function(){
+    var type=tSel.value,name=(c.querySelector("#nc_name").value||"").trim(),dist=parseFloat(dEl.value),start=sEl.value,end=eEl.value,goal=(c.querySelector("#nc_goal").value||"").trim();
+    if(!end){alert("Informe a data da prova.");return;}
+    if(!start){alert("Informe o início do bloco.");return;}
+    if(end<=start){alert("A data da prova precisa ser depois do início do bloco.");return;}
+    var t=RACE_TYPES[type]||RACE_TYPES.maratona;
+    if(isNaN(dist)||dist<=0)dist=t.dist||42.195;
+    if(!name)name=t.label;
+    if(active){
+      if(!confirm("Arquivar o ciclo atual (“"+(active.name||"prova")+"”) e iniciar “"+name+"”?"))return;
+      archiveCycle(active);
+    }
+    state.race={name:name,type:type,date:end,distKm:dist,goal:goal||"finish",objective:goal,startDate:start,
+      longRunTargetKm:t.longRunTargetKm,peakKmTarget:t.peakKmTarget,updatedAt:new Date().toISOString()};
+    touch();save();scheduleSync();toast("Novo ciclo iniciado");currentTab="maratona";render();
+  };
+  return c;
 }
 function renderBikeZonesCard(){
   var a=state.athlete;
