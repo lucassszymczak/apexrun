@@ -449,6 +449,31 @@ details.fc-ex[open] .fx-chev{transform:rotate(180deg)}
 .fx-blk b{display:block;font-size:10px;text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px}
 .fx-blk.s b{color:var(--s3)}.fx-blk.e b{color:var(--s5)}.fx-blk.r b{color:var(--accent)}
 @media(prefers-reduced-motion:reduce){details.fc-sec>summary::after,.fx-chev{transition:none}}
+/* ---- Coach Insight ---- */
+.ci-head{display:flex;gap:11px;align-items:flex-start;margin-top:6px}
+.ci-av{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent-2));color:var(--accent-ink);display:grid;place-items:center;font-size:19px;flex:none}
+.ci-bubble{background:var(--surface-2);border:1px solid var(--line);border-radius:4px 14px 14px 14px;padding:11px 13px;flex:1;min-width:0}
+.ci-hl{font-family:var(--head);font-weight:700;font-size:15px;line-height:1.35;text-wrap:balance}
+.ci-sub{font-size:12.5px;color:var(--ink-2);margin-top:4px;line-height:1.45}
+.ci-status{display:flex;flex-direction:column;gap:8px;margin-top:14px}
+.ci-st{display:flex;gap:9px;align-items:flex-start;font-size:13px;line-height:1.45;color:var(--ink-2)}
+.ci-st .ci-ic{flex:none}
+.ci-st b{color:var(--ink)}
+.ci-rows{display:flex;flex-direction:column;margin-top:14px;border-top:1px solid var(--line-2)}
+.ci-row{display:flex;align-items:center;gap:11px;padding:9px 0;border-bottom:1px solid var(--line-2)}
+.ci-row:last-child{border-bottom:0}
+.ci-ric{width:24px;text-align:center;flex:none;font-size:16px}
+.ci-rmid{flex:1;min-width:0}
+.ci-rtop{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.ci-rtop b{font-size:13px}
+.ci-rval{font-family:var(--head);font-weight:700;font-size:13.5px}
+.ci-arrow{font-family:var(--head);font-weight:700;font-size:11.5px}
+.ci-arrow.up{color:var(--good)}.ci-arrow.down{color:var(--crit)}.ci-arrow.flat{color:var(--muted)}
+.ci-rread{font-size:11.5px;color:var(--muted);margin-top:1px}
+.ci-todo{margin-top:14px;background:color-mix(in srgb,var(--accent) 7%,var(--surface-2));border:1px solid color-mix(in srgb,var(--accent) 25%,var(--line));border-radius:12px;padding:12px 14px}
+.ci-th{font-family:var(--head);font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--accent);margin-bottom:6px}
+.ci-todo ul{margin:0;padding-left:18px}
+.ci-todo li{font-size:13px;line-height:1.5;margin:3px 0}
 a:focus-visible,button:focus-visible,summary:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
 
 /* ---- acessibilidade ---- */
@@ -2369,8 +2394,9 @@ function renderPainel(v){
 
   // ---- COACH INSIGHT ----
   v.appendChild(sectionTitle("Coach insight"));
-  var ci=el("div","card");
-  ci.innerHTML='<h3>💬 Leitura da inteligência <span class="badge mid" style="margin-left:auto">média</span></h3><div class="insight" style="margin-top:8px">'+coachInsight(ws,a,{latestEF:latestEF,efDelta:efDelta,latestCad:latestCad,latestDec:latestDec,trend:trend,pol:pol,ac:ac,rd:rd,recov:recov,tsb:tsb,restTr:restTr,hrvTr:hrvTr,sleepLast:sleepLast,vo2Last:vo2Last,vo2Eff:vo2Eff,td:td,hillAgg:hillAgg,score:score,bike:bike})+'</div>';
+  var ci=el("div","card ci-card");
+  ci.innerHTML='<h3>💬 Coach Insight <span class="badge mid" style="margin-left:auto">leitura</span></h3>';
+  ci.appendChild(coachInsightEl(ws,a,{latestEF:latestEF,efDelta:efDelta,latestCad:latestCad,latestDec:latestDec,trend:trend,pol:pol,ac:ac,rd:rd,recov:recov,tsb:tsb,restTr:restTr,hrvTr:hrvTr,sleepLast:sleepLast,vo2Last:vo2Last,vo2Eff:vo2Eff,td:td,hillAgg:hillAgg,score:score,bike:bike}));
   v.appendChild(ci);
 
   // ---- PROFILE + PREDICTION + RECORDS + TIMELINE ----
@@ -2492,6 +2518,66 @@ function focusLine(x,a){
     var map={"Eficiência":"economia (EF) e cadência","Consistência":"regularidade — completar as sessões da semana","Resist. fadiga":"resistência aeróbica (longões que desacoplam menos)","Volume":"volume gradual (subir ~10%/semana)"};
     if(worst&&map[worst])return '<b>Foco da fase:</b> '+map[worst]+'.';}
   return '<b>Foco da fase:</b> economia (EF) e cadência para sustentar paces bons por mais tempo.';
+}
+function ciArrow(pct){if(pct==null)return null;if(pct>0.5)return{cls:"up",txt:"▲ +"+Math.abs(pct).toFixed(0)+"%"};if(pct<-0.5)return{cls:"down",txt:"▼ "+Math.abs(pct).toFixed(0)+"%"};return{cls:"flat",txt:"→"};}
+// Coach Insight visual: headline (balão) + semáforo + linhas por tema + "esta semana" acionável
+function coachInsightEl(ws,a,x){
+  var wrap=el("div"),runs=runsOnly(ws);
+  var hydroR=runs.filter(hydroHas),lastHy=hydroR.length?hydroR[hydroR.length-1]:null,hyRate=lastHy?hydroRateMlH(lastHy):null,hySt=hydroStatus(hyRate);
+  var good=[],warn=[];
+  if(x.efDelta!=null){if(x.efDelta>=1)good.push("economia do motor subindo (<b>+"+x.efDelta.toFixed(0)+"%</b> no bloco)");else if(x.efDelta<=-2)warn.push("EF caiu no bloco ("+x.efDelta.toFixed(0)+"%) — cheque sono/calor/pacing");}
+  if(x.latestDec!=null){if(x.latestDec<0)good.push("decoupling negativo — fica mais eficiente no fim");else if(x.latestDec>8)warn.push("decoupling alto ("+x.latestDec.toFixed(1)+"%) — combustível/calor/pacing");}
+  if(x.pol){if(x.pol.easyPct>=75)good.push("distribuição saudável ("+Math.round(x.pol.easyPct)+"% fácil)");else warn.push("fácil forte demais (só "+Math.round(x.pol.easyPct)+"% em zona fácil)");}
+  if(x.ac){if(x.ac.zone==="atenção"||x.ac.zone==="risco")warn.push("salto de carga (A:C "+x.ac.ratio.toFixed(2)+") — segure a semana");else if(x.ac.zone==="sweet spot")good.push("carga sustentável (A:C "+x.ac.ratio.toFixed(2)+")");}
+  if(x.hrvTr&&x.hrvTr.deltaPct!=null&&x.hrvTr.deltaPct<-8)warn.push("HRV abaixo do normal — priorize recuperar");
+  if(x.restTr&&x.restTr.deltaAbs!=null&&x.restTr.deltaAbs>3)warn.push("FC repouso elevada (+"+x.restTr.deltaAbs.toFixed(0)+") — fadiga");
+  if(x.restTr&&x.restTr.deltaAbs!=null&&x.restTr.deltaAbs<=-2)good.push("FC repouso em queda — adaptando bem");
+  if(x.sleepLast&&x.sleepLast.value<6.5)warn.push("sono curto ("+x.sleepLast.value+"h)");
+  if(hySt&&hySt.label==="baixa")warn.push("hidratação baixa ("+Math.round(hyRate)+" ml/h) no último treino");
+  else if(hySt&&hySt.label==="adequada")good.push("hidratação adequada");
+  var rdLow=x.rd&&x.rd.score<60,rdHigh=x.rd&&x.rd.score>=80;
+  // headline
+  var hl,sub;
+  if(rdLow||(x.recov&&x.recov.label==="Needs Recovery")){hl="Hora de recuperar antes de puxar.";sub="Readiness "+(x.rd?x.rd.score:"")+" — os sinais pedem um dia leve.";}
+  else if(x.ac&&x.ac.zone==="risco"){hl="Segure a carga esta semana.";sub="Salto de carga (A:C "+x.ac.ratio.toFixed(2)+") — risco de lesão/overreaching.";}
+  else if(x.pol&&x.pol.easyPct<75){hl="Corra o fácil mais fácil.";sub="Só "+Math.round(x.pol.easyPct)+"% em zona fácil — a base pede Z1–Z2 de verdade.";}
+  else if(x.efDelta!=null&&x.efDelta>=2){hl="Motor evoluindo — siga o plano.";sub="Economia +"+x.efDelta.toFixed(0)+"% no bloco. Constância fácil + força rendendo.";}
+  else if(rdHigh){hl="Verde para uma sessão de qualidade.";sub="Readiness "+x.rd.score+" — corpo pronto; aproveite com técnica.";}
+  else{hl="Base no rumo — constância é a chave.";sub="Siga puxando o fácil fácil e cuidando da recuperação.";}
+  var head=el("div","ci-head");
+  head.innerHTML='<div class="ci-av">🧠</div><div class="ci-bubble"><div class="ci-hl">'+hl+'</div><div class="ci-sub">'+sub+'</div></div>';
+  wrap.appendChild(head);
+  // semáforo
+  var st=el("div","ci-status");
+  st.innerHTML='<div class="ci-st"><span class="ci-ic">✅</span><div><b>Indo bem:</b> '+(good.length?good[0]:"constância mantida")+'</div></div>'+
+    '<div class="ci-st"><span class="ci-ic">'+(warn.length?"⚠️":"🟢")+'</span><div><b>Atenção:</b> '+(warn.length?warn[0]:"nada crítico agora")+'</div></div>'+
+    '<div class="ci-st"><span class="ci-ic">🎯</span><div>'+focusLine(x,a)+'</div></div>';
+  wrap.appendChild(st);
+  // linhas por tema
+  var rows=el("div","ci-rows");
+  function row(ic,lab,val,arrow,read){var r=el("div","ci-row");
+    r.innerHTML='<span class="ci-ric">'+ic+'</span><div class="ci-rmid"><div class="ci-rtop"><b>'+lab+'</b>'+(val?' <span class="ci-rval">'+val+'</span>':'')+(arrow?' <span class="ci-arrow '+arrow.cls+'">'+arrow.txt+'</span>':'')+'</div>'+(read?'<div class="ci-rread">'+read+'</div>':'')+'</div>';rows.appendChild(r);}
+  if(x.latestEF!=null)row("🫀","Motor (EF)",(x.latestEF*1000).toFixed(1).replace(".",",")+" pts",ciArrow(x.efDelta),"economia do motor"+(x.efDelta!=null?" "+(x.efDelta>=0?"subindo":"caindo"):""));
+  if(x.latestDec!=null)row("🫁","Resistência",x.latestDec.toFixed(1)+"%",{cls:x.latestDec<7?"up":x.latestDec>8?"down":"flat",txt:x.latestDec<7?"sólido":x.latestDec>8?"investigar":"ok"},"decoupling — queda de eficiência no fim");
+  if(x.latestCad)row("🎵","Cadência",x.latestCad+" spm",{cls:x.latestCad>=a.cadenceTarget?"up":"flat",txt:x.latestCad>=a.cadenceTarget?"na meta":"meta "+a.cadenceTarget},"passos por minuto");
+  if(x.rd)row("🔋","Recuperação",x.rd.score+" · "+x.rd.band,{cls:x.rd.score>=70?"up":x.rd.score>=50?"flat":"down",txt:x.rd.score>=70?"boa":x.rd.score>=50?"ok":"baixa"},(x.sleepLast?"sono "+x.sleepLast.value+"h":"")+(x.hrvTr&&x.hrvTr.deltaPct!=null?(x.sleepLast?" · ":"")+"HRV "+(x.hrvTr.deltaPct>=0?"+":"")+x.hrvTr.deltaPct.toFixed(0)+"%":""));
+  if(x.ac)row("🛡️","Carga (A:C)",x.ac.ratio.toFixed(2).replace(".",","),{cls:x.ac.zone==="sweet spot"?"up":x.ac.zone==="baixa"?"flat":"down",txt:x.ac.zone},"aguda ÷ crônica"+(x.tsb!=null?" · forma "+(x.tsb>0?"+":"")+x.tsb.toFixed(0):""));
+  if(hyRate!=null)row("💧","Hidratação",Math.round(hyRate)+" ml/h",{cls:hySt.label==="adequada"?"up":hySt.label==="baixa"?"down":"flat",txt:hySt.label},"água durante o último treino");
+  if(x.pol)row("⚖️","Distribuição",Math.round(x.pol.easyPct)+"% fácil",{cls:x.pol.easyPct>=75?"up":"down",txt:x.pol.easyPct>=75?"polarizado":"ajustar"},"80/20 — tempo em zona fácil");
+  wrap.appendChild(rows);
+  // esta semana
+  var todos=[];
+  if(rdLow)todos.push("Trocar a próxima qualidade por rodagem fácil ou descanso.");
+  if(x.ac&&(x.ac.zone==="atenção"||x.ac.zone==="risco"))todos.push("Não subir volume; manter ou descarregar ~10%.");
+  if(x.pol&&x.pol.easyPct<75)todos.push("Segurar a FC em Z1–Z2 nas rodagens fáceis.");
+  if(hySt&&hySt.label==="baixa")todos.push("Levar mais água no próximo longo (mire 500–700 ml/h).");
+  if(x.latestDec!=null&&x.latestDec>8)todos.push("Revisar combustível/ritmo nos longos (decoupling alto).");
+  if(!todos.length)todos.push("Manter a constância: 2 fáceis + 1 longo + força 2× na semana.");
+  todos.push('Programar a semana na aba <b>🏁 Maratona</b> e marcar os treinos cumpridos.');
+  var td=el("div","ci-todo");
+  td.innerHTML='<div class="ci-th">🎯 Esta semana</div><ul>'+todos.slice(0,4).map(function(t){return '<li>'+t+'</li>';}).join("")+'</ul>';
+  wrap.appendChild(td);
+  return wrap;
 }
 function bestAnchor(ws){
   var cands=ws.filter(function(w){return(w.type==="teste"||w.type==="prova")&&w.distKm&&w.durationSec;});
