@@ -6,14 +6,26 @@
 // Vite) para habilitar a sincronização opcional entre aparelhos. A chave anon é
 // pública por design (o RLS/RPC protege os dados); a service_role NUNCA entra.
 // Sem as variáveis (build local), os placeholders ficam e a sync fica desligada.
-import { mkdirSync, readFileSync, writeFileSync, existsSync } from 'node:fs';
+import { mkdirSync, readFileSync, writeFileSync, copyFileSync, existsSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const src = resolve(root, 'analise/index.html');
+const srcDir = resolve(root, 'analise');
+const src = resolve(srcDir, 'index.html');
 const destDir = resolve(root, 'dist/analise');
 const dest = resolve(destDir, 'index.html');
+
+// Assets estáticos da página autônoma (ícones do app + manifest PWA) que
+// precisam ir junto para o atalho na tela inicial mostrar a logo.
+const ASSETS = [
+  'manifest.webmanifest',
+  'apex-icon-32.png',
+  'apex-icon-180.png',
+  'apex-icon-192.png',
+  'apex-icon-512.png',
+  'apex-icon-maskable-512.png',
+];
 
 if (!existsSync(src)) {
   console.error('[copy-analise] fonte não encontrada:', src);
@@ -37,3 +49,13 @@ if (url && anon) {
 mkdirSync(destDir, { recursive: true });
 writeFileSync(dest, html);
 console.log('[copy-analise] copiado →', dest.replace(root + '/', ''));
+
+for (const name of ASSETS) {
+  const from = resolve(srcDir, name);
+  if (existsSync(from)) {
+    copyFileSync(from, resolve(destDir, name));
+  } else {
+    console.warn('[copy-analise] asset ausente (ignorado):', name);
+  }
+}
+console.log('[copy-analise] ícones + manifest copiados (' + ASSETS.length + ' arquivos)');
