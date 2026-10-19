@@ -568,6 +568,21 @@ tbody tr{transition:background-color .12s ease}
 .m-cycstat small{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
 .m-cycstat b{font-family:var(--head);font-size:14px;color:var(--ink)}
 .m-cycact{display:flex;gap:7px;flex-wrap:wrap;margin-top:11px}
+/* Recordes (preenchimento automático) */
+.rec-list{display:flex;flex-direction:column;gap:7px;margin-top:4px}
+.rec-row{display:flex;align-items:center;gap:11px;padding:9px 11px;border-radius:12px;background:var(--surface-2);border:1px solid var(--line)}
+.rec-ic{font-size:17px;flex:none;width:22px;text-align:center}
+.rec-mid{min-width:0;flex:1;display:flex;flex-direction:column;gap:1px}
+.rec-mid b{font-size:13.5px;color:var(--ink);font-weight:600}
+.rec-mid small{font-size:11px;color:var(--muted)}
+.rec-val{font-family:var(--head);font-size:15px;color:var(--ink);white-space:nowrap}
+/* Hidratação: repartição antes/durante/depois */
+.hyd-brk{display:flex;gap:8px;margin:12px 0 4px}
+.hyd-ph{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:10px 6px;border-radius:12px;background:var(--surface-2);border:1px solid var(--line)}
+.hyd-ph.on{border-color:color-mix(in srgb,var(--accent) 40%,var(--line));background:color-mix(in srgb,var(--accent) 8%,var(--surface-2))}
+.hyd-ic{font-size:16px}
+.hyd-ph b{font-family:var(--head);font-size:15px;color:var(--ink)}
+.hyd-ph small{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
 /* ii — ritmo de prova por zona */
 .m-pztbl{display:flex;flex-direction:column;gap:6px;margin-top:4px}
 .m-pzrow{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:11px;background:var(--surface-2);border:1px solid var(--line)}
@@ -1942,6 +1957,19 @@ function render(){
   wireTooltips(v);
   makeCardsCollapsible(v);
   wireInfo(v);
+  updateCycleTabLabel();
+}
+// Nome da aba do ciclo: usa o nome do ciclo configurado (Meia, São Silvestre…) ou "Ciclo Atual".
+function cycleTabLabel(){
+  var r=state.race;if(!r)return "Ciclo Atual";
+  var n=(r.name||"").trim();
+  if(!n)return (RACE_TYPES[raceTypeOf(r)]||{}).label||"Ciclo Atual";
+  return n.length>18?n.slice(0,17)+"…":n;
+}
+function updateCycleTabLabel(){
+  var btn=document.getElementById("tab-maratona");if(!btn)return;
+  var lb=btn.querySelector(".tlb");if(lb)lb.textContent=cycleTabLabel();
+  btn.title=state.race?(state.race.name||"Ciclo atual"):"Ciclo atual";
 }
 
 /* -------- PAINEL (dashboard) -------- */
@@ -2260,8 +2288,9 @@ function renderPainel(v){
   // ⚡ Prontidão
   var _rdLab=rd&&rd.score!=null?(rd.score>=80?"ótima":rd.score>=60?"boa":rd.score>=40?"moderada":"baixa"):"—";
   hero.appendChild(tile({lab:"⚡ Prontidão",val:rd&&rd.score!=null?rd.score:"—",note:_rdLab,conf:null}));
-  // 💧 Água
-  hero.appendChild(tile({lab:"💧 Água",val:hydroRate!=null?Math.round(hydroRate):(lastHydro&&hydroTotal(lastHydro)!=null?hydroTotal(lastHydro):"—"),unit:hydroRate!=null?"ml/h":(lastHydro?"ml":""),note:lastHydro?((hydroSt?hydroSt.label:"total")+" · último"):"informe no treino",conf:null,info:"hidratacao"}));
+  // 💧 Água (ciclo completo do treino: antes+durante+depois)
+  var _lastTot=lastHydro?hydroTotal(lastHydro):null;
+  hero.appendChild(tile({lab:"💧 Água",val:_lastTot!=null?_lastTot:"—",unit:_lastTot!=null?"ml":"",note:_lastTot!=null?("total · "+(hydroRate!=null?Math.round(hydroRate)+" ml/h durante":"último treino")):"informe no treino",conf:null,info:"hidratacao"}));
   // ★ Baseline 5K (opcional — liga em Config)
   if(a.showBaseline5k){
     var baseline5k=ws.filter(function(w){return w.type==="teste"||w.type==="prova";}).find(function(w){return Math.abs(w.distKm-5)<0.6;});
@@ -2317,20 +2346,31 @@ function renderPainel(v){
   carga.appendChild(formCard);
   v.appendChild(carga);
 
-  // ---- HIDRATAÇÃO ----
+  // ---- HIDRATAÇÃO (ciclo completo do treino: antes + durante + depois) ----
   if(hydroRuns.length){
-    v.appendChild(sectionTitle("Hidratação · acompanhamento entre treinos"));
-    var hcard=card("Água durante o treino · ml/h","média","hidratacao");
-    if(hydroRate!=null){var _hh=el("div");_hh.innerHTML='<div class="kbig">'+Math.round(hydroRate)+'<small> ml/h</small></div><div class="ksub">último treino · total '+hydroTotal(lastHydro)+' ml</div>';hcard.appendChild(_hh);}
-    var hpts=hydroRuns.map(function(w){var r=hydroRateMlH(w);return r!=null?{label:fmtDate(w.date),y:Math.round(r),extra:(w.temp!=null?Math.round(w.temp)+"°C":"")}:null;}).filter(Boolean);
-    if(hpts.length)hcard.appendChild(chartBox(lineChart({series:[{name:"ml/h",points:hpts,colorVar:seriesColor(1)}],yfmt:function(v){return Math.round(v)+"";},target:{y:600,label:"alvo ~600"}})));
-    if(hydroRate!=null)hcard.appendChild(richBlock(scaleWidget({min:0,max:1200,val:hydroRate,valText:Math.round(hydroRate)+" ml/h",segs:[{to:400,label:"Baixa",c:"var(--warn)"},{to:900,label:"Adequada",c:"var(--good)"},{to:1200,label:"Alta",c:"var(--trend)"}]})));
+    v.appendChild(sectionTitle("Hidratação · antes · durante · depois"));
+    var hcard=card("Hidratação do treino · ciclo completo","média","hidratacao");
+    var lastTot=lastHydro?hydroTotal(lastHydro):null, totAvg=hydroTotalAvg(hydroRuns);
+    var _hh=el("div");_hh.innerHTML='<div class="kbig">'+(lastTot!=null?lastTot:"—")+'<small> ml</small></div><div class="ksub">último treino · média do ciclo '+(totAvg!=null?totAvg+" ml":"—")+'</div>';hcard.appendChild(_hh);
+    // repartição média antes / durante / depois
+    var aAvg=hydroPhaseAvg(hydroRuns,"waterBefore"),dAvg=hydroPhaseAvg(hydroRuns,"waterDuring"),pAvg=hydroPhaseAvg(hydroRuns,"waterAfter");
+    var brk=el("div","hyd-brk");
+    brk.innerHTML=
+      '<div class="hyd-ph"><span class="hyd-ic">🛫</span><b>'+(aAvg!=null?aAvg+" ml":"—")+'</b><small>antes</small></div>'+
+      '<div class="hyd-ph on"><span class="hyd-ic">🏃</span><b>'+(dAvg!=null?dAvg+" ml":"—")+'</b><small>durante</small></div>'+
+      '<div class="hyd-ph"><span class="hyd-ic">🛬</span><b>'+(pAvg!=null?pAvg+" ml":"—")+'</b><small>depois</small></div>';
+    hcard.appendChild(brk);
+    // evolução do total (ml) por treino — o ciclo inteiro
+    var hpts=hydroRuns.map(function(w){var t=hydroTotal(w);return t!=null?{label:fmtDate(w.date),y:t,extra:(w.temp!=null?Math.round(w.temp)+"°C":"")}:null;}).filter(Boolean);
+    if(hpts.length)hcard.appendChild(chartBox(lineChart({series:[{name:"total ml",points:hpts,colorVar:seriesColor(1)}],yfmt:function(v){return Math.round(v)+"";}})));
+    // taxa durante (ml/h) — densidade de reposição no esforço
+    if(hydroRate!=null)hcard.appendChild(richBlock(scaleWidget({min:0,max:1200,val:hydroRate,valText:Math.round(hydroRate)+" ml/h durante",segs:[{to:400,label:"Baixa",c:"var(--warn)"},{to:900,label:"Adequada",c:"var(--good)"},{to:1200,label:"Alta",c:"var(--trend)"}]})));
     var _dLast=null;try{if(lastHydro&&!isBike(lastHydro))_dLast=computeDecoupling(lastHydro);}catch(e){}
-    var hAn="Mire <b>400–900 ml/h</b> durante treinos longos/quentes. ";
-    if(hydroRate!=null&&hydroRate<400&&_dLast!=null&&_dLast>8)hAn+="No último treino, taxa baixa + decoupling "+_dLast.toFixed(1)+"%"+(lastHydro.temp!=null&&lastHydro.temp>=22?" e calor":"")+" sugerem <b>desidratação na deriva cardíaca</b>.";
-    else if(hydroSt&&hydroSt.label==="adequada")hAn+="Sua reposição está <b>adequada</b>.";
-    else if(hydroSt&&hydroSt.label==="baixa")hAn+="Sua reposição está <b>baixa</b> — aumente a água durante.";
-    else if(hydroSt&&hydroSt.label==="alta")hAn+="Reposição <b>alta</b> — bom no calor.";
+    var hAn="Avalia o <b>ciclo completo</b> do treino — antes + durante + depois. Durante, mire <b>400–900 ml/h</b>; chegue bem hidratado (antes) e reidrate na recuperação (depois). ";
+    if(hydroRate!=null&&hydroRate<400&&_dLast!=null&&_dLast>8)hAn+="No último treino, pouca água durante + decoupling "+_dLast.toFixed(1)+"%"+(lastHydro.temp!=null&&lastHydro.temp>=22?" e calor":"")+" sugerem <b>desidratação na deriva cardíaca</b> — reforce o antes e o durante.";
+    else if(hydroSt&&hydroSt.label==="adequada")hAn+="Reposição <b>durante</b> adequada. 👍";
+    else if(hydroSt&&hydroSt.label==="baixa")hAn+="Reposição <b>durante</b> baixa — aumente a água no treino.";
+    else if(hydroSt&&hydroSt.label==="alta")hAn+="Reposição <b>durante</b> alta — boa no calor; equilibre com antes/depois.";
     hcard.appendChild(hint(hAn));
     v.appendChild(hcard);
   }
@@ -2512,7 +2552,7 @@ function renderPainel(v){
 
   // records + timeline
   var lower2=el("div","grid g-2");
-  var rec=el("div","card");rec.innerHTML='<h3>🏆 Recordes do ciclo</h3>';
+  var rec=el("div","card");rec.innerHTML='<h3>🏆 Recordes <span class="badge lo" style="margin-left:auto">todo o histórico</span></h3>';
   rec.appendChild(recordsTable(runs));
   lower2.appendChild(rec);
   var tl=el("div","card");tl.innerHTML='<h3>⏱ Timeline · destaques</h3>';
@@ -2656,18 +2696,38 @@ function bestAnchor(ws){
   if(!cands.length)return null;
   return cands.slice().sort(function(a,b){return a.date<b.date?1:-1;})[0];
 }
+// Recordes que se preenchem sozinhos a partir das atividades (não exige distância exata).
 function recordsTable(ws){
-  var dists=[{n:"5 km",d:5},{n:"10 km",d:10},{n:"15 km",d:15},{n:"21,1 km",d:21.0975},{n:"42,2 km",d:42.195}];
-  var t=el("table");t.innerHTML='<thead><tr><th>Distância</th><th class="num">Melhor tempo</th><th>Onde</th></tr></thead>';
-  var tb=el("tbody");
-  dists.forEach(function(dd){
-    var best=null;
-    ws.forEach(function(w){if(!w.distKm||!w.durationSec)return;if(Math.abs(w.distKm-dd.d)/dd.d<=0.05){if(!best||w.durationSec<best.durationSec)best=w;}});
-    var r=el("tr");
-    r.innerHTML='<td>'+dd.n+'</td><td class="num">'+(best?hms(best.durationSec):"—")+'</td><td class="sub">'+(best?esc((best.notes||"").split("·")[0]||best.type)+" · "+fmtDate(best.date):"—")+'</td>';
-    tb.appendChild(r);
-  });
-  t.appendChild(tb);return t;
+  var runs=(ws||[]).filter(function(w){return !isBike(w)&&w.distKm&&w.durationSec;});
+  function dateTxt(w){return esc((w.notes||"").split("·")[0].trim()||typeLabel(w.type))+" · "+fmtDate(w.date);}
+  // maior distância
+  var longest=null;runs.forEach(function(w){if(!longest||w.distKm>longest.distKm)longest=w;});
+  // maior duração
+  var longT=null;runs.forEach(function(w){if(!longT||w.durationSec>longT.durationSec)longT=w;});
+  // pace mais rápido (≥3 km, pra evitar tiro curto)
+  var fast=null;runs.forEach(function(w){if(w.distKm>=3){var p=w.durationSec/w.distKm;if(!fast||p<fast.p)fast={w:w,p:p};}});
+  // melhor EF (economia do motor)
+  var bEF=null;runs.forEach(function(w){var ef=computeEF(w);if(ef!=null&&(!bEF||ef>bEF.ef))bEF={w:w,ef:ef};});
+  // maior semana (volume de corrida)
+  var byWk={};runs.forEach(function(w){var k=isoWeekKey(w.date);byWk[k]=(byWk[k]||0)+(w.distKm||0);});
+  var bWk=null;Object.keys(byWk).forEach(function(k){if(!bWk||byWk[k]>bWk.km)bWk={k:k,km:byWk[k]};});
+  // maior subida (ganho de elevação)
+  var bClimb=null;runs.forEach(function(w){if(w.gainM&&(!bClimb||w.gainM>bClimb.gainM))bClimb=w;});
+  var rows=[
+    {ic:"🏃",lab:"Maior distância",val:longest?mKmTxt(longest.distKm)+" km":"—",sub:longest?dateTxt(longest):"sem corrida"},
+    {ic:"⏱️",lab:"Maior duração",val:longT?hmsShort(longT.durationSec):"—",sub:longT?dateTxt(longT):"sem corrida"},
+    {ic:"⚡",lab:"Pace mais rápido",val:fast?paceStr(fast.p)+"/km":"—",sub:fast?mKmTxt(fast.w.distKm)+" km · "+fmtDate(fast.w.date):"≥ 3 km"},
+    {ic:"❤️",lab:"Melhor EF (economia)",val:bEF?bEF.ef.toFixed(4).replace(".",","):"—",sub:bEF?fmtDate(bEF.w.date):"sem EF"},
+    {ic:"📅",lab:"Maior semana",val:bWk?mKmTxt(bWk.km)+" km":"—",sub:bWk?"semana "+bWk.k.split("-W")[1]:"—"},
+    {ic:"⛰️",lab:"Maior subida",val:bClimb?Math.round(bClimb.gainM)+" m":"—",sub:bClimb?"D+ · "+fmtDate(bClimb.date):"sem ganho"}
+  ];
+  var wrap=el("div","rec-list");
+  wrap.innerHTML=rows.map(function(r){
+    return '<div class="rec-row"><span class="rec-ic">'+r.ic+'</span>'+
+      '<div class="rec-mid"><b>'+r.lab+'</b><small>'+r.sub+'</small></div>'+
+      '<span class="rec-val">'+r.val+'</span></div>';
+  }).join("");
+  return wrap;
 }
 function timelineEl(ws){
   var wrap=el("div","timeline");
@@ -3200,6 +3260,8 @@ function renderMaratona(v){
   var race=state.race, a=state.athlete, ws=sortedWorkouts(), runs=runsOnly(ws);
   if(!race){ renderNoCycle(v); return; }
   var blk=mBlock(race), phase=blk?mPhase(blk,race):null;
+  // Esta aba mostra SÓ os treinos deste ciclo (startDate → data da prova). As demais abas seguem com o histórico completo.
+  var cRuns=cycleRunsInRange(race);
 
   /* ---- HERO ---- */
   var hero=el("div","m-hero");
@@ -3255,13 +3317,11 @@ function renderMaratona(v){
   var ac=null;try{ac=acuteChronic(ws,a);}catch(e){}
   var acR=ac?ac.ratio:null;
   var acBand=acR==null?null:(acR<0.8?["Destreino","lo"]:acR<=1.3?["Seguro","hi"]:acR<=1.5?["Atenção","mid"]:["Risco","lo"]);
-  // longão recente (últimos 49 dias; senão, maior do histórico)
-  var nowT=Date.now(),maxLongRecent=0,maxLongAll=0;
-  runs.forEach(function(w){var dk=w.distKm||0;if(dk>maxLongAll)maxLongAll=dk;var age=(nowT-new Date(w.date+"T00:00:00"))/86400000;if(age<=49&&dk>maxLongRecent)maxLongRecent=dk;});
-  var maxLong=maxLongRecent||maxLongAll;
-  // volume da semana atual (corrida)
+  // longão DESTE ciclo (maior corrida dentro do bloco startDate→prova)
+  var maxLong=0;cRuns.forEach(function(w){if((w.distKm||0)>maxLong)maxLong=w.distKm||0;});
+  // volume da semana atual (corrida) — dentro do ciclo
   var curKey=mWeekInfo(0).key;
-  var curKm=runs.filter(function(w){return isoWeekKey(w.date)===curKey;}).reduce(function(s,w){return s+(w.distKm||0);},0);
+  var curKm=cRuns.filter(function(w){return isoWeekKey(w.date)===curKey;}).reduce(function(s,w){return s+(w.distKm||0);},0);
   var longTarget=race.longRunTargetKm||30, peakTarget=race.peakKmTarget||50;
   var grid=el("div","grid g-2");
   grid.appendChild(mTile({lab:"🏃 Longão",val:mKmTxt(maxLong),unit:"km",meter:maxLong/longTarget*100,note:"meta <b>"+longTarget+" km</b>"}));
@@ -3271,7 +3331,9 @@ function renderMaratona(v){
   v.appendChild(grid);
 
   /* ---- RITMO DE PROVA POR ZONA DE FC (item ii) ---- */
-  var pz=mPaceByZone(runs,a);
+  var pzCycle=cRuns.filter(function(w){return !isBike(w)&&w.hrAvg&&(w.distKm||0)>=2&&w.durationSec;});
+  var pzFromCycle=pzCycle.length>=3;
+  var pz=mPaceByZone(pzFromCycle?cRuns:runs,a);
   var pzc=el("div","card");
   var pzh='<h3>🎯 Ritmo de prova por zona de FC</h3>';
   if(pz){
@@ -3292,7 +3354,7 @@ function renderMaratona(v){
     var sug=(z2&&z2.pace&&z3&&z3.pace)?paceStr(z3.pace)+'–'+paceStr(z2.pace)+'/km':null;
     pzc.innerHTML=pzh+'<div class="m-pztbl">'+rows+'</div>'+
       (sug?'<div class="m-pzsug">🏁 Dia da prova (terminar bem): segure a FC na faixa <b>Z2–Z3</b> → ritmo estimado <b>'+sug+'</b>. Nas primeiras horas fique no lado leve (Z2); se sobrar perna no fim, suba pra Z3.</div>':'');
-    pzc.appendChild(hint("Estimado da sua relação <b>FC × ritmo</b> das últimas "+pz.n+" corridas (regressão linear). É referência de treino por zonas — não um tempo-alvo. Melhora conforme o EF sobe."));
+    pzc.appendChild(hint("Estimado da sua relação <b>FC × ritmo</b> de "+pz.n+" corridas "+(pzFromCycle?"<b>deste ciclo</b>":"do <b>histórico</b> (ainda com &lt; 3 corridas no ciclo)")+" (regressão linear). É referência de treino por zonas — não um tempo-alvo. Melhora conforme o EF sobe."));
   }else{
     pzc.innerHTML=pzh;
     pzc.appendChild(hint("Registre ao menos 3 corridas com <b>FC média</b> e distância para estimar o ritmo por zona. A faixa de prova (Z2–Z3) aparece aqui."));
@@ -3367,30 +3429,47 @@ function renderMaratona(v){
   }
   zc.innerHTML=zh;v.appendChild(zc);
 
-  /* ---- EVOLUÇÃO DO VOLUME (real) ---- */
-  var kmByWk={};runs.forEach(function(w){var k=isoWeekKey(w.date);kmByWk[k]=(kmByWk[k]||0)+(w.distKm||0);});
+  /* ---- EVOLUÇÃO DO VOLUME (real · deste ciclo) ---- */
+  var kmByWk={};cRuns.forEach(function(w){var k=isoWeekKey(w.date);kmByWk[k]=(kmByWk[k]||0)+(w.distKm||0);});
   var wkeys=Object.keys(kmByWk).sort();
   var bars=wkeys.slice(-16).map(function(k){return{label:k.replace(/^\d+-/,""),y:Math.round(kmByWk[k]*10)/10};});
   var ec=el("div","card");
   ec.innerHTML='<h3>📈 Evolução do volume</h3>';
   if(bars.length){
     ec.appendChild(chartBox(barChart({bars:bars,yfmt:function(x){return Math.round(x);},threshold:{y:peakTarget,label:"pico "+peakTarget+" km"}})));
-    ec.appendChild(hint("Volume semanal de corrida (km) <b>real</b>, por semana ISO. A linha tracejada é a meta de pico."));
-  }else ec.appendChild(hint("Importe ou registre corridas para ver a evolução do volume."));
+    ec.appendChild(hint("Volume semanal de corrida (km) <b>real deste ciclo</b>, por semana ISO. A linha tracejada é a meta de pico."));
+  }else ec.appendChild(hint("Registre corridas neste ciclo para ver a evolução do volume."));
   v.appendChild(ec);
 
-  /* ---- ESTIMATIVA (discreta, só referência) ---- */
-  var anchor=bestAnchor(runs);
-  if(anchor){
-    var preds=racePredictions(anchor.distKm,anchor.durationSec);
-    var p42=preds.filter(function(p){return Math.abs(p.d-42.195)<1;})[0]||preds[preds.length-1];
-    var hh=Math.floor(p42.timeSec/3600),mm=Math.round((p42.timeSec%3600)/60);if(mm===60){mm=0;hh++;}
-    var est=el("div","card tile m-est");est.style.borderStyle="dashed";
-    est.innerHTML='<div class="lab">⏱️ Estimativa 42 km · só referência</div>'+
-      '<div class="val">~'+hh+'h'+mPad2(mm)+'</div>'+
-      '<div class="note">a partir do seu melhor esforço recente ('+esc(anchor.type||"âncora")+' · '+mKmTxt(anchor.distKm)+' km). Melhora com o treino — o foco é <b>terminar bem</b>, não o tempo.</div>';
-    v.appendChild(est);
+  /* ---- ESTIMATIVA (meia · ciclo atual · maratona) ---- */
+  var estAnchorCycle=bestAnchor(cRuns), estAnchor=estAnchorCycle||bestAnchor(runs);
+  var est=el("div","card");
+  est.innerHTML='<h3>⏱️ Estimativa de prova <span class="badge lo" style="margin-left:auto">Riegel</span></h3>';
+  if(estAnchor){
+    var cycleLab=(raceTypeOf(race)==="custom"&&race.name)?race.name:((RACE_TYPES[raceTypeOf(race)]||{}).label||"Ciclo atual");
+    var cand=[{d:21.0975,lab:"Meia maratona"},{d:race.distKm,lab:cycleLab},{d:42.195,lab:"Maratona"}];
+    var seen={},list=[];
+    cand.forEach(function(c){if(!c.d||c.d<=0)return;var k=Math.round(c.d*10);if(seen[k])return;seen[k]=1;list.push(c);});
+    list.sort(function(x,y){return x.d-y.d;});
+    var tb='<table style="margin-top:8px"><thead><tr><th>Trecho</th><th class="num">Tempo</th><th class="num">Pace</th></tr></thead><tbody>';
+    list.forEach(function(c){var t=riegel(estAnchor.distKm,estAnchor.durationSec,c.d);var isRace=Math.abs(c.d-race.distKm)<0.3;
+      tb+='<tr'+(isRace?' style="background:color-mix(in srgb,var(--accent) 10%,transparent)"':'')+'>'+
+        '<td>'+(isRace?'🎯 ':'')+esc(c.lab)+' <span class="sub">'+mKmTxt(c.d)+' km</span></td>'+
+        '<td class="num">'+hms(t)+'</td><td class="num">'+paceStr(t/c.d)+'/km</td></tr>';});
+    tb+='</tbody></table>';
+    est.innerHTML+=tb;
+    est.appendChild(hint("Projeção de Riegel a partir do seu melhor esforço "+(estAnchorCycle?"<b>deste ciclo</b>":"recente (ainda sem teste/prova no ciclo)")+" ("+esc(estAnchor.type||"âncora")+" · "+mKmTxt(estAnchor.distKm)+" km em "+hms(estAnchor.durationSec)+"). Estimativa, não garantia — o foco é <b>terminar bem</b>. Melhora com uma prova/teste recente."));
+  }else{
+    est.appendChild(hint("Registre um teste ou prova neste ciclo para projetar os tempos de meia, do ciclo atual e da maratona."));
   }
+  v.appendChild(est);
+
+  /* ---- RECORDES DO CICLO (preenche sozinho) ---- */
+  var crec=el("div","card");
+  crec.innerHTML='<h3>🏆 Recordes do ciclo</h3>';
+  crec.appendChild(recordsTable(cRuns));
+  crec.appendChild(hint("Melhores marcas <b>deste ciclo</b> ("+mDateBR(race.startDate)+" → "+mDateBR(race.date)+"). Preenche automaticamente conforme você registra as atividades."));
+  v.appendChild(crec);
 
   /* ---- CICLOS ANTERIORES ---- */
   renderCiclosAnteriores(v);
@@ -3472,6 +3551,8 @@ function hydroHas(w){return !!w&&(w.waterBefore!=null||w.waterDuring!=null||w.wa
 function hydroTotal(w){if(!hydroHas(w))return null;return (w.waterBefore||0)+(w.waterDuring||0)+(w.waterAfter||0);}
 function hydroRateMlH(w){if(!w||w.waterDuring==null||!w.durationSec)return null;return w.waterDuring/(w.durationSec/3600);}
 function hydroStatus(rate){if(rate==null)return null;if(rate<400)return{label:"baixa",c:"var(--warn)"};if(rate<=900)return{label:"adequada",c:"var(--good)"};return{label:"alta",c:"var(--trend)"};}
+function hydroPhaseAvg(rs,key){var v=(rs||[]).map(function(w){return w[key];}).filter(function(x){return x!=null;});return v.length?Math.round(v.reduce(function(a,b){return a+b;},0)/v.length):null;}
+function hydroTotalAvg(rs){var v=(rs||[]).map(hydroTotal).filter(function(x){return x!=null;});return v.length?Math.round(v.reduce(function(a,b){return a+b;},0)/v.length):null;}
 function renderHydroInfo(w){
   var box=document.getElementById("hydroInfo");if(!box)return;
   if(!hydroHas(w)){box.style.display="none";box.innerHTML="";return;}
