@@ -888,6 +888,41 @@ function hillPerformance(w){
 }
 function hillAggregate(ws){var rows=ws.map(hillPerformance).filter(function(h){return h&&h.effVsModel!=null;});if(!rows.length)return null;return{sessions:rows.length,effVsModel:mean(rows.map(function(r){return r.effVsModel;})),speedLossPctPerGrade:mean(rows.map(function(r){return r.speedLossPctPerGrade;})),totalClimbM:ws.reduce(function(a2,w){var h=hillPerformance(w);return a2+(h?h.gainM:0);},0)};}
 function median(arr){if(!arr.length)return 0;var s=arr.slice().sort(function(x,y){return x-y;});var m=Math.floor(s.length/2);return s.length%2?s[m]:(s[m-1]+s[m])/2;}
+// Custo de FC do morro (análise, baseada em SPLITS): ajusta FC ≈ a + b·v_GAP nos km planos
+// e mede quanto a FC real desvia do previsto por faixa de inclinação. Positivo em subida =
+// subir custa mais FC do que o pace prevê; negativo em descida = a FC subestima o impacto.
+function hrGradeBand(g){if(g>5)return 0;if(g>2)return 1;if(g>=-2)return 2;if(g>=-5)return 3;return 4;}
+var HR_GRADE_BANDS=[">5%","2–5%","±2% (plano)","−5 a −2%","<−5%"];
+function hrGradeCost(runs){
+  var ok={facil:1,"longão":1,regenerativo:1,tempo:1};
+  var cand=(runs||[]).filter(function(w){return !isBike(w)&&w.splits&&w.splits.length&&ok[w.type];})
+    .sort(function(x,y){return x.date<y.date?1:-1;}).slice(0,12);
+  var pool=[];
+  cand.forEach(function(w){w.splits.forEach(function(s){
+    if(s.hrAvg==null||!s.timeSec||s.elevDeltaM==null)return;
+    var d=s.distKm||1,grade=clamp(s.elevDeltaM/(d*10),-35,35),gt=s.timeSec/gradeCostMult(grade);
+    pool.push({grade:grade,vgap:(d*1000)/gt,hr:s.hrAvg,min:s.timeSec/60});
+  });});
+  if(pool.length<10)return null;
+  var flat=pool.filter(function(p){return Math.abs(p.grade)<=2;});
+  if(flat.length<5)return null;
+  // base robusta: FC média no plano (ponderada por minuto) — sempre vale, mesmo em ritmo estável
+  var fm=0,fw=0;flat.forEach(function(p){fm+=p.min*p.hr;fw+=p.min;});
+  var meanFlatHr=fm/fw;
+  var predict=function(){return meanFlatHr;};
+  // refinamento: regressão FC ≈ a + b·v_GAP só quando há variação real de v_GAP (senão é instável)
+  if(flat.length>=8&&std(flat.map(function(p){return p.vgap;}))>=0.15){
+    var n=0,sx=0,sy=0,sxx=0,sxy=0;
+    flat.forEach(function(p){n++;sx+=p.vgap;sy+=p.hr;sxx+=p.vgap*p.vgap;sxy+=p.vgap*p.hr;});
+    var den=n*sxx-sx*sx;
+    if(den>0){var b=(n*sxy-sx*sy)/den,a=(sy-b*sx)/n;if(b>0&&b<80)predict=function(v){return a+b*v;};}
+  }
+  var acc=HR_GRADE_BANDS.map(function(){return{min:0,wr:0};});
+  pool.forEach(function(p){var bi=hrGradeBand(p.grade),r=p.hr-predict(p.vgap);acc[bi].min+=p.min;acc[bi].wr+=p.min*r;});
+  var bands=acc.map(function(x,i){return{lab:HR_GRADE_BANDS[i],min:x.min,resid:x.min>0?x.wr/x.min:null};});
+  function wres(idxs){var m=0,w=0;idxs.forEach(function(i){m+=acc[i].min;w+=acc[i].wr;});return m>0?w/m:null;}
+  return {bands:bands,upCost:wres([0,1]),downDev:wres([3,4]),nSplits:pool.length,nRuns:cand.length,flatN:flat.length};
+}
 // ---- recuperação: diário (sono/FC repouso/HRV/VO2) ----
 function metricTrend(entries,key,refDate,baseDays){baseDays=baseDays||14;var rows=entries.filter(function(e){return e[key]!=null&&(!refDate||e.date<=refDate);}).sort(function(a,b){return a.date<b.date?1:-1;});if(!rows.length)return null;var latest=rows[0];var ref=refDate?new Date(refDate+"T00:00:00"):new Date(latest.date+"T00:00:00");var base=rows.slice(1).filter(function(e){var days=Math.round((ref-new Date(e.date+"T00:00:00"))/86400000);return days>=1&&days<=baseDays;});var baseline=base.length?median(base.map(function(e){return e[key];})):null;var deltaAbs=baseline!=null?latest[key]-baseline:null;var deltaPct=baseline?deltaAbs/baseline*100:null;return{latest:latest[key],date:latest.date,baseline:baseline,deltaAbs:deltaAbs,deltaPct:deltaPct};}
 function latestDaily(entries,key,refDate){var rows=entries.filter(function(e){return e[key]!=null&&(!refDate||e.date<=refDate);}).sort(function(a,b){return a.date<b.date?1:-1;});return rows.length?{value:rows[0][key],date:rows[0].date}:null;}
@@ -1906,7 +1941,8 @@ var EXTRA_DOCS={
   baseline:{name:"Baseline 5K",conf:"alta",formula:"marco zero do ciclo (teste ou prova de ~5 km mais recente)",desc:"Seu ponto de partida de referência: o pace (e o GAP) do 5K que ancora as comparações e as projeções de prova. <b>Objetivo: melhorar o pace no mesmo esforço ao longo do ciclo.</b>",fields:"teste/prova de ~5 km"},
   fcrep:{name:"FC de repouso",conf:"média",formula:"menor FC em repouso (do Apple Watch) — média/mediana do período",desc:"Termômetro de recuperação e adaptação. <b>Tendência de queda = adaptando bem; subida de +3 a +5 bpm sobre o seu normal = fadiga/estresse — considere aliviar.</b> É individual: compare com você mesmo.",fields:"FC de repouso (Apple Watch) ou informado"},
   hrv:{name:"HRV (SDNN)",conf:"média",formula:"SDNN (ms) do Apple Watch · comparado ao seu baseline do período",desc:"A variação entre batimentos: <b>maior/estável = sistema nervoso mais recuperado</b>. O que importa é a <b>tendência vs. você</b>, não o número cru. Acima do seu normal = verde para qualidade; bem abaixo = priorize um dia fácil.",fields:"HRV SDNN (Apple Watch) ou informado"},
-  hidratacao:{name:"Hidratação",conf:"média",formula:"taxa durante = água durante ÷ horas de treino (ml/h)\ntotal = antes + durante + depois",desc:"Quanta água você repõe <b>durante</b> o treino, por hora. Faixa prática: <b>400–900 ml/h</b> (ajuste por calor, suor e duração). <b>Abaixo de ~400 ml/h</b> em treino longo/quente, com decoupling alto, sugere desidratação contribuindo para a <b>deriva cardíaca</b>. Não substitui a sede nem orientação individual.",fields:"água antes/durante/depois (ml), informada no treino"}
+  hidratacao:{name:"Hidratação",conf:"média",formula:"taxa durante = água durante ÷ horas de treino (ml/h)\ntotal = antes + durante + depois",desc:"Quanta água você repõe <b>durante</b> o treino, por hora. Faixa prática: <b>400–900 ml/h</b> (ajuste por calor, suor e duração). <b>Abaixo de ~400 ml/h</b> em treino longo/quente, com decoupling alto, sugere desidratação contribuindo para a <b>deriva cardíaca</b>. Não substitui a sede nem orientação individual.",fields:"água antes/durante/depois (ml), informada no treino"},
+  "fc-morro":{name:"Custo de FC do morro",conf:"exploratório",formula:"ajusta FC ≈ a + b·v_GAP nos km planos (|inclinação| ≤ 2%) das últimas corridas fáceis\nresíduo = FC real − FC prevista, por faixa de inclinação (média ponderada por minuto)",desc:"Quanto a sua <b>FC real</b> foge do que o seu próprio pace (velocidade-GAP) prevê, faixa a faixa de inclinação. <b>Subida com resíduo positivo</b> = subir custa mais FC do que o GAP (Minetti) assume para você. <b>Descida com resíduo negativo</b> = a FC fica <i>abaixo</i> do previsto — ela <b>subestima o impacto excêntrico</b> da descida (relevante para a tíbia). É <b>análise</b>, não um alvo: a FC real e as zonas continuam intactas no TRIMP e nas zonas. Precisa de splits por km com <b>FC + Δelevação</b>. Versão por amostra (1 Hz do .FIT) aparece em “Perfil de inclinação”.",fields:"splits por km: FC, Δelevação, tempo"}
 };
 function kpiDoc(key){
   if(EXTRA_DOCS[key])return EXTRA_DOCS[key];
@@ -2336,6 +2372,32 @@ function renderPainel(v){
   gapCard.appendChild(hint("Pace ajustado à inclinação km a km (subida +3,5%/1%, descida −1,5%/1%). Torna sessões em relevos diferentes comparáveis. Menor = mais rápido."));
   mec.appendChild(gapCard);
   v.appendChild(mec);
+
+  // ---- CUSTO DE FC DO MORRO (análise secundária, baseada em splits) ----
+  var hc=hrGradeCost(runs);
+  if(hc){
+    var fcm=card("💗 Custo de FC do morro","exploratório","fc-morro");
+    var up=hc.upCost, dn=hc.downDev;
+    var head=el("div");
+    var upTxt=up==null?"sem subidas suficientes":(Math.abs(up)<1?"subir custa <b>~o previsto</b> (GAP calibrado)":"subir custa <b>"+(up>0?"+":"")+up.toFixed(0)+" bpm</b> acima do previsto pelo seu pace");
+    head.innerHTML='<div class="kbig">'+(up!=null?(up>0?"+":"")+up.toFixed(0):"—")+'<small> bpm</small></div><div class="ksub">'+upTxt+'</div>';
+    fcm.appendChild(head);
+    // tabela por faixa (só faixas com ≥2 min)
+    var rowsH="";
+    hc.bands.forEach(function(bd){
+      if(bd.min<2||bd.resid==null)return;
+      var col=bd.resid>1?"var(--warn)":bd.resid<-1?"var(--s1)":"var(--muted)";
+      rowsH+='<tr><td>'+bd.lab+'</td><td class="num" style="color:'+col+';font-weight:700">'+(bd.resid>0?"+":"")+bd.resid.toFixed(1)+' bpm</td><td class="num sub">'+Math.round(bd.min)+' min</td></tr>';
+    });
+    if(rowsH)fcm.appendChild(chartBox('<table><thead><tr><th>Inclinação</th><th class="num">Resíduo FC</th><th class="num">Tempo</th></tr></thead><tbody>'+rowsH+'</tbody></table>'));
+    var read="";
+    if(up!=null&&up>1)read+="Nas <b>subidas</b> sua FC roda <b>+"+up.toFixed(0)+" bpm</b> acima do que o pace prevê — treinando por zona, segure (ou caminhe) nos trechos íngremes para não estourar o teto. ";
+    else if(up!=null&&Math.abs(up)<=1)read+="Nas subidas sua FC acompanha o previsto — o GAP está bem calibrado para você. ";
+    if(dn!=null&&dn<-1)read+="Nas <b>descidas</b> a FC fica <b>"+dn.toFixed(0)+" bpm abaixo</b> do previsto: ela <b>subestima o impacto excêntrico</b> — cuidado com a tíbia, a carga mecânica existe mesmo com FC baixa.";
+    if(read)fcm.appendChild(richBlock('<div class="sub" style="line-height:1.55;margin-top:6px">'+read+'</div>'));
+    fcm.appendChild(hint("Análise exploratória de <b>"+hc.nRuns+" corrida(s)</b> fáceis com splits (FC + Δelev). Mede o <i>seu</i> desvio de FC vs. o que o pace prevê — <b>não</b> altera o GAP, nem a FC/zonas no TRIMP. Quanto mais corridas em relevo variado, mais estável."));
+    v.appendChild(fcm);
+  }
 
   // ---- CARGA & FORMA ----
   v.appendChild(sectionTitle("Carga & forma"));
