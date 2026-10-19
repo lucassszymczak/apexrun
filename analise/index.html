@@ -893,17 +893,25 @@ function metricTrend(entries,key,refDate,baseDays){baseDays=baseDays||14;var row
 function latestDaily(entries,key,refDate){var rows=entries.filter(function(e){return e[key]!=null&&(!refDate||e.date<=refDate);}).sort(function(a,b){return a.date<b.date?1:-1;});return rows.length?{value:rows[0][key],date:rows[0].date}:null;}
 function recoveryStatus(c){var s=100;if(c.restingDelta!=null)s-=clamp(c.restingDelta*5,-8,30);if(c.hrvDeltaPct!=null)s+=clamp(c.hrvDeltaPct*0.5,-25,12);if(c.sleepH!=null)s-=clamp((7.5-c.sleepH)*6,-6,24);if(c.tsb!=null&&c.tsb<-20)s-=clamp((-c.tsb-20)*0.6,0,15);s=Math.round(clamp(s,0,100));return{score:s,label:s>=75?"Good":s>=55?"Moderate":"Needs Recovery"};}
 function dailyLoads(ws,a){var m={};ws.forEach(function(w){var t=computeTrimp(w,a);if(t==null)return;m[w.date]=(m[w.date]||0)+t;});return m;}
-function fitnessSeries(ws,a){
+function fitnessSeries(ws,a,asOf){
   var loads=dailyLoads(ws,a),dates=Object.keys(loads).sort();
   if(!dates.length)return[];
   var out=[],ctl=0,atl=0,kC=1-Math.exp(-1/42),kA=1-Math.exp(-1/7);
   var d=new Date(dates[0]+"T00:00:00"),end=new Date(dates[dates.length-1]+"T00:00:00");
-  while(d<=end){var iso=d.toISOString().slice(0,10),load=loads[iso]||0,tsb=ctl-atl;ctl+=kC*(load-ctl);atl+=kA*(load-atl);out.push({date:iso,load:load,ctl:ctl,atl:atl,tsb:tsb});d.setDate(d.getDate()+1);}
+  // Estende a série até hoje (ou asOf) com cargas zero: assim CTL/ATL/TSB refletem o
+  // frescor REAL de hoje, decaindo nos dias de descanso — e não congelam no último treino.
+  var ref=asOf?new Date(asOf+"T00:00:00"):new Date();ref.setHours(0,0,0,0);
+  if(ref>end)end=ref;
+  while(d<=end){var iso=mIsoLocal(d),load=loads[iso]||0,tsb=ctl-atl;ctl+=kC*(load-ctl);atl+=kA*(load-atl);out.push({date:iso,load:load,ctl:ctl,atl:atl,tsb:tsb});d.setDate(d.getDate()+1);}
   return out;
 }
 function acuteChronic(ws,a,refDate){
   var loads=dailyLoads(ws,a);var keys=Object.keys(loads);if(!keys.length)return null;
-  var ref=refDate?new Date(refDate+"T00:00:00"):new Date(keys.sort()[keys.length-1]+"T00:00:00");
+  // Referência = hoje por padrão (ou asOf), nunca antes do último treino: a janela aguda
+  // (7d) decai nos dias de descanso em vez de ficar presa na data do último treino.
+  var ref;
+  if(refDate){ref=new Date(refDate+"T00:00:00");}
+  else{ref=new Date();ref.setHours(0,0,0,0);var last=new Date(keys.sort()[keys.length-1]+"T00:00:00");if(last>ref)ref=last;}
   var acute=0,chronic=0;
   keys.forEach(function(iso){var days=Math.round((ref-new Date(iso+"T00:00:00"))/86400000);if(days>=0&&days<7)acute+=loads[iso];if(days>=0&&days<28)chronic+=loads[iso];});
   var c7=chronic/4;if(c7<=0)return null;var r=acute/c7;
@@ -2016,7 +2024,7 @@ function renderPainel(v){
   var pol=polarization(ws,a);
   var cons=consistency(ws,a.sessionsTarget);
   var trend=performanceTrend(efPts.map(function(p){return{value:p.y};}));
-  var decPts=runs.map(function(w){var d=computeDecoupling(w);return d==null?null:{label:fmtDate(w.date),y:d,extra:w.type,color:d<7?"var(--good)":d<8?"var(--warn)":"var(--crit)"};}).filter(Boolean);
+  var decPts=runs.map(function(w){var d=computeDecoupling(w);return d==null?null:{label:fmtDate(w.date),y:d,extra:w.type,color:d<5?"var(--good)":d<=8?"var(--warn)":"var(--crit)"};}).filter(Boolean);
 
   // load per week — inclui corrida + bike (carga interna via FC)
   var loadByWeek={};ws.forEach(function(w){var t=computeTrimp(w,a);if(t==null)return;var k=isoWeekKey(w.date);loadByWeek[k]=(loadByWeek[k]||0)+t;});
@@ -2308,7 +2316,7 @@ function renderPainel(v){
   efCard.appendChild(hint("<b>Pontos = o EF ×1000</b> (sem os zeros). Sobe = motor mais econômico. A régua é você mesmo: hoje vs. 6 semanas atrás."+(trend?" Tendência "+trend.arrow+" "+deltaHtml(trend.deltaPct)+".":"")));
   motor.appendChild(efCard);
   var decCard=card("Decoupling · resistência aeróbica","alta","decoupling");
-  decCard.appendChild(chartBox(barChart({bars:decPts,yfmt:function(v){return v.toFixed(1)+"%";},threshold:{y:7,label:"alvo <7%"},zeroLine:true})));
+  decCard.appendChild(chartBox(barChart({bars:decPts,yfmt:function(v){return v.toFixed(1)+"%";},threshold:{y:5,label:"base sólida <5%"},zeroLine:true})));
   var _decLast=decPts&&decPts.length?decPts[decPts.length-1].y:null;
   if(_decLast!=null)decCard.appendChild(richBlock(scaleWidget({min:0,max:12,val:Math.max(0,_decLast),valText:_decLast.toFixed(1).replace(".",",")+"%",segs:[{to:5,label:"Sólido",c:"var(--good)"},{to:8,label:"Limítrofe",c:"var(--warn)"},{to:12,label:"Investigar",c:"var(--crit)"}]})));
   decCard.appendChild(hint("Decoupling negativo nos longões = closer comprovado (fica mais eficiente na 2ª metade). &lt;5% = base sólida; &gt;8% = investigar."));
@@ -3309,14 +3317,21 @@ function renderMaratona(v){
     v.appendChild(pc);
   }
 
-  /* ---- TILES (dados reais do motor) ---- */
-  var fit=[];try{fit=fitnessSeries(ws,a)||[];}catch(e){}
+  /* ---- TILES (dados reais do motor · SÓ deste ciclo) ---- */
+  // Forma (CTL/ATL) e A:C escopados ao ciclo: computados só com os treinos do bloco
+  // (startDate→prova). Como CTL é média de ~6 semanas e a crônica do A:C é de 4 semanas,
+  // no começo do ciclo elas ainda estão "formando" — avisamos abaixo.
+  var cStart=race.startDate, cEnd=race.date;
+  var cycleWk=ws.filter(function(w){return (!cStart||w.date>=cStart)&&(!cEnd||w.date<=cEnd);});
+  var cycleAgeDays=cStart?Math.round((Date.now()-new Date(cStart+"T00:00:00"))/86400000):999;
+  var fit=[];try{fit=fitnessSeries(cycleWk,a)||[];}catch(e){}
   var ctl=fit.length?fit[fit.length-1].ctl:null;
   var ctlPrev=fit.length>7?fit[fit.length-8].ctl:(fit.length?fit[0].ctl:null);
   var ctlArrow=(ctl!=null&&ctlPrev!=null)?(ctl>ctlPrev+0.5?" ↑":ctl<ctlPrev-0.5?" ↓":" →"):"";
-  var ac=null;try{ac=acuteChronic(ws,a);}catch(e){}
+  var ac=null;try{ac=acuteChronic(cycleWk,a);}catch(e){}
   var acR=ac?ac.ratio:null;
-  var acBand=acR==null?null:(acR<0.8?["Destreino","lo"]:acR<=1.3?["Seguro","hi"]:acR<=1.5?["Atenção","mid"]:["Risco","lo"]);
+  var acProvisional=cycleAgeDays<28;
+  var acBand=acR==null?null:(acProvisional?["Formando","mid"]:(acR<0.8?["Destreino","lo"]:acR<=1.3?["Seguro","hi"]:acR<=1.5?["Atenção","mid"]:["Risco","lo"]));
   // longão DESTE ciclo (maior corrida dentro do bloco startDate→prova)
   var maxLong=0;cRuns.forEach(function(w){if((w.distKm||0)>maxLong)maxLong=w.distKm||0;});
   // volume da semana atual (corrida) — dentro do ciclo
@@ -3326,8 +3341,8 @@ function renderMaratona(v){
   var grid=el("div","grid g-2");
   grid.appendChild(mTile({lab:"🏃 Longão",val:mKmTxt(maxLong),unit:"km",meter:maxLong/longTarget*100,note:"meta <b>"+longTarget+" km</b>"}));
   grid.appendChild(mTile({lab:"📊 Volume / sem",val:mKmTxt(curKm),unit:"km",meter:curKm/peakTarget*100,note:"pico <b>~"+peakTarget+" km</b>"}));
-  grid.appendChild(mTile({lab:"📈 Forma (CTL)",val:(ctl!=null?Math.round(ctl):"—")+(ctl!=null?'<small>'+ctlArrow+'</small>':""),note:"condicionamento acumulado"}));
-  grid.appendChild(mTile({lab:"🛡️ Salto de carga",val:(acR!=null?acR.toFixed(2).replace(".",","):"—"),note:"A:C — carga aguda ÷ crônica",badge:acBand?'<span class="badge '+acBand[1]+'">'+acBand[0]+'</span>':""}));
+  grid.appendChild(mTile({lab:"📈 Forma (CTL)",val:(ctl!=null?Math.round(ctl):"—")+(ctl!=null?'<small>'+ctlArrow+'</small>':""),note:cycleAgeDays<42?"deste ciclo · ainda formando":"condicionamento deste ciclo"}));
+  grid.appendChild(mTile({lab:"🛡️ Salto de carga",val:(acR!=null?acR.toFixed(2).replace(".",","):"—"),note:acProvisional?"A:C deste ciclo · crônica formando":"A:C deste ciclo · aguda ÷ crônica",badge:acBand?'<span class="badge '+acBand[1]+'">'+acBand[0]+'</span>':""}));
   v.appendChild(grid);
 
   /* ---- RITMO DE PROVA POR ZONA DE FC (item ii) ---- */
