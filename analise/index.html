@@ -2352,7 +2352,8 @@ function renderPainel(v){
   efCard.appendChild(hint("<b>Pontos = o EF ×1000</b> (sem os zeros). Sobe = motor mais econômico. A régua é você mesmo: hoje vs. 6 semanas atrás."+(trend?" Tendência "+trend.arrow+" "+deltaHtml(trend.deltaPct)+".":"")));
   motor.appendChild(efCard);
   var decCard=card("Decoupling · resistência aeróbica","alta","decoupling");
-  decCard.appendChild(chartBox(barChart({bars:decPts,yfmt:function(v){return v.toFixed(1)+"%";},threshold:{y:5,label:"base sólida <5%"},zeroLine:true})));
+  var _decTgt=a.decouplingTarget||7;
+  decCard.appendChild(chartBox(barChart({bars:decPts,yfmt:function(v){return v.toFixed(1)+"%";},threshold:{y:_decTgt,label:"seu alvo "+_decTgt+"%"},zeroLine:true})));
   var _decLast=decPts&&decPts.length?decPts[decPts.length-1].y:null;
   if(_decLast!=null)decCard.appendChild(richBlock(scaleWidget({min:0,max:12,val:Math.max(0,_decLast),valText:_decLast.toFixed(1).replace(".",",")+"%",segs:[{to:5,label:"Sólido",c:"var(--good)"},{to:8,label:"Limítrofe",c:"var(--warn)"},{to:12,label:"Investigar",c:"var(--crit)"}]})));
   decCard.appendChild(hint("Decoupling negativo nos longões = closer comprovado (fica mais eficiente na 2ª metade). &lt;5% = base sólida; &gt;8% = investigar."));
@@ -4205,7 +4206,7 @@ function renderConfig(v){
   g.appendChild(f("Cadência alvo","c_cad",a.cadenceTarget,"spm","number"));
   g.appendChild(f("EF baseline","c_efb",a.efBaseline,"m/s/bpm","number"));
   g.appendChild(f("Meta de EF","c_efg",a.efGainPct,"% de ganho","number"));
-  g.appendChild(f("Decoupling alvo","c_dec",a.decouplingTarget,"%","number"));
+  g.appendChild(f("Decoupling alvo","c_dec",a.decouplingTarget,"% · sua linha-alvo no gráfico","number"));
   g.appendChild(f("Volume semanal alvo","c_wk",a.weeklyTargetKm,"km","number"));
   g.appendChild(f("Sessões/semana alvo","c_ses",a.sessionsTarget,"","number"));
   g.appendChild(f("Nome do ciclo","c_cycle",a.cycleName));
