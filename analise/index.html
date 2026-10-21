@@ -1592,7 +1592,26 @@ function load(){
 }
 // marca o momento da última mudança local (usado pelo merge "mais novo vence")
 function touch(){state.updatedAt=new Date().toISOString();}
-function save(){try{localStorage.setItem(LS_KEY,JSON.stringify({athlete:state.athlete,workouts:state.workouts,daily:state.daily,deleted:state.deleted||[],race:state.race||null,races:state.races||[],planWeeks:state.planWeeks||{},updatedAt:state.updatedAt,lastSyncAt:state.lastSyncAt}));}catch(e){}}
+var _saveWarned=false;
+function _isQuotaErr(e){return !!e&&(e.name==="QuotaExceededError"||e.name==="NS_ERROR_DOM_QUOTA_REACHED"||e.code===22||e.code===1014||/quota|exceeded/i.test((e.message||"")));}
+function _stripStream(w){if(!w||!w.stream)return w;var c=Object.assign({},w);delete c.stream;c.streamPruned=true;return c;}
+function save(){
+  var base={athlete:state.athlete,workouts:state.workouts,daily:state.daily,deleted:state.deleted||[],race:state.race||null,races:state.races||[],planWeeks:state.planWeeks||{},updatedAt:state.updatedAt,lastSyncAt:state.lastSyncAt};
+  try{localStorage.setItem(LS_KEY,JSON.stringify(base));return true;}
+  catch(e){
+    if(!_isQuotaErr(e)){try{console.error("save falhou:",e);}catch(_){}return false;}
+    // Cota estourada (streams .FIT pesados). Tenta versões mais enxutas para NÃO perder o treino.
+    try{var l1=Object.assign({},base);l1.workouts=state.workouts.map(_stripStream);localStorage.setItem(LS_KEY,JSON.stringify(l1));
+      if(!_saveWarned){_saveWarned=true;try{toast("Espaço local quase cheio — guardei o treino sem os dados brutos do .FIT (os indicadores seguem). Exporte um backup ou ligue a sincronização.");}catch(_){}}
+      return true;}
+    catch(e2){
+      try{var l2=Object.assign({},base);l2.workouts=state.workouts.map(function(w){var c=_stripStream(w);c=Object.assign({},c);delete c.hrHist;return c;});localStorage.setItem(LS_KEY,JSON.stringify(l2));
+        try{toast("Armazenamento do aparelho cheio — salvei uma versão enxuta. Exporte um backup / ligue a sincronização.");}catch(_){}
+        return true;}
+      catch(e3){try{toast("⚠ Não consegui salvar no aparelho (armazenamento cheio). Exporte um backup ou ligue a sincronização para não perder o treino.");}catch(_){}return false;}
+    }
+  }
+}
 function sortedWorkouts(){return state.workouts.slice().sort(function(a,b){return a.date<b.date?-1:a.date>b.date?1:0;});}
 function sortedDaily(){return (state.daily||[]).slice().sort(function(a,b){return a.date<b.date?-1:a.date>b.date?1:0;});}
 // mescla entradas diárias (do Saúde ou manuais) por data, sem perder campos
@@ -4387,6 +4406,7 @@ function renderSyncCard(){
    MODAL DE TREINO
 ============================================================================ */
 var editingId=null;
+var _fromFitUnsaved=false; // modal aberto a partir de um .FIT e ainda não salvo
 var modalExtras={}; // campos não-editáveis preservados no salvar (histograma de FC, esporte)
 var RUN_TYPES=[["facil","Fácil / rodagem"],["longão","Longão"],["tempo","Tempo"],["limiar","Limiar"],["intervalado","Intervalado"],["regenerativo","Regenerativo"],["teste_motor","Teste do Motor"],["teste","Teste"],["prova","Prova"]];
 var BIKE_TYPES=[["bike","Bike (base / Z2)"],["bike_int","Bike forte / intervalado"]];
@@ -4431,6 +4451,7 @@ function renderSleepInfo(w){
 }
 function openModal(id,prefill,fromFit){
   editingId=id||null;
+  _fromFitUnsaved=!!fromFit&&!id;
   var w=id?state.workouts.find(function(x){return x.id===id;}):null;
   var s=w||prefill||null; // fonte dos valores
   modalExtras={hrHist:s&&s.hrHist?s.hrHist:null,sport:s&&s.sport?s.sport:null,bikeRpm:s&&s.bikeRpm!=null?s.bikeRpm:null,trainingEffect:s&&s.trainingEffect!=null?s.trainingEffect:null,
@@ -4501,7 +4522,9 @@ function modalTrap(e){
   if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}
   else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}
 }
-function closeModal(){$("#modalBg").classList.remove("show");editingId=null;if(_modalLastFocus&&_modalLastFocus.focus){try{_modalLastFocus.focus();}catch(e){}}_modalLastFocus=null;}
+function closeModal(){
+  if(_fromFitUnsaved){_fromFitUnsaved=false;try{toast("Treino do .FIT não foi salvo — toque em “Salvar treino” para ele entrar no Painel.");}catch(e){}}
+  $("#modalBg").classList.remove("show");editingId=null;if(_modalLastFocus&&_modalLastFocus.focus){try{_modalLastFocus.focus();}catch(e){}}_modalLastFocus=null;}
 function parseSplits(txt){
   if(!txt||!txt.trim())return null;
   var out=[];var lines=txt.split(/\n/);
@@ -4596,7 +4619,7 @@ function saveModal(){
   state.workouts.push(w);
   finalizeSave("Treino registrado");
 }
-function finalizeSave(msg){try{pruneStreams(state.workouts,20);}catch(e){}try{linkSleepToWorkouts();}catch(e){}touch();save();scheduleSync();closeModal();toast(msg);currentTab="painel";setActiveTab();render();}
+function finalizeSave(msg){_fromFitUnsaved=false;try{pruneStreams(state.workouts,20);}catch(e){}try{linkSleepToWorkouts();}catch(e){}touch();save();scheduleSync();closeModal();toast(msg);currentTab="painel";setActiveTab();render();}
 function askChoice(title,message,choices){
   return new Promise(function(resolve){
     var bg=el("div","choice-bg");
