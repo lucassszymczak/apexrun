@@ -828,7 +828,9 @@ function splitIntoHalves(sp){var tot=sp.reduce(function(a,s){return a+(s.distKm|
 function halfEFfromSplits(sp){var d=sp.reduce(function(a,s){return a+(s.distKm||1);},0);var num=0,den=0;for(var i=0;i<sp.length;i++){if(sp[i].hrAvg){num+=sp[i].hrAvg*sp[i].timeSec;den+=sp[i].timeSec;}}if(!den)return null;var gt=gapTimeFromSplits(sp);return((d*1000)/gt)/(num/den);}
 function computeDecoupling(w){
   if(w.decouplingPct!=null)return w.decouplingPct;
-  if(w.splits&&w.splits.length>=4&&w.splits.every(function(s){return s.hrAvg;})){
+  // Robusto a quedas de FC: não exige FC em TODOS os km (o .FIT frequentemente perde 1–2 km de
+  // FC por dropout). Basta cobertura suficiente — halfEFfromSplits já pondera só os km com FC.
+  if(w.splits&&w.splits.length>=4&&w.splits.filter(function(s){return s.hrAvg;}).length>=4){
     var h=splitIntoHalves(w.splits);if(h){var e1=halfEFfromSplits(h.first),e2=halfEFfromSplits(h.second);if(e1&&e2)return((e1-e2)/e1)*100;}
   }
   return null;
