@@ -152,6 +152,40 @@ nav.tabs button:focus-visible{outline:2px solid var(--accent);outline-offset:2px
 .insight .dot.g{background:var(--good)} .insight .dot.w{background:var(--warn)} .insight .dot.a{background:var(--accent)}
 .insight p{margin:0;font-size:12.5px;line-height:1.45;color:var(--ink-2)}
 .insight p b{color:var(--ink)}
+/* --- Progresso: hub de sistemas (resumo→detalhe) --- */
+.pg-prof h3{font-size:14px}
+.pg-grid{display:grid;grid-template-columns:1fr;gap:10px}
+@media(min-width:620px){.pg-grid{grid-template-columns:1fr 1fr}}
+.pg-card{display:flex;align-items:center;gap:13px;padding:15px 14px;cursor:pointer;position:relative;transition:border-color .15s ease,transform .05s ease}
+.pg-card:hover{border-color:var(--accent)}
+.pg-card:active{transform:scale(.995)}
+.pg-card:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.pg-ic{width:40px;height:40px;border-radius:11px;display:grid;place-items:center;font-size:19px;flex:none;background:color-mix(in srgb,var(--d,var(--accent)) 16%,transparent)}
+.pg-body{flex:1;min-width:0}
+.pg-nm{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:700;font-family:var(--head)}
+.pg-val{font-family:var(--head);font-size:23px;font-weight:700;letter-spacing:-.01em;line-height:1.1;margin-top:2px}
+.pg-val small{font-size:12px;color:var(--ink-2);font-weight:600}
+.pg-val .pg-ar{font-size:11px;font-weight:700;margin-left:4px}
+.pg-ar.up{color:var(--good)} .pg-ar.down{color:var(--crit)} .pg-ar.flat{color:var(--muted)}
+.pg-sub{font-size:12px;color:var(--ink-2);margin-top:3px;line-height:1.35}
+.pg-dot{width:8px;height:8px;border-radius:50%;flex:none}
+.pg-chev{color:var(--muted);font-size:20px;flex:none;margin-left:2px}
+.pg-dh{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.pg-back{width:38px;height:38px;border-radius:10px;background:var(--surface-2);border:1px solid var(--line);color:var(--ink);cursor:pointer;font-size:18px;flex:none}
+.pg-back:hover{border-color:var(--accent);color:var(--accent)}
+.pg-dh-t{display:flex;align-items:center;gap:9px;min-width:0}
+.pg-dh-t b{font-family:var(--head);font-size:19px}
+.pg-dh-ic{font-size:20px}
+.pg-link{display:flex;align-items:center;gap:12px;cursor:pointer;margin-top:4px}
+.pg-link:hover{border-color:var(--accent)}
+.pg-link:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.pg-link b{font-size:14px}
+.pg-link .sub{font-size:12px;margin-top:2px}
+.prog-adv{margin-top:4px}
+.prog-adv>summary{cursor:pointer;font-family:var(--head);font-weight:600;font-size:13px;color:var(--ink-2);padding:10px 2px;list-style:none}
+.prog-adv>summary::-webkit-details-marker{display:none}
+.prog-adv>summary:before{content:"▸ ";color:var(--muted)}
+.prog-adv[open]>summary:before{content:"▾ "}
 .nav-x{margin-left:auto;background:var(--surface-2);border:1px solid var(--line);color:var(--ink-2);border-radius:9px;width:32px;height:32px;cursor:pointer;font-size:14px;flex:none}
 .nav-x:hover{border-color:var(--accent);color:var(--accent)}
 .nav-backdrop{position:fixed;inset:0;z-index:55;background:rgba(0,0,0,.5);opacity:0;visibility:hidden;transition:opacity .2s ease,visibility .2s ease}
@@ -2067,13 +2101,14 @@ function wireInfo(root){
    VIEWS
 ============================================================================ */
 var currentTab="hoje";
+var progSys=null; // Progresso: sistema aberto (null = hub de resumo)
 function render(){
   var v=$("#view");v.innerHTML="";
   $("#athleteName").textContent=state.athlete.name||"Atleta";
   $("#athleteInitial").textContent=(state.athlete.name||"A").trim().charAt(0).toUpperCase();
   if(currentTab==="hoje")renderHoje(v);
   else if(currentTab==="treinos")renderTreinos(v);
-  else if(currentTab==="progresso"||currentTab==="painel")renderPainel(v);
+  else if(currentTab==="progresso"||currentTab==="painel")renderProgresso(v);
   else if(currentTab==="ciclo"||currentTab==="maratona")renderMaratona(v);
   else if(currentTab==="coach")renderCoach(v);
   else if(currentTab==="relatorio")renderRelatorio(v);
@@ -2266,12 +2301,11 @@ function renderCoach(v){
   ci.appendChild(coachInsightEl(ws,a,cx));
   v.appendChild(ci);
 }
-function renderPainel(v){
+/* ======================= PROGRESSO ===========================
+   Hub de 6 sistemas (resumo → detalhe). A engine de cálculo é a
+   mesma; aqui só reorganizamos a apresentação dos KPIs.         */
+function progContext(){
   var a=state.athlete, ws=sortedWorkouts();
-  if(!ws.length){v.appendChild(emptyState());return;}
-
-  // ---- computed series ----
-  // Métricas de corrida usam só as corridas; carga (TRIMP/forma/zonas) usa tudo (corrida + bike).
   var runs=runsOnly(ws), bikes=bikesOnly(ws), bike=bikeSummary(ws,a);
   var easy=easyRuns(runs);
   var efPts=easy.map(function(w){var ef=computeEF(w);return ef?{label:fmtDate(w.date),y:ef,extra:"FC "+w.hrAvg,w:w}:null;}).filter(Boolean);
@@ -2283,31 +2317,22 @@ function renderPainel(v){
   var cons=consistency(ws,a.sessionsTarget);
   var trend=performanceTrend(efPts.map(function(p){return{value:p.y};}));
   var decPts=runs.map(function(w){var d=computeDecoupling(w);return d==null?null:{label:fmtDate(w.date),y:d,extra:w.type,color:d<5?"var(--good)":d<=8?"var(--warn)":"var(--crit)"};}).filter(Boolean);
-
-  // load per week — inclui corrida + bike (carga interna via FC)
   var loadByWeek={};ws.forEach(function(w){var t=computeTrimp(w,a);if(t==null)return;var k=isoWeekKey(w.date);loadByWeek[k]=(loadByWeek[k]||0)+t;});
   var weekKeys=Object.keys(loadByWeek).sort();
   var loadBars=weekKeys.map(function(k){return{label:k.replace(/^\d+-/,""),y:Math.round(loadByWeek[k])};});
-
-  // weekly km (só corrida — bike outdoor não conta como volume de corrida)
   var lastWeek=weekKeys[weekKeys.length-1];
   var weeklyKm=runs.filter(function(w){return isoWeekKey(w.date)===lastWeek;}).reduce(function(a2,w){return a2+(w.distKm||0);},0);
   var refDate=new Date(ws[ws.length-1].date+"T00:00:00");
   var km28=runs.filter(function(w){return Math.round((refDate-new Date(w.date+"T00:00:00"))/86400000)<28;}).reduce(function(a2,w){return a2+(w.distKm||0);},0);
   var avgWeeklyKm=km28/4;
-
-  // latest EF + delta
   var latestEF=efPts.length?efPts[efPts.length-1].y:null;
   var firstEF=efPts.length?efPts[0].y:null;
   var efDelta=(latestEF&&firstEF)?((latestEF-firstEF)/firstEF)*100:null;
   var efTarget=a.efBaseline*(1+(a.efGainPct||0)/100);
-
   var latestCad=cadPts.length?cadPts[cadPts.length-1].y:null;
   var latestDec=decPts.length?decPts[decPts.length-1].y:null;
   var tsb=fit.length?fit[fit.length-1].tsb:null;
   var ctl=fit.length?fit[fit.length-1].ctl:null;
-
-  // score + readiness + recuperação (diário: sono / FC repouso / HRV)
   var last=ws[ws.length-1];
   var dailyArr=sortedDaily();
   var lastDailyDate=dailyArr.length?dailyArr[dailyArr.length-1].date:null;
@@ -2324,167 +2349,245 @@ function renderPainel(v){
   var hillAgg=hillAggregate(runs);
   var score=performanceScore({efTrendPct:trend?trend.deltaPct:0,decoupling:latestDec,adherencePct:cons?cons.adherencePct:null,weeklyKm:avgWeeklyKm,targetKm:a.weeklyTargetKm});
   var rd=readiness({tsb:tsb,adherencePct:cons?cons.adherencePct:null,sleepH:dctx.sleepH,soreness:last.soreness,pain:last.pain,restingDelta:dctx.restingDelta,hrvDeltaPct:dctx.hrvDeltaPct});
-
-  // ---- alert banner ----
-  if(a.alert){var b=el("div","banner warn");b.style.marginBottom="16px";b.innerHTML='<span class="bi">⚠</span><span>'+esc(a.alert)+'</span>';v.appendChild(b);}
-
-  // ---- FOCO ATUAL (KPIs de FC × inclinação e cadência) ----
-  var fcRef=a.fcRef||145;
   var confMap={"Alta":"alta","Moderada":"média","Baixa":"baixa","Dados insuficientes":"sem dados"};
   function byDateAsc(x,y){return x.date<y.date?-1:x.date>y.date?1:0;}
-  var pgRuns=runs.filter(function(w){return w.paceGap&&w.paceGap.paceSec!=null;}).sort(byDateAsc);
   var effHist=runs.filter(function(w){return w.eff;}).sort(byDateAsc);
   var mechHist=runs.filter(function(w){return w.mech&&w.mech.pct!=null;}).sort(byDateAsc);
-  var streamRuns=runs.filter(function(w){return w.stream;}).sort(byDateAsc);
   var easyR=easyRuns(runs);
-  var ml=medianLag(easyR);               // 3.3 — defasagem mediana (parâmetro)
-  var lagLow=ml.n<3;                      // <3 sessões válidas → rebaixa 3.1 e 3.5
-  var paceRef=paceRefSuggest(easyR.length?easyR:runs);
-  // IMP (Fase 1): baseline = média de v_padrao das 3 primeiras sessões no padrão (conf≥Moderada)
-  function impQual(w){return w.imp&&w.imp.vPadrao!=null&&w.imp.confidence==="Moderada"&&w.weather&&w.weather.inStandard;}
-  var impBl=impBaseline(runs,impQual);
-  var needWeatherN=runs.filter(function(w){return w.geo&&w.geo.lat!=null&&!w.weather;}).length;
-  // IMP Fase 2 (modelo individual) — ativa com ≥10 sessões fáceis cobrindo ≥8 °C
-  var p2sessions=easyR.filter(function(w){return w.stream&&w.weather&&w.weather.tempC!=null;}).map(function(w){return{date:w.date,temp:w.weather.tempC,aligned:alignForModel(expandStream(w.stream),ml.lagSec)};});
-  var phase2=impPhase2(p2sessions);
-  var p2map={},p2vmap={};if(phase2.ok&&phase2.usable&&impBl.vBaseline){phase2.perSession.forEach(function(p){if(p.vPadrao!=null){p2map[p.date]=impIndex(p.vPadrao,impBl.vBaseline);p2vmap[p.date]=p.vPadrao;}});}
-  var p2on=phase2.ok&&phase2.usable&&impBl.vBaseline;
-  if(pgRuns.length||effHist.length||streamRuns.length){
-    v.appendChild(sectionTitle("Foco atual"));
-    var grid1=el("div","grid g-2");
-
-    // 1) IMP / Pace-GAP@145 — DESATIVADOS (ritmo agora via "Ritmo Ajustado à Inclinação")
-    if(false){
-      var impTl=pgRuns.map(function(w){
-        var inStd=w.weather&&w.weather.inStandard;
-        var yImp=p2on?(p2map[w.date]!=null?p2map[w.date]:null):((inStd&&w.imp&&w.imp.vPadrao!=null)?impIndex(w.imp.vPadrao,impBl.vBaseline):null);
-        var yAll=w.paceGap&&w.paceGap.vGap!=null?impIndex(w.paceGap.vGap,impBl.vBaseline):null;
-        return{date:w.date,label:fmtDate(w.date),yImp:yImp,yAll:yAll,w:w};
-      });
-      var impPts=impTl.map(function(p){return{label:p.label,y:p.yImp,extra:p.w.weather?(Math.round(p.w.weather.tempC)+"°C"):""};});
-      var allPts=impTl.map(function(p){return{label:p.label,y:p.yAll,extra:p.w.weather&&p.w.weather.tags&&p.w.weather.tags.length?p.w.weather.tags.join(" · "):"todas as condições"};});
-      var impWithIdx=impTl.filter(function(p){return p.yImp!=null;});
-      var lastImp=impWithIdx.length?impWithIdx[impWithIdx.length-1]:null;
-      var impPrev3=impWithIdx.slice(-4,-1).map(function(p){return p.yImp;});
-      var impMa3=impPrev3.length?impPrev3.reduce(function(s,x){return s+x;},0)/impPrev3.length:null;
-      var impDelta=(lastImp&&impMa3)?lastImp.yImp-impMa3:null;
-      // custo do contexto: Fase 2 → média(todas − padrão) por sessão; Fase 1 → padrão médio − fora do padrão
-      var custo;
-      if(p2on){var both=impTl.filter(function(p){return p.yImp!=null&&p.yAll!=null;});custo=both.length?mean(both.map(function(p){return p.yImp-p.yAll;})):null;}
-      else{var meanImp=impWithIdx.length?mean(impWithIdx.map(function(p){return p.yImp;})):null;var outIdx=impTl.filter(function(p){return p.yAll!=null&&!(p.w.weather&&p.w.weather.inStandard);}).map(function(p){return p.yAll;});custo=(meanImp!=null&&outIdx.length)?meanImp-mean(outIdx):null;}
-      var lastVpad=lastImp?(p2on&&p2vmap[lastImp.date]!=null?p2vmap[lastImp.date]:(lastImp.w.imp?lastImp.w.imp.vPadrao:null)):null;
-      var impConf=p2on?"Moderada":(lastImp&&lastImp.w.imp?lastImp.w.imp.confidence:"Dados insuficientes");
-      var impCard=card("IMP · Índice do Motor Padronizado"+(p2on?" · Fase 2":""),confMap[impConf]||"média","imp");
-      var ivr=el("div");ivr.style.cssText="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-top:8px";
-      ivr.innerHTML='<div style="font-size:34px;font-weight:800;letter-spacing:-.02em;line-height:1">'+(lastImp?lastImp.yImp.toFixed(0):"—")+'<small style="font-size:15px;color:var(--ink-2);font-weight:600"> índice</small></div>'+
-        (lastVpad?'<span class="sub">≈ '+paceStr(1000/lastVpad)+'/km no padrão</span>':'')+
-        (impDelta!=null?'<span class="delta '+(impDelta>=0.5?"up":impDelta<=-0.5?"down":"flat")+'">'+(impDelta>0?"▲ +":impDelta<0?"▼ ":"→ ")+impDelta.toFixed(1)+' vs média 3</span>':'');
-      impCard.appendChild(ivr);
-      impCard.appendChild(chartBox(lineChart({series:[
-        {name:"IMP (padrão)",points:impPts,colorVar:seriesColor(1)},
-        {name:"Todas as condições",points:allPts,colorVar:seriesColor(5)}
-      ],yfmt:function(vv){return vv.toFixed(0);},target:{y:100,label:"baseline 100"}})));
-      var p2note=p2on
-        ?" <b>Fase 2 ativa:</b> modelo individual FC = a + b·v_GAP + c·temp + d·min projeta <b>todas</b> as sessões ao ponto-padrão (13 °C, min 20) — erro LOSO "+phase2.losoMedAbs+" bpm."
-        :(phase2.ok&&!phase2.usable?" Fase 2 testada mas o erro de validação ficou alto ("+phase2.losoMedAbs+" bpm &gt; 4) — seguindo na Fase 1.":" Fase 2 (modelo individual) ativa com ≥10 sessões fáceis cobrindo ≥8 °C — hoje "+phase2.nSessions+" sessão(ões), amplitude "+(phase2.tempAmp||0)+" °C.");
-      impCard.appendChild(hint("Velocidade-GAP a <b>"+fcRef+" bpm em terreno plano e clima padrão</b> (8–18 °C, orvalho ≤14), como índice (baseline das 3 primeiras = 100). A linha <b>Todas as condições</b> é o Pace-GAP@145 no mesmo índice; a distância entre as duas é o <b>custo do contexto</b>"+(custo!=null?' — ~<b>'+custo.toFixed(0)+' pts</b>':'')+"."+(p2on?"":" Sessões fora do padrão não entram no IMP (mas o Pace-GAP continua).")+p2note));
-      if(needWeatherN){var bw=el("button","btn sm");bw.style.marginTop="10px";bw.textContent="🌤 Buscar clima de "+needWeatherN+" sessão(ões)";bw.onclick=function(){backfillWeather(bw);};impCard.appendChild(bw);}
-      grid1.appendChild(impCard);
-      // Sensibilidade ao calor (exploratório) — só quando a Fase 2 roda (ok)
-      if(phase2.ok){
-        var hc=card("Sensibilidade ao calor","exploratório","calor-sens");
-        var hv=el("div");hv.style.cssText="margin-top:8px;display:flex;align-items:baseline;gap:12px;flex-wrap:wrap";
-        hv.innerHTML='<div style="font-size:30px;font-weight:800;line-height:1">'+(phase2.cZero?"~0":(phase2.heatSens>0?"+":"")+phase2.heatSens.toFixed(2))+'<small style="font-size:14px;color:var(--ink-2);font-weight:600"> bpm/°C</small></div>'+
-          '<span class="sub">IC95% ['+phase2.heatCI[0].toFixed(2)+', '+phase2.heatCI[1].toFixed(2)+']</span>';
-        hc.appendChild(hv);
-        hc.appendChild(hint(phase2.cZero
-          ?"O intervalo de confiança inclui zero — <b>sem efeito de calor detectável</b> nos seus dados ainda (c = 0 na projeção). Exploratório; nunca usa coeficientes da literatura."
-          :"Quanto sua FC sobe por grau de temperatura, no seu próprio histórico: <b>"+(phase2.heatSens>0?"+":"")+phase2.heatSens.toFixed(2)+" bpm/°C</b>. Alimenta a correção do IMP Fase 2. <b>Exploratório</b> — modelo individual, nunca coeficientes da literatura. Cobertura: "+phase2.nSessions+" sessões, amplitude "+phase2.tempAmp+" °C."));
-        grid1.appendChild(hc);
-      }
+  var ml=medianLag(easyR);
+  var lagLow=ml.n<3;
+  return {a:a,ws:ws,runs:runs,bikes:bikes,bike:bike,easy:easy,efPts:efPts,gapPts:gapPts,cadPts:cadPts,fit:fit,ac:ac,pol:pol,cons:cons,trend:trend,decPts:decPts,loadBars:loadBars,weeklyKm:weeklyKm,avgWeeklyKm:avgWeeklyKm,latestEF:latestEF,efDelta:efDelta,efTarget:efTarget,latestCad:latestCad,latestDec:latestDec,tsb:tsb,ctl:ctl,last:last,dailyArr:dailyArr,restTr:restTr,hrvTr:hrvTr,sleepLast:sleepLast,vo2Last:vo2Last,dctx:dctx,recov:recov,vo2Eff:vo2Eff,fcRepEff:fcRepEff,td:td,hillAgg:hillAgg,score:score,rd:rd,confMap:confMap,byDateAsc:byDateAsc,effHist:effHist,mechHist:mechHist,ml:ml,lagLow:lagLow};
+}
+var PROG_SYS={
+  motor:{ic:"⚙️",name:"Motor",build:progMotor},
+  resist:{ic:"🫀",name:"Resistência",build:progResist},
+  mec:{ic:"🦿",name:"Mecânica & ritmo",build:progMec},
+  carga:{ic:"📊",name:"Carga & forma",build:progCarga},
+  hidr:{ic:"💧",name:"Hidratação",build:progHidr},
+  recup:{ic:"🌙",name:"Recuperação",build:progRecup}
+};
+function renderProgresso(v){
+  var ws=sortedWorkouts();
+  if(!ws.length){v.appendChild(emptyState());return;}
+  var c=progContext();
+  if(c.a.alert){var b=el("div","banner warn");b.style.marginBottom="14px";b.innerHTML='<span class="bi">⚠</span><span>'+esc(c.a.alert)+'</span>';v.appendChild(b);}
+  if(!progSys){progHub(v,c);return;}
+  var S=PROG_SYS[progSys];
+  if(!S){progSys=null;progHub(v,c);return;}
+  var hd=el("div","pg-dh");
+  hd.innerHTML='<button class="pg-back" aria-label="Voltar ao Progresso">←</button><div class="pg-dh-t"><span class="pg-dh-ic">'+S.ic+'</span><b>'+S.name+'</b></div>';
+  hd.querySelector(".pg-back").onclick=function(){progSys=null;render();window.scrollTo(0,0);};
+  v.appendChild(hd);
+  S.build(v,c);
+}
+function pgBand(b){return b==="g"?"var(--good)":b==="w"?"var(--warn)":b==="c"?"var(--crit)":"var(--muted)";}
+function progResumoCard(sys,ic,name,val,unit,sub,band,arrow){
+  var c=el("div","card pg-card");c.setAttribute("role","button");c.tabIndex=0;c.setAttribute("aria-label",name+" — abrir detalhe");
+  c.innerHTML='<div class="pg-ic" style="--d:'+pgBand(band)+'">'+ic+'</div>'+
+    '<div class="pg-body"><div class="pg-nm">'+name+'</div>'+
+    '<div class="pg-val">'+val+(unit?'<small> '+unit+'</small>':'')+(arrow?' <span class="pg-ar '+arrow.cls+'">'+arrow.txt+'</span>':'')+'</div>'+
+    '<div class="pg-sub">'+sub+'</div></div>'+
+    '<span class="pg-dot" style="background:'+pgBand(band)+'"></span><span class="pg-chev" aria-hidden="true">›</span>';
+  function go(){progSys=sys;render();window.scrollTo(0,0);}
+  c.onclick=go;c.onkeydown=function(e){if(e.key==="Enter"||e.key===" "){e.preventDefault();go();}};
+  return c;
+}
+function progHub(v,c){
+  var a=c.a,runs=c.runs,ws=c.ws,score=c.score,rd=c.rd,trend=c.trend,latestEF=c.latestEF,cons=c.cons;
+  // perfil compacto
+  var prof=el("div","card pg-prof");
+  var closerSess=runs.filter(function(w){var p=computePacing(w);return p&&(p.closer||p.label==="negative split");}).length;
+  var nWeeks=cons?cons.weeks:1;var kmTot=runs.reduce(function(s,w){return s+(w.distKm||0);},0);var kmWk=nWeeks?kmTot/nWeeks:0;
+  var nivel=kmWk<15?"iniciante":kmWk<45?"intermediário":"avançado";
+  var decMean=(function(){var d=runs.map(computeDecoupling).filter(function(x){return x!=null;});return d.length?mean(d):null;})();
+  var ponto=(closerSess>=2||(decMean!=null&&decMean<3))?"resistência":(latestEF&&a.efBaseline&&latestEF>a.efBaseline*1.03?"economia":"em análise");
+  var focoMap={"Eficiência":"economia (EF)","Consistência":"consistência","Resist. fadiga":"resistência aeróbica","Volume":"volume gradual"};
+  var worst=null,wv=101;if(score&&score.parts)for(var kk in score.parts)if(score.parts[kk]<wv){wv=score.parts[kk];worst=kk;}
+  var foco=(rd&&rd.score<60)?"recuperar":(worst&&focoMap[worst])?focoMap[worst]:"base & economia";
+  prof.innerHTML='<h3>👤 Seu perfil</h3><div class="pill-list" style="margin-top:10px">'+[
+    '<span class="pill">Nível <b>'+nivel+'</b></span>',
+    '<span class="pill">Ponto forte <b>'+ponto+'</b></span>',
+    '<span class="pill">Foco <b>'+foco+'</b></span>',
+    '<span class="pill">Estilo <b>'+(closerSess>=2?"closer (negative split)":"em análise")+'</b></span>',
+    '<span class="pill">Tendência <b>'+(trend?trend.arrow:"→")+'</b></span>',
+    '<span class="pill">Score <b>'+score.overall+'</b></span>'
+  ].join("")+'</div>';
+  v.appendChild(prof);
+  // 6 sistemas (resumo)
+  v.appendChild(sectionTitle("Sistemas · toque para o detalhe"));
+  var grid=el("div","pg-grid");
+  // MOTOR
+  grid.appendChild(progResumoCard("motor","⚙️","Motor",(c.latestEF!=null?(c.latestEF*1000).toFixed(1).replace(".",","):"—"),"pts EF",(c.efDelta!=null?"economia "+(c.efDelta>=0?"+":"")+c.efDelta.toFixed(0)+"% no bloco":"registre uma rodagem fácil"),(c.trend?(c.trend.deltaPct>2?"g":c.trend.deltaPct<-2?"c":"n"):"n"),(c.trend?ciArrow(c.trend.deltaPct):null)));
+  // RESISTÊNCIA
+  var dv=c.latestDec;var dBand=dv==null?"n":dv<5?"g":dv<=8?"w":"c";
+  grid.appendChild(progResumoCard("resist","🫀","Resistência",(dv!=null?dv.toFixed(1).replace(".",","):"—"),"% deriva",(dv==null?"sem longo com FC":dv<0?"negativo — closer comprovado":dv<5?"base sólida":dv<=8?"limítrofe":"investigar combustível/pacing"),dBand,null));
+  // MECÂNICA
+  var cadv=c.latestCad;var cadBand=cadv==null?"n":cadv>=a.cadenceTarget?"g":(a.cadenceTarget-cadv<=5?"w":"n");
+  grid.appendChild(progResumoCard("mec","🦿","Mecânica & ritmo",(cadv!=null?Math.round(cadv):"—"),"spm",(cadv==null?"registre cadência":cadv>=a.cadenceTarget?"na meta "+a.cadenceTarget:"meta "+a.cadenceTarget+" · faltam "+(a.cadenceTarget-Math.round(cadv))),cadBand,null));
+  // CARGA & FORMA
+  var cBand=c.ac?(c.ac.zone==="sweet spot"?"g":c.ac.zone==="atenção"?"w":c.ac.zone==="risco"?"c":"n"):"n";
+  grid.appendChild(progResumoCard("carga","📊","Carga & forma",(c.tsb!=null?(c.tsb>0?"+":"")+Math.round(c.tsb):"—"),"forma TSB",((c.tsb!=null?tsbState(c.tsb):"registre treinos")+(c.ac?" · A:C "+c.ac.ratio.toFixed(2).replace(".",","):"")),cBand,null));
+  // HIDRATAÇÃO
+  var hydroRuns=c.runs.filter(hydroHas);var lastHydro=hydroRuns.length?hydroRuns[hydroRuns.length-1]:null;var hydroRate=lastHydro?hydroRateMlH(lastHydro):null;var hSt=hydroStatus(hydroRate);
+  var hBand=hydroRate==null?"n":(hSt&&hSt.label==="baixa"?"w":"g");
+  grid.appendChild(progResumoCard("hidr","💧","Hidratação",(hydroRate!=null?Math.round(hydroRate):"—"),"ml/h",(hydroRate==null?"informe a água no treino":"durante · último treino"+(hSt?" · "+hSt.label:"")),hBand,null));
+  // RECUPERAÇÃO
+  var rBand=c.recov?(c.recov.score>=75?"g":c.recov.score>=55?"w":"c"):"n";
+  grid.appendChild(progResumoCard("recup","🌙","Recuperação",(c.recov?c.recov.score:"—"),"recovery",((c.recov?c.recov.label:"preencha o diário")+(c.sleepLast?" · sono "+c.sleepLast.value+"h":"")),rBand,null));
+  v.appendChild(grid);
+  // histórico
+  v.appendChild(sectionTitle("Histórico"));
+  var lower2=el("div","grid g-2");
+  var rec=el("div","card");rec.innerHTML='<h3>🏆 Recordes <span class="badge lo" style="margin-left:auto">todo o histórico</span></h3>';
+  rec.appendChild(recordsTable(runs));
+  lower2.appendChild(rec);
+  var tl=el("div","card");tl.innerHTML='<h3>⏱ Timeline · destaques</h3>';
+  tl.appendChild(timelineEl(ws));
+  lower2.appendChild(tl);
+  v.appendChild(lower2);
+}
+/* ---- detalhe: MOTOR (economia + tamanho do motor) ---- */
+function progMotor(v,c){
+  var a=c.a,runs=c.runs,efPts=c.efPts,latestEF=c.latestEF,efDelta=c.efDelta,efTarget=c.efTarget,trend=c.trend,vo2Eff=c.vo2Eff,vo2Last=c.vo2Last,score=c.score,byDateAsc=c.byDateAsc,effHist=c.effHist;
+  var motor=el("div","grid g-2");
+  var efCard=card("Efficiency Factor · economia do motor","alta","efficiency");
+  if(latestEF!=null){var efH=el("div");efH.innerHTML='<div class="kbig">'+(latestEF*1000).toFixed(1).replace(".",",")+'<small> pts</small></div>'+
+    '<div class="ksub">economia '+(efDelta!=null?deltaHtml(efDelta)+" vs. o 1º":"—")+' · <b>EF '+latestEF.toFixed(4)+'</b></div>';efCard.appendChild(efH);}
+  efCard.appendChild(chartBox(lineChart({series:[{name:"Pontos",points:efPts}],yfmt:function(v){return (v*1000).toFixed(1).replace(".",",");},target:{y:efTarget,label:"meta "+(efTarget*1000).toFixed(1).replace(".",",")+" pts"}})));
+  efCard.appendChild(hint("<b>Pontos = o EF ×1000</b> (sem os zeros). Sobe = motor mais econômico. A régua é você mesmo: hoje vs. 6 semanas atrás."+(trend?" Tendência "+trend.arrow+" "+deltaHtml(trend.deltaPct)+".":"")));
+  motor.appendChild(efCard);
+  if(effHist.length){
+    var curEff=effHist[effHist.length-1].eff;
+    var prevE=effHist.slice(-4,-1).map(function(w){return w.eff;});
+    var prevAvg=prevE.length?{mPerBeat:mean(prevE.map(function(e){return e.mPerBeat;})),stepsPerBeat:mean(prevE.map(function(e){return e.stepsPerBeat;})),mPerStep:mean(prevE.map(function(e){return e.mPerStep;})),spmMean:mean(prevE.map(function(e){return e.spmMean;})),hrMean:mean(prevE.map(function(e){return e.hrMean;})),vgapMean:mean(prevE.map(function(e){return e.vgapMean;}))}:null;
+    var tree=effTree(curEff,prevAvg);
+    var efCard2=card("Árvore da Eficiência · decomposição do EF","média","arvore-ef");
+    var idn=el("div");idn.style.cssText="margin-top:8px;font-size:14px;line-height:1.6";
+    idn.innerHTML='<b style="font-size:17px">'+curEff.mPerBeat.toFixed(3)+'</b> m/batimento = <b>'+curEff.stepsPerBeat.toFixed(3)+'</b> passos/bat × <b>'+curEff.mPerStep.toFixed(3)+'</b> m/passo'+
+      '<div class="sub" style="margin-top:4px">EF = '+(curEff.mPerBeat/60).toFixed(4)+' · cadência '+Math.round(curEff.spmMean)+' spm · FC '+Math.round(curEff.hrMean)+' bpm</div>';
+    efCard2.appendChild(idn);
+    if(tree.dln){
+      var pill=el("div");pill.style.cssText="margin:10px 0 2px";pill.innerHTML='<span class="pill">'+esc(tree.label)+'</span>';efCard2.appendChild(pill);
+      efCard2.appendChild(chartBox(barChart({bars:[
+        {label:"passos/bat",y:Math.round(tree.contribPct.stepsPerBeat*10)/10,color:tree.contribPct.stepsPerBeat>=0?"var(--good)":"var(--crit)"},
+        {label:"m/passo",y:Math.round(tree.contribPct.mPerStep*10)/10,color:tree.contribPct.mPerStep>=0?"var(--good)":"var(--crit)"}
+      ],yfmt:function(vv){return vv.toFixed(0)+"%";},zeroLine:true})));
+      efCard2.appendChild(hint("Quanto cada parte contribuiu para a variação do EF vs. as 3 anteriores. Cadência <b>"+(tree.cadDeltaPct>=0?"+":"")+tree.cadDeltaPct.toFixed(1)+"%</b> · EF <b>"+(tree.efDeltaPct>=0?"+":"")+tree.efDeltaPct.toFixed(1)+"%</b>. A identidade é exata; a leitura é exploratória."));
+    }else{
+      efCard2.appendChild(chartBox(lineChart({series:[{name:"m/batimento",points:effHist.map(function(w){return{label:fmtDate(w.date),y:w.eff.mPerBeat,extra:"EF "+(w.eff.mPerBeat/60).toFixed(4)};}),colorVar:seriesColor(4)}],yfmt:function(vv){return vv.toFixed(3);}})));
+      efCard2.appendChild(hint("m/batimento = (passos/bat) × (m/passo). Sobe = mais metros por batimento. Precisa de ao menos uma sessão anterior com stream para decompor a variação."));
     }
-    else if(false){
-      var pgPts=pgRuns.map(function(w){return{label:fmtDate(w.date),y:w.paceGap.paceSec,extra:w.paceGap.confidence};});
-      var last=pgRuns[pgRuns.length-1].paceGap;
-      var prev3=pgPts.slice(-4,-1).map(function(p){return p.y;});
-      var ma3=prev3.length?prev3.reduce(function(s,x){return s+x;},0)/prev3.length:null;
-      var dPct=ma3?((last.paceSec-ma3)/ma3)*100:null; // menor pace = melhor (negativo = melhorou)
-      var pgConf=lagLow?downgradeConf(last.confidence):last.confidence;
-      var pgCard=card("Pace-GAP @ "+fcRef+" bpm · esforço padronizado",confMap[pgConf]||"média","pace-gap");
-      var vr=el("div");vr.style.cssText="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-top:8px";
-      vr.innerHTML='<div style="font-size:34px;font-weight:800;letter-spacing:-.02em;line-height:1">'+paceStr(last.paceSec)+'<small style="font-size:15px;color:var(--ink-2);font-weight:600"> /km</small></div>'+
-        (dPct!=null?'<span class="delta '+(dPct<=-1?"up":dPct>=1?"down":"flat")+'">'+(dPct<0?"▼ ":dPct>0?"▲ ":"→ ")+Math.abs(dPct).toFixed(1)+'% vs média 3</span>':'')+
-        '<span class="sub">na mesma FC — quanto de plano você produz</span>';
-      pgCard.appendChild(vr);
-      pgCard.appendChild(chartBox(lineChart({series:[{name:"Pace-GAP@"+fcRef,points:pgPts,colorVar:seriesColor(1)}],yfmt:function(vv){return paceStr(vv);},reverseY:true})));
-      pgCard.appendChild(hint("Mediana da velocidade-GAP quando a FC (defasada "+ml.lagSec+"s) fica em <b>"+fcRef+"±3 bpm</b>, nos min 10–45. <b>Menor pace = mais trabalho de plano no mesmo esforço.</b> Confiança: Alta ≥15 min · Moderada 8–15 min ou regressão (R²≥0,5) · Baixa."+(lagLow?' <b>Rebaixada</b> — menos de 3 sessões válidas para estimar a defasagem de FC (3.3).':'')));
-      grid1.appendChild(pgCard);
-    }
-
-    // 2) Árvore da Eficiência (3.2) -----------------------------------------
-    if(effHist.length){
-      var curEff=effHist[effHist.length-1].eff;
-      var prevE=effHist.slice(-4,-1).map(function(w){return w.eff;});
-      var prevAvg=prevE.length?{mPerBeat:mean(prevE.map(function(e){return e.mPerBeat;})),stepsPerBeat:mean(prevE.map(function(e){return e.stepsPerBeat;})),mPerStep:mean(prevE.map(function(e){return e.mPerStep;})),spmMean:mean(prevE.map(function(e){return e.spmMean;})),hrMean:mean(prevE.map(function(e){return e.hrMean;})),vgapMean:mean(prevE.map(function(e){return e.vgapMean;}))}:null;
-      var tree=effTree(curEff,prevAvg);
-      var efCard=card("Árvore da Eficiência · decomposição do EF","média","arvore-ef");
-      var idn=el("div");idn.style.cssText="margin-top:8px;font-size:14px;line-height:1.6";
-      idn.innerHTML='<b style="font-size:17px">'+curEff.mPerBeat.toFixed(3)+'</b> m/batimento = <b>'+curEff.stepsPerBeat.toFixed(3)+'</b> passos/bat × <b>'+curEff.mPerStep.toFixed(3)+'</b> m/passo'+
-        '<div class="sub" style="margin-top:4px">EF = '+(curEff.mPerBeat/60).toFixed(4)+' · cadência '+Math.round(curEff.spmMean)+' spm · FC '+Math.round(curEff.hrMean)+' bpm</div>';
-      efCard.appendChild(idn);
-      if(tree.dln){
-        var pill=el("div");pill.style.cssText="margin:10px 0 2px";pill.innerHTML='<span class="pill">'+esc(tree.label)+'</span>';efCard.appendChild(pill);
-        efCard.appendChild(chartBox(barChart({bars:[
-          {label:"passos/bat",y:Math.round(tree.contribPct.stepsPerBeat*10)/10,color:tree.contribPct.stepsPerBeat>=0?"var(--good)":"var(--crit)"},
-          {label:"m/passo",y:Math.round(tree.contribPct.mPerStep*10)/10,color:tree.contribPct.mPerStep>=0?"var(--good)":"var(--crit)"}
-        ],yfmt:function(vv){return vv.toFixed(0)+"%";},zeroLine:true})));
-        efCard.appendChild(hint("Quanto cada parte contribuiu para a variação do EF vs. as 3 anteriores. Cadência <b>"+(tree.cadDeltaPct>=0?"+":"")+tree.cadDeltaPct.toFixed(1)+"%</b> · EF <b>"+(tree.efDeltaPct>=0?"+":"")+tree.efDeltaPct.toFixed(1)+"%</b>. A identidade é exata; a leitura é exploratória."));
-      }else{
-        efCard.appendChild(chartBox(lineChart({series:[{name:"m/batimento",points:effHist.map(function(w){return{label:fmtDate(w.date),y:w.eff.mPerBeat,extra:"EF "+(w.eff.mPerBeat/60).toFixed(4)};}),colorVar:seriesColor(4)}],yfmt:function(vv){return vv.toFixed(3);}})));
-        efCard.appendChild(hint("m/batimento = (passos/bat) × (m/passo). Sobe = mais metros por batimento. Precisa de ao menos uma sessão anterior com stream para decompor a variação."));
-      }
-      grid1.appendChild(efCard);
-    }
-
-    // 3) Cadência @ PACE_REF — DESATIVADO (consolidado no card "Cadência")
-    if(false){
-      var lastSr=streamRuns[streamRuns.length-1];
-      var cad=cadenceAtPace(expandStream(lastSr.stream),{paceRef:paceRef});
-      var cadPts=streamRuns.map(function(w){var c=cadenceAtPace(expandStream(w.stream),{paceRef:paceRef});return c.spm!=null?{label:fmtDate(w.date),y:c.spm,extra:c.confidence}:null;}).filter(Boolean);
-      var adh=lastSr.cadAdherencePct!=null?lastSr.cadAdherencePct:cad.adherencePct;
-      var cadCard=card("Cadência @ ritmo-ref ("+paceStr(paceRef)+"/km)",confMap[cad.confidence]||"média","cad-ref");
-      var cvr=el("div");cvr.style.cssText="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-top:8px";
-      cvr.innerHTML='<div style="font-size:34px;font-weight:800;letter-spacing:-.02em;line-height:1">'+(cad.spm!=null?cad.spm:"—")+'<small style="font-size:15px;color:var(--ink-2);font-weight:600"> spm</small></div>'+
-        (adh!=null?'<span class="pill">'+adh.toFixed(0)+'% na faixa 170–176</span>':'')+
-        '<span class="sub">meta 173 · baseline 168</span>';
-      cadCard.appendChild(cvr);
-      if(cadPts.length)cadCard.appendChild(chartBox(lineChart({series:[{name:"spm@ref",points:cadPts,colorVar:seriesColor(3)}],yfmt:function(vv){return Math.round(vv)+"";},target:{y:a.cadenceTarget,label:"meta "+a.cadenceTarget}})));
-      cadCard.appendChild(hint("Mediana do spm quando o pace-GAP fica em <b>"+paceStr(paceRef)+"±15 s/km</b> (ritmo-ref = mediana das sessões fáceis). Cadência comparada sempre no mesmo ritmo, não no mesmo esforço. <b>Fonte:</b> Heiderscheit et al., 2011."));
-      grid1.appendChild(cadCard);
-    }
-
-    // 4) Decoupling cardíaco | mecânico (3.5) + matriz -----------------------
-    if(mechHist.length){
-      var lastMech=mechHist[mechHist.length-1];
-      var cardiac=computeDecoupling(lastMech);
-      var mechPct=lastMech.mech.pct;
-      var mechConf=lagLow?downgradeConf(lastMech.mech.confidence):lastMech.mech.confidence;
-      var matrix=cardiac!=null?decoupleMatrix(cardiac,mechPct):null;
-      var dcard=card("Decoupling · cardíaco | mecânico",confMap[mechConf]||"média","decoupling-mec");
-      var dvr=el("div");dvr.style.cssText="display:flex;gap:18px;flex-wrap:wrap;margin-top:8px;align-items:baseline";
-      dvr.innerHTML='<div><div class="sub">cardíaco (pace:FC)</div><div style="font-size:26px;font-weight:800;line-height:1.1">'+(cardiac!=null?cardiac.toFixed(1)+'%':'—')+'</div></div>'+
-        '<div><div class="sub">mecânico (passada)</div><div style="font-size:26px;font-weight:800;line-height:1.1;color:'+(mechPct>2?'var(--crit)':mechPct<-2?'var(--good)':'inherit')+'">'+(mechPct!=null?(mechPct>0?'+':'')+mechPct.toFixed(1)+'%':'—')+'</div></div>';
-      dcard.appendChild(dvr);
-      if(matrix){var mp=el("div");mp.style.cssText="margin:10px 0 2px";mp.innerHTML='<span class="pill">'+esc(matrix)+'</span>';dcard.appendChild(mp);}
-      if(mechHist.length>1)dcard.appendChild(chartBox(barChart({bars:mechHist.map(function(w){return{label:fmtDate(w.date),y:w.mech.pct,extra:w.type,color:w.mech.pct>2?"var(--crit)":w.mech.pct<-2?"var(--good)":"var(--warn)"};}),yfmt:function(vv){return(vv>0?'+':'')+vv.toFixed(1)+"%";},zeroLine:true})));
-      dcard.appendChild(hint("Mecânico = Δ% da passada-GAP (m/passo) entre a 2ª e a 1ª metade (só sessões ≥40 min). <b>Positivo = passada caiu no fim.</b> Cruzado com o cardíaco: FC sobe + passada estável → deriva cardiovascular; ambos cedem → fadiga global."+(lagLow?' Confiança rebaixada (defasagem de FC com <3 sessões).':'')));
-      grid1.appendChild(dcard);
-    }
-
-    v.appendChild(grid1);
+    motor.appendChild(efCard2);
   }
-
-  // ---- PERFIL DE INCLINAÇÃO (3.6) · exploratório ----
+  v.appendChild(motor);
+  var mt2=el("div","grid g-2");
+  var vo2Card=el("div","card tile has-info");vo2Card.setAttribute("data-info","vo2");vo2Card.setAttribute("aria-label","Sobre: VO₂máx");var vb=vo2Band(vo2Eff);
+  vo2Card.innerHTML='<div class="lab">◉ VO₂máx<span class="info-dot" aria-hidden="true">ⓘ</span></div><div class="val">'+(vo2Eff||"—")+'<small> ml/kg</small></div><div class="note">'+(vb?bandBadge(vb)+(vo2Last?" · Apple Watch "+fmtDate(vo2Last.date):" (homem 30–39)"):"")+'</div>';
+  if(vo2Eff!=null)vo2Card.appendChild(richBlock(scaleWidget({min:30,max:55,val:vo2Eff,valText:(""+vo2Eff).replace(".",","),segs:[{to:36,label:"Abaixo",c:"var(--warn)"},{to:42,label:"Bom",c:"var(--good)"},{to:52,label:"Excelente",c:"var(--trend)"},{to:55,label:"Elite",c:"var(--accent)"}]})));
+  vo2Card.appendChild(hint("Bom 36–42 · excelente 43–52. É o tamanho do motor; o EF é o quanto você aproveita dele."));
+  mt2.appendChild(vo2Card);
+  var trCard=el("div","card tile");
+  trCard.innerHTML='<div class="lab">↗ Performance Trend</div><div class="val">'+(trend?trend.arrow+' '+deltaHtml(trend.deltaPct):"—")+'</div><div class="note">'+(trend?(trend.enough?"janela de 4 sessões":"provisório · &lt;3 sessões/janela"):"≥3 sessões por janela")+'</div>';
+  trCard.appendChild(hint("Direção da forma: ↗ &gt;+2% · → estável · ↘ &lt;−2%."));
+  mt2.appendChild(trCard);
+  v.appendChild(mt2);
+  var scoreCard=el("div","card");
+  scoreCard.innerHTML='<h3>◆ Athlete Performance Score <span class="badge mid" style="margin-left:auto">provisório</span></h3>';
+  var sr=el("div","ring-wrap");sr.style.marginTop="12px";
+  var ring=el("div","ring");ring.style.position="relative";ring.style.setProperty("--p",score.overall);ring.innerHTML='<b>'+score.overall+'</b>';
+  sr.appendChild(ring);
+  var subs=el("div");subs.style.flex="1";
+  var sb=el("div","subbars");
+  Object.keys(score.parts).forEach(function(k){var val=score.parts[k];sb.appendChild(subbar(k,val));});
+  subs.appendChild(sb);sr.appendChild(subs);scoreCard.appendChild(sr);
+  scoreCard.appendChild(hint("Média ponderada transparente: 30% eficiência · 25% consistência · 25% resistência à fadiga · 20% volume. Nunca decida treino só pelo score — abra os componentes."));
+  v.appendChild(scoreCard);
+  var motorRuns=runs.filter(function(w){return w.type==="teste_motor"&&w.stream;}).sort(byDateAsc);
+  if(motorRuns.length){
+    var stages=(a.motorStages||[]).filter(function(s){return s;});
+    var lastMt=motorRuns[motorRuns.length-1];
+    var mt=motorTest(expandStream(lastMt.stream),stages);
+    var inPad=lastMt.weather?lastMt.weather.inStandard:null;
+    var mtCard=card("Teste do Motor — "+fmtDateFull(lastMt.date),(lastMt.weather&&inPad)?"alta":"média","teste-motor");
+    var mhead=el("div");mhead.style.cssText="margin-top:6px";
+    mhead.innerHTML='<span class="sub">'+(lastMt.weather?("🌤 "+Math.round(lastMt.weather.tempC)+"°C · orvalho "+(lastMt.weather.dewC!=null?Math.round(lastMt.weather.dewC)+"°":"—")+(inPad?" · <b>clima padrão</b>":" · <b style=\"color:var(--warn)\">fora do padrão</b>")+(lastMt.weather.tags&&lastMt.weather.tags.length?" · "+esc(lastMt.weather.tags.join(" · ")):"")):"sem clima")+'</span>';
+    mtCard.appendChild(mhead);
+    var mtbl=el("div");mtbl.style.cssText="overflow:auto;margin-top:8px";
+    var tt=el("table");var th='<thead><tr><th>Estágio</th><th class="num">Alvo FC</th><th class="num">Veloc.</th><th class="num">Pace</th><th class="num">FC real</th></tr></thead><tbody>';
+    mt.forEach(function(r){th+='<tr><td>'+esc(r.name)+(r.flagged?' <span class="sub" style="color:var(--crit)">⚑ fora do alvo</span>':'')+'</td><td class="num">'+(r.targetHr!=null?r.targetHr+" bpm":"—")+'</td><td class="num">'+(r.speed!=null?r.speed.toFixed(2)+" m/s":"—")+'</td><td class="num">'+(r.pace!=null?paceStr(r.pace)+"/km":"—")+'</td><td class="num"'+(r.flagged?' style="color:var(--crit)"':'')+'>'+(r.hrMean!=null?r.hrMean+" bpm":"—")+'</td></tr>';});
+    th+='</tbody>';tt.innerHTML=th;mtbl.appendChild(tt);mtCard.appendChild(mtbl);
+    var targetStages=stages.filter(function(s){return s.targetHr!=null;});
+    if(motorRuns.length>1&&targetStages.length){
+      var series=targetStages.map(function(st,si){
+        var pts=motorRuns.map(function(w){var r=motorTest(expandStream(w.stream),stages).filter(function(x){return x.name===st.name;})[0];return r&&r.speed!=null?{label:fmtDate(w.date),y:r.speed,extra:st.name+(r.flagged?" ⚑":"")}:null;}).filter(Boolean);
+        return{name:st.name,points:pts,colorVar:seriesColor(si+1)};
+      }).filter(function(s){return s.points.length;});
+      if(series.length)mtCard.appendChild(chartBox(lineChart({series:series,yfmt:function(vv){return vv.toFixed(2)+" m/s";}})));
+    }
+    var nextD=new Date(lastMt.date+"T00:00:00");nextD.setDate(nextD.getDate()+14);
+    mtCard.appendChild(hint("Mesmo circuito plano e horário, por estágio de FC-alvo. <b>Velocidade = mediana dos últimos 3 min</b> de cada estágio; se a FC média sair de ±3 bpm do alvo, o estágio é <b>marcado</b>. Compare a velocidade no mesmo alvo ao longo do tempo: <b>mais rápido no mesmo alvo = motor melhor.</b> Estágios acima de 145 liberam quando a tíbia permitir. <b>Próximo teste sugerido:</b> "+fmtDateFull(nextD.toISOString().slice(0,10))+". <b>Fonte:</b> Vesterinen et al., 2017."));
+    v.appendChild(mtCard);
+  }
+}
+/* ---- detalhe: RESISTÊNCIA (aeróbica / fadiga) ---- */
+function progResist(v,c){
+  var a=c.a,runs=c.runs,decPts=c.decPts,mechHist=c.mechHist,lagLow=c.lagLow,confMap=c.confMap;
+  var decCard=card("Decoupling · resistência aeróbica","alta","decoupling");
+  var _decTgt=a.decouplingTarget||7;
+  decCard.appendChild(chartBox(barChart({bars:decPts,yfmt:function(v){return v.toFixed(1)+"%";},threshold:{y:_decTgt,label:"seu alvo "+_decTgt+"%"},zeroLine:true})));
+  var _decLast=decPts&&decPts.length?decPts[decPts.length-1].y:null;
+  if(_decLast!=null)decCard.appendChild(richBlock(scaleWidget({min:0,max:12,val:Math.max(0,_decLast),valText:_decLast.toFixed(1).replace(".",",")+"%",segs:[{to:5,label:"Sólido",c:"var(--good)"},{to:8,label:"Limítrofe",c:"var(--warn)"},{to:12,label:"Investigar",c:"var(--crit)"}]})));
+  decCard.appendChild(hint("Decoupling negativo nos longões = closer comprovado (fica mais eficiente na 2ª metade). &lt;5% = base sólida; &gt;8% = investigar."));
+  v.appendChild(decCard);
+  if(mechHist.length){
+    var lastMech=mechHist[mechHist.length-1];
+    var cardiac=computeDecoupling(lastMech);
+    var mechPct=lastMech.mech.pct;
+    var mechConf=lagLow?downgradeConf(lastMech.mech.confidence):lastMech.mech.confidence;
+    var matrix=cardiac!=null?decoupleMatrix(cardiac,mechPct):null;
+    var dcard=card("Decoupling · cardíaco | mecânico",confMap[mechConf]||"média","decoupling-mec");
+    var dvr=el("div");dvr.style.cssText="display:flex;gap:18px;flex-wrap:wrap;margin-top:8px;align-items:baseline";
+    dvr.innerHTML='<div><div class="sub">cardíaco (pace:FC)</div><div style="font-size:26px;font-weight:800;line-height:1.1">'+(cardiac!=null?cardiac.toFixed(1)+'%':'—')+'</div></div>'+
+      '<div><div class="sub">mecânico (passada)</div><div style="font-size:26px;font-weight:800;line-height:1.1;color:'+(mechPct>2?'var(--crit)':mechPct<-2?'var(--good)':'inherit')+'">'+(mechPct!=null?(mechPct>0?'+':'')+mechPct.toFixed(1)+'%':'—')+'</div></div>';
+    dcard.appendChild(dvr);
+    if(matrix){var mp=el("div");mp.style.cssText="margin:10px 0 2px";mp.innerHTML='<span class="pill">'+esc(matrix)+'</span>';dcard.appendChild(mp);}
+    if(mechHist.length>1)dcard.appendChild(chartBox(barChart({bars:mechHist.map(function(w){return{label:fmtDate(w.date),y:w.mech.pct,extra:w.type,color:w.mech.pct>2?"var(--crit)":w.mech.pct<-2?"var(--good)":"var(--warn)"};}),yfmt:function(vv){return(vv>0?'+':'')+vv.toFixed(1)+"%";},zeroLine:true})));
+    dcard.appendChild(hint("Mecânico = Δ% da passada-GAP (m/passo) entre a 2ª e a 1ª metade (só sessões ≥40 min). <b>Positivo = passada caiu no fim.</b> Cruzado com o cardíaco: FC sobe + passada estável → deriva cardiovascular; ambos cedem → fadiga global."+(lagLow?' Confiança rebaixada (defasagem de FC com <3 sessões).':'')));
+    v.appendChild(dcard);
+  }
+  var pred=el("div","card");
+  pred.innerHTML='<h3>🏁 Race Prediction <span class="badge lo" style="margin-left:auto">Riegel</span></h3>';
+  var anchor=bestAnchor(runs);
+  if(anchor){
+    var preds=racePredictions(anchor.distKm,anchor.durationSec);
+    var tb='<table style="margin-top:8px"><thead><tr><th>Distância</th><th class="num">Tempo</th><th class="num">Pace</th></tr></thead><tbody>';
+    preds.forEach(function(p){tb+='<tr><td>'+p.name+'</td><td class="num">'+hms(p.timeSec)+'</td><td class="num">'+paceStr(p.paceSec)+'/km</td></tr>';});
+    tb+='</tbody></table>';
+    pred.innerHTML+=tb+'<div class="mini-note">Âncora: '+esc(anchor.notes||anchor.type)+' ('+anchor.distKm.toFixed(2)+' km em '+hms(anchor.durationSec)+'). Estimativa, não garantia — melhora com uma prova recente.</div>';
+  }else pred.innerHTML+='<div class="empty" style="padding:24px">Registre um teste ou prova para ancorar as projeções.</div>';
+  v.appendChild(pred);
+}
+/* ---- detalhe: MECÂNICA & RITMO ---- */
+function progMec(v,c){
+  var a=c.a,runs=c.runs,cadPts=c.cadPts,latestCad=c.latestCad,gapPts=c.gapPts,hillAgg=c.hillAgg,ml=c.ml,byDateAsc=c.byDateAsc;
+  var mec=el("div","grid g-2");
+  var cadCard=card("Cadência","alta","cadência");
+  if(latestCad){var _ch=el("div");_ch.innerHTML='<div class="kbig">'+Math.round(latestCad)+'<small> spm</small></div><div class="ksub">meta '+a.cadenceTarget+(Math.round(latestCad)<a.cadenceTarget?' · faltam '+(a.cadenceTarget-Math.round(latestCad)):' · na meta ✓')+'</div>';cadCard.appendChild(_ch);}
+  cadCard.appendChild(chartBox(lineChart({series:[{name:"Cadência",points:cadPts,colorVar:seriesColor(3)}],yfmt:function(v){return Math.round(v)+"";},target:{y:a.cadenceTarget,label:"meta "+a.cadenceTarget}})));
+  cadCard.appendChild(hint("A alavanca de maior retorno: subir ~5% já traz ganho. Sinal de ouro: mesmo pace, cadência maior, FC menor."));
+  mec.appendChild(cadCard);
+  var gapCard=card("Ritmo Ajustado à Inclinação","alta","gap");
+  gapCard.appendChild(chartBox(lineChart({series:[{name:"Ritmo ajustado",points:gapPts,colorVar:seriesColor(2)}],yfmt:function(v){return paceStr(v);},reverseY:true})));
+  gapCard.appendChild(hint("Pace ajustado à inclinação km a km (subida +3,5%/1%, descida −1,5%/1%). Torna sessões em relevos diferentes comparáveis. Menor = mais rápido."));
+  mec.appendChild(gapCard);
+  v.appendChild(mec);
+  var hCard=card("Desempenho em subida","baixa","hill");
+  if(hillAgg){
+    hCard.innerHTML+='<div class="ring-wrap" style="margin-top:12px"><div><div style="font-size:28px;font-weight:800">'+(hillAgg.effVsModel*100).toFixed(0)+'<small style="font-size:14px;color:var(--ink-2)">% do modelo</small></div>'+
+      '<div class="sub" style="margin-top:4px">'+hillAgg.totalClimbM+' m de subida no ciclo · '+hillAgg.sessions+' sessão(ões) com rampa</div></div></div>';
+    hCard.appendChild(hint((hillAgg.effVsModel>=1?"Você sobe <b>melhor</b> que o previsto pelo Minetti":"Você perde um pouco mais que o previsto nas subidas")+" — perda média ~"+hillAgg.speedLossPctPerGrade.toFixed(1)+"% de velocidade por +1% de rampa. Menor perda + recuperar rápido no topo = força de subida melhorando."));
+  } else hCard.appendChild(el("div","empty",'<div class="big">⛰️</div>Registre corridas com subida (splits com Δelevação) para ativar.'));
+  v.appendChild(hCard);
   var easyStream=easyRuns(runs).filter(function(w){return w.stream;}).sort(byDateAsc);
   if(easyStream.length>=2){
     var last6=easyStream.slice(-6).map(function(w){return expandStream(w.stream);});
@@ -2492,8 +2595,7 @@ function renderPainel(v){
     if(gp.ok){
       var shown=gp.rows.filter(function(r){return r.show;});
       if(shown.length){
-        v.appendChild(sectionTitle("Perfil de inclinação · como o relevo mexe na sua FC"));
-        var gcard=card("Resíduo de FC por faixa de inclinação","exploratório","perfil-incl");
+        var gcard=card("Perfil de inclinação · resíduo de FC por faixa","exploratório","perfil-incl");
         var gp2=el("div");gp2.style.cssText="margin-top:6px";gp2.innerHTML='<span class="pill">'+esc(gp.label)+'</span> <span class="sub">modelo FC = '+gp.fit.a.toFixed(0)+' + '+gp.fit.b.toFixed(1)+'·v_GAP · R² '+gp.fit.r2.toFixed(2)+' · '+gp.nSessions+' sessões fáceis</span>';
         gcard.appendChild(gp2);
         gcard.appendChild(chartBox(barChart({bars:shown.map(function(r){return{label:r.band,y:r.residual,extra:(r.spm?r.spm+" spm · ":"")+r.minutes+" min",color:r.residual>1?"var(--crit)":r.residual<-1?"var(--good)":"var(--warn)"};}),yfmt:function(vv){return(vv>0?"+":"")+vv.toFixed(1)+" bpm";},zeroLine:true})));
@@ -2506,97 +2608,6 @@ function renderPainel(v){
       }
     }
   }
-
-  // ---- TESTE DO MOTOR ----
-  var motorRuns=runs.filter(function(w){return w.type==="teste_motor"&&w.stream;}).sort(byDateAsc);
-  if(motorRuns.length){
-    v.appendChild(sectionTitle("Teste do Motor · circuito fixo"));
-    var stages=(a.motorStages||[]).filter(function(s){return s;});
-    var lastMt=motorRuns[motorRuns.length-1];
-    var mt=motorTest(expandStream(lastMt.stream),stages);
-    var inPad=lastMt.weather?lastMt.weather.inStandard:null;
-    var mtCard=card("Último teste — "+fmtDateFull(lastMt.date),(lastMt.weather&&inPad)?"alta":"média","teste-motor");
-    var mhead=el("div");mhead.style.cssText="margin-top:6px";
-    mhead.innerHTML='<span class="sub">'+(lastMt.weather?("🌤 "+Math.round(lastMt.weather.tempC)+"°C · orvalho "+(lastMt.weather.dewC!=null?Math.round(lastMt.weather.dewC)+"°":"—")+(inPad?" · <b>clima padrão</b>":" · <b style=\"color:var(--warn)\">fora do padrão</b>")+(lastMt.weather.tags&&lastMt.weather.tags.length?" · "+esc(lastMt.weather.tags.join(" · ")):"")):"sem clima")+'</span>';
-    mtCard.appendChild(mhead);
-    var mtbl=el("div");mtbl.style.cssText="overflow:auto;margin-top:8px";
-    var tt=el("table");var th='<thead><tr><th>Estágio</th><th class="num">Alvo FC</th><th class="num">Veloc.</th><th class="num">Pace</th><th class="num">FC real</th></tr></thead><tbody>';
-    mt.forEach(function(r){th+='<tr><td>'+esc(r.name)+(r.flagged?' <span class="sub" style="color:var(--crit)">⚑ fora do alvo</span>':'')+'</td><td class="num">'+(r.targetHr!=null?r.targetHr+" bpm":"—")+'</td><td class="num">'+(r.speed!=null?r.speed.toFixed(2)+" m/s":"—")+'</td><td class="num">'+(r.pace!=null?paceStr(r.pace)+"/km":"—")+'</td><td class="num"'+(r.flagged?' style="color:var(--crit)"':'')+'>'+(r.hrMean!=null?r.hrMean+" bpm":"—")+'</td></tr>';});
-    th+='</tbody>';tt.innerHTML=th;mtbl.appendChild(tt);mtCard.appendChild(mtbl);
-    // histórico: velocidade por estágio (com alvo) ao longo dos testes
-    var targetStages=stages.filter(function(s){return s.targetHr!=null;});
-    if(motorRuns.length>1&&targetStages.length){
-      var series=targetStages.map(function(st,si){
-        var pts=motorRuns.map(function(w){var r=motorTest(expandStream(w.stream),stages).filter(function(x){return x.name===st.name;})[0];return r&&r.speed!=null?{label:fmtDate(w.date),y:r.speed,extra:st.name+(r.flagged?" ⚑":"")}:null;}).filter(Boolean);
-        return{name:st.name,points:pts,colorVar:seriesColor(si+1)};
-      }).filter(function(s){return s.points.length;});
-      if(series.length)mtCard.appendChild(chartBox(lineChart({series:series,yfmt:function(vv){return vv.toFixed(2)+" m/s";}})));
-    }
-    // próximo teste sugerido (~14 dias após o último)
-    var nextD=new Date(lastMt.date+"T00:00:00");nextD.setDate(nextD.getDate()+14);
-    mtCard.appendChild(hint("Mesmo circuito plano e horário, por estágio de FC-alvo. <b>Velocidade = mediana dos últimos 3 min</b> de cada estágio; se a FC média sair de ±3 bpm do alvo, o estágio é <b>marcado</b>. Compare a velocidade no mesmo alvo ao longo do tempo: <b>mais rápido no mesmo alvo = motor melhor.</b> Estágios acima de 145 liberam quando a tíbia permitir. <b>Próximo teste sugerido:</b> "+fmtDateFull(nextD.toISOString().slice(0,10))+". <b>Fonte:</b> Vesterinen et al., 2017."));
-    v.appendChild(mtCard);
-  }
-
-  // ---- PAINEL GERAL (hero tiles) ----
-  v.appendChild(sectionTitle("Painel geral · dados reais"));
-  var hero=el("div","grid g-4");
-  var hydroRuns=runs.filter(hydroHas);var lastHydro=hydroRuns.length?hydroRuns[hydroRuns.length-1]:null;var hydroRate=lastHydro?hydroRateMlH(lastHydro):null;var hydroSt=hydroStatus(hydroRate);
-  // ♥ FC repouso
-  var fcRepNote=restTr&&restTr.baseline!=null
-    ?(restTr.deltaAbs<=0?'<span class="delta up">▼ '+Math.abs(restTr.deltaAbs).toFixed(0)+'</span> vs base':'<span class="delta down">▲ '+restTr.deltaAbs.toFixed(0)+'</span> vs base')+' · do Apple Watch'
-    :"reserva "+(a.fcMax-a.fcRep)+" bpm"+(a.fcMaxProv?" · FCmáx prov.":"");
-  hero.appendChild(tile({lab:"♥ FC repouso",val:fcRepEff,unit:"bpm",note:fcRepNote,conf:null,info:"fcrep"}));
-  // 🧊 Forma (TSB)
-  hero.appendChild(tile({lab:"🧊 Forma (TSB)",val:(tsb!=null?(tsb>0?"+":"")+Math.round(tsb):"—"),note:tsb!=null?tsbState(tsb):"registre treinos",conf:null,info:"form"}));
-  // 📊 Volume 7 dias
-  hero.appendChild(tile({lab:"📊 Volume 7d",val:weeklyKm?Math.round(weeklyKm):"—",unit:weeklyKm?"km":"",note:"média 4 sem "+(avgWeeklyKm?Math.round(avgWeeklyKm)+" km":"—"),conf:null}));
-  // ⚡ Prontidão
-  var _rdLab=rd&&rd.score!=null?(rd.score>=80?"ótima":rd.score>=60?"boa":rd.score>=40?"moderada":"baixa"):"—";
-  hero.appendChild(tile({lab:"⚡ Prontidão",val:rd&&rd.score!=null?rd.score:"—",note:_rdLab,conf:null}));
-  // 💧 Água (ciclo completo do treino: antes+durante+depois)
-  var _lastTot=lastHydro?hydroTotal(lastHydro):null;
-  hero.appendChild(tile({lab:"💧 Água",val:_lastTot!=null?_lastTot:"—",unit:_lastTot!=null?"ml":"",note:_lastTot!=null?("total · "+(hydroRate!=null?Math.round(hydroRate)+" ml/h durante":"último treino")):"informe no treino",conf:null,info:"hidratacao"}));
-  // ★ Baseline 5K (opcional — liga em Config)
-  if(a.showBaseline5k){
-    var baseline5k=ws.filter(function(w){return w.type==="teste"||w.type==="prova";}).find(function(w){return Math.abs(w.distKm-5)<0.6;});
-    hero.appendChild(tile({lab:"★ Baseline 5K",val:baseline5k?paceStr(baseline5k.durationSec/baseline5k.distKm):"—",unit:"/km",note:baseline5k?fmtDate(baseline5k.date)+" · marco zero · GAP "+paceStr(computeGap(baseline5k).gapPace):"registre um teste",conf:null,info:"baseline"}));
-  }
-  v.appendChild(hero);
-
-  // ---- MOTOR: EF + decoupling ----
-  v.appendChild(sectionTitle("Motor aeróbico · EF & decoupling"));
-  var motor=el("div","grid g-2");
-  var efCard=card("Efficiency Factor · economia do motor","alta","efficiency");
-  if(latestEF!=null){var efH=el("div");efH.innerHTML='<div class="kbig">'+(latestEF*1000).toFixed(1).replace(".",",")+'<small> pts</small></div>'+
-    '<div class="ksub">economia '+(efDelta!=null?deltaHtml(efDelta)+" vs. o 1º":"—")+' · <b>EF '+latestEF.toFixed(4)+'</b></div>';efCard.appendChild(efH);}
-  efCard.appendChild(chartBox(lineChart({series:[{name:"Pontos",points:efPts}],yfmt:function(v){return (v*1000).toFixed(1).replace(".",",");},target:{y:efTarget,label:"meta "+(efTarget*1000).toFixed(1).replace(".",",")+" pts"}})));
-  efCard.appendChild(hint("<b>Pontos = o EF ×1000</b> (sem os zeros). Sobe = motor mais econômico. A régua é você mesmo: hoje vs. 6 semanas atrás."+(trend?" Tendência "+trend.arrow+" "+deltaHtml(trend.deltaPct)+".":"")));
-  motor.appendChild(efCard);
-  var decCard=card("Decoupling · resistência aeróbica","alta","decoupling");
-  var _decTgt=a.decouplingTarget||7;
-  decCard.appendChild(chartBox(barChart({bars:decPts,yfmt:function(v){return v.toFixed(1)+"%";},threshold:{y:_decTgt,label:"seu alvo "+_decTgt+"%"},zeroLine:true})));
-  var _decLast=decPts&&decPts.length?decPts[decPts.length-1].y:null;
-  if(_decLast!=null)decCard.appendChild(richBlock(scaleWidget({min:0,max:12,val:Math.max(0,_decLast),valText:_decLast.toFixed(1).replace(".",",")+"%",segs:[{to:5,label:"Sólido",c:"var(--good)"},{to:8,label:"Limítrofe",c:"var(--warn)"},{to:12,label:"Investigar",c:"var(--crit)"}]})));
-  decCard.appendChild(hint("Decoupling negativo nos longões = closer comprovado (fica mais eficiente na 2ª metade). &lt;5% = base sólida; &gt;8% = investigar."));
-  motor.appendChild(decCard);
-  v.appendChild(motor);
-
-  // ---- MECÂNICA + GAP ----
-  v.appendChild(sectionTitle("Mecânica & ritmo"));
-  var mec=el("div","grid g-2");
-  var cadCard=card("Cadência","alta","cadência");
-  if(latestCad){var _ch=el("div");_ch.innerHTML='<div class="kbig">'+Math.round(latestCad)+'<small> spm</small></div><div class="ksub">meta '+a.cadenceTarget+(Math.round(latestCad)<a.cadenceTarget?' · faltam '+(a.cadenceTarget-Math.round(latestCad)):' · na meta ✓')+'</div>';cadCard.appendChild(_ch);}
-  cadCard.appendChild(chartBox(lineChart({series:[{name:"Cadência",points:cadPts,colorVar:seriesColor(3)}],yfmt:function(v){return Math.round(v)+"";},target:{y:a.cadenceTarget,label:"meta "+a.cadenceTarget}})));
-  cadCard.appendChild(hint("A alavanca de maior retorno: subir ~5% já traz ganho. Sinal de ouro: mesmo pace, cadência maior, FC menor."));
-  mec.appendChild(cadCard);
-  var gapCard=card("Ritmo Ajustado à Inclinação","alta","gap");
-  gapCard.appendChild(chartBox(lineChart({series:[{name:"Ritmo ajustado",points:gapPts,colorVar:seriesColor(2)}],yfmt:function(v){return paceStr(v);},reverseY:true})));
-  gapCard.appendChild(hint("Pace ajustado à inclinação km a km (subida +3,5%/1%, descida −1,5%/1%). Torna sessões em relevos diferentes comparáveis. Menor = mais rápido."));
-  mec.appendChild(gapCard);
-  v.appendChild(mec);
-
-  // ---- CUSTO DE FC DO MORRO (análise secundária, baseada em splits) ----
   var hc=hrGradeCost(runs);
   if(hc){
     var fcm=card("💗 Custo de FC do morro","exploratório","fc-morro");
@@ -2605,7 +2616,6 @@ function renderPainel(v){
     var upTxt=up==null?"sem subidas suficientes":(Math.abs(up)<1?"subir custa <b>~o previsto</b> (GAP calibrado)":"subir custa <b>"+(up>0?"+":"")+up.toFixed(0)+" bpm</b> acima do previsto pelo seu pace");
     head.innerHTML='<div class="kbig">'+(up!=null?(up>0?"+":"")+up.toFixed(0):"—")+'<small> bpm</small></div><div class="ksub">'+upTxt+'</div>';
     fcm.appendChild(head);
-    // tabela por faixa (só faixas com ≥2 min)
     var rowsH="";
     hc.bands.forEach(function(bd){
       if(bd.min<2||bd.resid==null)return;
@@ -2621,9 +2631,26 @@ function renderPainel(v){
     fcm.appendChild(hint("Análise exploratória de <b>"+hc.nRuns+" corrida(s)</b> fáceis com splits (FC + Δelev). Mede o <i>seu</i> desvio de FC vs. o que o pace prevê — <b>não</b> altera o GAP, nem a FC/zonas no TRIMP. Quanto mais corridas em relevo variado, mais estável."));
     v.appendChild(fcm);
   }
-
-  // ---- CARGA & FORMA ----
-  v.appendChild(sectionTitle("Carga & forma"));
+}
+/* ---- detalhe: CARGA & FORMA ---- */
+function progCarga(v,c){
+  var a=c.a,ws=c.ws,runs=c.runs,bikes=c.bikes,bike=c.bike,fit=c.fit,loadBars=c.loadBars,tsb=c.tsb,ac=c.ac,pol=c.pol,cons=c.cons,td=c.td,weeklyKm=c.weeklyKm,avgWeeklyKm=c.avgWeeklyKm,ml=c.ml,lagLow=c.lagLow;
+  var tiles=el("div","grid g-4");
+  tiles.appendChild(tile({lab:"📊 Volume 7d",val:weeklyKm?Math.round(weeklyKm):"—",unit:weeklyKm?"km":"",note:"média 4 sem "+(avgWeeklyKm?Math.round(avgWeeklyKm)+" km":"—"),conf:null}));
+  var acCard=el("div","card tile has-info");acCard.setAttribute("data-info","ac");acCard.setAttribute("aria-label","Sobre: Razão aguda:crônica");
+  acCard.innerHTML='<div class="lab">▦ Razão aguda:crônica<span class="info-dot" aria-hidden="true">ⓘ</span></div><div class="val">'+(ac?ac.ratio.toFixed(2):"—")+'</div>'+
+    '<div class="note">'+(ac?zoneBadge(ac.zone):"acumula ~4 semanas")+'</div>';
+  if(ac){acCard.appendChild(richBlock(scaleWidget({min:0.5,max:2,val:ac.ratio,valText:ac.ratio.toFixed(2).replace(".",","),segs:[{to:0.8,label:"Destreino",c:"var(--muted)"},{to:1.3,label:"Seguro",c:"var(--good)"},{to:1.5,label:"Atenção",c:"var(--warn)"},{to:2,label:"Risco",c:"var(--crit)"}]})));acCard.appendChild(hint("Sweet spot 0,8–1,3 = carga sustentável. Toque para ver o que fazer."));}
+  tiles.appendChild(acCard);
+  var polCard=el("div","card tile");
+  polCard.innerHTML='<div class="lab">◷ Aderência 80/20</div><div class="val">'+(pol?Math.round(pol.easyPct)+'<small>% fácil</small>':"—")+'</div><div class="note">alvo ~80% em Z1–Z2 · tempo real em zona</div>';
+  if(pol){var pm=el("div","meter");pm.innerHTML='<i style="width:'+Math.round(pol.easyPct)+'%;background:'+(pol.easyPct>=75?"var(--good)":"var(--warn)")+'"></i>';polCard.appendChild(pm);polCard.appendChild(hint(pol.easyPct<75?"Abaixo de 75% = treinando forte demais no volume.":"Boa distribuição polarizada."));}
+  tiles.appendChild(polCard);
+  var conCard=el("div","card tile");
+  conCard.innerHTML='<div class="lab">✓ Consistência</div><div class="val">'+(cons?Math.round(cons.adherencePct)+'<small>%</small>':"—")+'</div><div class="note">'+(cons?cons.weeks+" semanas · "+cons.activeDays+" dias ativos":"—")+'</div>';
+  conCard.appendChild(hint("Consistência &gt; heroísmo — maior preditor de evolução. Alvo ≥85%."));
+  tiles.appendChild(conCard);
+  v.appendChild(tiles);
   var carga=el("div","grid g-2");
   var loadCard=card("Carga interna semanal · TRIMP","alta","trimp");
   loadCard.appendChild(chartBox(barChart({bars:loadBars,yfmt:function(v){return Math.round(v)+"";}})));
@@ -2638,61 +2665,10 @@ function renderPainel(v){
   formCard.appendChild(hint("Form (TSB) atual: <b>"+(tsb!=null?(tsb>0?"+":"")+tsb.toFixed(1):"—")+"</b> — "+tsbState(tsb)+". Fitness = capacidade adquirida; Fatigue = cansaço; Form = frescor resultante."));
   carga.appendChild(formCard);
   v.appendChild(carga);
-
-  // ---- HIDRATAÇÃO (durante = métrica; antes/depois = benefícios) ----
-  if(hydroRuns.length){
-    v.appendChild(sectionTitle("Hidratação · durante · antes · depois"));
-    var hcard=card("Hidratação do treino","média","hidratacao");
-    var hp=hydroPlan(lastHydro,a);
-    // ---- MANCHETE: taxa DURANTE (ml/h) ----
-    var durStat=hydroDurStat(hydroRate,hp?hp.durFloor:400);
-    var _hh=el("div");
-    _hh.innerHTML='<div class="kbig">'+(hydroRate!=null?Math.round(hydroRate):"—")+'<small> ml/h · durante</small></div>'+
-      '<div class="ksub">último treino'+(hp&&hp.tempKnown?" · "+Math.round(hp.temp)+"°C":"")+(hp?" · "+Math.round(hp.durMin)+" min":"")+' · <b style="color:'+durStat.c+'">'+durStat.label+'</b></div>';
-    hcard.appendChild(_hh);
-    if(hydroRate!=null)hcard.appendChild(richBlock(scaleWidget({min:0,max:1200,val:hydroRate,valText:Math.round(hydroRate)+" ml/h",segs:[{to:(hp?hp.durFloor:400),label:"Baixa",c:"var(--warn)"},{to:900,label:"Adequada",c:"var(--good)"},{to:1200,label:"Alta",c:"var(--trend)"}]})));
-    var durRead=(hydroRate==null)?"Informe a água <b>durante</b> e a duração para calcular a taxa (ml/h) — é a métrica que segura o <b>pace e a deriva cardíaca</b>."
-      :(durStat.label==="adequada"?"Reposição no esforço <b>adequada</b> — ajuda a manter o pace e a segurar a deriva cardíaca."
-       :durStat.label==="baixa"?("Reposição <b>baixa</b> pro esforço"+(hp&&hp.durMin<60&&hp.temp<18?" — mas em treino curto e frio, beber na sede costuma bastar.":" — em longo/quente, suba a água durante pra conter a deriva.")):
-        "Reposição <b>alta</b> — ótima no calor; só cuide do desconforto gástrico.");
-    hcard.appendChild(hint(durRead));
-    // ---- ANTES · largada (benefício: deriva cardíaca) ----
-    if(hp){
-      var aStat=hydroPhaseStat(hp.antes,hp.antesTarget);
-      var dec=null;try{if(!isBike(lastHydro))dec=computeDecoupling(lastHydro);}catch(e){}
-      var aRead="Meta ~"+hp.antesTarget+" ml ("+(hp.antesTarget/hp.kg).toFixed(0)+" ml/kg, ajustada ao treino). Chegar hidratado <b>baixa a FC inicial e segura a deriva</b>.";
-      if(hp.antes!=null&&hp.antes<hp.antesTarget*0.6&&dec!=null&&dec>7)aRead="⚠ Pouca água antes ("+hp.antes+" ml) e deriva <b>alta</b> ("+dec.toFixed(1)+"%) — provável <b>largada desidratada</b>. Reforce o pré nos longos/quentes.";
-      else if(hp.antes!=null&&hp.antes>=hp.antesTarget*0.85&&dec!=null&&dec<5)aRead="Chegou bem hidratado ("+hp.antes+" ml) e a deriva ficou <b>baixa</b> ("+dec.toFixed(1)+"%) — largada hidratada ✓.";
-      else if(hp.antes!=null&&hp.antes<hp.antesTarget*0.5)aRead="Pouco antes ("+hp.antes+" ml) pra meta ~"+hp.antesTarget+" ml — larga em leve déficit. Chegar hidratado reduz a deriva.";
-      hcard.appendChild(hydroPhaseBlock("🛫","Antes · largada",hp.antes,hp.antesTarget,aRead,aStat));
-    }
-    // ---- DEPOIS · recuperação (benefício: dia seguinte) ----
-    if(hp){
-      var pStat=hydroPhaseStat(hp.depois,hp.depoisTarget);
-      var nd=hydroNextDayRecovery(lastHydro);
-      var pRead="Meta ~"+hp.depoisTarget+" ml pra repor o déficit estimado ("+hp.deficit+" ml de suor − durante). Reidratar <b>acelera a recuperação</b> e protege a próxima sessão.";
-      if(hp.depois!=null&&hp.depois<hp.depoisTarget*0.6&&nd&&nd.restingDelta!=null&&nd.restingDelta>2)
-        pRead="⚠ Pouco depois ("+hp.depois+" ml) e a <b>FC de repouso subiu +"+nd.restingDelta.toFixed(0)+" bpm</b> no dia seguinte — reidratar melhor acelera a recuperação.";
-      else if(hp.depois!=null&&hp.depois>=hp.depoisTarget*0.85&&nd&&((nd.restingDelta!=null&&nd.restingDelta<=0)||(nd.hrvDeltaPct!=null&&nd.hrvDeltaPct>=0)))
-        pRead="Boa reidratação ("+hp.depois+" ml) — a recuperação no dia seguinte veio bem"+(nd.restingDelta!=null?" (FC repouso "+(nd.restingDelta<=0?"estável/menor":"+"+nd.restingDelta.toFixed(0)+" bpm")+")":"")+". ✓";
-      else if(hp.depois!=null&&hp.depois<hp.depoisTarget*0.6)
-        pRead="Pouco depois ("+hp.depois+" ml) pra um déficit estimado de "+hp.deficit+" ml — reponha mais na recuperação, principalmente após longo/quente.";
-      hcard.appendChild(hydroPhaseBlock("🛬","Depois · recuperação",hp.depois,hp.depoisTarget,pRead,pStat));
-    }
-    // ---- contexto do ciclo: médias + evolução ----
-    var aAvg=hydroPhaseAvg(hydroRuns,"waterBefore"),dAvg=hydroPhaseAvg(hydroRuns,"waterDuring"),pAvg=hydroPhaseAvg(hydroRuns,"waterAfter");
-    var brk=el("div","hyd-brk");brk.style.marginTop="14px";
-    brk.innerHTML='<div class="hyd-ph"><span class="hyd-ic">🛫</span><b>'+(aAvg!=null?aAvg+" ml":"—")+'</b><small>antes · méd</small></div>'+
-      '<div class="hyd-ph on"><span class="hyd-ic">🏃</span><b>'+(dAvg!=null?dAvg+" ml":"—")+'</b><small>durante · méd</small></div>'+
-      '<div class="hyd-ph"><span class="hyd-ic">🛬</span><b>'+(pAvg!=null?pAvg+" ml":"—")+'</b><small>depois · méd</small></div>';
-    hcard.appendChild(brk);
-    var hpts=hydroRuns.map(function(w){var t=hydroTotal(w);return t!=null?{label:fmtDate(w.date),y:t,extra:(w.temp!=null?Math.round(w.temp)+"°C":"")}:null;}).filter(Boolean);
-    if(hpts.length>1)hcard.appendChild(chartBox(lineChart({series:[{name:"total ml",points:hpts,colorVar:seriesColor(1)}],yfmt:function(v){return Math.round(v)+"";}})));
-    hcard.appendChild(hint("Metas pessoais pelo seu <b>peso ("+((a&&a.weight)||72)+" kg)</b> e ajustadas por <b>duração e calor</b>. Antes/depois são estimativas de apoio — não substituem a sede nem orientação individual."));
-    v.appendChild(hcard);
-  }
-
-  // ---- BIKE & CROSS-TRAINING (sempre visível; convida a adicionar a 1ª bike) ----
+  var zCard=card("Distribuição por intensidade","alta","distribution");
+  if(td){zCard.appendChild(chartBox(zonesBar(td)));zCard.appendChild(hint("Tempo REAL em cada zona (do histograma de FC do .FIT). Fácil (Z1–Z2) <b>"+Math.round(td.pct.facil)+"%</b> · moderado (Z3) "+Math.round(td.pct.moderado)+"% · forte (Z4–Z5) "+Math.round(td.pct.forte)+"%. Base ideal: maioria fácil + uma fatia de qualidade."));}
+  else zCard.appendChild(el("div","empty",'<div class="big">🎯</div>Importe um .FIT para ver o tempo real em zona.'));
+  v.appendChild(zCard);
   v.appendChild(sectionTitle("🚴 Bike & cross-training"));
   var bikeNote=el("div","sub");bikeNote.style.cssText="margin:-6px 4px 12px;line-height:1.5";
   bikeNote.innerHTML="A bike sustenta a base aeróbica sem impacto na canela. Entra na <b>carga (TRIMP), na forma (CTL·ATL·TSB), no A:C e nas zonas de FC</b> — mas fica de fora do EF, GAP, pace e cadência, que são de corrida.";
@@ -2712,7 +2688,6 @@ function renderPainel(v){
     bhero.appendChild(tile({lab:"♥ FC média · bike",val:bike.avgHr||"—",unit:"bpm",note:(bike.totalKcal?bike.totalKcal+" kcal":"")+(bike.outdoor&&bike.totalKm?" · "+bike.totalKm.toFixed(0)+" km outdoor":""),conf:null}));
     v.appendChild(bhero);
     var bgrid=el("div","grid g-2");
-    // carga da bike por semana
     var bLoadWk={};bikes.forEach(function(w){var t=computeTrimp(w,a);if(t==null)return;var k=isoWeekKey(w.date);bLoadWk[k]=(bLoadWk[k]||0)+t;});
     var bWkKeys=Object.keys(bLoadWk).sort();
     var bLoadBars=bWkKeys.map(function(k){return{label:k.replace(/^\d+-/,""),y:Math.round(bLoadWk[k])};});
@@ -2721,7 +2696,6 @@ function renderPainel(v){
     else bLoadCard.appendChild(el("div","empty",'<div class="big">🚴</div>Importe um .FIT de bike para ver a carga.'));
     bLoadCard.appendChild(hint("Quanta dose fisiológica veio da bike a cada semana — o quanto o cross-training está segurando o pé aeróbico."));
     bgrid.appendChild(bLoadCard);
-    // zonas de FC na bike
     var bTd=trainingDistribution(bikes,a);
     var bZCard=card("Zonas de FC na bike","alta","polarizado");
     if(bTd){bZCard.appendChild(chartBox(zonesBar(bTd)));bZCard.appendChild(hint("Onde a bike trabalha: fácil (Z1–Z2) <b>"+Math.round(bTd.pct.facil)+"%</b> · moderado (Z3) "+Math.round(bTd.pct.moderado)+"% · forte (Z4–Z5) "+Math.round(bTd.pct.forte)+"%. "+(a.bikeZones?"Zonas do seu Garmin (FCmáx "+(a.bikeFcMax||186)+"). ":"")+"Rodízio de base fica na Z2; tiros na bike sobem para Z4–Z5 sem castigar a tíbia."));}
@@ -2729,25 +2703,84 @@ function renderPainel(v){
     bgrid.appendChild(bZCard);
     v.appendChild(bgrid);
   }
-
-  // ---- INTELIGÊNCIA (score, readiness, A:C, 80/20) ----
-  v.appendChild(sectionTitle("Inteligência do atleta"));
-  var intel=el("div","grid g-4");
-  // score card (span 2)
-  var scoreCard=el("div","card span-2");
-  scoreCard.innerHTML='<h3>◆ Athlete Performance Score <span class="badge mid" style="margin-left:auto">provisório</span></h3>';
-  var sr=el("div","ring-wrap");sr.style.marginTop="12px";
-  var ring=el("div","ring");ring.style.position="relative";ring.style.setProperty("--p",score.overall);ring.innerHTML='<b>'+score.overall+'</b>';
-  sr.appendChild(ring);
-  var subs=el("div");subs.style.flex="1";
-  var sb=el("div","subbars");
-  Object.keys(score.parts).forEach(function(k){var val=score.parts[k];sb.appendChild(subbar(k,val));});
-  subs.appendChild(sb);
-  sr.appendChild(subs);
-  scoreCard.appendChild(sr);
-  scoreCard.appendChild(hint("Média ponderada transparente: 30% eficiência · 25% consistência · 25% resistência à fadiga · 20% volume. Nunca decida treino só pelo score — abra os componentes."));
-  intel.appendChild(scoreCard);
-  // readiness (agora com sono/HRV/FC repouso)
+  var aud=runs.filter(function(w){return w.quality;}).sort(function(x,y){return x.date<y.date?1:x.date>y.date?-1:0;});
+  if(aud.length){
+    var auSec=el("details","prog-adv");var auS=el("summary");auS.innerHTML='<span>🔎 Auditoria das sessões (.FIT)</span>';auSec.appendChild(auS);
+    var ac2=card("Transparência do pré-processamento","alta");
+    var at=el("div");at.style.cssText="overflow:auto;margin-top:8px";
+    var t2=el("table");t2.innerHTML='<thead><tr><th>Data</th><th class="num">Válidos</th><th class="num">Excl.</th><th class="num">Defas.</th><th class="num">Mec.</th><th>Clima</th><th>Motivos</th></tr></thead>';
+    var tb2=el("tbody");
+    aud.slice(0,16).forEach(function(w){var q=w.quality,mot=[];for(var rk in q.reasons)mot.push(rk);
+      var mv=w.mech&&w.mech.pct!=null?(w.mech.pct>0?"+":"")+w.mech.pct.toFixed(1)+"%":"—";
+      var cl=w.weather?(Math.round(w.weather.tempC)+"° "+(w.weather.inStandard?"<span class=\"sub\">padrão</span>":"<span class=\"sub\" style=\"color:var(--warn)\">fora</span>")):(w.geo&&w.geo.lat!=null?'<span class="sub">—</span>':'<span class="sub">s/GPS</span>');
+      var r=el("tr");r.innerHTML='<td>'+fmtDateFull(w.date)+'</td>'+
+        '<td class="num">'+q.validMin+' min</td>'+
+        '<td class="num"'+(q.excludedPct>20?' style="color:var(--crit)"':'')+'>'+q.excludedPct+'%</td>'+
+        '<td class="num">'+(w.hrLagSec!=null?w.hrLagSec+"s":"—")+(w.streamPruned?' <span class="sub">(resumido)</span>':'')+'</td>'+
+        '<td class="num"'+(w.mech&&w.mech.pct>2?' style="color:var(--crit)"':'')+'>'+mv+'</td>'+
+        '<td>'+cl+'</td>'+
+        '<td class="sub">'+esc(mot.slice(0,3).join(" · ")||"—")+'</td>';
+      tb2.appendChild(r);});
+    t2.appendChild(tb2);at.appendChild(t2);ac2.appendChild(at);
+    ac2.appendChild(hint("Minutos válidos, % excluído, defasagem de FC usada e decoupling mecânico por sessão. &gt;20% excluído (e passada caindo &gt;2%) aparecem em vermelho. Defasagem de FC do ciclo: <b>"+ml.lagSec+"s</b> (mediana de "+ml.n+" sessão(ões) válida(s))"+(lagLow?" — <b>&lt;3 sessões</b>, decoupling mecânico com confiança rebaixada.":".")+" Sessões antigas podem aparecer como <b>(resumido)</b>."));
+    var rc=el("button","btn ghost sm");rc.style.marginTop="10px";rc.textContent="↻ Recalcular KPIs";rc.title="Recalcula do stream e refaz as etiquetas de clima; lista o que precisa reimportar";rc.onclick=function(){recalcKpis();};ac2.appendChild(rc);
+    auSec.appendChild(ac2);
+    v.appendChild(auSec);
+  }
+}
+/* ---- detalhe: HIDRATAÇÃO ---- */
+function progHidr(v,c){
+  var a=c.a,runs=c.runs;
+  var hydroRuns=runs.filter(hydroHas);var lastHydro=hydroRuns.length?hydroRuns[hydroRuns.length-1]:null;var hydroRate=lastHydro?hydroRateMlH(lastHydro):null;
+  if(!hydroRuns.length){v.appendChild(el("div","empty",'<div class="big">💧</div>Nenhum treino com hidratação registrada. Informe a água antes/durante/depois ao salvar um treino.'));return;}
+  var hcard=card("Hidratação do treino","média","hidratacao");
+  var hp=hydroPlan(lastHydro,a);
+  var durStat=hydroDurStat(hydroRate,hp?hp.durFloor:400);
+  var _hh=el("div");
+  _hh.innerHTML='<div class="kbig">'+(hydroRate!=null?Math.round(hydroRate):"—")+'<small> ml/h · durante</small></div>'+
+    '<div class="ksub">último treino'+(hp&&hp.tempKnown?" · "+Math.round(hp.temp)+"°C":"")+(hp?" · "+Math.round(hp.durMin)+" min":"")+' · <b style="color:'+durStat.c+'">'+durStat.label+'</b></div>';
+  hcard.appendChild(_hh);
+  if(hydroRate!=null)hcard.appendChild(richBlock(scaleWidget({min:0,max:1200,val:hydroRate,valText:Math.round(hydroRate)+" ml/h",segs:[{to:(hp?hp.durFloor:400),label:"Baixa",c:"var(--warn)"},{to:900,label:"Adequada",c:"var(--good)"},{to:1200,label:"Alta",c:"var(--trend)"}]})));
+  var durRead=(hydroRate==null)?"Informe a água <b>durante</b> e a duração para calcular a taxa (ml/h) — é a métrica que segura o <b>pace e a deriva cardíaca</b>."
+    :(durStat.label==="adequada"?"Reposição no esforço <b>adequada</b> — ajuda a manter o pace e a segurar a deriva cardíaca."
+     :durStat.label==="baixa"?("Reposição <b>baixa</b> pro esforço"+(hp&&hp.durMin<60&&hp.temp<18?" — mas em treino curto e frio, beber na sede costuma bastar.":" — em longo/quente, suba a água durante pra conter a deriva.")):
+      "Reposição <b>alta</b> — ótima no calor; só cuide do desconforto gástrico.");
+  hcard.appendChild(hint(durRead));
+  if(hp){
+    var aStat=hydroPhaseStat(hp.antes,hp.antesTarget);
+    var dec=null;try{if(!isBike(lastHydro))dec=computeDecoupling(lastHydro);}catch(e){}
+    var aRead="Meta ~"+hp.antesTarget+" ml ("+(hp.antesTarget/hp.kg).toFixed(0)+" ml/kg, ajustada ao treino). Chegar hidratado <b>baixa a FC inicial e segura a deriva</b>.";
+    if(hp.antes!=null&&hp.antes<hp.antesTarget*0.6&&dec!=null&&dec>7)aRead="⚠ Pouca água antes ("+hp.antes+" ml) e deriva <b>alta</b> ("+dec.toFixed(1)+"%) — provável <b>largada desidratada</b>. Reforce o pré nos longos/quentes.";
+    else if(hp.antes!=null&&hp.antes>=hp.antesTarget*0.85&&dec!=null&&dec<5)aRead="Chegou bem hidratado ("+hp.antes+" ml) e a deriva ficou <b>baixa</b> ("+dec.toFixed(1)+"%) — largada hidratada ✓.";
+    else if(hp.antes!=null&&hp.antes<hp.antesTarget*0.5)aRead="Pouco antes ("+hp.antes+" ml) pra meta ~"+hp.antesTarget+" ml — larga em leve déficit. Chegar hidratado reduz a deriva.";
+    hcard.appendChild(hydroPhaseBlock("🛫","Antes · largada",hp.antes,hp.antesTarget,aRead,aStat));
+  }
+  if(hp){
+    var pStat=hydroPhaseStat(hp.depois,hp.depoisTarget);
+    var nd=hydroNextDayRecovery(lastHydro);
+    var pRead="Meta ~"+hp.depoisTarget+" ml pra repor o déficit estimado ("+hp.deficit+" ml de suor − durante). Reidratar <b>acelera a recuperação</b> e protege a próxima sessão.";
+    if(hp.depois!=null&&hp.depois<hp.depoisTarget*0.6&&nd&&nd.restingDelta!=null&&nd.restingDelta>2)
+      pRead="⚠ Pouco depois ("+hp.depois+" ml) e a <b>FC de repouso subiu +"+nd.restingDelta.toFixed(0)+" bpm</b> no dia seguinte — reidratar melhor acelera a recuperação.";
+    else if(hp.depois!=null&&hp.depois>=hp.depoisTarget*0.85&&nd&&((nd.restingDelta!=null&&nd.restingDelta<=0)||(nd.hrvDeltaPct!=null&&nd.hrvDeltaPct>=0)))
+      pRead="Boa reidratação ("+hp.depois+" ml) — a recuperação no dia seguinte veio bem"+(nd.restingDelta!=null?" (FC repouso "+(nd.restingDelta<=0?"estável/menor":"+"+nd.restingDelta.toFixed(0)+" bpm")+")":"")+". ✓";
+    else if(hp.depois!=null&&hp.depois<hp.depoisTarget*0.6)
+      pRead="Pouco depois ("+hp.depois+" ml) pra um déficit estimado de "+hp.deficit+" ml — reponha mais na recuperação, principalmente após longo/quente.";
+    hcard.appendChild(hydroPhaseBlock("🛬","Depois · recuperação",hp.depois,hp.depoisTarget,pRead,pStat));
+  }
+  var aAvg=hydroPhaseAvg(hydroRuns,"waterBefore"),dAvg=hydroPhaseAvg(hydroRuns,"waterDuring"),pAvg=hydroPhaseAvg(hydroRuns,"waterAfter");
+  var brk=el("div","hyd-brk");brk.style.marginTop="14px";
+  brk.innerHTML='<div class="hyd-ph"><span class="hyd-ic">🛫</span><b>'+(aAvg!=null?aAvg+" ml":"—")+'</b><small>antes · méd</small></div>'+
+    '<div class="hyd-ph on"><span class="hyd-ic">🏃</span><b>'+(dAvg!=null?dAvg+" ml":"—")+'</b><small>durante · méd</small></div>'+
+    '<div class="hyd-ph"><span class="hyd-ic">🛬</span><b>'+(pAvg!=null?pAvg+" ml":"—")+'</b><small>depois · méd</small></div>';
+  hcard.appendChild(brk);
+  var hpts=hydroRuns.map(function(w){var t=hydroTotal(w);return t!=null?{label:fmtDate(w.date),y:t,extra:(w.temp!=null?Math.round(w.temp)+"°C":"")}:null;}).filter(Boolean);
+  if(hpts.length>1)hcard.appendChild(chartBox(lineChart({series:[{name:"total ml",points:hpts,colorVar:seriesColor(1)}],yfmt:function(v){return Math.round(v)+"";}})));
+  hcard.appendChild(hint("Metas pessoais pelo seu <b>peso ("+((a&&a.weight)||72)+" kg)</b> e ajustadas por <b>duração e calor</b>. Antes/depois são estimativas de apoio — não substituem a sede nem orientação individual."));
+  v.appendChild(hcard);
+}
+/* ---- detalhe: RECUPERAÇÃO ---- */
+function progRecup(v,c){
+  var a=c.a,ac=c.ac,tsb=c.tsb,rd=c.rd,recov=c.recov,dailyArr=c.dailyArr,restTr=c.restTr,hrvTr=c.hrvTr,sleepLast=c.sleepLast,fcRepEff=c.fcRepEff,last=c.last,dctx=c.dctx;
   var shinProtect=!!(a.alert&&/canela|t[íi]bia|protetora|suspensa/i.test(a.alert))||!!(last&&last.pain);
   var sug=nextWorkoutSuggestion(rd,tsb,ac,shinProtect);
   var rdCard=el("div","card");
@@ -2764,145 +2797,28 @@ function renderPainel(v){
   rr.appendChild(rt);rdCard.appendChild(rr);
   rdCard.appendChild(richBlock('<div class="nw-read">'+sug.read+'</div>'));
   rdCard.appendChild(richBlock('<div class="nw-foot">Sugestão esportiva a partir dos seus dados — você decide. Não é prescrição médica.</div>'));
-  intel.appendChild(rdCard);
-  // recovery status (olha para trás)
-  var recCard=el("div","card tile");
+  v.appendChild(rdCard);
+  var tiles=el("div","grid g-4");
   var recCol=recov.score>=75?"var(--good)":recov.score>=55?"var(--warn)":"var(--crit)";
+  var recCard=el("div","card tile");
   recCard.innerHTML='<div class="lab">🌙 Recovery Status</div><div class="val" style="font-size:22px">'+recov.label+'</div><div class="note">score '+recov.score+' · sono/FC repouso/HRV</div>';
   var recm=el("div","meter");recm.innerHTML='<i style="width:'+recov.score+'%;background:'+recCol+'"></i>';recCard.appendChild(recm);
-  recCard.appendChild(hint(dailyArr.length?"Do diário/Apple Watch. Good / Moderate / Needs Recovery.":"Preencha o diário (aba Recuperação) para ativar."));
-  intel.appendChild(recCard);
-  v.appendChild(intel);
-
-  var intel2=el("div","grid g-4");
-  // A:C
-  var acCard=el("div","card tile has-info");acCard.setAttribute("data-info","ac");acCard.setAttribute("aria-label","Sobre: Razão aguda:crônica");
-  acCard.innerHTML='<div class="lab">▦ Razão aguda:crônica<span class="info-dot" aria-hidden="true">ⓘ</span></div><div class="val">'+(ac?ac.ratio.toFixed(2):"—")+'</div>'+
-    '<div class="note">'+(ac?zoneBadge(ac.zone):"acumula ~4 semanas")+'</div>';
-  if(ac){acCard.appendChild(richBlock(scaleWidget({min:0.5,max:2,val:ac.ratio,valText:ac.ratio.toFixed(2).replace(".",","),segs:[{to:0.8,label:"Destreino",c:"var(--muted)"},{to:1.3,label:"Seguro",c:"var(--good)"},{to:1.5,label:"Atenção",c:"var(--warn)"},{to:2,label:"Risco",c:"var(--crit)"}]})));acCard.appendChild(hint("Sweet spot 0,8–1,3 = carga sustentável. Toque para ver o que fazer."));}
-  intel2.appendChild(acCard);
-  // 80/20 (tempo REAL em zona quando há .FIT)
-  var polCard=el("div","card tile");
-  polCard.innerHTML='<div class="lab">◷ Aderência 80/20</div><div class="val">'+(pol?Math.round(pol.easyPct)+'<small>% fácil</small>':"—")+'</div><div class="note">alvo ~80% em Z1–Z2 · tempo real em zona</div>';
-  if(pol){var pm=el("div","meter");pm.innerHTML='<i style="width:'+Math.round(pol.easyPct)+'%;background:'+(pol.easyPct>=75?"var(--good)":"var(--warn)")+'"></i>';polCard.appendChild(pm);polCard.appendChild(hint(pol.easyPct<75?"Abaixo de 75% = treinando forte demais no volume.":"Boa distribuição polarizada."));}
-  intel2.appendChild(polCard);
-  // consistency
-  var conCard=el("div","card tile");
-  conCard.innerHTML='<div class="lab">✓ Consistência</div><div class="val">'+(cons?Math.round(cons.adherencePct)+'<small>%</small>':"—")+'</div><div class="note">'+(cons?cons.weeks+" semanas · "+cons.activeDays+" dias ativos":"—")+'</div>';
-  conCard.appendChild(hint("Consistência &gt; heroísmo — maior preditor de evolução. Alvo ≥85%."));
-  intel2.appendChild(conCard);
-  // VO2 (automático do Apple Watch quando há diário)
-  var vo2Card=el("div","card tile has-info");vo2Card.setAttribute("data-info","vo2");vo2Card.setAttribute("aria-label","Sobre: VO₂máx");var vb=vo2Band(vo2Eff);
-  vo2Card.innerHTML='<div class="lab">◉ VO₂máx<span class="info-dot" aria-hidden="true">ⓘ</span></div><div class="val">'+(vo2Eff||"—")+'<small> ml/kg</small></div><div class="note">'+(vb?bandBadge(vb)+(vo2Last?" · Apple Watch "+fmtDate(vo2Last.date):" (homem 30–39)"):"")+'</div>';
-  if(vo2Eff!=null)vo2Card.appendChild(richBlock(scaleWidget({min:30,max:55,val:vo2Eff,valText:(""+vo2Eff).replace(".",","),segs:[{to:36,label:"Abaixo",c:"var(--warn)"},{to:42,label:"Bom",c:"var(--good)"},{to:52,label:"Excelente",c:"var(--trend)"},{to:55,label:"Elite",c:"var(--accent)"}]})));
-  vo2Card.appendChild(hint("Bom 36–42 · excelente 43–52. É o tamanho do motor; o EF é o quanto você aproveita dele."));
-  intel2.appendChild(vo2Card);
-  // performance trend
-  var trCard=el("div","card tile");
-  trCard.innerHTML='<div class="lab">↗ Performance Trend</div><div class="val">'+(trend?trend.arrow+' '+deltaHtml(trend.deltaPct):"—")+'</div><div class="note">'+(trend?(trend.enough?"janela de 4 sessões":"provisório · &lt;3 sessões/janela"):"≥3 sessões por janela")+'</div>';
-  trCard.appendChild(hint("Direção da forma: ↗ &gt;+2% · → estável · ↘ &lt;−2%."));
-  intel2.appendChild(trCard);
-  v.appendChild(intel2);
-
-  // ---- ZONAS DE FC & SUBIDA ----
-  v.appendChild(sectionTitle("Zonas de FC & subida"));
-  var zc=el("div","grid g-2");
-  var zCard=card("Distribuição por intensidade","alta","distribution");
-  if(td){zCard.appendChild(chartBox(zonesBar(td)));zCard.appendChild(hint("Tempo REAL em cada zona (do histograma de FC do .FIT). Fácil (Z1–Z2) <b>"+Math.round(td.pct.facil)+"%</b> · moderado (Z3) "+Math.round(td.pct.moderado)+"% · forte (Z4–Z5) "+Math.round(td.pct.forte)+"%. Base ideal: maioria fácil + uma fatia de qualidade."));}
-  else zCard.appendChild(el("div","empty",'<div class="big">🎯</div>Importe um .FIT para ver o tempo real em zona.'));
-  zc.appendChild(zCard);
-  var hCard=card("Desempenho em subida","baixa","hill");
-  if(hillAgg){
-    hCard.innerHTML+='<div class="ring-wrap" style="margin-top:12px"><div><div style="font-size:28px;font-weight:800">'+(hillAgg.effVsModel*100).toFixed(0)+'<small style="font-size:14px;color:var(--ink-2)">% do modelo</small></div>'+
-      '<div class="sub" style="margin-top:4px">'+hillAgg.totalClimbM+' m de subida no ciclo · '+hillAgg.sessions+' sessão(ões) com rampa</div></div></div>';
-    hCard.appendChild(hint((hillAgg.effVsModel>=1?"Você sobe <b>melhor</b> que o previsto pelo Minetti":"Você perde um pouco mais que o previsto nas subidas")+" — perda média ~"+hillAgg.speedLossPctPerGrade.toFixed(1)+"% de velocidade por +1% de rampa. Menor perda + recuperar rápido no topo = força de subida melhorando."));
-  } else hCard.appendChild(el("div","empty",'<div class="big">⛰️</div>Registre corridas com subida (splits com Δelevação) para ativar.'));
-  zc.appendChild(hCard);
-  v.appendChild(zc);
-
-  // ---- COACH INSIGHT ----
-  v.appendChild(sectionTitle("Coach insight"));
-  var ci=el("div","card ci-card");
-  ci.innerHTML='<h3>💬 Coach Insight <span class="badge mid" style="margin-left:auto">leitura</span></h3>';
-  ci.appendChild(coachInsightEl(ws,a,{latestEF:latestEF,efDelta:efDelta,latestCad:latestCad,latestDec:latestDec,trend:trend,pol:pol,ac:ac,rd:rd,recov:recov,tsb:tsb,restTr:restTr,hrvTr:hrvTr,sleepLast:sleepLast,vo2Last:vo2Last,vo2Eff:vo2Eff,td:td,hillAgg:hillAgg,score:score,bike:bike}));
-  v.appendChild(ci);
-
-  // ---- PROFILE + PREDICTION + RECORDS + TIMELINE ----
-  var lower=el("div","grid g-2");
-  // athlete profile
-  var prof=el("div","card");
-  prof.innerHTML='<h3>👤 Athlete Profile</h3>';
-  var pl=el("div","pill-list");pl.style.marginTop="10px";
-  var closerSess=runs.filter(function(w){var p=computePacing(w);return p&&(p.closer||p.label==="negative split");}).length;
-  // rótulos derivados dos dados (perfil de corrida usa só as corridas)
-  var nWeeks=cons?cons.weeks:1;var kmTot=runs.reduce(function(s,w){return s+(w.distKm||0);},0);var kmWk=nWeeks?kmTot/nWeeks:0;
-  var nivel=kmWk<15?"iniciante":kmWk<45?"intermediário":"avançado";
-  var decMean=(function(){var d=runs.map(computeDecoupling).filter(function(x){return x!=null;});return d.length?mean(d):null;})();
-  var ponto=(closerSess>=2||(decMean!=null&&decMean<3))?"resistência":(latestEF&&a.efBaseline&&latestEF>a.efBaseline*1.03?"economia":"em análise");
-  var focoMap={"Eficiência":"economia (EF)","Consistência":"consistência","Resist. fadiga":"resistência aeróbica","Volume":"volume gradual"};
-  var worst=null,wv=101;if(score&&score.parts)for(var kk in score.parts)if(score.parts[kk]<wv){wv=score.parts[kk];worst=kk;}
-  var foco=(rd&&rd.score<60)?"recuperar":(worst&&focoMap[worst])?focoMap[worst]:"base & economia";
-  pl.innerHTML=[
-    '<span class="pill">Nível <b>'+nivel+'</b></span>',
-    '<span class="pill">Ponto forte <b>'+ponto+'</b></span>',
-    '<span class="pill">Foco <b>'+foco+'</b></span>',
-    '<span class="pill">Estilo <b>'+(closerSess>=2?"closer (negative split)":"em análise")+'</b></span>',
-    '<span class="pill">Tendência <b>'+(trend?trend.arrow:"→")+'</b></span>',
-    '<span class="pill">Readiness <b>'+rd.score+'</b></span>',
-    '<span class="pill">Score <b>'+score.overall+'</b></span>'
-  ].join("");
-  prof.appendChild(pl);
-  lower.appendChild(prof);
-  // race prediction
-  var pred=el("div","card");
-  pred.innerHTML='<h3>🏁 Race Prediction <span class="badge lo" style="margin-left:auto">Riegel</span></h3>';
-  var anchor=bestAnchor(runs);
-  if(anchor){
-    var preds=racePredictions(anchor.distKm,anchor.durationSec);
-    var tb='<table style="margin-top:8px"><thead><tr><th>Distância</th><th class="num">Tempo</th><th class="num">Pace</th></tr></thead><tbody>';
-    preds.forEach(function(p){tb+='<tr><td>'+p.name+'</td><td class="num">'+hms(p.timeSec)+'</td><td class="num">'+paceStr(p.paceSec)+'/km</td></tr>';});
-    tb+='</tbody></table>';
-    pred.innerHTML+=tb+'<div class="mini-note">Âncora: '+esc(anchor.notes||anchor.type)+' ('+anchor.distKm.toFixed(2)+' km em '+hms(anchor.durationSec)+'). Estimativa, não garantia — melhora com uma prova recente.</div>';
-  }else pred.innerHTML+='<div class="empty" style="padding:24px">Registre um teste ou prova para ancorar as projeções.</div>';
-  lower.appendChild(pred);
-  v.appendChild(lower);
-
-  // records + timeline
-  var lower2=el("div","grid g-2");
-  var rec=el("div","card");rec.innerHTML='<h3>🏆 Recordes <span class="badge lo" style="margin-left:auto">todo o histórico</span></h3>';
-  rec.appendChild(recordsTable(runs));
-  lower2.appendChild(rec);
-  var tl=el("div","card");tl.innerHTML='<h3>⏱ Timeline · destaques</h3>';
-  tl.appendChild(timelineEl(ws));
-  lower2.appendChild(tl);
-  v.appendChild(lower2);
-
-  // ---- AUDITORIA DAS SESSÕES (.FIT por amostra) ----
-  var aud=runs.filter(function(w){return w.quality;}).sort(function(x,y){return x.date<y.date?1:x.date>y.date?-1:0;});
-  if(aud.length){
-    var ac2=card("Auditoria das sessões (.FIT)","alta");
-    var at=el("div");at.style.cssText="overflow:auto;margin-top:8px";
-    var t2=el("table");t2.innerHTML='<thead><tr><th>Data</th><th class="num">Válidos</th><th class="num">Excl.</th><th class="num">Defas.</th><th class="num">Mec.</th><th>Clima</th><th>Motivos</th></tr></thead>';
-    var tb2=el("tbody");
-    aud.slice(0,16).forEach(function(w){var q=w.quality,pg=w.paceGap,mot=[];for(var rk in q.reasons)mot.push(rk);
-      var mv=w.mech&&w.mech.pct!=null?(w.mech.pct>0?"+":"")+w.mech.pct.toFixed(1)+"%":"—";
-      var cl=w.weather?(Math.round(w.weather.tempC)+"° "+(w.weather.inStandard?"<span class=\"sub\">padrão</span>":"<span class=\"sub\" style=\"color:var(--warn)\">fora</span>")):(w.geo&&w.geo.lat!=null?'<span class="sub">—</span>':'<span class="sub">s/GPS</span>');
-      var r=el("tr");r.innerHTML='<td>'+fmtDateFull(w.date)+'</td>'+
-        '<td class="num">'+q.validMin+' min</td>'+
-        '<td class="num"'+(q.excludedPct>20?' style="color:var(--crit)"':'')+'>'+q.excludedPct+'%</td>'+
-        '<td class="num">'+(w.hrLagSec!=null?w.hrLagSec+"s":"—")+(w.streamPruned?' <span class="sub">(resumido)</span>':'')+'</td>'+
-        '<td class="num"'+(w.mech&&w.mech.pct>2?' style="color:var(--crit)"':'')+'>'+mv+'</td>'+
-        '<td>'+cl+'</td>'+
-        '<td class="sub">'+esc(mot.slice(0,3).join(" · ")||"—")+'</td>';
-      tb2.appendChild(r);});
-    t2.appendChild(tb2);at.appendChild(t2);ac2.appendChild(at);
-    ac2.appendChild(hint("Transparência do pré-processamento: minutos válidos, % excluído, defasagem de FC usada e decoupling mecânico por sessão. &gt;20% excluído (e passada caindo &gt;2%) aparecem em vermelho. Defasagem de FC do ciclo: <b>"+ml.lagSec+"s</b> (mediana de "+ml.n+" sessão(ões) válida(s))"+(lagLow?" — <b>&lt;3 sessões</b>, então o decoupling mecânico entra com confiança rebaixada (3.3).":".")+" Sessões antigas podem aparecer como <b>(resumido)</b> — o stream por amostra é mantido só nas mais recentes."));
-    var rc=el("button","btn ghost sm");rc.style.marginTop="10px";rc.textContent="↻ Recalcular KPIs";rc.title="Recalcula do stream e refaz as etiquetas de clima; lista o que precisa reimportar";rc.onclick=function(){recalcKpis();};ac2.appendChild(rc);
-    ac2.appendChild(hint("A correção de <b>pausa × lacuna × gravação inteligente</b> usa os <b>records brutos</b> do .FIT — que <b>não ficam salvos</b> (só um stream reduzido). Por isso ela passa a valer ao <b>reimportar</b> cada arquivo. O botão acima recalcula o que dá a partir do stream e aponta o que precisa de reimport."));
-    v.appendChild(ac2);
-  }
+  recCard.appendChild(hint(dailyArr.length?"Do diário/Apple Watch. Good / Moderate / Needs Recovery.":"Preencha o diário (abaixo) para ativar."));
+  tiles.appendChild(recCard);
+  var fcRepNote=restTr&&restTr.baseline!=null
+    ?(restTr.deltaAbs<=0?'<span class="delta up">▼ '+Math.abs(restTr.deltaAbs).toFixed(0)+'</span> vs base':'<span class="delta down">▲ '+restTr.deltaAbs.toFixed(0)+'</span> vs base')+' · do Apple Watch'
+    :"reserva "+(a.fcMax-a.fcRep)+" bpm"+(a.fcMaxProv?" · FCmáx prov.":"");
+  tiles.appendChild(tile({lab:"♥ FC repouso",val:fcRepEff,unit:"bpm",note:fcRepNote,conf:null,info:"fcrep"}));
+  tiles.appendChild(tile({lab:"😴 Sono (última noite)",val:sleepLast?sleepLast.value:"—",unit:"h",note:sleepLast?fmtDate(sleepLast.date):"registre no diário"}));
+  var hrvTile=tile({lab:"💓 HRV (SDNN)",val:hrvTr?hrvTr.latest:"—",unit:"ms",note:hrvTr&&hrvTr.deltaPct!=null?(hrvTr.deltaPct>=0?'<span class="delta up">▲ '+hrvTr.deltaPct.toFixed(0)+'%</span> vs base':'<span class="delta down">▼ '+Math.abs(hrvTr.deltaPct).toFixed(0)+'%</span> vs base'):"—",info:"hrv"});
+  tiles.appendChild(hrvTile);
+  v.appendChild(tiles);
+  var lk=el("div","card pg-link");lk.setAttribute("role","button");lk.tabIndex=0;lk.setAttribute("aria-label","Abrir diário de recuperação");
+  lk.innerHTML='<div><b>🌙 Diário completo de recuperação</b><div class="sub">Tendências de sono, FC repouso, HRV e VO₂máx · importar do Apple Saúde · prontidão da semana</div></div><span class="pg-chev" aria-hidden="true">›</span>';
+  function goRec(){currentTab="recuperacao";setActiveTab();render();window.scrollTo(0,0);}
+  lk.onclick=goRec;lk.onkeydown=function(e){if(e.key==="Enter"||e.key===" "){e.preventDefault();goRec();}};
+  v.appendChild(lk);
 }
-
 function coachInsight(ws,a,x){
   var parts=[];
   // 1) perfil / baseline
@@ -4960,7 +4876,7 @@ window.addEventListener("unhandledrejection",function(e){showFatal(e&&e.reason&&
     try{var th=localStorage.getItem("apex.theme");if(th)document.documentElement.setAttribute("data-theme",th);}catch(e){}
     var tabBtns=Array.prototype.slice.call($("#tabs").querySelectorAll("button"));
     tabBtns.forEach(function(b,i){
-      b.onclick=function(){currentTab=b.dataset.tab;setActiveTab();render();window.scrollTo(0,0);setNav(false);};
+      b.onclick=function(){currentTab=b.dataset.tab;progSys=null;setActiveTab();render();window.scrollTo(0,0);setNav(false);};
       // navegação por teclado no padrão ARIA tablist (setas / Home / End)
       b.onkeydown=function(e){
         var k=e.key,j=-1;
@@ -4969,7 +4885,7 @@ window.addEventListener("unhandledrejection",function(e){showFatal(e&&e.reason&&
         else if(k==="Home")j=0;
         else if(k==="End")j=tabBtns.length-1;
         else return;
-        e.preventDefault();var t=tabBtns[j];currentTab=t.dataset.tab;setActiveTab();render();t.focus();
+        e.preventDefault();var t=tabBtns[j];currentTab=t.dataset.tab;progSys=null;setActiveTab();render();t.focus();
       };
     });
     // menu lateral (celular): ☰ abre, ✕/fundo/Esc fecham
