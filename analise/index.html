@@ -128,7 +128,7 @@ nav.tabs button:focus-visible{outline:2px solid var(--accent);outline-offset:2px
 .h-ready-r{min-width:0}
 .h-verdict{font-family:var(--head);font-size:15px;font-weight:600;margin-top:8px;line-height:1.3;color:var(--ink)}
 .h-chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:13px}
-.h-chip{font-size:12px;font-weight:600;color:var(--ink-2);background:var(--surface-2);border:1px solid var(--line);border-radius:11px;padding:6px 10px}
+.h-chip{font-size:12px;font-weight:600;color:var(--ink-2);background:var(--surface-2);border:1px solid var(--line);border-radius:999px;padding:6px 11px}
 .h-chip b{color:var(--ink);font-family:var(--head)}
 .h-cycle{cursor:pointer}
 .h-cyc-top{display:flex;align-items:center;gap:8px;font-size:14px}
@@ -263,7 +263,7 @@ main{max-width:1120px;margin:0 auto;padding:18px 16px 40px}
 .span-2{grid-column:span 2}@media(max-width:860px){.span-2{grid-column:span 2}}@media(max-width:560px){.span-2{grid-column:span 1}}
 
 .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow)}
-.card h3{font-size:13.5px;letter-spacing:-.005em;color:var(--ink-2);font-weight:700;display:flex;align-items:center;gap:8px}
+.card h3{font-size:15px;letter-spacing:-.01em;color:var(--ink);font-weight:700;font-family:var(--head);display:flex;align-items:center;gap:8px}
 .card .sub{color:var(--muted);font-size:12.5px}
 /* cards recolhíveis + botão de "sobre o indicador" no cabeçalho */
 .card > h3.can-collapse{cursor:pointer}
@@ -289,8 +289,9 @@ main{max-width:1120px;margin:0 auto;padding:18px 16px 40px}
 .info-sec pre{margin:0;font-family:var(--mono);font-size:12.5px;line-height:1.5;color:var(--ink-2);background:var(--surface-2);border:1px solid var(--line-2);border-radius:10px;padding:10px 12px;white-space:pre-wrap}
 .tile.has-info{cursor:pointer}
 .tile .info-dot{margin-left:5px;color:var(--muted);font-size:11px}
-.section-title{font-size:13px;letter-spacing:0;color:var(--ink-2);
-  font-weight:700;margin:28px 2px 12px;display:flex;align-items:center;gap:10px}
+.section-title{font-size:17px;letter-spacing:-.01em;color:var(--ink);font-family:var(--head);
+  font-weight:700;margin:26px 2px 13px;display:flex;align-items:center;gap:11px}
+.section-title::before{content:"";width:4px;height:17px;border-radius:3px;background:linear-gradient(180deg,var(--accent),var(--accent-2));flex:none}
 .section-title::after{content:"";flex:1;height:1px;background:var(--line)}
 
 /* ---- KPI tile ---- */
@@ -463,7 +464,8 @@ svg.chart{cursor:pointer}
 .insight{font-size:14px;line-height:1.6}
 .insight .lead{font-weight:700}
 .pill-list{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
-.pill{font-size:12px;background:var(--surface-3);border-radius:999px;padding:4px 11px;color:var(--ink-2)}
+.pill{font-size:12px;background:var(--surface-2);border:1px solid var(--line-2);border-radius:999px;padding:5px 11px;color:var(--ink-2)}
+.pill b{color:var(--ink);font-family:var(--head)}
 .pill b{color:var(--ink)}
 .next-steps{display:grid;gap:8px;margin-top:6px;counter-reset:step}
 .next-steps .ns{display:grid;grid-template-columns:24px 1fr;gap:10px;font-size:13.5px;align-items:start}
@@ -2550,17 +2552,17 @@ function progMotor(v,c){
   v.appendChild(motor);
   var mt2=el("div","grid g-2");
   var vo2Card=el("div","card tile has-info");vo2Card.setAttribute("data-info","vo2");vo2Card.setAttribute("aria-label","Sobre: VO₂máx");var vb=vo2Band(vo2Eff);
-  vo2Card.innerHTML='<div class="lab">◉ VO₂máx<span class="info-dot" aria-hidden="true">ⓘ</span></div><div class="val">'+(vo2Eff||"—")+'<small> ml/kg</small></div><div class="note">'+(vb?bandBadge(vb)+(vo2Last?" · Apple Watch "+fmtDate(vo2Last.date):" (homem 30–39)"):"")+'</div>';
+  vo2Card.innerHTML='<div class="lab">🫁 VO₂máx<span class="info-dot" aria-hidden="true">ⓘ</span></div><div class="val">'+(vo2Eff||"—")+'<small> ml/kg</small></div><div class="note">'+(vb?bandBadge(vb)+(vo2Last?" · Apple Watch "+fmtDate(vo2Last.date):" (homem 30–39)"):"")+'</div>';
   if(vo2Eff!=null)vo2Card.appendChild(richBlock(scaleWidget({min:30,max:55,val:vo2Eff,valText:(""+vo2Eff).replace(".",","),segs:[{to:36,label:"Abaixo",c:"var(--warn)"},{to:42,label:"Bom",c:"var(--good)"},{to:52,label:"Excelente",c:"var(--trend)"},{to:55,label:"Elite",c:"var(--accent)"}]})));
   vo2Card.appendChild(hint("Bom 36–42 · excelente 43–52. É o tamanho do motor; o EF é o quanto você aproveita dele."));
   mt2.appendChild(vo2Card);
   var trCard=el("div","card tile");
-  trCard.innerHTML='<div class="lab">↗ Performance Trend</div><div class="val">'+(trend?trend.arrow+' '+deltaHtml(trend.deltaPct):"—")+'</div><div class="note">'+(trend?(trend.enough?"janela de 4 sessões":"provisório · &lt;3 sessões/janela"):"≥3 sessões por janela")+'</div>';
+  trCard.innerHTML='<div class="lab">📈 Performance Trend</div><div class="val">'+(trend?trend.arrow+' '+deltaHtml(trend.deltaPct):"—")+'</div><div class="note">'+(trend?(trend.enough?"janela de 4 sessões":"provisório · &lt;3 sessões/janela"):"≥3 sessões por janela")+'</div>';
   trCard.appendChild(hint("Direção da forma: ↗ &gt;+2% · → estável · ↘ &lt;−2%."));
   mt2.appendChild(trCard);
   v.appendChild(mt2);
   var scoreCard=el("div","card");
-  scoreCard.innerHTML='<h3>◆ Athlete Performance Score <span class="badge mid" style="margin-left:auto">provisório</span></h3>';
+  scoreCard.innerHTML='<h3>🏅 Athlete Performance Score <span class="badge mid" style="margin-left:auto">provisório</span></h3>';
   var sr=el("div","ring-wrap");sr.style.marginTop="12px";
   var ring=el("div","ring");ring.style.position="relative";ring.style.setProperty("--p",score.overall);ring.innerHTML='<b>'+score.overall+'</b>';
   sr.appendChild(ring);
@@ -2706,16 +2708,16 @@ function progCarga(v,c){
   var tiles=el("div","grid g-4");
   tiles.appendChild(tile({lab:"📊 Volume 7d",val:weeklyKm?Math.round(weeklyKm):"—",unit:weeklyKm?"km":"",note:"média 4 sem "+(avgWeeklyKm?Math.round(avgWeeklyKm)+" km":"—"),conf:null}));
   var acCard=el("div","card tile has-info");acCard.setAttribute("data-info","ac");acCard.setAttribute("aria-label","Sobre: Razão aguda:crônica");
-  acCard.innerHTML='<div class="lab">▦ Razão aguda:crônica<span class="info-dot" aria-hidden="true">ⓘ</span></div><div class="val">'+(ac?ac.ratio.toFixed(2):"—")+'</div>'+
+  acCard.innerHTML='<div class="lab">🛡️ Razão aguda:crônica<span class="info-dot" aria-hidden="true">ⓘ</span></div><div class="val">'+(ac?ac.ratio.toFixed(2):"—")+'</div>'+
     '<div class="note">'+(ac?zoneBadge(ac.zone):"acumula ~4 semanas")+'</div>';
   if(ac){acCard.appendChild(richBlock(scaleWidget({min:0.5,max:2,val:ac.ratio,valText:ac.ratio.toFixed(2).replace(".",","),segs:[{to:0.8,label:"Destreino",c:"var(--muted)"},{to:1.3,label:"Seguro",c:"var(--good)"},{to:1.5,label:"Atenção",c:"var(--warn)"},{to:2,label:"Risco",c:"var(--crit)"}]})));acCard.appendChild(hint("Sweet spot 0,8–1,3 = carga sustentável. Toque para ver o que fazer."));}
   tiles.appendChild(acCard);
   var polCard=el("div","card tile");
-  polCard.innerHTML='<div class="lab">◷ Aderência 80/20</div><div class="val">'+(pol?Math.round(pol.easyPct)+'<small>% fácil</small>':"—")+'</div><div class="note">alvo ~80% em Z1–Z2 · tempo real em zona</div>';
+  polCard.innerHTML='<div class="lab">⚖️ Aderência 80/20</div><div class="val">'+(pol?Math.round(pol.easyPct)+'<small>% fácil</small>':"—")+'</div><div class="note">alvo ~80% em Z1–Z2 · tempo real em zona</div>';
   if(pol){var pm=el("div","meter");pm.innerHTML='<i style="width:'+Math.round(pol.easyPct)+'%;background:'+(pol.easyPct>=75?"var(--good)":"var(--warn)")+'"></i>';polCard.appendChild(pm);polCard.appendChild(hint(pol.easyPct<75?"Abaixo de 75% = treinando forte demais no volume.":"Boa distribuição polarizada."));}
   tiles.appendChild(polCard);
   var conCard=el("div","card tile");
-  conCard.innerHTML='<div class="lab">✓ Consistência</div><div class="val">'+(cons?Math.round(cons.adherencePct)+'<small>%</small>':"—")+'</div><div class="note">'+(cons?cons.weeks+" semanas · "+cons.activeDays+" dias ativos":"—")+'</div>';
+  conCard.innerHTML='<div class="lab">🔁 Consistência</div><div class="val">'+(cons?Math.round(cons.adherencePct)+'<small>%</small>':"—")+'</div><div class="note">'+(cons?cons.weeks+" semanas · "+cons.activeDays+" dias ativos":"—")+'</div>';
   conCard.appendChild(hint("Consistência &gt; heroísmo — maior preditor de evolução. Alvo ≥85%."));
   tiles.appendChild(conCard);
   v.appendChild(tiles);
@@ -2753,7 +2755,7 @@ function progCarga(v,c){
     bhero.appendChild(tile({lab:"🚴 Sessões de bike",val:bike.sessions,note:bike.indoor+" indoor · "+bike.outdoor+" outdoor",conf:null}));
     bhero.appendChild(tile({lab:"⏱ Tempo na bike",val:hmsShort(bike.totalSec),note:"acumulado no período",conf:null}));
     bhero.appendChild(tile({lab:"⚡ Carga da bike",val:bike.totalTrimp,unit:"TRIMP",note:"soma à forma (CTL·ATL·TSB)",conf:"alta"}));
-    bhero.appendChild(tile({lab:"♥ FC média · bike",val:bike.avgHr||"—",unit:"bpm",note:(bike.totalKcal?bike.totalKcal+" kcal":"")+(bike.outdoor&&bike.totalKm?" · "+bike.totalKm.toFixed(0)+" km outdoor":""),conf:null}));
+    bhero.appendChild(tile({lab:"❤️ FC média · bike",val:bike.avgHr||"—",unit:"bpm",note:(bike.totalKcal?bike.totalKcal+" kcal":"")+(bike.outdoor&&bike.totalKm?" · "+bike.totalKm.toFixed(0)+" km outdoor":""),conf:null}));
     v.appendChild(bhero);
     var bgrid=el("div","grid g-2");
     var bLoadWk={};bikes.forEach(function(w){var t=computeTrimp(w,a);if(t==null)return;var k=isoWeekKey(w.date);bLoadWk[k]=(bLoadWk[k]||0)+t;});
@@ -2876,7 +2878,7 @@ function progRecup(v,c){
   var fcRepNote=restTr&&restTr.baseline!=null
     ?(restTr.deltaAbs<=0?'<span class="delta up">▼ '+Math.abs(restTr.deltaAbs).toFixed(0)+'</span> vs base':'<span class="delta down">▲ '+restTr.deltaAbs.toFixed(0)+'</span> vs base')+' · do Apple Watch'
     :"reserva "+(a.fcMax-a.fcRep)+" bpm"+(a.fcMaxProv?" · FCmáx prov.":"");
-  tiles.appendChild(tile({lab:"♥ FC repouso",val:fcRepEff,unit:"bpm",note:fcRepNote,conf:null,info:"fcrep"}));
+  tiles.appendChild(tile({lab:"❤️ FC repouso",val:fcRepEff,unit:"bpm",note:fcRepNote,conf:null,info:"fcrep"}));
   tiles.appendChild(tile({lab:"😴 Sono (última noite)",val:sleepLast?sleepLast.value:"—",unit:"h",note:sleepLast?fmtDate(sleepLast.date):"registre no diário"}));
   var hrvTile=tile({lab:"💓 HRV (SDNN)",val:hrvTr?hrvTr.latest:"—",unit:"ms",note:hrvTr&&hrvTr.deltaPct!=null?(hrvTr.deltaPct>=0?'<span class="delta up">▲ '+hrvTr.deltaPct.toFixed(0)+'%</span> vs base':'<span class="delta down">▼ '+Math.abs(hrvTr.deltaPct).toFixed(0)+'%</span> vs base'):"—",info:"hrv"});
   tiles.appendChild(hrvTile);
@@ -3609,7 +3611,7 @@ function renderMaratona(v){
   var hero=el("div","m-hero");
   var goalTxt=race.goal==="finish"?"Terminar bem":(race.goal||"—");
   hero.innerHTML='<button class="m-edit" id="mEditBtn" type="button">⚙ editar meta</button>'+
-    '<div class="m-eyebrow">◈ Missão · '+esc(race.name||"Prova")+'</div>'+
+    '<div class="m-eyebrow">🎯 Missão · '+esc(race.name||"Prova")+'</div>'+
     '<div class="m-count"><span class="n">'+(blk?blk.days:"—")+'</span><span class="u">dias</span></div>'+
     '<div class="m-hsub">'+(blk?blk.wkToGo+" semanas · ":"")+'<b>'+mDateBR(race.date)+'</b> · '+mKmTxt(race.distKm)+' km</div>'+
     '<div class="m-chips"><span class="m-chip on">🎯 '+esc(goalTxt)+'</span>'+(race.goal==="finish"?'<span class="m-chip">❤️ por zonas de FC</span>':'')+'<span class="m-chip">'+esc((RACE_TYPES[raceTypeOf(race)]||{}).label||"Prova")+'</span></div>';
@@ -4028,7 +4030,7 @@ function renderTreinoDetalhe(v,w,a){
   if(w.distKm)hero.appendChild(tile({lab:"📏 Distância",val:w.distKm.toFixed(2).replace(".",","),unit:"km",note:(w.gainM?"D+ "+Math.round(w.gainM)+" m":"")}));
   hero.appendChild(tile({lab:"⏱ Tempo",val:hmsShort(w.durationSec),note:(w.rpe?"RPE "+w.rpe+"/10":"")}));
   if(!bk&&w.distKm){var g0=computeGap(w);hero.appendChild(tile({lab:"⚡ Pace",val:paceStr(w.durationSec/w.distKm),unit:"/km",note:(g0&&g0.gapPace?"GAP "+paceStr(g0.gapPace)+"/km":"")}));}
-  if(w.hrAvg)hero.appendChild(tile({lab:"♥ FC",val:w.hrAvg,unit:"bpm",note:(w.hrMax?"pico "+w.hrMax:"")}));
+  if(w.hrAvg)hero.appendChild(tile({lab:"❤️ FC",val:w.hrAvg,unit:"bpm",note:(w.hrMax?"pico "+w.hrMax:"")}));
   if(bk&&w.kcal)hero.appendChild(tile({lab:"🔥 Calorias",val:w.kcal,unit:"kcal",note:""}));
   v.appendChild(hero);
   // splits
@@ -4313,7 +4315,7 @@ function renderRecuperacao(v){
   var recCol=rec.score>=75?"var(--good)":rec.score>=55?"var(--warn)":"var(--crit)";
   var recT=el("div","card tile");recT.innerHTML='<div class="lab">🌙 Recovery Status</div><div class="val" style="font-size:22px">'+rec.label+'</div><div class="note">score '+rec.score+'</div>';var rm=el("div","meter");rm.innerHTML='<i style="width:'+rec.score+'%;background:'+recCol+'"></i>';recT.appendChild(rm);tiles.appendChild(recT);
   tiles.appendChild(tile({lab:"😴 Sono (última noite)",val:sleepL?sleepL.value:"—",unit:"h",note:sleepL?fmtDate(sleepL.date):"—"}));
-  tiles.appendChild(tile({lab:"♥ FC repouso",val:restTr?restTr.latest:"—",unit:"bpm",note:restTr&&restTr.deltaAbs!=null?(restTr.deltaAbs<=0?'<span class="delta up">▼ '+Math.abs(restTr.deltaAbs).toFixed(0)+'</span> vs base (bom)':'<span class="delta down">▲ '+restTr.deltaAbs.toFixed(0)+'</span> vs base'):"—"}));
+  tiles.appendChild(tile({lab:"❤️ FC repouso",val:restTr?restTr.latest:"—",unit:"bpm",note:restTr&&restTr.deltaAbs!=null?(restTr.deltaAbs<=0?'<span class="delta up">▼ '+Math.abs(restTr.deltaAbs).toFixed(0)+'</span> vs base (bom)':'<span class="delta down">▲ '+restTr.deltaAbs.toFixed(0)+'</span> vs base'):"—"}));
   var hrvTile=tile({lab:"💓 HRV (SDNN)",val:hrvTr?hrvTr.latest:"—",unit:"ms",note:hrvTr&&hrvTr.deltaPct!=null?(hrvTr.deltaPct>=0?'<span class="delta up">▲ '+hrvTr.deltaPct.toFixed(0)+'%</span> vs base':'<span class="delta down">▼ '+Math.abs(hrvTr.deltaPct).toFixed(0)+'%</span> vs base'):"—",info:"hrv"});
   if(hrvTr&&hrvTr.deltaPct!=null)hrvTile.appendChild(richBlock(scaleWidget({min:-30,max:30,val:hrvTr.deltaPct,valText:(hrvTr.deltaPct>=0?"+":"")+hrvTr.deltaPct.toFixed(0)+"%",segs:[{to:-10,label:"Abaixo",c:"var(--warn)"},{to:10,label:"No seu normal",c:"var(--good)"},{to:30,label:"Acima",c:"var(--trend)"}]})));
   tiles.appendChild(hrvTile);
