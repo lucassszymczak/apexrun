@@ -256,7 +256,11 @@ main{max-width:1120px;margin:0 auto;padding:18px 16px 40px}
   .top-in{max-width:none}
   body{padding-bottom:40px}
 }
-.grid{display:grid;gap:14px}
+/* espaçamento vertical consistente entre os blocos do conteúdo (cards, grids, listas)
+   — antes os cards soltos ficavam colados; agora todos respiram igual */
+#view > * + *{margin-top:16px}
+#view > .section-title + *{margin-top:0}
+.grid{display:grid;gap:16px}
 .g-2{grid-template-columns:repeat(2,1fr)} .g-3{grid-template-columns:repeat(3,1fr)} .g-4{grid-template-columns:repeat(4,1fr)}
 @media(max-width:860px){.g-3,.g-4{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:560px){.g-2,.g-3,.g-4{grid-template-columns:1fr}}
@@ -859,6 +863,7 @@ tbody tr{transition:background-color .12s ease}
         <small>seus dados · seu ritmo · sua evolução</small>
       </div>
     </div>
+    <button class="icon-btn" id="themeBtn" type="button" aria-label="Alternar tema claro/escuro" title="Alternar tema (claro/escuro)">🌙</button>
     <input type="file" id="importFile" accept="application/json" hidden />
     <input type="file" id="fitFile" accept=".fit,.FIT" hidden />
     <input type="file" id="healthFile" accept=".xml" hidden />
@@ -2188,6 +2193,8 @@ function render(){
   wireInfo(v);
   updateCycleTabLabel();
   renderTicker();
+  var _tbtn=document.getElementById("themeBtn");
+  if(_tbtn){var _lt=document.documentElement.getAttribute("data-theme")==="light";_tbtn.textContent=_lt?"☀️":"🌙";_tbtn.setAttribute("title",_lt?"Mudar para o tema escuro":"Mudar para o tema claro");}
 }
 // Nome da aba do ciclo: usa o nome do ciclo configurado (Meia, São Silvestre…) ou "Ciclo Atual".
 function cycleTabLabel(){
@@ -5151,6 +5158,7 @@ window.addEventListener("unhandledrejection",function(e){showFatal(e&&e.reason&&
     var _ncl=$("#navClose");if(_ncl)_ncl.onclick=function(){setNav(false);};
     var _nbd=$("#navBackdrop");if(_nbd)_nbd.onclick=function(){setNav(false);};
     document.addEventListener("keydown",function(e){if(e.key==="Escape"&&document.body.classList.contains("nav-open"))setNav(false);});
+    var _tb=$("#themeBtn");if(_tb)_tb.onclick=function(){toggleTheme();layoutRail();render();};
     $("#importFile").onchange=function(e){if(e.target.files[0])importData(e.target.files[0]);e.target.value="";};
     $("#fitFile").onchange=function(e){if(e.target.files[0])handleFitFile(e.target.files[0]);e.target.value="";};
     $("#healthFile").onchange=function(e){if(e.target.files[0])handleHealthFile(e.target.files[0]);e.target.value="";};
