@@ -103,6 +103,55 @@ nav.tabs button.active::before{content:"";position:absolute;left:3px;top:50%;tra
 nav.tabs button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .nav-head{display:flex;align-items:center;gap:8px;padding:2px 4px 8px;margin-bottom:4px;border-bottom:1px solid var(--line)}
 .nav-title{font-family:var(--head);font-weight:700;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.nav-sep{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);padding:13px 12px 4px;font-weight:700;font-family:var(--head)}
+/* ---- HOJE ---- */
+.h-ready{display:flex;gap:15px;align-items:center}
+.h-ready-r{min-width:0}
+.h-verdict{font-family:var(--head);font-size:15px;font-weight:600;margin-top:8px;line-height:1.3;color:var(--ink)}
+.h-chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:13px}
+.h-chip{font-size:12px;font-weight:600;color:var(--ink-2);background:var(--surface-2);border:1px solid var(--line);border-radius:11px;padding:6px 10px}
+.h-chip b{color:var(--ink);font-family:var(--head)}
+.h-cycle{cursor:pointer}
+.h-cyc-top{display:flex;align-items:center;gap:8px;font-size:14px}
+.h-cyc-top b{font-family:var(--head);font-size:15px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.h-cyc-days{margin-left:auto;color:var(--accent);font-family:var(--head);font-weight:700;font-size:13px;flex:none}
+.h-phase{display:flex;gap:4px;margin:10px 0 8px}
+.h-phase i{height:6px;border-radius:4px;flex:1;background:var(--surface-3)}
+.h-phase i.done{background:color-mix(in srgb,var(--accent) 45%,var(--surface-3))}
+.h-phase i.on{background:linear-gradient(90deg,var(--accent),var(--accent-2))}
+.h-cyc-sub{font-size:12px;color:var(--muted)} .h-cyc-sub b{color:var(--ink-2)}
+.h-wk-h{display:flex;align-items:center;font-size:14px;margin-bottom:11px}
+.h-wk-h b{font-family:var(--head)}
+.h-go{margin-left:auto;color:var(--accent);font-size:12px;font-weight:700;cursor:pointer;flex:none}
+.h-wdays{display:flex;gap:6px}
+.h-wday{flex:1;text-align:center;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:7px 2px;min-width:0}
+.h-wday small{display:block;font-size:9px;color:var(--muted);text-transform:uppercase}
+.h-wday .e{font-size:15px;margin-top:3px;line-height:1}
+.h-wday .st{font-size:11px;font-weight:700;margin-top:3px;color:var(--muted)}
+.h-wday.done{border-color:color-mix(in srgb,var(--good) 38%,var(--line))}
+.h-wday.done .st{color:var(--good)}
+.h-adh{display:flex;align-items:center;gap:9px;margin-top:11px}
+.h-adh .track{flex:1;height:6px;border-radius:4px;background:var(--surface-3);overflow:hidden}
+.h-adh .track i{display:block;height:100%;background:linear-gradient(90deg,var(--accent),var(--accent-2))}
+.h-adh b{font-family:var(--head);font-size:12px;color:var(--ink-2)}
+.h-lw-top{display:flex;align-items:center;gap:9px}
+.h-lw-ic{width:34px;height:34px;border-radius:10px;background:var(--surface-2);display:grid;place-items:center;font-size:16px;flex:none}
+.h-lw-ttl{min-width:0;flex:1}
+.h-lw-ttl b{font-family:var(--head);font-size:14.5px;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.h-lw-ttl small{color:var(--muted);font-size:11.5px}
+.h-lw-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:11px}
+.h-ls{background:var(--surface-2);border-radius:10px;padding:8px 4px;text-align:center;min-width:0}
+.h-ls b{font-family:var(--head);font-size:15px;display:block}
+.h-ls small{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.03em}
+.ct-h{display:flex;align-items:center;gap:9px;margin-bottom:4px}
+.ct-h .brain{width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,#9b8cff,#4bb4ff);display:grid;place-items:center;font-size:14px;flex:none}
+.ct-h b{font-family:var(--head);font-size:14px}
+.insight{display:flex;gap:10px;padding:9px 0;border-top:1px solid var(--line)}
+.insight:first-of-type{border-top:0}
+.insight .dot{width:9px;height:9px;border-radius:50%;margin-top:5px;flex:none}
+.insight .dot.g{background:var(--good)} .insight .dot.w{background:var(--warn)} .insight .dot.a{background:var(--accent)}
+.insight p{margin:0;font-size:12.5px;line-height:1.45;color:var(--ink-2)}
+.insight p b{color:var(--ink)}
 .nav-x{margin-left:auto;background:var(--surface-2);border:1px solid var(--line);color:var(--ink-2);border-radius:9px;width:32px;height:32px;cursor:pointer;font-size:14px;flex:none}
 .nav-x:hover{border-color:var(--accent);color:var(--accent)}
 .nav-backdrop{position:fixed;inset:0;z-index:55;background:rgba(0,0,0,.5);opacity:0;visibility:hidden;transition:opacity .2s ease,visibility .2s ease}
@@ -719,9 +768,12 @@ tbody tr{transition:background-color .12s ease}
 </header>
 <nav class="tabs" id="tabs" role="tablist" aria-label="Seções da análise">
     <div class="nav-head"><span class="nav-title">Navegação</span><button class="nav-x" id="navClose" type="button" aria-label="Fechar menu">✕</button></div>
-    <button data-tab="painel" id="tab-painel" role="tab" aria-selected="true" aria-controls="view" tabindex="0" class="active"><span class="tic" aria-hidden="true">📊</span><span class="tlb">Painel</span></button>
-    <button data-tab="maratona" id="tab-maratona" role="tab" aria-selected="false" aria-controls="view" tabindex="-1"><span class="tic" aria-hidden="true">🏁</span><span class="tlb">Maratona</span></button>
+    <button data-tab="hoje" id="tab-hoje" role="tab" aria-selected="true" aria-controls="view" tabindex="0" class="active"><span class="tic" aria-hidden="true">◉</span><span class="tlb">Hoje</span></button>
     <button data-tab="treinos" id="tab-treinos" role="tab" aria-selected="false" aria-controls="view" tabindex="-1"><span class="tic" aria-hidden="true">🏃</span><span class="tlb">Treinos</span></button>
+    <button data-tab="progresso" id="tab-progresso" role="tab" aria-selected="false" aria-controls="view" tabindex="-1"><span class="tic" aria-hidden="true">📈</span><span class="tlb">Progresso</span></button>
+    <button data-tab="ciclo" id="tab-ciclo" role="tab" aria-selected="false" aria-controls="view" tabindex="-1"><span class="tic" aria-hidden="true">🏁</span><span class="tlb">Ciclo</span></button>
+    <button data-tab="coach" id="tab-coach" role="tab" aria-selected="false" aria-controls="view" tabindex="-1"><span class="tic" aria-hidden="true">🧠</span><span class="tlb">Coach</span></button>
+    <div class="nav-sep">Mais</div>
     <button data-tab="relatorio" id="tab-relatorio" role="tab" aria-selected="false" aria-controls="view" tabindex="-1"><span class="tic" aria-hidden="true">🗒️</span><span class="tlb">Relatório</span></button>
     <button data-tab="recuperacao" id="tab-recuperacao" role="tab" aria-selected="false" aria-controls="view" tabindex="-1"><span class="tic" aria-hidden="true">🌙</span><span class="tlb">Recuperação</span></button>
     <button data-tab="forca" id="tab-forca" role="tab" aria-selected="false" aria-controls="view" tabindex="-1"><span class="tic" aria-hidden="true">💪</span><span class="tlb">Força</span></button>
@@ -730,7 +782,7 @@ tbody tr{transition:background-color .12s ease}
   </nav>
 <div class="nav-backdrop" id="navBackdrop"></div>
 
-<main id="view" role="tabpanel" aria-labelledby="tab-painel" tabindex="-1"><noscript><div style="max-width:640px;margin:40px auto;padding:20px;border:1px solid #e7a; border-radius:14px;background:#fff;color:#1a1512;font-family:system-ui,sans-serif;line-height:1.5"><b>Este app precisa de JavaScript.</b><br>Você provavelmente abriu o arquivo na pré-visualização do iPhone (app Arquivos ou Mail), que não executa o app. Abra o arquivo por um navegador de verdade — <b>Safari</b> ou <b>Chrome</b> — ou use o link hospedado que o desenvolvedor enviar.</div></noscript></main>
+<main id="view" role="tabpanel" aria-labelledby="tab-hoje" tabindex="-1"><noscript><div style="max-width:640px;margin:40px auto;padding:20px;border:1px solid #e7a; border-radius:14px;background:#fff;color:#1a1512;font-family:system-ui,sans-serif;line-height:1.5"><b>Este app precisa de JavaScript.</b><br>Você provavelmente abriu o arquivo na pré-visualização do iPhone (app Arquivos ou Mail), que não executa o app. Abra o arquivo por um navegador de verdade — <b>Safari</b> ou <b>Chrome</b> — ou use o link hospedado que o desenvolvedor enviar.</div></noscript></main>
 
 <!-- Modal treino -->
 <div class="modal-bg" id="modalBg">
@@ -2014,19 +2066,22 @@ function wireInfo(root){
 /* ============================================================================
    VIEWS
 ============================================================================ */
-var currentTab="painel";
+var currentTab="hoje";
 function render(){
   var v=$("#view");v.innerHTML="";
   $("#athleteName").textContent=state.athlete.name||"Atleta";
   $("#athleteInitial").textContent=(state.athlete.name||"A").trim().charAt(0).toUpperCase();
-  if(currentTab==="painel")renderPainel(v);
-  else if(currentTab==="maratona")renderMaratona(v);
+  if(currentTab==="hoje")renderHoje(v);
   else if(currentTab==="treinos")renderTreinos(v);
+  else if(currentTab==="progresso"||currentTab==="painel")renderPainel(v);
+  else if(currentTab==="ciclo"||currentTab==="maratona")renderMaratona(v);
+  else if(currentTab==="coach")renderCoach(v);
   else if(currentTab==="relatorio")renderRelatorio(v);
   else if(currentTab==="recuperacao")renderRecuperacao(v);
   else if(currentTab==="forca")renderForca(v);
   else if(currentTab==="kpis")renderKpis(v);
   else if(currentTab==="config")renderConfig(v);
+  else renderHoje(v);
   wireTooltips(v);
   makeCardsCollapsible(v);
   wireInfo(v);
@@ -2040,7 +2095,7 @@ function cycleTabLabel(){
   return n.length>18?n.slice(0,17)+"…":n;
 }
 function updateCycleTabLabel(){
-  var btn=document.getElementById("tab-maratona");if(!btn)return;
+  var btn=document.getElementById("tab-ciclo");if(!btn)return;
   var lb=btn.querySelector(".tlb");if(lb)lb.textContent=cycleTabLabel();
   btn.title=state.race?(state.race.name||"Ciclo atual"):"Ciclo atual";
 }
@@ -2073,6 +2128,144 @@ function bikeSummary(ws,a){
     avgHr:hrs.length?Math.round(hrs.reduce(function(x,y){return x+y;},0)/hrs.length):null,indoor:indoor,outdoor:outdoor};
 }
 function kmH(w){if(!w.distKm||!w.durationSec)return null;return w.distKm/(w.durationSec/3600);}
+
+/* ============================================================================
+   HOJE + COACH (nova arquitetura, Fase 1) — reusa o motor; não recalcula fórmulas.
+============================================================================ */
+// Contexto único do Coach/Hoje (espelha o preparo do Painel; alimenta coachInsightEl).
+function coachContext(ws,a){
+  ws=ws||sortedWorkouts();a=a||state.athlete;
+  var runs=runsOnly(ws),bike=bikeSummary(ws,a);
+  var easy=easyRuns(runs);
+  var efPts=easy.map(function(w){var ef=computeEF(w);return ef?{y:ef}:null;}).filter(Boolean);
+  var cadPts=runs.filter(function(w){return w.cadence;}).map(function(w){return{y:w.cadence};});
+  var decPts=runs.map(function(w){return computeDecoupling(w);}).filter(function(d){return d!=null;});
+  var fit=[];try{fit=fitnessSeries(ws,a)||[];}catch(e){}
+  var ac=null;try{ac=acuteChronic(ws,a);}catch(e){}
+  var pol=polarization(ws,a),cons=consistency(ws,a.sessionsTarget);
+  var trend=performanceTrend(efPts.map(function(p){return{value:p.y};}));
+  var latestEF=efPts.length?efPts[efPts.length-1].y:null,firstEF=efPts.length?efPts[0].y:null;
+  var efDelta=(latestEF&&firstEF)?((latestEF-firstEF)/firstEF)*100:null;
+  var latestCad=cadPts.length?cadPts[cadPts.length-1].y:null;
+  var latestDec=decPts.length?decPts[decPts.length-1]:null;
+  var tsb=fit.length?fit[fit.length-1].tsb:null,ctl=fit.length?fit[fit.length-1].ctl:null;
+  var last=ws.length?ws[ws.length-1]:null;
+  var dailyArr=sortedDaily(),lastDailyDate=dailyArr.length?dailyArr[dailyArr.length-1].date:null;
+  var refDate2=last?last.date:null;if(lastDailyDate&&(!refDate2||lastDailyDate>refDate2))refDate2=lastDailyDate;
+  var restTr=metricTrend(dailyArr,"restingHR",refDate2),hrvTr=metricTrend(dailyArr,"hrv",refDate2);
+  var sleepLast=latestDaily(dailyArr,"sleepH",refDate2),vo2Last=latestDaily(dailyArr,"vo2");
+  var dctx={tsb:tsb,restingDelta:restTr?restTr.deltaAbs:null,hrvDeltaPct:hrvTr?hrvTr.deltaPct:null,sleepH:sleepLast?sleepLast.value:(last&&last.sleepH!=null?last.sleepH:null)};
+  var recov=recoveryStatus(dctx),vo2Eff=vo2Last?vo2Last.value:a.vo2;
+  var td=trainingDistribution(ws,a),hillAgg=hillAggregate(runs);
+  var refDate=last?new Date(last.date+"T00:00:00"):new Date();
+  var km28=runs.filter(function(w){return Math.round((refDate-new Date(w.date+"T00:00:00"))/86400000)<28;}).reduce(function(s,w){return s+(w.distKm||0);},0);
+  var avgWeeklyKm=km28/4;
+  var score=performanceScore({efTrendPct:trend?trend.deltaPct:0,decoupling:latestDec,adherencePct:cons?cons.adherencePct:null,weeklyKm:avgWeeklyKm,targetKm:a.weeklyTargetKm});
+  // prontidão = recuperação (sono/HRV/FC rep) + forma (TSB) + risco de carga (A:C)
+  var rd=readiness({tsb:tsb,adherencePct:cons?cons.adherencePct:null,sleepH:dctx.sleepH,soreness:last?last.soreness:null,pain:last?last.pain:false,restingDelta:dctx.restingDelta,hrvDeltaPct:dctx.hrvDeltaPct});
+  if(ac&&ac.ratio!=null&&ac.ratio>1.3)rd.score=Math.round(clamp(rd.score-(ac.ratio-1.3)*22,0,100));
+  var rb=readyBand(rd.score);rd.band=rb[0];
+  return {runs:runs,bike:bike,fit:fit,ac:ac,pol:pol,cons:cons,trend:trend,latestEF:latestEF,efDelta:efDelta,latestCad:latestCad,latestDec:latestDec,tsb:tsb,ctl:ctl,last:last,restTr:restTr,hrvTr:hrvTr,sleepLast:sleepLast,vo2Last:vo2Last,recov:recov,vo2Eff:vo2Eff,td:td,hillAgg:hillAgg,score:score,rd:rd,avgWeeklyKm:avgWeeklyKm};
+}
+function hChip(ic,lab,val){return '<span class="h-chip">'+ic+' '+lab+' <b>'+val+'</b></span>';}
+function hLwstat(val,lab){return '<div class="h-ls"><b>'+val+'</b><small>'+lab+'</small></div>';}
+function week7Km(runs){var cut=mIsoLocal(mAddDays(new Date(),-6));return (runs||[]).filter(function(w){return w.date>=cut;}).reduce(function(s,w){return s+(w.distKm||0);},0);}
+function hojeVerdict(cx){var s=cx.rd.score;
+  if(cx.last&&cx.last.pain)return "Sinal de dor — priorize recuperar; no máximo bike/elíptico leve.";
+  if(cx.ac&&cx.ac.ratio>1.5)return "Carga saltou (A:C "+cx.ac.ratio.toFixed(2).replace(".",",")+") — fácil hoje pra não virar risco.";
+  if(s>=80)return "Dia verde — pode puxar a qualidade se o plano pedir.";
+  if(s>=70)return "Prontidão moderada — fácil a moderado; segure a qualidade.";
+  if(s>=60)return "Cautela — mantenha fácil; a qualidade fica pra quando subir.";
+  return "Recuperar — sono e um dia leve; o motor agradece.";}
+function hojeAction(cx){
+  if(cx.last&&cx.last.pain)return "descanso ou bike leve — proteger a tíbia.";
+  if(cx.rd.score>=80)return "pode puxar a qualidade se o plano pedir.";
+  if(cx.rd.score>=70)return "fácil a moderado; segure a qualidade.";
+  if(cx.rd.score>=60)return "mantenha fácil hoje.";
+  return "recuperar — fácil leve ou descanso.";}
+function hojeCoachLines(cx){
+  var out=[];
+  if(cx.efDelta!=null&&cx.efDelta>1)out.push({c:"g",t:"<b>Motor subindo</b> — EF "+(cx.efDelta>=0?"+":"")+cx.efDelta.toFixed(0)+"% no bloco."});
+  else if(cx.latestDec!=null&&cx.latestDec<5)out.push({c:"g",t:"<b>Resistência sólida</b> — deriva "+cx.latestDec.toFixed(1)+"% nos longos."});
+  if(cx.last&&cx.last.pain)out.push({c:"w",t:"<b>Dor registrada</b> — recuar cedo protege a tíbia."});
+  else if(cx.ac&&cx.ac.ratio>1.5)out.push({c:"w",t:"<b>Salto de carga</b> (A:C "+cx.ac.ratio.toFixed(2).replace(".",",")+") — segure o volume."});
+  else if(cx.latestDec!=null&&cx.latestDec>8)out.push({c:"w",t:"<b>Deriva alta</b> ("+cx.latestDec.toFixed(1)+"%) — revise hidratação e pacing."});
+  else if(cx.recov&&cx.recov.score<55)out.push({c:"w",t:"<b>Recuperação baixa</b> — priorize sono antes da qualidade."});
+  out.push({c:"a",t:"<b>Hoje:</b> "+hojeAction(cx)});
+  return out.slice(0,3);}
+function renderHoje(v){
+  var a=state.athlete,ws=sortedWorkouts();
+  if(!ws.length){v.appendChild(emptyState());return;}
+  var cx=coachContext(ws,a);
+  if(a.alert){var b=el("div","banner warn");b.style.marginBottom="14px";b.innerHTML='<span class="bi">⚠</span><span>'+esc(a.alert)+'</span>';v.appendChild(b);}
+  // ---- PRONTIDÃO ----
+  var rb=readyBand(cx.rd.score),ring='conic-gradient(var(--accent) '+Math.round(cx.rd.score*3.6)+'deg, color-mix(in srgb,var(--line) 70%,transparent) 0)';
+  var chips='';
+  if(cx.tsb!=null)chips+=hChip("🧊","forma",(cx.tsb>0?"+":"")+cx.tsb.toFixed(0));
+  if(cx.sleepLast)chips+=hChip("💤","sono",cx.sleepLast.value.toFixed(1)+"h");
+  if(cx.restTr)chips+=hChip("❤️","repouso",Math.round(cx.restTr.latest));
+  chips+=hChip("📊","7d",mKmTxt(week7Km(cx.runs))+" km");
+  var pc=el("div","card");
+  pc.innerHTML='<div class="h-ready"><div class="wr-ring" style="background:'+ring+'"><div class="wr-ringin"><b>'+cx.rd.score+'</b><small>prontidão</small></div></div>'+
+    '<div class="h-ready-r"><span class="badge '+rb[1]+'">'+rb[0]+'</span><div class="h-verdict">'+hojeVerdict(cx)+'</div></div></div>'+
+    '<div class="h-chips">'+chips+'</div>';
+  v.appendChild(pc);
+  // ---- CICLO + PLANO DA SEMANA ----
+  var race=state.race;
+  if(race){
+    var blk=mBlock(race),phase=blk?mPhase(blk,race):null;
+    var cc=el("div","card h-cycle");var segs='';
+    if(phase){for(var i=0;i<4;i++)segs+='<i class="'+(i===phase.idx?"on":(i<phase.idx?"done":""))+'"></i>';}
+    cc.innerHTML='<div class="h-cyc-top"><span>🏁</span><b>'+esc(race.name||"Prova")+'</b><span class="h-cyc-days">'+(blk?blk.days+" dias":"")+'</span></div>'+
+      (phase?'<div class="h-phase">'+segs+'</div>':'')+
+      '<div class="h-cyc-sub">'+(phase?'<b>'+phase.name+'</b> · ':'')+(blk?'Semana '+blk.cur+' de '+blk.N:'')+'</div>';
+    cc.onclick=function(){currentTab="ciclo";setActiveTab();render();window.scrollTo(0,0);};
+    v.appendChild(cc);
+    var info=mWeekInfo(0),wk=state.planWeeks&&state.planWeeks[info.key];
+    var sessions=wk&&wk.sessions?wk.sessions.slice().sort(function(x,y){return (x.dow||0)-(y.dow||0);}):[];
+    var pw=el("div","card");var inner='<div class="h-wk-h"><b>🗓️ Plano da semana</b><span class="h-go" data-go="ciclo">ver ciclo →</span></div>';
+    if(sessions.length){
+      var cells='';sessions.forEach(function(s){var t=mType(s.type),st=mSessStatus(s,info);var mk=(st==="done"||st==="adapted")?"✓":(st==="missed")?"✗":"·";
+        cells+='<div class="h-wday '+(st==="done"||st==="adapted"?"done":"")+'"><small>'+(M_DOW[(s.dow||1)-1]||"")+'</small><div class="e">'+t.emoji+'</div><div class="st">'+mk+'</div></div>';});
+      var trainS=sessions.filter(function(s){return !mType(s.type).rest;});
+      var okN=trainS.filter(function(s){var st=mSessStatus(s,info);return st==="done"||st==="adapted";}).length;
+      var pct=trainS.length?Math.round(okN/trainS.length*100):0;
+      inner+='<div class="h-wdays">'+cells+'</div><div class="h-adh"><div class="track"><i style="width:'+pct+'%"></i></div><b>'+okN+' de '+trainS.length+' cumpridos</b></div>';
+    }else inner+='<div class="sub" style="padding:8px 0 2px">Nenhum treino programado nesta semana. Lance no <b>Ciclo</b> o que seu app passou.</div>';
+    pw.innerHTML=inner;v.appendChild(pw);
+  }
+  // ---- ÚLTIMO TREINO ----
+  var lastRun=cx.runs.length?cx.runs[cx.runs.length-1]:(ws.length?ws[ws.length-1]:null);
+  if(lastRun){
+    var lw=el("div","card"),isBk=isBike(lastRun),ef=computeEF(lastRun),dec=null;try{dec=computeDecoupling(lastRun);}catch(e){}
+    lw.innerHTML='<div class="h-lw-top"><div class="h-lw-ic">'+(isBk?"🚴":"🏃")+'</div>'+
+      '<div class="h-lw-ttl"><b>'+esc((lastRun.notes||"").split("·")[0].trim()||typeLabel(lastRun.type))+(lastRun.distKm?' · '+mKmTxt(lastRun.distKm)+" km":"")+'</b><small>'+fmtDateFull(lastRun.date)+(lastRun.temp!=null?" · "+Math.round(lastRun.temp)+"°C":"")+'</small></div>'+
+      '<span class="h-go h-lw-go">abrir →</span></div>'+
+      '<div class="h-lw-stats">'+
+        (lastRun.distKm&&lastRun.durationSec?hLwstat(paceStr(lastRun.durationSec/lastRun.distKm),"/km"):"")+
+        (ef!=null?hLwstat((ef*1000).toFixed(1).replace(".",","),"EF"):"")+
+        (dec!=null?hLwstat(dec.toFixed(1).replace(".",",")+"%","deriva"):"")+
+        (lastRun.hrAvg?hLwstat(lastRun.hrAvg,"fc méd"):"")+'</div>';
+    lw.querySelector(".h-lw-go").onclick=function(){openModal(lastRun.id);};
+    v.appendChild(lw);
+  }
+  // ---- COACH RESUMO ----
+  var cs=el("div","card"),ins='';hojeCoachLines(cx).forEach(function(l){ins+='<div class="insight"><span class="dot '+l.c+'"></span><p>'+l.t+'</p></div>';});
+  cs.innerHTML='<div class="ct-h"><div class="brain">🧠</div><b>Coach</b><span class="h-go" data-go="coach">abrir →</span></div>'+ins;
+  v.appendChild(cs);
+  // wiring dos "ver →"
+  Array.prototype.forEach.call(v.querySelectorAll(".h-go[data-go]"),function(g){g.onclick=function(e){e.stopPropagation();currentTab=g.getAttribute("data-go");setActiveTab();render();window.scrollTo(0,0);};});
+}
+function renderCoach(v){
+  var a=state.athlete,ws=sortedWorkouts();
+  if(!ws.length){v.appendChild(emptyState());return;}
+  var cx=coachContext(ws,a);
+  v.appendChild(sectionTitle("Coach"));
+  var ci=el("div","card ci-card");
+  ci.innerHTML='<h3>🧠 Coach <span class="badge mid" style="margin-left:auto">leitura + ação</span></h3>';
+  ci.appendChild(coachInsightEl(ws,a,cx));
+  v.appendChild(ci);
+}
 function renderPainel(v){
   var a=state.athlete, ws=sortedWorkouts();
   if(!ws.length){v.appendChild(emptyState());return;}
@@ -4389,7 +4582,7 @@ function renderNewCycleCard(){
     }
     state.race={name:name,type:type,date:end,distKm:dist,goal:goal||"finish",objective:goal,startDate:start,
       longRunTargetKm:t.longRunTargetKm,peakKmTarget:t.peakKmTarget,updatedAt:new Date().toISOString()};
-    touch();save();scheduleSync();toast("Novo ciclo iniciado");currentTab="maratona";render();
+    touch();save();scheduleSync();toast("Novo ciclo iniciado");currentTab="ciclo";render();
   };
   return c;
 }
@@ -4688,7 +4881,7 @@ function saveModal(){
   state.workouts.push(w);
   finalizeSave("Treino registrado");
 }
-function finalizeSave(msg){_fromFitUnsaved=false;try{pruneStreams(state.workouts,20);}catch(e){}try{linkSleepToWorkouts();}catch(e){}touch();save();scheduleSync();closeModal();toast(msg);currentTab="painel";setActiveTab();render();}
+function finalizeSave(msg){_fromFitUnsaved=false;try{pruneStreams(state.workouts,20);}catch(e){}try{linkSleepToWorkouts();}catch(e){}touch();save();scheduleSync();closeModal();toast(msg);currentTab="hoje";setActiveTab();render();}
 function askChoice(title,message,choices){
   return new Promise(function(resolve){
     var bg=el("div","choice-bg");
