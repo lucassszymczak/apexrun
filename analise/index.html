@@ -186,6 +186,9 @@ nav.tabs button:focus-visible{outline:2px solid var(--accent);outline-offset:2px
 .prog-adv>summary::-webkit-details-marker{display:none}
 .prog-adv>summary:before{content:"▸ ";color:var(--muted)}
 .prog-adv[open]>summary:before{content:"▾ "}
+.h-lw-card{cursor:pointer;transition:border-color .15s ease}
+.h-lw-card:hover{border-color:var(--accent)}
+.h-lw-card:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 /* --- Treinos: lista estilo Strava + detalhe por sistema --- */
 .tr-list{display:flex;flex-direction:column;gap:10px}
 .tr-yh{display:flex;align-items:baseline;gap:10px;margin:14px 2px 2px}
@@ -589,6 +592,19 @@ details.fc-ex[open] .fx-chev{transform:rotate(180deg)}
 .ci-arrow{font-family:var(--head);font-weight:700;font-size:11.5px}
 .ci-arrow.up{color:var(--good)}.ci-arrow.down{color:var(--crit)}.ci-arrow.flat{color:var(--muted)}
 .ci-rread{font-size:11.5px;color:var(--muted);margin-top:1px}
+/* Coach dois níveis: leitura (semáforo) + ação */
+.ci-level{font-family:var(--head);font-weight:700;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:20px 0 6px;display:flex;align-items:center;gap:8px}
+.ci-level .n{width:20px;height:20px;border-radius:6px;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center;font-size:11px;font-weight:800;flex:none}
+.ci-sys{display:flex;gap:11px;padding:11px 0;border-top:1px solid var(--line-2);align-items:flex-start}
+.ci-sys:first-of-type{border-top:0}
+.ci-sd{width:10px;height:10px;border-radius:50%;margin-top:5px;flex:none}
+.ci-sd.g{background:var(--good)} .ci-sd.w{background:var(--warn)} .ci-sd.c{background:var(--crit)}
+.ci-smid{flex:1;min-width:0}
+.ci-stop{display:flex;align-items:baseline;gap:7px;flex-wrap:wrap}
+.ci-stop b{font-family:var(--head);font-size:13.5px}
+.ci-sval{font-family:var(--head);font-weight:700;font-size:12.5px;color:var(--ink-2)}
+.ci-sread{font-size:12px;color:var(--ink-2);line-height:1.45;margin-top:2px}
+.ci-sread b{color:var(--ink)}
 .ci-todo{margin-top:14px;background:color-mix(in srgb,var(--accent) 7%,var(--surface-2));border:1px solid color-mix(in srgb,var(--accent) 25%,var(--line));border-radius:12px;padding:12px 14px}
 .ci-th{font-family:var(--head);font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--accent);margin-bottom:6px}
 .ci-todo ul{margin:0;padding-left:18px}
@@ -2300,7 +2316,8 @@ function renderHoje(v){
   // ---- ÚLTIMO TREINO ----
   var lastRun=cx.runs.length?cx.runs[cx.runs.length-1]:(ws.length?ws[ws.length-1]:null);
   if(lastRun){
-    var lw=el("div","card"),isBk=isBike(lastRun),ef=computeEF(lastRun),dec=null;try{dec=computeDecoupling(lastRun);}catch(e){}
+    var lw=el("div","card h-lw-card"),isBk=isBike(lastRun),ef=computeEF(lastRun),dec=null;try{dec=computeDecoupling(lastRun);}catch(e){}
+    lw.setAttribute("role","button");lw.tabIndex=0;lw.setAttribute("aria-label","Abrir análise do último treino");
     lw.innerHTML='<div class="h-lw-top"><div class="h-lw-ic">'+(isBk?"🚴":"🏃")+'</div>'+
       '<div class="h-lw-ttl"><b>'+esc((lastRun.notes||"").split("·")[0].trim()||typeLabel(lastRun.type))+(lastRun.distKm?' · '+mKmTxt(lastRun.distKm)+" km":"")+'</b><small>'+fmtDateFull(lastRun.date)+(lastRun.temp!=null?" · "+Math.round(lastRun.temp)+"°C":"")+'</small></div>'+
       '<span class="h-go h-lw-go">abrir →</span></div>'+
@@ -2309,7 +2326,8 @@ function renderHoje(v){
         (ef!=null?hLwstat((ef*1000).toFixed(1).replace(".",","),"EF"):"")+
         (dec!=null?hLwstat(dec.toFixed(1).replace(".",",")+"%","deriva"):"")+
         (lastRun.hrAvg?hLwstat(lastRun.hrAvg,"fc méd"):"")+'</div>';
-    lw.querySelector(".h-lw-go").onclick=function(){openModal(lastRun.id);};
+    function goLw(){currentTab="treinos";progSys=null;treinoSel=lastRun.id;setActiveTab();render();window.scrollTo(0,0);}
+    lw.onclick=goLw;lw.onkeydown=function(e){if(e.key==="Enter"||e.key===" "){e.preventDefault();goLw();}};
     v.appendChild(lw);
   }
   // ---- COACH RESUMO ----
@@ -2325,7 +2343,8 @@ function renderCoach(v){
   var cx=coachContext(ws,a);
   v.appendChild(sectionTitle("Coach"));
   var ci=el("div","card ci-card");
-  ci.innerHTML='<h3>🧠 Coach <span class="badge mid" style="margin-left:auto">leitura + ação</span></h3>';
+  ci.innerHTML='<h3>🧠 Coach <span class="badge mid" style="margin-left:auto">leitura + ação</span></h3>'+
+    '<div class="sub" style="margin:-2px 0 4px;line-height:1.45">Análise técnica dos seus dados — prioridade em <b>segurança (tíbia)</b> e <b>desempenho (motor, pace)</b>.</div>';
   ci.appendChild(coachInsightEl(ws,a,cx));
   v.appendChild(ci);
 }
@@ -2896,58 +2915,99 @@ function ciArrow(pct){if(pct==null)return null;if(pct>0.5)return{cls:"up",txt:"�
 function coachInsightEl(ws,a,x){
   var wrap=el("div"),runs=runsOnly(ws);
   var hydroR=runs.filter(hydroHas),lastHy=hydroR.length?hydroR[hydroR.length-1]:null,hyRate=lastHy?hydroRateMlH(lastHy):null,hySt=hydroStatus(hyRate);
-  var good=[],warn=[];
-  if(x.efDelta!=null){if(x.efDelta>=1)good.push("economia do motor subindo (<b>+"+x.efDelta.toFixed(0)+"%</b> no bloco)");else if(x.efDelta<=-2)warn.push("EF caiu no bloco ("+x.efDelta.toFixed(0)+"%) — cheque sono/calor/pacing");}
-  if(x.latestDec!=null){if(x.latestDec<0)good.push("decoupling negativo — fica mais eficiente no fim");else if(x.latestDec>8)warn.push("decoupling alto ("+x.latestDec.toFixed(1)+"%) — combustível/calor/pacing");}
-  if(x.pol){if(x.pol.easyPct>=75)good.push("distribuição saudável ("+Math.round(x.pol.easyPct)+"% fácil)");else warn.push("fácil forte demais (só "+Math.round(x.pol.easyPct)+"% em zona fácil)");}
-  if(x.ac){if(x.ac.zone==="atenção"||x.ac.zone==="risco")warn.push("salto de carga (A:C "+x.ac.ratio.toFixed(2)+") — segure a semana");else if(x.ac.zone==="sweet spot")good.push("carga sustentável (A:C "+x.ac.ratio.toFixed(2)+")");}
-  if(x.hrvTr&&x.hrvTr.deltaPct!=null&&x.hrvTr.deltaPct<-8)warn.push("HRV abaixo do normal — priorize recuperar");
-  if(x.restTr&&x.restTr.deltaAbs!=null&&x.restTr.deltaAbs>3)warn.push("FC repouso elevada (+"+x.restTr.deltaAbs.toFixed(0)+") — fadiga");
-  if(x.restTr&&x.restTr.deltaAbs!=null&&x.restTr.deltaAbs<=-2)good.push("FC repouso em queda — adaptando bem");
-  if(x.sleepLast&&x.sleepLast.value<6.5)warn.push("sono curto ("+x.sleepLast.value+"h)");
-  if(hySt&&hySt.label==="baixa")warn.push("hidratação baixa ("+Math.round(hyRate)+" ml/h) no último treino");
-  else if(hySt&&hySt.label==="adequada")good.push("hidratação adequada");
+  // ---- sinais de SEGURANÇA (tíbia) — prioridade 1 ----
+  var pain=!!(x.last&&x.last.pain);
+  var sore=(x.last&&x.last.soreness!=null)?x.last.soreness:null;
+  var shinAlert=!!(a.alert&&/canela|t[íi]bia|protetora|suspensa/i.test(a.alert));
+  var acR=x.ac?x.ac.ratio:null, acZone=x.ac?x.ac.zone:null;
+  var safeDot=(pain||shinAlert||acZone==="risco")?"c":((sore!=null&&sore>=3)||acZone==="atenção")?"w":"g";
+  var safeRead=shinAlert?"<b>Alerta protetor da tíbia ativo</b> — "+esc((a.alert||"").split("·")[0].trim())+". Mantenha a corrida suspensa/reduzida até a palpação liberar."
+    :pain?"<b>Dor articular registrada no último treino.</b> Recuar cedo separa um recuo de dias de uma lesão de meses — priorize reforço e reavalie."
+    :acZone==="risco"?"<b>Carga aguda:crônica "+acR.toFixed(2).replace(".",",")+" (risco).</b> Salto de carga é o principal gatilho de sobrecarga na tíbia — descarregue ~10%."
+    :acZone==="atenção"?"Carga aguda:crônica <b>"+acR.toFixed(2).replace(".",",")+" (atenção)</b> — subindo rápido; segure o volume esta semana."
+    :(sore!=null&&sore>=3)?"Dor muscular <b>"+sore+"/5</b> — ok treinar fácil, evite impacto forte até ceder."
+    :"Sem sinais de dor; carga sustentável"+(acR!=null?" (A:C "+acR.toFixed(2).replace(".",",")+")":"")+".";
+  // ---- veredito técnico (prioridade: segurança → recuperação → desempenho) ----
   var rdLow=x.rd&&x.rd.score<60,rdHigh=x.rd&&x.rd.score>=80;
-  // headline
+  var needRec=rdLow||(x.recov&&x.recov.label==="Needs Recovery");
   var hl,sub;
-  if(rdLow||(x.recov&&x.recov.label==="Needs Recovery")){hl="Hora de recuperar antes de puxar.";sub="Readiness "+(x.rd?x.rd.score:"")+" — os sinais pedem um dia leve.";}
-  else if(x.ac&&x.ac.zone==="risco"){hl="Segure a carga esta semana.";sub="Salto de carga (A:C "+x.ac.ratio.toFixed(2)+") — risco de lesão/overreaching.";}
-  else if(x.pol&&x.pol.easyPct<75){hl="Corra o fácil mais fácil.";sub="Só "+Math.round(x.pol.easyPct)+"% em zona fácil — a base pede Z1–Z2 de verdade.";}
-  else if(x.efDelta!=null&&x.efDelta>=2){hl="Motor evoluindo — siga o plano.";sub="Economia +"+x.efDelta.toFixed(0)+"% no bloco. Constância fácil + força rendendo.";}
-  else if(rdHigh){hl="Verde para uma sessão de qualidade.";sub="Readiness "+x.rd.score+" — corpo pronto; aproveite com técnica.";}
-  else{hl="Base no rumo — constância é a chave.";sub="Siga puxando o fácil fácil e cuidando da recuperação.";}
+  if(shinAlert||pain){hl="Prioridade: proteger a tíbia.";sub="Segurança antes de desempenho — base aeróbica pela bike e força de quadril/panturrilha enquanto a canela não libera.";}
+  else if(acZone==="risco"){hl="Segure a carga — risco de sobrecarga.";sub="A:C "+acR.toFixed(2).replace(".",",")+". O motor até pede mais, mas a tíbia cobra o salto de carga; descarregue.";}
+  else if(needRec){hl="Recuperar antes de puxar.";sub="Readiness "+(x.rd?x.rd.score:"")+" — os sinais (sono/HRV/FC repouso) pedem um dia leve antes de qualidade.";}
+  else if(x.pol&&x.pol.easyPct<75){hl="Corra o fácil mais fácil.";sub="Só "+Math.round(x.pol.easyPct)+"% em Z1–Z2 — a base aeróbica (e o EF) rende quando o fácil é fácil de verdade.";}
+  else if(x.efDelta!=null&&x.efDelta>=2){hl="Motor evoluindo — siga o plano.";sub="Economia +"+x.efDelta.toFixed(0)+"% no bloco. Constância no fácil + força rendendo; janela boa para qualidade.";}
+  else if(rdHigh){hl="Verde para uma sessão de qualidade.";sub="Readiness "+x.rd.score+" e sem sinais de risco — corpo pronto; execute com técnica.";}
+  else{hl="Base no rumo — constância é a alavanca.";sub="Sem bandeiras vermelhas; puxe o fácil fácil e proteja a recuperação para o motor subir.";}
   var head=el("div","ci-head");
   head.innerHTML='<div class="ci-av">🧠</div><div class="ci-bubble"><div class="ci-hl">'+hl+'</div><div class="ci-sub">'+sub+'</div></div>';
   wrap.appendChild(head);
-  // semáforo
-  var st=el("div","ci-status");
-  st.innerHTML='<div class="ci-st"><span class="ci-ic">✅</span><div><b>Indo bem:</b> '+(good.length?good[0]:"constância mantida")+'</div></div>'+
-    '<div class="ci-st"><span class="ci-ic">'+(warn.length?"⚠️":"🟢")+'</span><div><b>Atenção:</b> '+(warn.length?warn[0]:"nada crítico agora")+'</div></div>'+
-    '<div class="ci-st"><span class="ci-ic">🎯</span><div>'+focusLine(x,a)+'</div></div>';
-  wrap.appendChild(st);
-  // linhas por tema
-  var rows=el("div","ci-rows");
-  function row(ic,lab,val,arrow,read){var r=el("div","ci-row");
-    r.innerHTML='<span class="ci-ric">'+ic+'</span><div class="ci-rmid"><div class="ci-rtop"><b>'+lab+'</b>'+(val?' <span class="ci-rval">'+val+'</span>':'')+(arrow?' <span class="ci-arrow '+arrow.cls+'">'+arrow.txt+'</span>':'')+'</div>'+(read?'<div class="ci-rread">'+read+'</div>':'')+'</div>';rows.appendChild(r);}
-  if(x.latestEF!=null)row("🫀","Motor (EF)",(x.latestEF*1000).toFixed(1).replace(".",",")+" pts",ciArrow(x.efDelta),"economia do motor"+(x.efDelta!=null?" "+(x.efDelta>=0?"subindo":"caindo"):""));
-  if(x.latestDec!=null)row("🫁","Resistência",x.latestDec.toFixed(1)+"%",{cls:x.latestDec<7?"up":x.latestDec>8?"down":"flat",txt:x.latestDec<7?"sólido":x.latestDec>8?"investigar":"ok"},"decoupling — queda de eficiência no fim");
-  if(x.latestCad)row("🎵","Cadência",x.latestCad+" spm",{cls:x.latestCad>=a.cadenceTarget?"up":"flat",txt:x.latestCad>=a.cadenceTarget?"na meta":"meta "+a.cadenceTarget},"passos por minuto");
-  if(x.rd)row("🔋","Recuperação",x.rd.score+" · "+x.rd.band,{cls:x.rd.score>=70?"up":x.rd.score>=50?"flat":"down",txt:x.rd.score>=70?"boa":x.rd.score>=50?"ok":"baixa"},(x.sleepLast?"sono "+x.sleepLast.value+"h":"")+(x.hrvTr&&x.hrvTr.deltaPct!=null?(x.sleepLast?" · ":"")+"HRV "+(x.hrvTr.deltaPct>=0?"+":"")+x.hrvTr.deltaPct.toFixed(0)+"%":""));
-  if(x.ac)row("🛡️","Carga (A:C)",x.ac.ratio.toFixed(2).replace(".",","),{cls:x.ac.zone==="sweet spot"?"up":x.ac.zone==="baixa"?"flat":"down",txt:x.ac.zone},"aguda ÷ crônica"+(x.tsb!=null?" · forma "+(x.tsb>0?"+":"")+x.tsb.toFixed(0):""));
-  if(hyRate!=null)row("💧","Hidratação",Math.round(hyRate)+" ml/h",{cls:hySt.label==="adequada"?"up":hySt.label==="baixa"?"down":"flat",txt:hySt.label},"água durante o último treino");
-  if(x.pol)row("⚖️","Distribuição",Math.round(x.pol.easyPct)+"% fácil",{cls:x.pol.easyPct>=75?"up":"down",txt:x.pol.easyPct>=75?"polarizado":"ajustar"},"80/20 — tempo em zona fácil");
-  wrap.appendChild(rows);
-  // esta semana
-  var todos=[];
-  if(rdLow)todos.push("Trocar a próxima qualidade por rodagem fácil ou descanso.");
-  if(x.ac&&(x.ac.zone==="atenção"||x.ac.zone==="risco"))todos.push("Não subir volume; manter ou descarregar ~10%.");
-  if(x.pol&&x.pol.easyPct<75)todos.push("Segurar a FC em Z1–Z2 nas rodagens fáceis.");
-  if(hySt&&hySt.label==="baixa")todos.push("Levar mais água no próximo longo (mire 500–700 ml/h).");
-  if(x.latestDec!=null&&x.latestDec>8)todos.push("Revisar combustível/ritmo nos longos (decoupling alto).");
-  if(!todos.length)todos.push("Manter a constância: 2 fáceis + 1 longo + força 2× na semana.");
-  todos.push('Programar a semana na aba <b>🏁 Maratona</b> e marcar os treinos cumpridos.');
+  // ===== NÍVEL 1 — LEITURA (semáforo) =====
+  var lv1=el("div","ci-level");lv1.innerHTML='<span class="n">1</span> Leitura · diagnóstico';
+  wrap.appendChild(lv1);
+  var sys=el("div");
+  function sysRow(dot,ic,lab,val,read){var r=el("div","ci-sys");
+    r.innerHTML='<span class="ci-sd '+dot+'"></span><div class="ci-smid"><div class="ci-stop"><b>'+ic+' '+lab+'</b>'+(val?'<span class="ci-sval">'+val+'</span>':'')+'</div><div class="ci-sread">'+read+'</div></div>';sys.appendChild(r);}
+  // 1) Segurança / tíbia (sempre no topo)
+  sysRow(safeDot,"🦵","Segurança · tíbia","",safeRead);
+  // 2) Motor (desempenho)
+  var motorDot=x.efDelta==null?"w":(x.efDelta>=1?"g":x.efDelta<=-2?"c":"w");
+  var motorRead=x.efDelta==null?"Registre rodagens fáceis com FC para medir a economia do motor."
+    :x.efDelta>=1?"<b>Economia +"+x.efDelta.toFixed(0)+"%</b> no bloco — motor rendendo no mesmo esforço."
+    :x.efDelta<=-2?"<b>EF caiu "+x.efDelta.toFixed(0)+"%</b> no bloco — cheque sono, calor e pacing dos fáceis."
+    :"EF estável no bloco — constância mantém o motor.";
+  sysRow(motorDot,"⚙️","Motor · economia",(x.latestEF!=null?(x.latestEF*1000).toFixed(1).replace(".",",")+" pts":"—"),motorRead);
+  // 3) Resistência
+  if(x.latestDec!=null){
+    var rDot=x.latestDec<5?"g":x.latestDec<=8?"w":"c";
+    var rRead=x.latestDec<0?"Decoupling negativo — fica <b>mais eficiente no fim</b> (closer comprovado)."
+      :x.latestDec<5?"Deriva baixa — base aeróbica sólida no último longo."
+      :x.latestDec<=8?"Deriva limítrofe — no limite do sustentável.":"Deriva <b>alta</b> — revise combustível/calor/pacing nos longos.";
+    sysRow(rDot,"🫁","Resistência · deriva",(x.latestDec>0?"+":"")+x.latestDec.toFixed(1)+"%",rRead);
+  }
+  // 4) Mecânica / ritmo
+  if(x.latestCad){
+    var mDot=x.latestCad>=a.cadenceTarget?"g":"w";
+    var mRead=x.latestCad>=a.cadenceTarget?"Cadência na meta ("+a.cadenceTarget+") — passada econômica e menos impacto por passo."
+      :"Rumo à meta "+a.cadenceTarget+"; subir ~5% reduz o impacto por passada (poupa a tíbia) e tende a baixar a FC.";
+    sysRow(mDot,"🦿","Mecânica · cadência",x.latestCad+" spm",mRead);
+  }
+  // 5) Carga & forma
+  if(x.ac||x.tsb!=null){
+    var cDot=acZone?(acZone==="sweet spot"?"g":acZone==="atenção"?"w":acZone==="risco"?"c":"w"):"w";
+    var cVal=(acR!=null?"A:C "+acR.toFixed(2).replace(".",","):"")+(x.tsb!=null?((acR!=null?" · ":"")+"forma "+(x.tsb>0?"+":"")+x.tsb.toFixed(0)):"");
+    var cRead=(acR!=null?(acZone==="sweet spot"?"Carga sustentável. ":acZone==="risco"?"Salto de carga — risco. ":acZone==="atenção"?"Carga subindo rápido. ":"Carga baixa. "):"")+(x.tsb!=null?"Forma "+tsbState(x.tsb)+".":"");
+    sysRow(cDot,"📊","Carga & forma",cVal,cRead);
+  }
+  // 6) Recuperação
+  if(x.rd){
+    var recDot=x.rd.score>=70?"g":x.rd.score>=50?"w":"c";
+    var recBits=[];if(x.sleepLast)recBits.push("sono "+x.sleepLast.value+"h");if(x.hrvTr&&x.hrvTr.deltaPct!=null)recBits.push("HRV "+(x.hrvTr.deltaPct>=0?"+":"")+x.hrvTr.deltaPct.toFixed(0)+"%");if(x.restTr&&x.restTr.deltaAbs!=null)recBits.push("FC repouso "+(x.restTr.deltaAbs<=0?"↓":"↑")+Math.abs(x.restTr.deltaAbs).toFixed(0));
+    var recRead=(x.rd.score>=70?"Prontidão boa":x.rd.score>=50?"Prontidão moderada":"Prontidão baixa")+(recBits.length?" — "+recBits.join(" · ")+".":".");
+    sysRow(recDot,"🌙","Recuperação",x.rd.score+" · "+x.rd.band,recRead);
+  }
+  // 7) Hidratação
+  if(hyRate!=null){
+    var hDot=hySt.label==="adequada"?"g":hySt.label==="baixa"?"w":"g";
+    sysRow(hDot,"💧","Hidratação",Math.round(hyRate)+" ml/h",(hySt.label==="baixa"?"Reposição baixa durante o último treino — segura menos o pace e a deriva.":hySt.label==="adequada"?"Reposição adequada durante — ajuda a segurar pace e deriva.":"Reposição alta — boa no calor."));
+  }
+  wrap.appendChild(sys);
+  // ===== NÍVEL 2 — AÇÃO (esta semana) =====
+  var lv2=el("div","ci-level");lv2.innerHTML='<span class="n">2</span> Ação · esta semana';
+  wrap.appendChild(lv2);
+  var acts=[];
+  if(shinAlert||pain)acts.push({p:0,t:"<b>Segurança:</b> manter corrida suspensa/reduzida; priorizar força de quadril e panturrilha + protocolo de canela (aba <b>Força</b>). Base aeróbica pela bike."});
+  else if(sore!=null&&sore>=3)acts.push({p:0,t:"<b>Segurança:</b> treino fácil hoje e sem impacto forte até a dor muscular ("+sore+"/5) ceder."});
+  if(acZone==="risco"||acZone==="atenção")acts.push({p:1,t:"<b>Carga:</b> não subir volume; manter ou descarregar ~10% (A:C "+acR.toFixed(2).replace(".",",")+")."});
+  if(needRec)acts.push({p:1,t:"<b>Recuperação:</b> trocar a próxima qualidade por rodagem fácil ou descanso (readiness "+(x.rd?x.rd.score:"")+")."});
+  if(x.pol&&x.pol.easyPct<75)acts.push({p:2,t:"<b>Distribuição:</b> segurar a FC em Z1–Z2 nos fáceis (só "+Math.round(x.pol.easyPct)+"% em zona fácil hoje)."});
+  if(x.latestDec!=null&&x.latestDec>8)acts.push({p:2,t:"<b>Resistência:</b> revisar combustível e ritmo nos longos (deriva "+x.latestDec.toFixed(1)+"%)."});
+  if(hySt&&hySt.label==="baixa")acts.push({p:2,t:"<b>Hidratação:</b> subir a água no próximo longo (mire 500–700 ml/h)."});
+  if(!(shinAlert||pain)&&x.efDelta!=null&&x.efDelta>=1&&!needRec)acts.push({p:3,t:"<b>Desempenho:</b> motor rendendo — vale puxar uma sessão de qualidade quando a prontidão abrir."});
+  if(!(shinAlert||pain)&&x.latestCad&&x.latestCad<a.cadenceTarget)acts.push({p:3,t:"<b>Mecânica:</b> mirar cadência "+a.cadenceTarget+" (~+5%) nos fáceis — poupa a tíbia e baixa a FC."});
+  acts.push({p:4,t:"Manter a base: 2 fáceis + 1 longo + força 2×; programar a semana na aba <b>🏁 Ciclo</b> e marcar os cumpridos."});
+  acts.sort(function(m,n){return m.p-n.p;});
   var td=el("div","ci-todo");
-  td.innerHTML='<div class="ci-th">🎯 Esta semana</div><ul>'+todos.slice(0,4).map(function(t){return '<li>'+t+'</li>';}).join("")+'</ul>';
+  td.innerHTML='<div class="ci-th">🎯 Plano acionável (prioridade: segurança → desempenho)</div><ul>'+acts.slice(0,5).map(function(t){return '<li>'+t.t+'</li>';}).join("")+'</ul>';
   wrap.appendChild(td);
   return wrap;
 }
