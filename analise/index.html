@@ -10,7 +10,7 @@
 <link rel="icon" type="image/png" sizes="192x192" href="apex-icon-192.png" />
 <link rel="apple-touch-icon" href="apex-icon-180.png" />
 <link rel="manifest" href="manifest.webmanifest" />
-<meta name="theme-color" content="#0f1216" />
+<meta name="theme-color" content="#090c10" />
 <meta name="mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -22,8 +22,8 @@
 /* ====================== DESIGN SYSTEM — RUN PERFORMANCE // HEAT ============ */
 :root{
   color-scheme: light;
-  --plane:#eef1f4; --surface:#ffffff; --surface-2:#f6f8fb; --surface-3:#eef1f4;
-  --ink:#1a1d21; --ink-2:#5b636d; --muted:#737b85; --line:#dde2e8; --line-2:#e8ecf1;
+  --plane:#dfe4ea; --surface:#f7f9fc; --surface-2:#edf1f6; --surface-3:#e2e7ee;
+  --ink:#171a1e; --ink-2:#525a64; --muted:#6b737d; --line:#c7cfd9; --line-2:#d8dfe7;
   --accent:#c9820a; --accent-2:#b5560a; --accent-ink:#ffffff; --accent-soft:#fdebc8;
   --trend:#0f9e8e; --lime:#0f9e8e;
   --s1:#2a78d6; --s2:#eb6834; --s3:#0f9e8e; --s4:#c98500; --s5:#c14d80; --s6:#4a3aa7; --s7:#008300; --s8:#e34948;
@@ -37,8 +37,8 @@
 }
 :root[data-theme="dark"]{
   color-scheme: dark;
-  --plane:#0f1216; --surface:#1a1f26; --surface-2:#20262f; --surface-3:#262d37;
-  --ink:#eef1f5; --ink-2:#94a0ad; --muted:#7d8894; --line:#27303a; --line-2:#222a33;
+  --plane:#090c10; --surface:#191f29; --surface-2:#1f2630; --surface-3:#28313c;
+  --ink:#eef1f5; --ink-2:#9aa6b3; --muted:#848f9b; --line:#303a47; --line-2:#28313c;
   --accent:#fbbf24; --accent-2:#f59e0b; --accent-ink:#0c0f13; --accent-soft:#3a2f12;
   --trend:#9bff57; --lime:#9bff57;
   --s1:#3987e5; --s2:#fbbf24; --s3:#2dd4bf; --s4:#e0a01f; --s5:#d55181; --s6:#9085e9; --s7:#4ade80; --s8:#e66767;
@@ -88,6 +88,22 @@ header.top{position:sticky;top:0;z-index:30;background:color-mix(in srgb,var(--p
 .icon-btn{background:var(--surface);border:1px solid var(--line);color:var(--ink-2);border-radius:9px;
   width:34px;height:34px;display:grid;place-items:center;cursor:pointer;font-size:15px}
 .icon-btn:hover{border-color:var(--accent);color:var(--accent)}
+/* ---- fita de indicadores (ticker estilo homebroker) ---- */
+.ticker{border-top:1px solid var(--line);background:var(--surface-2);overflow:hidden;position:relative}
+.ticker:before,.ticker:after{content:"";position:absolute;top:0;bottom:0;width:38px;z-index:2;pointer-events:none}
+.ticker:before{left:0;background:linear-gradient(90deg,var(--surface-2),transparent)}
+.ticker:after{right:0;background:linear-gradient(270deg,var(--surface-2),transparent)}
+.ticker-track{display:flex;width:max-content;animation:tkscroll 55s linear infinite}
+.ticker:hover .ticker-track{animation-play-state:paused}
+.tk-seq{display:flex;align-items:center;padding:7px 0;white-space:nowrap}
+.tk-it{display:inline-flex;align-items:baseline;gap:6px;padding:0 15px}
+.tk-ic{font-size:12px;align-self:center}
+.tk-lab{color:var(--muted);font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;font-weight:600}
+.tk-val{font-family:var(--head);font-weight:700;font-size:13px;color:var(--ink)}
+.tk-val.up{color:var(--good)} .tk-val.down{color:var(--crit)}
+.tk-sep{color:var(--line);font-size:11px}
+@keyframes tkscroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+@media(prefers-reduced-motion:reduce){.ticker-track{animation:none;width:100%;overflow-x:auto}}
 
 /* ---- nav: menu lateral que recolhe (celular, abre no ☰) · trilho fixo (PC) ---- */
 nav.tabs{position:fixed;top:0;left:0;bottom:0;z-index:60;width:min(80vw,286px);margin:0;max-width:none;
@@ -841,14 +857,11 @@ tbody tr{transition:background-color .12s ease}
         <small>seus dados · seu ritmo · sua evolução</small>
       </div>
     </div>
-    <div class="athlete-chip" id="athleteChip" title="Atleta"><span class="dot" id="athleteInitial" aria-hidden="true">L</span><span id="athleteName">Atleta</span></div>
-    <button class="icon-btn" id="themeBtn" aria-label="Alternar tema claro/escuro" title="Alternar tema (claro/escuro)">◐</button>
-    <button class="icon-btn" id="exportBtn" aria-label="Exportar dados (JSON)" title="Exportar dados (JSON)">⭳</button>
-    <button class="icon-btn" id="importBtn" aria-label="Importar dados (JSON)" title="Importar dados (JSON)">⭱</button>
     <input type="file" id="importFile" accept="application/json" hidden />
     <input type="file" id="fitFile" accept=".fit,.FIT" hidden />
     <input type="file" id="healthFile" accept=".xml" hidden />
   </div>
+  <div class="ticker" id="ticker" aria-label="Seus indicadores ao vivo"><div class="ticker-track" id="tickerTrack"></div></div>
 </header>
 <nav class="tabs" id="tabs" role="tablist" aria-label="Seções da análise">
     <div class="nav-head"><span class="nav-title">Navegação</span><button class="nav-x" id="navClose" type="button" aria-label="Fechar menu">✕</button></div>
@@ -2155,8 +2168,8 @@ var progSys=null; // Progresso: sistema aberto (null = hub de resumo)
 var treinoSel=null; // Treinos: treino aberto (null = lista)
 function render(){
   var v=$("#view");v.innerHTML="";
-  $("#athleteName").textContent=state.athlete.name||"Atleta";
-  $("#athleteInitial").textContent=(state.athlete.name||"A").trim().charAt(0).toUpperCase();
+  var _an=$("#athleteName");if(_an)_an.textContent=state.athlete.name||"Atleta";
+  var _ai=$("#athleteInitial");if(_ai)_ai.textContent=(state.athlete.name||"A").trim().charAt(0).toUpperCase();
   if(currentTab==="hoje")renderHoje(v);
   else if(currentTab==="treinos")renderTreinos(v);
   else if(currentTab==="progresso"||currentTab==="painel")renderProgresso(v);
@@ -2172,6 +2185,7 @@ function render(){
   makeCardsCollapsible(v);
   wireInfo(v);
   updateCycleTabLabel();
+  renderTicker();
 }
 // Nome da aba do ciclo: usa o nome do ciclo configurado (Meia, São Silvestre…) ou "Ciclo Atual".
 function cycleTabLabel(){
@@ -4647,6 +4661,16 @@ function renderConfig(v){
   // zonas de FC da bike (limites em bpm do relógio)
   v.appendChild(renderBikeZonesCard());
 
+  // aparência (tema) — movido do cabeçalho pra cá
+  var ap=el("div","card");ap.style.marginTop="14px";
+  var curTheme=document.documentElement.getAttribute("data-theme")||"dark";
+  ap.innerHTML='<h3>🎨 Aparência</h3><div class="sub" style="margin:8px 0 12px">Tema da interface. O escuro poupa a vista; o claro é melhor em ambientes muito iluminados.</div>';
+  var tRow=el("div");tRow.style.cssText="display:flex;gap:10px;flex-wrap:wrap";
+  var tDark=el("button","btn"+(curTheme==="dark"?"":" ghost")+" sm","🌙 Escuro");tDark.onclick=function(){document.documentElement.setAttribute("data-theme","dark");try{localStorage.setItem("apex.theme","dark");}catch(e){}layoutRail();render();};
+  var tLight=el("button","btn"+(curTheme==="light"?"":" ghost")+" sm","☀️ Claro");tLight.onclick=function(){document.documentElement.setAttribute("data-theme","light");try{localStorage.setItem("apex.theme","light");}catch(e){}layoutRail();render();};
+  tRow.appendChild(tDark);tRow.appendChild(tLight);ap.appendChild(tRow);
+  v.appendChild(ap);
+
   // sincronização entre aparelhos
   v.appendChild(renderSyncCard());
 
@@ -5063,6 +5087,29 @@ function toast(msg){
   t.textContent=msg;t.style.opacity="1";clearTimeout(toastT);toastT=setTimeout(function(){t.style.opacity="0";},1800);
 }
 function setActiveTab(){$("#tabs").querySelectorAll("button").forEach(function(b){var on=b.dataset.tab===currentTab;b.classList.toggle("active",on);b.setAttribute("aria-selected",on?"true":"false");b.tabIndex=on?0:-1;});var v=$("#view");if(v)v.setAttribute("aria-labelledby","tab-"+currentTab);}
+// Fita de indicadores ao vivo (estilo homebroker) — atualiza a cada render.
+function renderTicker(){
+  var track=document.getElementById("tickerTrack"),band=document.getElementById("ticker");
+  if(!track||!band)return;
+  var ws=sortedWorkouts(),a=state.athlete;
+  if(!ws.length){track.innerHTML="";band.style.display="none";return;}
+  band.style.display="";
+  var cx;try{cx=coachContext(ws,a);}catch(e){band.style.display="none";return;}
+  function it(ic,lab,val,cls){return '<span class="tk-it"><span class="tk-ic">'+ic+'</span><span class="tk-lab">'+lab+'</span><b class="tk-val '+(cls||"")+'">'+val+'</b></span>';}
+  var items=[];
+  if(cx.rd)items.push(it("⚡","Prontidão",cx.rd.score,cx.rd.score>=70?"up":cx.rd.score>=50?"":"down"));
+  if(cx.latestEF!=null)items.push(it("⚙️","EF",(cx.latestEF*1000).toFixed(1).replace(".",",")+" pts"+(cx.efDelta!=null?(cx.efDelta>=0?" ▲":" ▼"):""),cx.efDelta!=null?(cx.efDelta>=0?"up":"down"):""));
+  if(cx.latestDec!=null)items.push(it("🫁","Deriva",(cx.latestDec>0?"+":"")+cx.latestDec.toFixed(1)+"%",cx.latestDec<5?"up":cx.latestDec>8?"down":""));
+  if(cx.tsb!=null)items.push(it("📊","Forma",(cx.tsb>0?"+":"")+Math.round(cx.tsb)));
+  if(cx.ac)items.push(it("🛡️","A:C",cx.ac.ratio.toFixed(2).replace(".",","),cx.ac.zone==="sweet spot"?"up":cx.ac.zone==="risco"?"down":""));
+  if(cx.recov)items.push(it("🌙","Recovery",cx.recov.score,cx.recov.score>=75?"up":cx.recov.score>=55?"":"down"));
+  if(cx.latestCad)items.push(it("🦿","Cadência",cx.latestCad+" spm"));
+  items.push(it("📅","Vol 7d",mKmTxt(week7Km(cx.runs))+" km"));
+  if(cx.sleepLast)items.push(it("💤","Sono",cx.sleepLast.value+"h"));
+  var race=state.race;if(race){var blk=mBlock(race);if(blk&&blk.days>=0)items.push(it("🏁",esc(race.name||"Prova"),blk.days+" dias"));}
+  var seq='<div class="tk-seq">'+items.join('<span class="tk-sep">•</span>')+'</div>';
+  track.innerHTML=seq+seq.replace('class="tk-seq"','class="tk-seq" aria-hidden="true"');
+}
 // altura do cabeçalho → posiciona o topo do trilho lateral (PC)
 function layoutRail(){try{var t=document.querySelector("header.top");if(t)document.documentElement.style.setProperty("--topH",t.offsetHeight+"px");}catch(e){}}
 // menu lateral do celular (recolhe): abre/fecha e sincroniza o ☰
@@ -5102,9 +5149,6 @@ window.addEventListener("unhandledrejection",function(e){showFatal(e&&e.reason&&
     var _ncl=$("#navClose");if(_ncl)_ncl.onclick=function(){setNav(false);};
     var _nbd=$("#navBackdrop");if(_nbd)_nbd.onclick=function(){setNav(false);};
     document.addEventListener("keydown",function(e){if(e.key==="Escape"&&document.body.classList.contains("nav-open"))setNav(false);});
-    $("#themeBtn").onclick=function(){toggleTheme();render();};
-    $("#exportBtn").onclick=exportData;
-    $("#importBtn").onclick=function(){$("#importFile").click();};
     $("#importFile").onchange=function(e){if(e.target.files[0])importData(e.target.files[0]);e.target.value="";};
     $("#fitFile").onchange=function(e){if(e.target.files[0])handleFitFile(e.target.files[0]);e.target.value="";};
     $("#healthFile").onchange=function(e){if(e.target.files[0])handleHealthFile(e.target.files[0]);e.target.value="";};
