@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Apex · Análise de Corrida</title>
+<title>Apex Run Performance</title>
 <meta name="description" content="Registre seus treinos de corrida e veja os KPIs do Livro de Fórmulas Apex — EF, GAP, decoupling, TRIMP, forma (CTL/ATL/TSB), score e prontidão — evoluindo ao longo do ciclo." />
 <!-- Ícone do app (aba do navegador + atalho na tela inicial, celular e desktop) -->
 <link rel="icon" type="image/png" sizes="32x32" href="apex-icon-32.png" />
@@ -73,11 +73,14 @@ button{font-family:inherit}
 header.top{position:sticky;top:0;z-index:30;background:color-mix(in srgb,var(--plane) 86%,transparent);
   backdrop-filter:saturate(1.4) blur(10px);border-bottom:1px solid var(--line)}
 .top-in{max-width:1120px;margin:0 auto;padding:12px 16px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
-.brand{display:flex;flex-direction:column;line-height:1.05;margin-right:auto}
-.wordmark{font-weight:800;letter-spacing:.06em;font-size:15px;text-transform:uppercase;display:flex;align-items:center;gap:8px}
-.wordmark b{background:linear-gradient(92deg,var(--accent),var(--accent-2));-webkit-background-clip:text;background-clip:text;color:transparent}
-.wordmark .slash{color:var(--muted);font-weight:600}
-.brand small{color:var(--muted);font-size:11px;letter-spacing:.02em;margin-top:2px}
+.brand{display:flex;flex-direction:row;align-items:center;gap:11px;margin-right:auto;min-width:0}
+.brand-logo{width:40px;height:40px;border-radius:11px;flex:none;object-fit:cover;box-shadow:0 0 0 1px var(--line),0 2px 10px rgba(0,0,0,.28)}
+.brand-tx{display:flex;flex-direction:column;line-height:1.1;min-width:0}
+.wordmark{font-weight:800;letter-spacing:.005em;font-size:16px;display:flex;align-items:baseline;gap:5px;white-space:nowrap}
+.wordmark b{background:linear-gradient(92deg,#22d3ee,#e0398b);-webkit-background-clip:text;background-clip:text;color:transparent;font-weight:800}
+.wordmark .rp{color:var(--ink);font-weight:700}
+.brand small{color:var(--muted);font-size:11px;letter-spacing:.01em;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media(max-width:420px){.brand small{display:none}.wordmark{font-size:15px}}
 .athlete-chip{display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line);
   border-radius:999px;padding:5px 12px 5px 6px;font-size:12.5px;color:var(--ink-2)}
 .athlete-chip .dot{width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent-2));
@@ -232,7 +235,8 @@ body.nav-open .nav-backdrop{opacity:1;visibility:visible}
 /* ---- layout ---- */
 main{max-width:1120px;margin:0 auto;padding:18px 16px 40px}
 @media(min-width:900px){
-  main{margin-left:234px;margin-right:auto;max-width:1040px;padding-top:22px}
+  /* trilho fixo à esquerda + painéis centralizados no viewport (sem colar na lateral) */
+  main{max-width:1000px;margin-left:max(258px,calc((100% - 1000px)/2));margin-right:auto;padding-top:22px}
   .top-in{max-width:none}
   body{padding-bottom:40px}
 }
@@ -831,8 +835,11 @@ tbody tr{transition:background-color .12s ease}
   <div class="top-in">
     <button class="icon-btn" id="menuBtn" type="button" aria-label="Abrir menu" aria-controls="tabs" aria-expanded="false" title="Menu">☰</button>
     <div class="brand">
-      <h1 class="wordmark">🔥 RUN PERFORMANCE <span class="slash">//</span> <b>HEAT</b></h1>
-      <small>Ciclo Base &amp; Pace · seus dados, seu ritmo, sua evolução</small>
+      <img class="brand-logo" src="apex-icon-192.png" alt="Apex Run Performance" width="40" height="40" />
+      <div class="brand-tx">
+        <h1 class="wordmark"><b>Apex</b> <span class="rp">Run Performance</span></h1>
+        <small>seus dados · seu ritmo · sua evolução</small>
+      </div>
     </div>
     <div class="athlete-chip" id="athleteChip" title="Atleta"><span class="dot" id="athleteInitial" aria-hidden="true">L</span><span id="athleteName">Atleta</span></div>
     <button class="icon-btn" id="themeBtn" aria-label="Alternar tema claro/escuro" title="Alternar tema (claro/escuro)">◐</button>
@@ -3178,7 +3185,7 @@ function cycleSummaryText(race,sum){
   if(sum.ctlEnd!=null)L.push("📈 Forma final (CTL): "+Math.round(sum.ctlEnd));
   if(sum.adesao!=null)L.push("✅ Adesão: "+sum.adesao+"% ("+sum.okN+"/"+sum.totN+" sessões, "+sum.weeks+" semanas)");
   L.push("");
-  L.push("— RUN PERFORMANCE // HEAT");
+  L.push("— Apex Run Performance");
   return L.join("\n");
 }
 function archiveCycle(race){
