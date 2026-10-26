@@ -208,6 +208,15 @@ nav.tabs button:focus-visible{outline:2px solid var(--accent);outline-offset:2px
 .h-lw-card{cursor:pointer;transition:border-color .15s ease}
 .h-lw-card:hover{border-color:var(--accent)}
 .h-lw-card:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+/* Resumo do ciclo (acumulado) */
+.cyc-sum{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:12px}
+@media(max-width:480px){.cyc-sum{grid-template-columns:repeat(2,1fr)}}
+.cyc-s{background:var(--surface-2);border:1px solid var(--line-2);border-radius:12px;padding:12px 8px;text-align:center}
+.cyc-s b{font-family:var(--head);font-size:23px;font-weight:800;display:block;line-height:1;letter-spacing:-.01em}
+.cyc-s b i{font-style:normal;font-size:12px;color:var(--ink-2);font-weight:600;margin-left:1px}
+.cyc-s small{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.03em;margin-top:6px;display:block;line-height:1.2}
+.h-cyc-acc{font-size:12px;color:var(--ink-2);margin-top:7px;display:flex;align-items:center;gap:6px}
+.h-cyc-acc b{color:var(--ink);font-family:var(--head)}
 /* --- Treinos: lista estilo Strava + detalhe por sistema --- */
 .tr-list{display:flex;flex-direction:column;gap:10px}
 .tr-yh{display:flex;align-items:baseline;gap:10px;margin:14px 2px 2px}
@@ -2325,9 +2334,11 @@ function renderHoje(v){
     var blk=mBlock(race),phase=blk?mPhase(blk,race):null;
     var cc=el("div","card h-cycle");var segs='';
     if(phase){for(var i=0;i<4;i++)segs+='<i class="'+(i===phase.idx?"on":(i<phase.idx?"done":""))+'"></i>';}
+    var ccRuns=cycleRunsInRange(race),ccKm=ccRuns.reduce(function(s,w){return s+(w.distKm||0);},0);
     cc.innerHTML='<div class="h-cyc-top"><span>🏁</span><b>'+esc(race.name||"Prova")+'</b><span class="h-cyc-days">'+(blk?blk.days+" dias":"")+'</span></div>'+
       (phase?'<div class="h-phase">'+segs+'</div>':'')+
-      '<div class="h-cyc-sub">'+(phase?'<b>'+phase.name+'</b> · ':'')+(blk?'Semana '+blk.cur+' de '+blk.N:'')+'</div>';
+      '<div class="h-cyc-sub">'+(phase?'<b>'+phase.name+'</b> · ':'')+(blk?'Semana '+blk.cur+' de '+blk.N:'')+'</div>'+
+      '<div class="h-cyc-acc">📋 <span><b>'+ccRuns.length+'</b> corrida'+(ccRuns.length===1?"":"s")+' · <b>'+mKmTxt(ccKm)+' km</b> acumulados no ciclo</span></div>';
     cc.onclick=function(){currentTab="ciclo";setActiveTab();render();window.scrollTo(0,0);};
     v.appendChild(cc);
     var info=mWeekInfo(0),wk=state.planWeeks&&state.planWeeks[info.key];
@@ -3681,9 +3692,23 @@ function renderMaratona(v){
   var curKey=mWeekInfo(0).key;
   var curKm=cRuns.filter(function(w){return isoWeekKey(w.date)===curKey;}).reduce(function(s,w){return s+(w.distKm||0);},0);
   var longTarget=race.longRunTargetKm||30, peakTarget=race.peakKmTarget||50;
+  // ---- RESUMO DO CICLO (acumulado — não zera a cada semana) ----
+  var totalKm=cRuns.reduce(function(s,w){return s+(w.distKm||0);},0);
+  var nTrein=cRuns.length, nBike=bikesOnly(cycleWk).length;
+  var wkElapsed=blk?blk.cur:1, avgWk=wkElapsed?totalKm/wkElapsed:0;
+  var sumc=el("div","card");
+  sumc.innerHTML='<h3>📋 Resumo do ciclo <span class="badge lo" style="margin-left:auto">acumulado</span></h3>'+
+    '<div class="cyc-sum">'+
+      '<div class="cyc-s"><b>'+nTrein+'</b><small>corrida'+(nTrein===1?"":"s")+(nBike?" + "+nBike+" bike":"")+'</small></div>'+
+      '<div class="cyc-s"><b>'+mKmTxt(totalKm)+'<i>km</i></b><small>volume total</small></div>'+
+      '<div class="cyc-s"><b>'+wkElapsed+'<i>/'+(blk?blk.N:"—")+'</i></b><small>semanas</small></div>'+
+      '<div class="cyc-s"><b>'+mKmTxt(avgWk)+'<i>km</i></b><small>média/semana</small></div>'+
+    '</div>';
+  sumc.appendChild(hint("Soma de <b>tudo que você já registrou neste ciclo</b> ("+mDateBR(race.startDate)+" → hoje) — <b>não zera a cada semana</b>. O <b>Volume · esta semana</b> abaixo é só a semana corrente, para comparar com a meta de pico."));
+  v.appendChild(sumc);
   var grid=el("div","grid g-2");
   grid.appendChild(mTile({lab:"🏃 Longão",val:mKmTxt(maxLong),unit:"km",meter:maxLong/longTarget*100,note:"meta <b>"+longTarget+" km</b>"}));
-  grid.appendChild(mTile({lab:"📊 Volume / sem",val:mKmTxt(curKm),unit:"km",meter:curKm/peakTarget*100,note:"pico <b>~"+peakTarget+" km</b>"}));
+  grid.appendChild(mTile({lab:"📊 Volume · esta semana",val:mKmTxt(curKm),unit:"km",meter:curKm/peakTarget*100,note:"pico <b>~"+peakTarget+" km</b>/sem"}));
   grid.appendChild(mTile({lab:"📈 Forma (CTL)",val:(ctl!=null?Math.round(ctl):"—")+(ctl!=null?'<small>'+ctlArrow+'</small>':""),note:cycleAgeDays<42?"deste ciclo · ainda formando":"condicionamento deste ciclo"}));
   grid.appendChild(mTile({lab:"🛡️ Salto de carga",val:(acR!=null?acR.toFixed(2).replace(".",","):"—"),note:acProvisional?"A:C deste ciclo · crônica formando":"A:C deste ciclo · aguda ÷ crônica",badge:acBand?'<span class="badge '+acBand[1]+'">'+acBand[0]+'</span>':""}));
   v.appendChild(grid);
