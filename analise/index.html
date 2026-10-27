@@ -3650,7 +3650,8 @@ function renderMaratona(v){
     ef.innerHTML='<h3>⚙ Editar meta da prova</h3>'+
       '<div class="m-form" style="border-top:0;padding-top:4px">'+
       '<div class="f-wide"><label>Nome da prova</label><input id="mrName" value="'+esc(race.name||"")+'"></div>'+
-      '<div><label>Data</label><input id="mrDate" type="date" value="'+esc(race.date||"")+'"></div>'+
+      '<div><label>Início do ciclo <span class="hint">1ª semana de treinos</span></label><input id="mrStart" type="date" value="'+esc(race.startDate||"")+'"></div>'+
+      '<div><label>Data da prova</label><input id="mrDate" type="date" value="'+esc(race.date||"")+'"></div>'+
       '<div><label>Distância (km)</label><input id="mrDist" type="number" step="0.1" value="'+(race.distKm||"")+'"></div>'+
       '<div><label>Meta de longão (km)</label><input id="mrLong" type="number" step="1" value="'+(race.longRunTargetKm||"")+'"></div>'+
       '<div><label>Pico de volume (km/sem)</label><input id="mrPeak" type="number" step="1" value="'+(race.peakKmTarget||"")+'"></div>'+
@@ -3867,6 +3868,8 @@ function renderMaratona(v){
       var r=state.race||defaultRace();
       r.name=($("#mrName",v).value||"Prova").trim();
       r.date=$("#mrDate",v).value||r.date;
+      var sd=$("#mrStart",v).value;
+      if(sd){if(r.date&&sd>r.date){alert("O início do ciclo não pode ser depois da data da prova.");return;}r.startDate=sd;}
       var dist=parseFloat($("#mrDist",v).value);if(!isNaN(dist)&&dist>0)r.distKm=dist;
       var lr=parseFloat($("#mrLong",v).value);if(!isNaN(lr)&&lr>0)r.longRunTargetKm=lr;
       var pk=parseFloat($("#mrPeak",v).value);if(!isNaN(pk)&&pk>0)r.peakKmTarget=pk;
