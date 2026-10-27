@@ -3159,9 +3159,17 @@ function mWeekRange(info){var m=info.monday,s=info.sunday;
   var same=m.getMonth()===s.getMonth();
   return m.getDate()+(same?"":" "+M_MONL[m.getMonth()])+"–"+s.getDate()+" "+M_MONL[s.getMonth()];}
 function mDaysToRace(race){if(!race||!race.date)return null;var r=new Date(race.date+"T00:00:00"),n=new Date();n.setHours(0,0,0,0);return Math.ceil((r-n)/86400000);}
-function mBlock(race){var days=mDaysToRace(race);if(days==null)return null;var wkToGo=Math.max(0,Math.ceil(days/7));var N=wkToGo;
-  if(race.startDate){var s=new Date(race.startDate+"T00:00:00"),r=new Date(race.date+"T00:00:00");var tot=Math.round((r-s)/86400000/7);if(tot>N)N=tot;}
-  if(N<1)N=1;var cur=N-wkToGo+1;if(cur<1)cur=1;if(cur>N)cur=N;return {days:days,wkToGo:wkToGo,N:N,cur:cur};}
+function mBlock(race){var days=mDaysToRace(race);if(days==null)return null;var wkToGo=Math.max(0,Math.ceil(days/7));var N=wkToGo,cur;
+  if(race.startDate){
+    // Semana atual contada A PARTIR DO INÍCIO (alinhada à segunda): a semana do startDate é a "Semana 1".
+    var WK=604800000;
+    var sMon=mMonday(new Date(race.startDate+"T00:00:00"));
+    var rMon=mMonday(new Date(race.date+"T00:00:00"));
+    var tMon=mMonday(new Date());
+    N=Math.round((rMon-sMon)/WK)+1;        // total de semanas do ciclo (início→prova), inclusivo
+    cur=Math.round((tMon-sMon)/WK)+1;       // semana atual desde o início do ciclo
+  } else { cur=N-wkToGo+1; }
+  if(N<1)N=1;if(cur<1)cur=1;if(cur>N)cur=N;return {days:days,wkToGo:wkToGo,N:N,cur:cur};}
 function mPhaseFracs(race){return (RACE_TYPES[raceTypeOf(race)]||RACE_TYPES.maratona).phases;}
 // Fase proporcional ao bloco (não por limiar fixo de semanas): a posição no bloco (início→fim) define a fase,
 // com frações por tipo de prova (maratona 40/30/20/10, meia 35/30/25/10).
