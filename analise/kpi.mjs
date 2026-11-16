@@ -455,7 +455,8 @@ export function performanceScore(ctx) {
     ? clamp(100 - Math.max(0, ctx.decoupling) * 8, 0, 100)              // 0% → 100; 12,5% → 0
     : 70;
   const vol = ctx.targetKm ? clamp((ctx.weeklyKm / ctx.targetKm) * 100, 0, 100) : clamp((ctx.weeklyKm || 0) * 2, 0, 100);
-  const overall = Math.round(0.30 * eff + 0.25 * cons + 0.25 * fat + 0.20 * vol);
+  const recup = ctx.recovery != null ? clamp(ctx.recovery, 0, 100) : 70; // recuperação (sono + HRV + FC repouso); neutro sem dado
+  const overall = Math.round(0.26 * eff + 0.22 * cons + 0.22 * fat + 0.15 * vol + 0.15 * recup);
   return {
     overall,
     parts: {
@@ -463,6 +464,7 @@ export function performanceScore(ctx) {
       "Consistência": Math.round(cons),
       "Resist. fadiga": Math.round(fat),
       "Volume": Math.round(vol),
+      "Recuperação": Math.round(recup),
     },
   };
 }
