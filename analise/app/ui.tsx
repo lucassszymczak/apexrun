@@ -123,8 +123,13 @@ export function Sheet({ title, onClose, children, labelId = 'sheet-title' }: { t
   );
 }
 
+// Apelidos de busca no Livro: "gap" casava primeiro com "Pace-GAP @ FC_REF (145)" (KPI
+// retirado da interface a pedido do Lucas, 20/11); o certo é o ritmo ajustado à inclinação.
+const DOC_ALIAS: Record<string, string> = { gap: 'ritmo ajustado' };
+export const docFor = (k: string) => E.kpiDoc(DOC_ALIAS[k] || k);
+
 function KpiSheet({ info, onClose }: { info: KpiInfo; onClose: () => void }) {
-  const doc = E.kpiDoc(info.doc);
+  const doc = docFor(info.doc);
   const name = noEmoji(info.title || (doc ? doc.name : info.doc));
   const conf = info.conf ?? (doc ? doc.conf : null);
   const todo: string[][] | undefined = E.KPI_TODO[info.doc];

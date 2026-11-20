@@ -48,7 +48,13 @@ export function extrasOf(s: any): Record<string, any> {
     paceGap: s && s.paceGap ? s.paceGap : null, hrLagSec: s && s.hrLagSec != null ? s.hrLagSec : null, geo: s && s.geo ? s.geo : null,
     eff: s && s.eff ? s.eff : null, mech: s && s.mech ? s.mech : null, cadAdherencePct: s && s.cadAdherencePct != null ? s.cadAdherencePct : null,
     imp: s && s.imp ? s.imp : null, weather: s && s.weather ? s.weather : null,
+    splitsOrig: s && s.splits ? s.splits : null,
   };
+}
+
+// Splits → texto do campo (igual ao openModal antigo)
+export function splitsText(sp: any[]): string {
+  return sp.map((x: any) => [E.hms(x.timeSec), x.hrAvg || '', x.elevDeltaM != null ? x.elevDeltaM : ''].filter((v, i) => i === 0 || v !== '').join(', ')).join('\n');
 }
 
 // Valores iniciais do formulário a partir de um treino (openModal antigo)
@@ -65,7 +71,7 @@ export function formFrom(s: any): FormVals {
     sleep: s && s.sleepH != null ? v(s.sleepH) : '', sore: s && s.soreness != null ? v(s.soreness) : '',
     waterB: s && s.waterBefore != null ? v(s.waterBefore) : '', waterD: s && s.waterDuring != null ? v(s.waterDuring) : '', waterA: s && s.waterAfter != null ? v(s.waterAfter) : '',
     dec: s && s.decouplingPct != null ? v(s.decouplingPct) : '', notes: s && s.notes ? s.notes : '', pain: s ? !!s.pain : false,
-    splits: s && s.splits ? s.splits.map((sp: any) => [E.hms(sp.timeSec), sp.hrAvg || '', sp.elevDeltaM != null ? sp.elevDeltaM : ''].filter((x, i) => i === 0 || x !== '').join(', ')).join('\n') : '',
+    splits: s && s.splits ? splitsText(s.splits) : '',
   };
 }
 
@@ -80,9 +86,14 @@ export function buildWorkout(f: FormVals, extras: Record<string, any>, editingId
     if (!hrAvg && !kcal) return { error: 'Na bike, informe a FC média ou as calorias (a carga usa a FC).' };
   } else if (!dist || !dur) return { error: 'Informe ao menos distância e duração.' };
   const indoor = isBk ? !!f.indoor : false;
-  const splits = isBk ? null : E.parseSplits(S('splits'));
+  // Decisão do Lucas (20/11, daqui para frente): se o texto dos splits não foi mexido, ficam
+  // os splits EXATOS do relógio/do treino. Antes, o texto era relido e o último km era
+  // "esticado" até a distância total (ex.: 1,00 → 1,09 km), o que mudava o decoupling.
+  // Splits digitados/editados à mão seguem a regra antiga (abaixo).
+  const keepOrig = !isBk && extras.splitsOrig && S('splits') === splitsText(extras.splitsOrig);
+  const splits = isBk ? null : keepOrig ? JSON.parse(JSON.stringify(extras.splitsOrig)) : E.parseSplits(S('splits'));
   // se splits não trazem distância explícita, ajusta a última para bater com o total
-  if (splits && dist) { const sd = splits.length; if (sd && Math.abs(sd - dist) > 0.001) splits[sd - 1].distKm = Math.max(0.05, dist - (sd - 1)); }
+  if (!keepOrig && splits && dist) { const sd = splits.length; if (sd && Math.abs(sd - dist) > 0.001) splits[sd - 1].distKm = Math.max(0.05, dist - (sd - 1)); }
   const num = (k: string) => (S(k) !== '' ? +S(k) : null);
   const sleepSrc = (() => { const sv = num('sleep'); if (sv == null) return null; const d = (getState().daily || []).find((x: any) => x && x.date === S('date')); return d && d.sleepH != null && Math.abs(sv - d.sleepH) < 0.05 ? 'apple' : 'manual'; })();
   const w = {

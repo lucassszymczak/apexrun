@@ -16,7 +16,8 @@ export function Livro() {
   const [q, setQ] = useState('');
   const openRef = useRef<HTMLDetailsElement | null>(null);
   const docs: any[] = useMemo(() => [
-    ...E.KPI_DOCS,
+    // Pace-GAP @ FC_REF (145) saiu da interface a pedido do Lucas (20/11)
+    ...E.KPI_DOCS.filter((d: any) => !/^Pace-GAP/.test(d.name)),
     ...Object.keys(E.EXTRA_DOCS).map((k) => Object.assign({ key: k, cat: 'Extras' }, E.EXTRA_DOCS[k])),
   ], []);
   const isTarget = (d: any) => !!target && (d.key === target || d.name === target);

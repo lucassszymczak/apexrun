@@ -1,13 +1,14 @@
 // PROGRESSO — "para onde a sua forma está indo". Porta de renderProgresso/progHub
 // (app antigo): perfil, os 6 sistemas (com mini-tendência) e o histórico (recordes e
-// linha do tempo). Novo, pedido no roteiro: "Foco atual" (IMP, Pace-GAP@145 e cadência
-// no ritmo de referência), montado só com funções do motor.
+// linha do tempo). Novo, pedido no roteiro: "Foco atual" (IMP e cadência no ritmo de
+// referência), montado só com funções do motor. O Pace-GAP@145 saiu da interface a pedido
+// do Lucas (20/11): o motor ainda o calcula (dado salvo e sincronizado), mas não é exibido.
 import { IconUser, IconTarget, IconEngine, IconHeartbeat, IconShoe, IconChartBar, IconDroplet, IconMoon, IconTrophy, IconTimeline, IconChevronRight, IconAlertTriangle } from '@tabler/icons-react';
 import * as E from '../../engine.mjs';
 import { useApex } from '../store';
 import { href } from '../route';
 import { PageHead } from '../Shell';
-import { Card, CardH, Kpi, Conf, Empty, IC } from '../ui';
+import { Card, CardH, Kpi, Empty, IC } from '../ui';
 import { dec, signed, km, dur, pace, dayMon, workoutTitle, noEmoji, recoveryPt, typeName } from '../fmt';
 import { SysDetail, SYS } from './ProgressoSys';
 
@@ -123,10 +124,8 @@ export function Progresso({ sys }: { sys: string | null }) {
         <CardH icon={<IconTarget {...IC} />} title="Foco atual" />
         <div>
           <div className="kv"><span>IMP · índice do motor</span><b>{f.imp != null ? <Kpi doc="imp" value={dec(f.imp, 1)} band={'baseline 100 = média das 3 primeiras sessões em clima padrão' + (f.lastImp ? ' · última: ' + dayMon(f.lastImp.date) : '')} conf={f.lastImp?.imp?.confidence}>{dec(f.imp, 1)}</Kpi> : <span className="muted">{f.base.n < 3 ? 'faltam ' + (3 - f.base.n) + ' sessão(ões) em clima padrão para o baseline' : '—'}</span>}</b></div>
-          <div className="kv"><span>Pace-GAP @ FC {a.fcRef || 145}</span><b>{f.lastPg ? <Kpi doc="pace-gap" value={pace(f.lastPg.paceGap.paceSec) + '/km'} band={'última leitura: ' + dayMon(f.lastPg.date) + ' · ' + dec(f.lastPg.paceGap.minInBand, 1) + ' min na banda'} conf={f.lastPg.paceGap.confidence}>{pace(f.lastPg.paceGap.paceSec)}/km</Kpi> : <span className="muted">importe um .FIT de corrida</span>}</b></div>
-          <div className="kv"><span>Cadência no ritmo de referência{f.paceRef != null ? ' (' + pace(f.paceRef) + '/km)' : ''}</span><b>{f.cad && f.cad.spm != null ? <Kpi doc="cad-ref" value={f.cad.spm + ' spm'} conf={f.cad.confidence} band={dec(f.cad.minInRange, 1) + ' min no ritmo'}>{f.cad.spm} spm</Kpi> : <span className="muted">{f.paceRef == null ? 'precisa de 2 leituras de Pace-GAP' : 'poucos minutos no ritmo'}</span>}</b></div>
+          <div className="kv"><span>Cadência no ritmo de referência{f.paceRef != null ? ' (' + pace(f.paceRef) + '/km)' : ''}</span><b>{f.cad && f.cad.spm != null ? <Kpi doc="cad-ref" value={f.cad.spm + ' spm'} conf={f.cad.confidence} band={dec(f.cad.minInRange, 1) + ' min no ritmo'}>{f.cad.spm} spm</Kpi> : <span className="muted">{f.paceRef == null ? 'precisa de 2 corridas com stream do .FIT' : 'poucos minutos no ritmo'}</span>}</b></div>
         </div>
-        <div className="row wrap" style={{ gap: 6 }}>{f.lastPg ? <Conf level={f.lastPg.paceGap.confidence} /> : null}</div>
       </Card>
     </div>
 

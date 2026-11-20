@@ -13,6 +13,11 @@ Fale com o Lucas em português do Brasil, de forma curta. Ele não é desenvolve
 - Os testes existentes precisam passar sempre: `node analise/kpi.test.mjs`, `node analise/fit.test.mjs`, `node analise/recovery.test.mjs`, `node analise/sync.test.mjs`, `node analise/stream.test.mjs`, `node analise/weather.test.mjs` e `npm test`. `npm run test:analise` roda todos os `analise/*.test.mjs` de uma vez (inclui paridade, golden e diferencial).
 - O teste de referência (golden master) compara cada número exibido pelo app antigo com o do app novo, para o seed e para o backup real do Lucas. Qualquer diferença bloqueia a entrega.
 - Se um bug no motor aparecer, não corrija calado: descreva e pergunte.
+- Decisões do Lucas (20/11/2026), que valem daqui para frente sem mudar treinos já salvos:
+  - **Splits ao salvar:** se o texto dos splits não foi editado, guardam-se os splits exatos do .FIT (antes o último km era esticado até a distância total e o decoupling mudava). Splits digitados à mão seguem a regra antiga. Ver `tests/splits.test.ts`.
+  - **Pace-GAP @ FC_REF (145) fora da interface:** o motor continua calculando (dado salvo e sincronizado), mas o app não exibe esse KPI. Ficam o pace e o pace ajustado à inclinação (GAP).
+  - **Dor muscular:** escala 0–10.
+  - **IMP:** só sessões em clima padrão com confiança Moderada ou Alta (regra do Livro de fórmulas).
 
 ## Dados do usuário
 

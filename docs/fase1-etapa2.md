@@ -136,3 +136,18 @@ Os arquivos ficam em `fixtures/privado/`, fora do git. São 3 corridas com GPS: 
 2. **Pace-GAP@145 implausível com pouco tempo na faixa de 145 bpm.**
    - Com 3,7 minutos em 145±3, o motor usa a regressão (R² 0,46) e devolve **18:24/km**, com confiança "Baixa".
    - No treino de 14/11, devolve 10:04/km. O valor aparece no Foco atual com a confiança indicada.
+
+## Atualização (20/11, tarde) — backup real e decisões aplicadas
+
+**Golden master com o backup real** (`fixtures/privado/backup.json`, fora do git): 14 treinos (13 corridas com stream e GPS, 1 bike indoor) e 1.099 dias de diário.
+- App antigo × motor novo no mesmo navegador: **idêntico valor a valor**. No Node: 135/135, incluindo 250 comparações por treino.
+- Comparação de telas: **1356/1356 (100%)** dos números das telas antigas aparecem no app novo.
+- Com isso, o **critério 2 da Fase 1** (golden no seed e no backup real) está cumprido.
+
+**Decisões aplicadas** (registradas também no `CLAUDE.md`):
+1. **Splits preservados ao salvar** (daqui para frente). No .FIT de 19/11, o decoupling fica em 8,4% ao salvar (antes caía para 5,6%). Treinos já salvos não mudam. Testes em `tests/splits.test.ts`.
+2. **Pace-GAP@145 retirado da interface:** saiu do Foco atual, da Qualidade dos dados ("min na banda 145±3") e do Livro de fórmulas.
+   - O motor continua calculando (dado salvo e sincronizado), só não aparece.
+   - O Foco atual fica com IMP e cadência no ritmo de referência.
+
+**Correção de um erro meu:** a Folha do KPI do pace ajustado (GAP) abria o texto do Pace-GAP@145, porque a busca pelo trecho "gap" casava primeiro com ele. Agora abre "GAP · Ritmo ajustado à inclinação".

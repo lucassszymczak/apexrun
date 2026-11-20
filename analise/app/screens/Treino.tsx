@@ -190,7 +190,7 @@ export function treinoBlocks(w: any, st: any) {
   const quality = q ? (
     <Card>
       <CardH icon={<IconDatabase {...IC} />} title="Qualidade dos dados" right={<StateBadge tone={q.needsConfirm ? 'alerta' : 'ok'}>{q.needsConfirm ? 'Conferir' : 'OK'}</StateBadge>} />
-      <p className="apoio">{q.needsConfirm ? <b>Confira: </b> : null}<b className="tn">{dec(q.validMin, 1)} min válidos</b>{q.minInBand != null ? ' · ' + dec(q.minInBand, 1) + ' min na banda 145±3' : ''}{q.medianHrValid != null ? ' · FC mediana ' + q.medianHrValid + ' bpm' : ''}
+      <p className="apoio">{q.needsConfirm ? <b>Confira: </b> : null}<b className="tn">{dec(q.validMin, 1)} min válidos</b>{q.medianHrValid != null ? ' · FC mediana ' + q.medianHrValid + ' bpm' : ''}
         {q.smart ? <> · <b style={{ color: 'var(--atencao)' }}>gravação inteligente</b> (confiança −1)</> : null}{!q.hasHR ? <> · <b>sem FC</b></> : null}{!q.hasCad ? <> · <b>sem cadência</b></> : null}{!q.hasAlt ? <> · <b>sem altitude</b></> : null}</p>
       <div>
         <KV k="Pausas" v={hm(q.pauseSec || 0)} />
