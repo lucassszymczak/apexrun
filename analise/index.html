@@ -5,7 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>Apex Performance</title>
     <meta name="description" content="Apex Performance — treinos, análises e ciclo de prova." />
-    <meta name="theme-color" content="#0D0F1A" />
+    <!-- cor da barra do navegador/sistema: segue o tema (ver applyTheme em app/theme.ts) -->
+    <meta name="theme-color" content="#0D0F1A" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#F6F7FB" media="(prefers-color-scheme: light)" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-title" content="Apex" />
@@ -22,6 +24,11 @@
         try { t = localStorage.getItem('apex.theme'); } catch (e) {}
         if (t === 'auto') t = window.matchMedia && matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
         document.documentElement.setAttribute('data-theme', t === 'light' ? 'light' : 'dark');
+        // tema escolhido à mão vale mais que o do sistema: as duas metas recebem a cor dele
+        if (t === 'light' || t === 'dark') {
+          var c = t === 'light' ? '#F6F7FB' : '#0D0F1A', ms = document.querySelectorAll('meta[name="theme-color"]');
+          for (var i = 0; i < ms.length; i++) ms[i].setAttribute('content', c);
+        }
       })();
     </script>
   </head>

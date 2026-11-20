@@ -1,7 +1,8 @@
 // TREINOS — lista. Porta de renderTreinos (app antigo) com busca, filtros e grupos
 // por mês (roteiro da Fase 1). Números por item = os mesmos cálculos de antes.
-import { useMemo, useState } from 'react';
-import { IconSearch, IconChevronRight, IconRoute, IconPlus } from '@tabler/icons-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { filterWorkouts, filtrosAtivos, typeBadge, FILTROS_PADRAO, type Modal, type Tipo, type Periodo } from '../treinos-filter';
+import { IconSearch, IconChevronRight, IconRoute, IconPlus, IconCalendar, IconChevronDown, IconCheck } from '@tabler/icons-react';
 import * as E from '../../engine.mjs';
 import { useApex } from '../store';
 import { href } from '../route';
@@ -9,17 +10,10 @@ import { PageHead } from '../Shell';
 import { Card, Empty, IC } from '../ui';
 import { privacyOf, privacyLabel } from '../privacy';
 import { PrivacyIcon } from './Privacidade';
-import { dec, signed, km, dur, pace, dayMon, monthYear, workoutTitle, noEmoji, typeName } from '../fmt';
+import { dec, signed, km, dur, pace, dayMon, monthYear, workoutTitle, noEmoji } from '../fmt';
 import { MiniRoute } from './parts';
 
-type Modal = 'todas' | 'corrida' | 'bike';
-type Tipo = 'todos' | 'facil' | 'longao' | 'qualidade' | 'prova' | 'teste';
-type Periodo = 'tudo' | '30' | '90' | '365';
-const TIPO_OF: Record<string, Tipo> = { facil: 'facil', regenerativo: 'facil', 'longão': 'longao', tempo: 'qualidade', limiar: 'qualidade', intervalado: 'qualidade', bike_int: 'qualidade', prova: 'prova', teste: 'teste', teste_motor: 'teste' };
-
-export function typeBadge(w: any): string {
-  return E.isBike(w) ? (w.indoor ? 'Bike indoor' : 'Bike') : typeName(w.type);
-}
+export { typeBadge } from '../treinos-filter';
 
 // 3 números do item (corrida: distância · pace · FC; bike: tempo · distância/FC · TRIMP)
 export function threeNumbers(w: any, a: any): { v: string; u: string; l: string }[] {
@@ -48,18 +42,9 @@ export function Treinos() {
   const [tipo, setTipo] = useState<Tipo>('todos');
   const [per, setPer] = useState<Periodo>('tudo');
 
-  const rows = useMemo(() => {
-    const today = new Date(); today.setHours(0, 0, 0, 0);
-    const qq = q.trim().toLowerCase();
-    return E.sortedWorkouts().slice().reverse().filter((w: any) => {
-      if (modal === 'bike' && !E.isBike(w)) return false;
-      if (modal === 'corrida' && E.isBike(w)) return false;
-      if (tipo !== 'todos' && TIPO_OF[w.type] !== tipo) return false;
-      if (per !== 'tudo') { const d = Math.round((today.getTime() - new Date(w.date + 'T00:00:00').getTime()) / 86400000); if (d > +per) return false; }
-      if (qq) { const hay = (workoutTitle(w) + ' ' + (w.notes || '') + ' ' + typeBadge(w) + ' ' + (w.terrain || '') + ' ' + dayMon(w.date)).toLowerCase(); if (!hay.includes(qq)) return false; }
-      return true;
-    });
-  }, [st.workouts, st.updatedAt, q, modal, tipo, per]);
+  const rows = useMemo(() => filterWorkouts({ q, modal, tipo, per }), [st.workouts, st.updatedAt, q, modal, tipo, per]);
+  const ativos = filtrosAtivos({ q, modal, tipo, per });
+  const limpar = () => { setQ(FILTROS_PADRAO.q); setModal(FILTROS_PADRAO.modal); setTipo(FILTROS_PADRAO.tipo); setPer(FILTROS_PADRAO.per); };
 
   // grupos por mês com totais (n, km, tempo)
   const groups: { key: string; ws: any[]; km: number; sec: number }[] = [];
@@ -76,30 +61,38 @@ export function Treinos() {
   const yearOpen: Record<string, boolean> = {}; const seenY: Record<string, boolean> = {};
   groups.forEach((g) => { const y = g.key.slice(0, 4); if (!seenY[y]) { seenY[y] = true; yearOpen[g.key] = true; } });
 
-  const chips = <T extends string>(val: T, set: (v: T) => void, opts: [T, string][], label: string) => (
-    <div className="row" style={{ gap: 6, flexWrap: 'wrap' }} role="group" aria-label={label}>
-      {opts.map(([k, l]) => <button key={k} type="button" className="chip" aria-pressed={val === k} onClick={() => set(k)}>{l}</button>)}
-    </div>
-  );
+  const sub = st.workouts.length ? (
+    <span className="row" style={{ gap: 12 }}>
+      <span aria-live="polite">{rows.length} treino{rows.length === 1 ? '' : 's'}</span>
+      {ativos ? <button type="button" className="link tf-limpar" onClick={limpar}>Limpar filtros</button> : null}
+    </span>
+  ) : 'Importe pelo +';
 
   return (<>
-    <PageHead title="Treinos" sub={st.workouts.length + ' registrado' + (st.workouts.length === 1 ? '' : 's') + ' · importar .FIT pelo +'} />
+    <PageHead title="Treinos" sub={sub} />
     {!st.workouts.length ? (
       <Card><Empty icon={<IconRoute size={32} stroke={1.75} />}><b>Nenhum treino ainda.</b><br />Importe um ou vários .FIT do relógio, ou registre à mão.</Empty>
         <a className="btn" href={href('importar')}><IconPlus size={18} stroke={2} aria-hidden="true" />Importar treino</a></Card>
     ) : (<>
-      <Card>
-        <div className="field">
-          <label htmlFor="busca" className="sr-only">Buscar treinos</label>
-          <div style={{ position: 'relative' }}>
-            <IconSearch size={18} stroke={1.75} style={{ position: 'absolute', left: 12, top: 13, color: 'var(--texto-3)' }} aria-hidden="true" />
-            <input id="busca" type="search" placeholder="Buscar por nome, nota ou tipo" value={q} onChange={(e) => setQ(e.target.value)} style={{ paddingLeft: 38 }} />
+      <div className="tf" role="search" aria-label="Filtros dos treinos">
+        <div className="tf-row1">
+          <div className="tf-busca">
+            <label htmlFor="busca" className="sr-only">Buscar treinos</label>
+            <IconSearch size={18} stroke={1.75} aria-hidden="true" />
+            <input id="busca" type="search" placeholder="Buscar por nome, nota ou tipo" value={q} onChange={(e) => setQ(e.target.value)} />
+          </div>
+          <PeriodoMenu value={per} onChange={setPer} />
+        </div>
+        <Segmentado value={modal} onChange={setModal} label="Modalidade" options={[['todas', 'Todas'], ['corrida', 'Corrida'], ['bike', 'Bike']]} />
+        <div className="tf-tipos">
+          <span className="tf-lab" id="tf-tipo-l">Tipo de treino</span>
+          <div className="tf-chips" role="group" aria-labelledby="tf-tipo-l">
+            {([['todos', 'Todos'], ['facil', 'Fácil'], ['longao', 'Longão'], ['qualidade', 'Qualidade'], ['prova', 'Prova'], ['teste', 'Teste']] as [Tipo, string][]).map(([k, l]) => (
+              <button key={k} type="button" className="tf-chip" aria-pressed={tipo === k} onClick={() => setTipo(k)}
+                onFocus={(e) => e.currentTarget.scrollIntoView({ block: 'nearest', inline: 'nearest' })}>{l}</button>))}
           </div>
         </div>
-        {chips(modal, setModal, [['todas', 'Todas'], ['corrida', 'Corrida'], ['bike', 'Bike']], 'Modalidade')}
-        {chips(tipo, setTipo, [['todos', 'Todos os tipos'], ['facil', 'Fácil'], ['longao', 'Longão'], ['qualidade', 'Qualidade'], ['prova', 'Prova'], ['teste', 'Teste']], 'Tipo')}
-        {chips(per, setPer, [['tudo', 'Tudo'], ['30', '30 dias'], ['90', '90 dias'], ['365', '12 meses']], 'Período')}
-      </Card>
+      </div>
       {!rows.length ? <Card><p className="muted">Nenhum treino com esses filtros.</p></Card> : null}
       {groups.map((g) => (
         <section key={g.key} aria-label={monthYear(g.key + '-01')}>
@@ -139,4 +132,65 @@ export function Treinos() {
       ))}
     </>)}
   </>);
+}
+
+// Modalidade: seletor segmentado de largura total (radiogroup; setas trocam a opção)
+function Segmentado<T extends string>({ value, onChange, label, options }: { value: T; onChange: (v: T) => void; label: string; options: [T, string][] }) {
+  const refs = useRef<(HTMLButtonElement | null)[]>([]);
+  const onKey = (e: React.KeyboardEvent, k: number) => {
+    const d = e.key === 'ArrowRight' || e.key === 'ArrowDown' ? 1 : e.key === 'ArrowLeft' || e.key === 'ArrowUp' ? -1 : 0;
+    if (!d) return;
+    e.preventDefault();
+    const n = (k + d + options.length) % options.length;
+    onChange(options[n][0]); refs.current[n]?.focus();
+  };
+  return (
+    <div className="seg tf-seg" role="radiogroup" aria-label={label}>
+      {options.map(([k, l], i) => (
+        <button key={k} ref={(el) => { refs.current[i] = el; }} type="button" role="radio" aria-checked={value === k} tabIndex={value === k ? 0 : -1}
+          onClick={() => onChange(k)} onKeyDown={(e) => onKey(e, i)}>{l}</button>))}
+    </div>
+  );
+}
+
+// Período: botão compacto que abre um menu com as 4 opções (setas, Enter, Esc)
+const PERIODOS: [Periodo, string][] = [['tudo', 'Tudo'], ['30', '30 dias'], ['90', '90 dias'], ['365', '12 meses']];
+function PeriodoMenu({ value, onChange }: { value: Periodo; onChange: (v: Periodo) => void }) {
+  const [open, setOpen] = useState(false);
+  const btn = useRef<HTMLButtonElement>(null);
+  const items = useRef<(HTMLButtonElement | null)[]>([]);
+  const box = useRef<HTMLDivElement>(null);
+  const cur = PERIODOS.findIndex(([k]) => k === value);
+  useEffect(() => {
+    if (!open) return;
+    items.current[Math.max(0, cur)]?.focus();
+    const out = (e: PointerEvent) => { if (box.current && !box.current.contains(e.target as Node)) setOpen(false); };
+    document.addEventListener('pointerdown', out);
+    return () => document.removeEventListener('pointerdown', out);
+  }, [open]);
+  const close = (focus = true) => { setOpen(false); if (focus) btn.current?.focus(); };
+  const onKey = (e: React.KeyboardEvent, k: number) => {
+    if (e.key === 'Escape') { e.preventDefault(); close(); return; }
+    if (e.key === 'Tab') { close(false); return; }
+    const n = e.key === 'ArrowDown' ? k + 1 : e.key === 'ArrowUp' ? k - 1 : e.key === 'Home' ? 0 : e.key === 'End' ? PERIODOS.length - 1 : null;
+    if (n == null) return;
+    e.preventDefault(); items.current[(n + PERIODOS.length) % PERIODOS.length]?.focus();
+  };
+  return (
+    <div className="tf-per" ref={box}>
+      <button ref={btn} type="button" className="tf-per-btn" aria-haspopup="menu" aria-expanded={open} aria-label={'Período: ' + PERIODOS[cur][1]}
+        onClick={() => setOpen(!open)} onKeyDown={(e) => { if (e.key === 'ArrowDown' && !open) { e.preventDefault(); setOpen(true); } }}>
+        <IconCalendar size={18} stroke={1.75} aria-hidden="true" /><span>{PERIODOS[cur][1]}</span><IconChevronDown size={16} stroke={1.75} aria-hidden="true" />
+      </button>
+      {open ? (
+        <div className="tf-menu" role="menu" aria-label="Período">
+          {PERIODOS.map(([k, l], i) => (
+            <button key={k} ref={(el) => { items.current[i] = el; }} type="button" role="menuitemradio" aria-checked={value === k} tabIndex={-1}
+              onClick={() => { onChange(k); close(); }} onKeyDown={(e) => onKey(e, i)}>
+              <span>{l}</span>{value === k ? <IconCheck size={16} stroke={2} aria-hidden="true" /> : null}
+            </button>))}
+        </div>
+      ) : null}
+    </div>
+  );
 }

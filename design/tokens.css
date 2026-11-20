@@ -12,6 +12,8 @@
   --magenta: #e8459a;
   --on-magenta: #0d0f1a;
   --ciano: #22d3ee;
+  --ciano-forte: #22d3ee; /* controle ativo com texto pequeno (segmentados, chips, links) */
+  --on-ciano: #0d0f1a;    /* texto e ícone sobre --ciano-forte */
   --violeta: #5b3fd0;
   --foco: var(--ciano);
   --zona-1: #a5f3fc;
@@ -37,6 +39,8 @@
   --magenta: #c42a7c;
   --on-magenta: #ffffff;
   --ciano: #0891b2;
+  --ciano-forte: #0e7490; /* 5,4:1 sobre branco · 4,7:1 sobre #EEF0F5 */
+  --on-ciano: #ffffff;    /* 5,4:1 sobre #0E7490 */
   --violeta: #5b3fd0;
   --zona-1: #0891b2;
   --zona-2: #4c67d6;
@@ -65,6 +69,16 @@
   --radius-pill: 999px;
 
   --font-brand: "Outfit", system-ui, sans-serif;
+
+  /* Área segura do iPhone (barra de status, Dynamic Island, indicador de início).
+     Precisa de viewport-fit=cover no <meta name="viewport">. */
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+  /* faixa sob a barra de status no app instalado: escura nos dois temas, porque o
+     texto do relógio/bateria é branco (apple-mobile-web-app-status-bar-style = black-translucent) */
+  --barra-status: #0d0f1a;
 }
 
 /* Estilos de texto (tamanho / altura de linha / peso) */
