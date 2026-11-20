@@ -9,7 +9,7 @@ import { describeRoute } from './describe';
 
 const R = 6371000;
 
-export function TrackSvg({ tr, band, cursor, onPick, photos, onPhoto }: { tr: Track; band: (i: number) => number | null; cursor: number | null; onPick: (i: number) => void; photos?: { i: number; id: string; url: string; label: string }[]; onPhoto?: (id: string) => void }) {
+export function TrackSvg({ tr, band, cursor, onPick, photos, onPhoto, palette = PALETTE, marca }: { tr: Track; band: (i: number) => number | null; cursor: number | null; onPick: (i: number) => void; photos?: { i: number; id: string; url: string; label: string }[]; onPhoto?: (id: string) => void; palette?: string[]; marca?: { i: number; label: string } | null }) {
   const box = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState({ w: 390, h: 400 });
   const [zoom, setZoom] = useState(1);
@@ -79,7 +79,7 @@ export function TrackSvg({ tr, band, cursor, onPick, photos, onPhoto }: { tr: Tr
         onPointerUp={(e) => { const d = drag.current; drag.current = null; if (d && !d.moved) { const [x, y] = toWorld(e); pick(x, y); } }}>
         <rect x={vb[0]} y={vb[1]} width={vb[2]} height={vb[3]} fill="var(--noite)" />
         <polyline points={pts(tr.draw)} fill="none" stroke="var(--linha)" strokeWidth={9 * unit} strokeLinejoin="round" strokeLinecap="round" />
-        {runs.map((r, k) => <polyline key={k} points={pts(r.idx)} fill="none" stroke={r.band == null ? 'var(--texto-3)' : PALETTE[r.band]} strokeWidth={4.5 * unit} strokeLinejoin="round" strokeLinecap="round" />)}
+        {runs.map((r, k) => <polyline key={k} points={pts(r.idx)} fill="none" stroke={r.band == null ? 'var(--texto-3)' : palette[r.band]} strokeWidth={4.5 * unit} strokeLinejoin="round" strokeLinecap="round" />)}
         {marks.map((m) => { const [x, y] = proj.P(nearestGps(tr, m.i)); return (
           <g key={m.km} aria-hidden="true">
             <circle cx={x} cy={y} r={10 * unit} fill="var(--noite)" stroke="var(--texto)" strokeWidth={1.5 * unit} />
@@ -93,6 +93,7 @@ export function TrackSvg({ tr, band, cursor, onPick, photos, onPhoto }: { tr: Tr
           </g>); })}
         {(() => { const [x, y] = proj.P(last); return <g aria-hidden="true"><circle cx={x} cy={y} r={8 * unit} fill="var(--noite)" stroke="var(--texto)" strokeWidth={3 * unit} /><circle cx={x} cy={y} r={3 * unit} fill="var(--texto)" /></g>; })()}
         {(() => { const [x, y] = proj.P(first); return <circle cx={x} cy={y} r={7 * unit} fill="var(--texto)" stroke="var(--noite)" strokeWidth={2.5 * unit} aria-hidden="true" />; })()}
+        {marca ? (() => { const [x, y] = proj.P(nearestGps(tr, marca.i)); return <g role="img" aria-label={marca.label}><circle cx={x} cy={y} r={9 * unit} fill="var(--noite)" stroke="var(--atencao)" strokeWidth={3 * unit} /><circle cx={x} cy={y} r={3.5 * unit} fill="var(--atencao)" /></g>; })() : null}
         {cur ? <circle cx={cur[0]} cy={cur[1]} r={8 * unit} fill="var(--ciano)" stroke="var(--noite)" strokeWidth={3 * unit} aria-hidden="true" /> : null}
       </svg>
       <div className="mapzoom" role="group" aria-label="Zoom do trajeto">

@@ -6,7 +6,7 @@ import { useToasts, useApex } from './store';
 import { useGarminQueue, useGarminSync, haQuantoSync, garminLocal } from './garmin-sync';
 
 export const MAIS = [
-  ['maratona', 'Maratona'],
+  ['maratona', 'Ciclo de prova'],
   ['relatorio', 'Relatório semanal'],
   ['recuperacao', 'Recuperação'],
   ['forca', 'Força e canela'],

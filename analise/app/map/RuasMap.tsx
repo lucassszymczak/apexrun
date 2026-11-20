@@ -28,11 +28,13 @@ function photoEl(p: MapPhoto, onPhoto?: (id: string) => void) {
   return b;
 }
 
-export function RuasMap({ tr, band, bandKey, cursor, onPick, onFail, photos, onPhoto }: { tr: Track; band: (i: number) => number | null; bandKey: string; cursor: number | null; onPick: (i: number) => void; onFail: (why: string) => void; photos?: MapPhoto[]; onPhoto?: (id: string) => void }) {
+export function RuasMap({ tr, band, bandKey, cursor, onPick, onFail, photos, onPhoto, palette = PALETTE, marca }: { tr: Track; band: (i: number) => number | null; bandKey: string; cursor: number | null; onPick: (i: number) => void; onFail: (why: string) => void; photos?: MapPhoto[]; onPhoto?: (id: string) => void; palette?: string[]; marca?: { i: number; label: string } | null }) {
   const box = useRef<HTMLDivElement>(null);
   const S = useRef<{ map: any; ml: any; cursor: any; marks: any[]; photos: any[]; ready: boolean } | null>(null);
   const photosRef = useRef<MapPhoto[]>(photos || []);
   photosRef.current = photos || [];
+  const marcaRef = useRef(marca || null);
+  marcaRef.current = marca || null;
 
   // cria o mapa uma vez
   useEffect(() => {
@@ -97,7 +99,7 @@ export function RuasMap({ tr, band, bandKey, cursor, onPick, onFail, photos, onP
   function draw() {
     const s = S.current; if (!s || !s.ready) return;
     const runs = coloredRuns(tr, band);
-    const features = runs.map((r) => ({ type: 'Feature', properties: { cor: resolve(r.band == null ? 'var(--texto-3)' : PALETTE[r.band]) }, geometry: { type: 'LineString', coordinates: r.idx.map((i) => [tr.lon[i], tr.lat[i]]) } }));
+    const features = runs.map((r) => ({ type: 'Feature', properties: { cor: resolve(r.band == null ? 'var(--texto-3)' : palette[r.band]) }, geometry: { type: 'LineString', coordinates: r.idx.map((i) => [tr.lon[i], tr.lat[i]]) } }));
     s.map.getSource('rota').setData({ type: 'FeatureCollection', features });
   }
   function drawMarks() {
@@ -108,6 +110,7 @@ export function RuasMap({ tr, band, bandKey, cursor, onPick, onFail, photos, onP
     const a = tr.draw[0], b = tr.draw[tr.draw.length - 1];
     s.marks.push(new s.ml.Marker({ element: markerEl('fim', undefined, 'Chegada') }).setLngLat([tr.lon[b], tr.lat[b]]).addTo(s.map));
     s.marks.push(new s.ml.Marker({ element: markerEl('ini', undefined, 'Largada') }).setLngLat([tr.lon[a], tr.lat[a]]).addTo(s.map));
+    if (marcaRef.current) { const i = nearestGps(tr, marcaRef.current.i); s.marks.push(new s.ml.Marker({ element: markerEl('deriva', undefined, marcaRef.current.label) }).setLngLat([tr.lon[i], tr.lat[i]]).addTo(s.map)); }
   }
   function drawPhotos() {
     const s = S.current; if (!s || !s.ready) return;
@@ -117,6 +120,7 @@ export function RuasMap({ tr, band, bandKey, cursor, onPick, onFail, photos, onP
   useEffect(() => { drawPhotos(); }, [(photos || []).map((p) => p.id + ':' + p.i).join(',')]);
   // recolore quando muda o modo de cor
   useEffect(() => { draw(); }, [bandKey]);
+  useEffect(() => { drawMarks(); }, [marca ? marca.i : -1]);
   // ponto do replay
   useEffect(() => {
     const s = S.current; if (!s || !s.ready) return;

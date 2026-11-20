@@ -90,7 +90,7 @@ export function coachReading(ws: any[], a: any, x: any) {
   if (hySt && hySt.label === 'baixa') acts.push({ p: 2, t: '<b>Hidratação:</b> subir a água no próximo longo (mire 500–700 ml/h).' });
   if (!(shinAlert || pain) && x.efDelta != null && x.efDelta >= 1 && !needRec) acts.push({ p: 3, t: '<b>Desempenho:</b> motor rendendo — vale puxar uma sessão de qualidade quando a prontidão abrir.' });
   if (!(shinAlert || pain) && x.latestCad && x.latestCad < a.cadenceTarget) acts.push({ p: 3, t: '<b>Mecânica:</b> mirar cadência ' + a.cadenceTarget + ' (~+5%) nos fáceis — poupa a tíbia e baixa a FC.' });
-  acts.push({ p: 4, t: 'Manter a base: 2 fáceis + 1 longo + força 2×; programar a semana em Mais › <b>Maratona</b> e marcar os cumpridos.' });
+  acts.push({ p: 4, t: 'Manter a base: 2 fáceis + 1 longo + força 2×; programar a semana em Mais › <b>Ciclo de prova</b> e marcar os cumpridos.' });
   acts.sort((m, n) => m.p - n.p);
   return { hl, sub, rows, acts: acts.slice(0, 5) };
 }

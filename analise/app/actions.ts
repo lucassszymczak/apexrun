@@ -7,6 +7,9 @@ import { buildTrack, totalDist, duration, type Track } from './track';
 import { putTrack, delTrack, delPhotosOf, getPhotos, putPhoto } from './db';
 import { refitPhotos } from './photos';
 import { pushTrack, deleteRemoteTrack } from './track-sync';
+import { computeLeitura, voltasParaLaps } from '../leitura.mjs';
+import { lapsFromMessages, tirosPorOrigem } from '../laps.mjs';
+import { fetchWind } from '../wind.mjs';
 
 // ---------------- .FIT ----------------
 // Mesma sequência do handleFitFile antigo. O leitor (@garmin/fitsdk 21) agora vem
@@ -25,7 +28,9 @@ export async function readFit(file: File, opts: { weather?: boolean } = {}): Pro
   const w = E.fitMessagesToWorkout(res.messages);
   let track: Track | null = null;
   try { track = buildTrack(res.messages); } catch (e) { console.warn('[apex] trajeto não montado', e); }
-  if (opts.weather === false) return { w, track, name: file.name, messages: res.messages };
+  const laps = lapsFromMessages(res.messages);
+  if (track) entradas.set(track, { laps, wind: null });
+  if (opts.weather === false) { anexaLeitura(w, track, laps, null); return { w, track, name: file.name, messages: res.messages }; }
   // clima automático (Open-Meteo): só corrida com GPS; melhor esforço, não bloqueia
   let when = w.date ? new Date(w.date + 'T12:00:00Z') : new Date();
   if (w.geo && w.geo.lat != null) {
@@ -34,10 +39,54 @@ export async function readFit(file: File, opts: { weather?: boolean } = {}): Pro
   }
   const needWeather = w.modal !== 'bike' && w.geo && w.geo.lat != null;
   w.weather = needWeather ? (await E.fetchWeather(w.geo, when, getState().athlete)) || null : null;
+  // vento (item 2 aprovado): mesma fonte e mesma consulta do clima (coordenada e horário)
+  const wind = needWeather && track && track.hasGps ? await fetchWind(w.geo, when) : null;
+  if (track) entradas.set(track, { laps, wind });
+  anexaLeitura(w, track, laps, wind);
   return { w, track, name: file.name, messages: res.messages };
 }
 
 // ---------------- formulário ----------------
+// Leitura do treino (Fase 2 · Etapa 5): calculada uma vez, com o trajeto completo (1 Hz).
+// As voltas e o vento lidos do .FIT ficam ligados ao trajeto até o treino ser salvo: a
+// leitura final usa o treino salvo (tipo, splits, clima), não o rascunho.
+const entradas = new WeakMap<Track, { laps: any[]; wind: any }>();
+export function anexaLeitura(w: any, track: Track | null, laps: any[], wind: any) {
+  try { w.leitura = computeLeitura({ w, tr: track, laps, wind, athlete: getState().athlete }); }
+  catch (e) { console.warn('[apex] leitura', e); }
+}
+// Leitura de um treino salvo, a partir do trajeto completo. Sem voltas/vento novos, usa os
+// que já estavam guardados na leitura anterior.
+export function leituraPara(w: any, track: Track | null, novo?: { laps?: any[]; wind?: any }): any {
+  const prev = w.leitura || {};
+  const laps = novo && novo.laps && novo.laps.length ? novo.laps : voltasParaLaps(prev.voltas);
+  const wind = (novo && novo.wind) || prev.ventoHora || null;
+  try {
+    if (track) {
+      const L = computeLeitura({ w, tr: track, laps, wind, athlete: getState().athlete });
+      if (prev.origem) { // origem escolhida à mão (Trocar origem) vale sobre a automática
+        L.origem = prev.origem;
+        const t = E.isBike(w) ? null : tirosPorOrigem(prev.origem, laps, track);
+        if (t) L.tiros = t; else delete L.tiros;
+      }
+      return L;
+    }
+    // sem trajeto (edição do treino): só o que depende do treino salvo é refeito
+    const base = computeLeitura({ w, tr: null, laps: [], wind: null, athlete: getState().athlete });
+    const out: any = { ...prev, v: base.v };
+    delete out.climaPadrao; delete out.deriva;
+    if (base.climaPadrao) out.climaPadrao = base.climaPadrao;
+    if (base.deriva) out.deriva = base.deriva;
+    return out;
+  } catch (e) { console.warn('[apex] leitura', e); return w.leitura || null; }
+}
+// Vento na hora do treino (Open-Meteo), para treinos que chegam sem ele.
+async function ventoDe(w: any, track: Track | null): Promise<any> {
+  if (!track || !track.hasGps || !w.geo || w.geo.lat == null || E.isBike(w)) return null;
+  const when = track.start ? new Date(track.start * 1000) : new Date(w.date + 'T12:00:00Z');
+  return fetchWind(w.geo, when).catch(() => null);
+}
+
 export type FormVals = Record<string, string | boolean>;
 export const RUN_TYPES: [string, string][] = [['facil', 'Fácil / rodagem'], ['longão', 'Longão'], ['tempo', 'Tempo'], ['limiar', 'Limiar'], ['intervalado', 'Intervalado'], ['regenerativo', 'Regenerativo'], ['teste_motor', 'Teste do Motor'], ['teste', 'Teste'], ['prova', 'Prova']];
 export const BIKE_TYPES: [string, string][] = [['bike', 'Bike (base / Z2)'], ['bike_int', 'Bike forte / intervalado']];
@@ -53,6 +102,7 @@ export function extrasOf(s: any): Record<string, any> {
     splitsOrig: s && s.splits ? s.splits : null,
     privacy: s && s.privacy ? s.privacy : null, // Etapa 3 (campo novo, opcional)
     garminActivityId: s && s.garminActivityId ? String(s.garminActivityId) : null, // Fase 2 (origem Garmin)
+    leitura: s && s.leitura ? s.leitura : null, // Fase 2 (leitura do treino)
   };
 }
 
@@ -120,6 +170,7 @@ export function buildWorkout(f: FormVals, extras: Record<string, any>, editingId
   // privacidade do treino (Etapa 3): campo novo e opcional — só existe se foi definido
   if (extras.privacy) w.privacy = extras.privacy;
   if (extras.garminActivityId) w.garminActivityId = extras.garminActivityId;
+  if (extras.leitura) w.leitura = extras.leitura;
   return { w };
 }
 
@@ -138,6 +189,8 @@ export function findDuplicate(w: any): { match: any; same: boolean } | null {
 export function commitWorkout(w: any, choice: 'new' | 'edit' | 'replace' | 'keep', matchId?: string, track?: Track | null, opts: { quiet?: boolean } = {}): string {
   const st = getState();
   let msg = 'Treino registrado';
+  if (track) { const ent = entradas.get(track); w.leitura = leituraPara(w, track, ent); }
+  else if (w.leitura) w.leitura = leituraPara(w, null);
   if (choice === 'edit') { const idx = st.workouts.findIndex((x: any) => x.id === w.id); st.workouts[idx] = w; msg = 'Treino atualizado'; }
   else if (choice === 'replace') { const i = st.workouts.findIndex((x: any) => x.id === matchId); if (i >= 0) st.workouts[i] = w; else st.workouts.push(w); msg = 'Treino substituído'; }
   else if (choice === 'keep') { st.workouts.push(w); msg = 'Treino registrado (2 no dia)'; }
@@ -197,6 +250,7 @@ export async function reimportFit(w: any, file: File): Promise<string> {
   if (!r.track) throw new Error('O arquivo não tem registros de trajeto.');
   await putTrack(w.id, r.track);
   pushTrack(w.id, r.track);
+  await setLeitura(w.id, r.track);
   await refitPhotos(w.id, r.track).catch(() => {});
   return r.track.hasGps ? 'Trajeto adicionado. Nada nas análises mudou.' : 'Séries adicionadas (o arquivo não tem GPS). Nada nas análises mudou.';
 }
@@ -234,4 +288,54 @@ export function setWorkoutPrivacy(id: string, p: { mapa: string; raio: number; q
   w.updatedAt = new Date().toISOString();
   commit();
   toast('Privacidade do treino salva');
+}
+
+// Guarda a leitura calculada num treino já salvo (campo novo; nenhum número existente muda).
+export async function setLeitura(id: string, track: Track, ent?: { laps?: any[]; wind?: any }) {
+  const w0 = getState().workouts.find((x: any) => x.id === id);
+  if (!w0) return;
+  ent = ent || entradas.get(track);
+  const wind = (ent && ent.wind) || (w0.leitura && w0.leitura.ventoHora) || (await ventoDe(w0, track));
+  const w = getState().workouts.find((x: any) => x.id === id); // pode ter mudado durante a busca
+  if (!w) return;
+  w.leitura = leituraPara(w, track, { laps: ent && ent.laps, wind });
+  w.updatedAt = new Date().toISOString();
+  commit();
+}
+// "Recalcular leitura": treinos com o trajeto completo neste aparelho.
+export async function recalcularLeitura(ids?: string[]): Promise<number> {
+  const { trackIds, getTrack } = await import('./db');
+  const local = await trackIds();
+  let n = 0;
+  for (const w of getState().workouts.slice()) {
+    if (!local.has(w.id) || (ids && !ids.includes(w.id))) continue;
+    const tr = await getTrack(w.id); if (!tr) continue;
+    await setLeitura(w.id, tr); n++;
+  }
+  return n;
+}
+
+// "Trocar origem" dos tiros: o que cada origem daria neste treino (precisa do trajeto completo
+// neste aparelho para a detecção automática).
+export async function opcoesOrigem(w: any): Promise<{ k: string; rotulo: string | null }[]> {
+  const { getTrack } = await import('./db');
+  const tr = await getTrack(w.id);
+  const laps = voltasParaLaps(w.leitura && w.leitura.voltas);
+  return ['estruturado', 'voltas', 'auto', 'nenhum'].map((k) => {
+    if (k === 'nenhum') return { k, rotulo: 'Não são tiros' };
+    if (k === 'auto' && !tr) return { k, rotulo: null };
+    const t = tirosPorOrigem(k, laps, tr);
+    return { k, rotulo: t ? t.rotulo : null };
+  });
+}
+export async function trocarOrigem(id: string, origem: string | null) {
+  const w = getState().workouts.find((x: any) => x.id === id); if (!w) return;
+  const { getTrack } = await import('./db');
+  const tr = await getTrack(id);
+  const laps = voltasParaLaps(w.leitura && w.leitura.voltas);
+  const L = { ...(w.leitura || { v: 1 }) };
+  if (origem) { L.origem = origem; const t = tirosPorOrigem(origem, laps, tr); if (t) L.tiros = t; else delete L.tiros; }
+  else { delete L.origem; if (tr) { const n = leituraPara({ ...w, leitura: L }, tr); Object.assign(L, n); if (!n.tiros) delete L.tiros; } }
+  w.leitura = L; w.updatedAt = new Date().toISOString();
+  commit(); toast(origem === 'nenhum' ? 'Tiros removidos deste treino' : 'Origem dos tiros trocada');
 }

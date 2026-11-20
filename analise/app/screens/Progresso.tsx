@@ -14,6 +14,7 @@ import { PageHead } from '../Shell';
 import { Card, CardH, Kpi, Empty, IC } from '../ui';
 import { dec, signed, km, dur, pace, dayMon, workoutTitle, noEmoji, recoveryPt, typeName } from '../fmt';
 import { SysDetail, SYS } from './ProgressoSys';
+import { EsforcosProgresso, CurvaSubida } from './Leitura';
 
 // mini-tendência (sparkline) — só desenho, sem número novo
 function Spark({ ys, color = 'var(--ciano)' }: { ys: number[]; color?: string }) {
@@ -179,6 +180,12 @@ export function Progresso({ sys }: { sys: string | null }) {
     <div className="cols">
       <Card>
         <Recordes runs={runs} todasCorridas={E.runsOnly(all)} recorte={per !== 'tudo'} />
+      </Card>
+      <Card>
+        <EsforcosProgresso runs={runs} todas={E.runsOnly(all)} recorte={per !== 'tudo'} st={st} />
+      </Card>
+      <Card>
+        <CurvaSubida runs={runs} />
       </Card>
       <Card>
         <CardH icon={<IconTimeline {...IC} />} title="Linha do tempo · destaques" />

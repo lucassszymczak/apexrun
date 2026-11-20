@@ -132,10 +132,16 @@ try {
   const antes = await C.page.evaluate(() => JSON.stringify(JSON.parse(localStorage.getItem('apex.analise.v1')).workouts));
   await C.page.getByRole('button', { name: /Buscar trajeto dos treinos antigos/ }).click();
   await C.page.waitForFunction(() => /Todos os treinos do Garmin já têm trajeto/.test(document.body.innerText), null, { timeout: 30000 }).catch(() => {});
-  const depois = await C.page.evaluate(() => JSON.stringify(JSON.parse(localStorage.getItem('apex.analise.v1')).workouts));
+  // Fase 2 · Etapa 5: o treino ganha só o campo novo e opcional `leitura` (e a marca de
+  // atualização, para sincronizar). Todo o resto tem de ser igual, byte a byte.
+  const depoisW = await C.page.evaluate(() => JSON.parse(localStorage.getItem('apex.analise.v1')).workouts);
+  const velho = depoisW.find((w) => w.id === 'velho1');
+  const ganhouLeitura = !!(velho && velho.leitura && velho.leitura.v === 1);
+  const depois = JSON.stringify(depoisW.map((w) => { if (w.id !== 'velho1') return w; const { leitura, updatedAt, ...r } = w; const orig = JSON.parse(antes).find((x) => x.id === 'velho1'); return { ...r, updatedAt: orig.updatedAt }; }));
   const tem = await C.page.evaluate(() => new Promise((res) => { const rq = indexedDB.open('apex-performance'); rq.onsuccess = () => { const g = rq.result.transaction('tracks').objectStore('tracks').get('velho1'); g.onsuccess = () => res(!!g.result); }; }));
   ok('trajeto do treino antigo acrescentado (e subiu para o servidor)', tem && server.tracks.has('velho1'));
-  ok('critério 11 · nenhum número do treino mudou (byte a byte)', antes === depois);
+  ok('critério 11 · nenhum número do treino mudou (byte a byte, fora o campo novo leitura)', antes === depois);
+  ok('etapa 5 · o treino ganhou a leitura (v1) calculada com o trajeto completo', ganhouLeitura);
   for (const d of [A, B, C]) await d.ctx.close();
 } finally { await browser.close(); vite.kill(); }
 console.log(`\n=== RESULTADO: ${pass} passaram, ${fail} falharam ===`);
