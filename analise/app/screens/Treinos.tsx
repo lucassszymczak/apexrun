@@ -165,8 +165,10 @@ function Segmentado<T extends string>({ value, onChange, label, options }: { val
 }
 
 // Período: botão compacto que abre um menu com as 4 opções (setas, Enter, Esc)
-const PERIODOS: [Periodo, string][] = [['tudo', 'Tudo'], ['30', '30 dias'], ['90', '90 dias'], ['365', '12 meses']];
-function PeriodoMenu({ value, onChange }: { value: Periodo; onChange: (v: Periodo) => void }) {
+const PERIODOS_TREINOS: [Periodo, string][] = [['tudo', 'Tudo'], ['30', '30 dias'], ['90', '90 dias'], ['365', '12 meses']];
+// também usado nos Recordes (Progresso), com outras opções
+export function PeriodoMenu<T extends string>({ value, onChange, options, label = 'Período' }: { value: T; onChange: (v: T) => void; options?: [T, string][]; label?: string }) {
+  const PERIODOS = (options || PERIODOS_TREINOS) as [T, string][];
   const [open, setOpen] = useState(false);
   const btn = useRef<HTMLButtonElement>(null);
   const items = useRef<(HTMLButtonElement | null)[]>([]);
@@ -189,12 +191,12 @@ function PeriodoMenu({ value, onChange }: { value: Periodo; onChange: (v: Period
   };
   return (
     <div className="tf-per" ref={box}>
-      <button ref={btn} type="button" className="tf-per-btn" aria-haspopup="menu" aria-expanded={open} aria-label={'Período: ' + PERIODOS[cur][1]}
+      <button ref={btn} type="button" className="tf-per-btn" aria-haspopup="menu" aria-expanded={open} aria-label={label + ': ' + PERIODOS[Math.max(0, cur)][1]}
         onClick={() => setOpen(!open)} onKeyDown={(e) => { if (e.key === 'ArrowDown' && !open) { e.preventDefault(); setOpen(true); } }}>
-        <IconCalendar size={18} stroke={1.75} aria-hidden="true" /><span>{PERIODOS[cur][1]}</span><IconChevronDown size={16} stroke={1.75} aria-hidden="true" />
+        <IconCalendar size={18} stroke={1.75} aria-hidden="true" /><span>{PERIODOS[Math.max(0, cur)][1]}</span><IconChevronDown size={16} stroke={1.75} aria-hidden="true" />
       </button>
       {open ? (
-        <div className="tf-menu" role="menu" aria-label="Período">
+        <div className="tf-menu" role="menu" aria-label={label}>
           {PERIODOS.map(([k, l], i) => (
             <button key={k} ref={(el) => { items.current[i] = el; }} type="button" role="menuitemradio" aria-checked={value === k} tabIndex={-1}
               onClick={() => { onChange(k); close(); }} onKeyDown={(e) => onKey(e, i)}>

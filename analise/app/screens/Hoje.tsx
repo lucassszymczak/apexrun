@@ -2,6 +2,8 @@
 // com a Leitura do Coach (antiga aba Coach) e o layout aprovado (design/telas/Main e HojeDesktop).
 import { IconAlertTriangle, IconMessageCircle, IconCalendarEvent, IconChevronRight, IconPlus, IconRoute, IconBike, IconRun } from '@tabler/icons-react';
 import * as E from '../../engine.mjs';
+import { PeriodoSel } from './PeriodoSel';
+import { usePeriodo, filtra, ehAtual, comTreinos } from '../periodo';
 import { useApex } from '../store';
 import { href } from '../route';
 import { PageHead } from '../Shell';
@@ -12,7 +14,8 @@ import { ParaCompletarCard } from './ParaCompletar';
 
 export function Hoje() {
   const { st } = useApex();
-  const a = st.athlete, ws = E.sortedWorkouts();
+  const per = usePeriodo(), pAtual = ehAtual(per, st) ? per : '12m';
+  const a = st.athlete, ws = filtra(E.sortedWorkouts(), pAtual, st);
   if (!ws.length) {
     return (<>
       <PageHead title="Hoje" sub={todayLabel()} />
@@ -20,7 +23,7 @@ export function Hoje() {
         <a className="btn" href={href('importar')}><IconPlus size={18} stroke={2} aria-hidden="true" />Importar treino</a></Card>
     </>);
   }
-  const cx = E.coachContext(ws, a);
+  const cx = comTreinos(ws, () => E.coachContext(ws, a));
   const rt = readyTone(cx.rd.score);
   // ---- ciclo e plano da semana (mesmas contas do renderHoje) ----
   const race = st.race;
@@ -145,7 +148,7 @@ export function Hoje() {
   ) : null;
 
   return (<>
-    <PageHead title="Hoje" sub={<><span className="only-mob">{todayLabel()}</span><span className="only-desk">{todayLabel(true)}</span></>} />
+    <PageHead title="Hoje" sub={<><span className="only-mob">{todayLabel()}</span><span className="only-desk">{todayLabel(true)}</span></>} right={<PeriodoSel soAtual />} />
     {alertTxt ? (
       <Card className="alert" role="alert">
         <IconAlertTriangle size={20} stroke={1.75} color="var(--alerta)" style={{ flexShrink: 0, marginTop: 1 }} aria-hidden="true" />

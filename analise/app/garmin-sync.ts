@@ -174,3 +174,39 @@ export function haQuantoSync(iso: string | null | undefined, now = Date.now()): 
   const m = Math.max(0, Math.round((now - Date.parse(iso)) / 60000));
   return m < 1 ? 'sincronizado agora' : m < 60 ? 'sincronizado há ' + m + ' min' : m < 1440 ? 'sincronizado há ' + Math.round(m / 60) + ' h' : 'sincronizado há ' + Math.round(m / 1440) + ' d';
 }
+
+// ---------------- "Buscar trajeto dos treinos antigos" (Fase 2 · Etapa 3) ----------------
+// Para treinos ligados ao Garmin sem trajeto neste aparelho: baixa o .FIT e guarda SÓ o
+// trajeto (como Reimportar .FIT): nenhum número do treino muda. Também sobe a versão leve.
+export async function buscarTrajetos(ids?: string[]): Promise<{ ok: number; falhas: number; faltam: number } | null> {
+  if (!garminReady() || view.rodando) return null;
+  const { trackIds, putTrack } = await import('./db');
+  const { pushTrack } = await import('./track-sync');
+  const local = await trackIds();
+  const alvo = getState().workouts.filter((w: any) => w.garminActivityId && !local.has(w.id) && (!ids || ids.includes(w.id)))
+    .sort((a: any, b: any) => String(b.date).localeCompare(String(a.date)));
+  parar = false;
+  set({ rodando: true, feito: 0, total: alvo.length });
+  const r = { ok: 0, falhas: 0, faltam: 0 };
+  try {
+    for (const w of alvo) {
+      if (parar) break;
+      try {
+        const buf = await garminFit(String(w.garminActivityId));
+        const f = await readFit(new File([buf], w.garminActivityId + '.fit'), { weather: false });
+        if (f.track) { await putTrack(w.id, f.track); await pushTrack(w.id, f.track, { quiet: true }); r.ok++; } else r.falhas++;
+      } catch (e) {
+        if (e instanceof GarminError && (e.codigo === 'limite' || e.codigo === 'garmin_fora' || e.codigo === 'sem_internet')) break;
+        r.falhas++;
+      }
+      set({ feito: view.feito + 1 });
+      await pausa(1500);
+    }
+  } finally { r.faltam = Math.max(0, alvo.length - r.ok - r.falhas); set({ rodando: false }); }
+  return r;
+}
+export async function semTrajetoGarmin(): Promise<number> {
+  const { trackIds } = await import('./db');
+  const local = await trackIds();
+  return getState().workouts.filter((w: any) => w.garminActivityId && !local.has(w.id)).length;
+}

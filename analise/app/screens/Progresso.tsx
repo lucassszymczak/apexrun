@@ -5,6 +5,9 @@
 // do Lucas (20/11): o motor ainda o calcula (dado salvo e sincronizado), mas não é exibido.
 import { IconUser, IconTarget, IconEngine, IconHeartbeat, IconShoe, IconChartBar, IconDroplet, IconMoon, IconTrophy, IconTimeline, IconChevronRight, IconAlertTriangle } from '@tabler/icons-react';
 import * as E from '../../engine.mjs';
+
+import { PeriodoSel } from './PeriodoSel';
+import { usePeriodo, filtra, rotulo, comTreinos } from '../periodo';
 import { useApex } from '../store';
 import { href } from '../route';
 import { PageHead } from '../Shell';
@@ -45,6 +48,28 @@ export function records(ws: any[]) {
   ];
 }
 
+// ---------------- Recordes no período de análise (pedido do Lucas, 20/11) ----------------
+// As contas são as mesmas de records(); o período só escolhe quais treinos entram. Fora de
+// "Desde o início", cada recorde mostra ao lado o seu melhor de todos os tempos.
+function Recordes({ runs, todasCorridas, recorte }: { runs: any[]; todasCorridas: any[]; recorte: boolean }) {
+  const todos = records(todasCorridas), aqui = records(runs);
+  const ano = (id: string | undefined) => { const w = id ? todasCorridas.find((x: any) => x.id === id) : null; return w ? String(w.date).slice(0, 4) : ''; };
+  return (<>
+    <h2 className="lead row" style={{ gap: 8 }}><IconTrophy {...IC} color="var(--ciano)" aria-hidden="true" />Recordes</h2>
+    {!runs.length ? <p className="apoio muted">Nenhuma corrida neste período.</p> : null}
+    <div className="list">
+      {aqui.map((x, i) => {
+        const best = todos[i];
+        const diff = recorte && best && best.id !== x.id && best.val !== '—';
+        const body = <><div className="grow stack" style={{ gap: 0 }}><b style={{ fontWeight: 500 }}>{x.lab}</b><span className="s">{x.sub}</span>
+          {diff ? <span className="s">seu melhor: <b className="tn" style={{ fontWeight: 500 }}>{best.val}</b>{ano(best.id) ? ' em ' + ano(best.id) : ''}</span> : null}</div>
+          <span className="val" style={{ fontSize: 17 }}>{x.val}</span></>;
+        return x.id ? <a key={x.lab} className="item-row" href={href('treino', x.id)}>{body}</a> : <div key={x.lab} className="item-row">{body}</div>;
+      })}
+    </div>
+  </>);
+}
+
 // Foco atual: última leitura de cada KPI do motor por amostra (valores guardados no treino).
 function focoAtual(runs: any[], a: any, ws: any[]) {
   const byDate = runs.slice().sort((x: any, y: any) => (x.date < y.date ? -1 : x.date > y.date ? 1 : 0));
@@ -62,9 +87,13 @@ function focoAtual(runs: any[], a: any, ws: any[]) {
 
 export function Progresso({ sys }: { sys: string | null }) {
   const { st } = useApex();
-  const ws = E.sortedWorkouts();
-  if (!ws.length) return (<><PageHead title="Progresso" /><Card><Empty>Nenhum treino ainda. Importe um .FIT pelo +.</Empty></Card></>);
-  const c = E.progContext();
+  const per = usePeriodo();
+  const all = E.sortedWorkouts();
+  const ws = filtra(all, per, st);
+  if (!all.length) return (<><PageHead title="Progresso" /><Card><Empty>Nenhum treino ainda. Importe um .FIT pelo +.</Empty></Card></>);
+  if (!ws.length) return (<><PageHead title="Progresso" right={<PeriodoSel />} /><Card><Empty>Nenhum treino em {rotulo(per, all, st).toLowerCase()}. Escolha outro período.</Empty></Card></>);
+  // o motor lê os treinos do estado por dentro: troca só durante a conta (período de análise)
+  const c = comTreinos(ws, () => E.progContext());
   if (sys && SYS[sys]) return <SysDetail sys={sys} c={c} />;
   const a = c.a, runs = c.runs, score = c.score, rd = c.rd, trend = c.trend, latestEF = c.latestEF, cons = c.cons;
 
@@ -104,11 +133,11 @@ export function Progresso({ sys }: { sys: string | null }) {
       band: c.recov ? (c.recov.score >= 75 ? 'g' : c.recov.score >= 55 ? 'w' : 'c') : 'n', spark: c.dailyArr.filter((d: any) => d.restingHR != null).map((d: any) => -d.restingHR) },
   ];
 
-  const f = focoAtual(runs, a, st.workouts);
+  const f = focoAtual(runs, a, ws);
   const timeline = ws.slice().sort((x: any, y: any) => (x.date < y.date ? 1 : -1)).slice(0, 6);
 
   return (<>
-    <PageHead title="Progresso" sub="Para onde a sua forma está indo" />
+    <PageHead title="Progresso" sub="Para onde a sua forma está indo" right={<PeriodoSel />} />
     {a.alert ? <Card className="alert" role="alert"><IconAlertTriangle size={20} stroke={1.75} color="var(--alerta)" aria-hidden="true" /><span className="apoio">{noEmoji(a.alert)}</span></Card> : null}
     <div className="cols">
       <Card>
@@ -149,13 +178,7 @@ export function Progresso({ sys }: { sys: string | null }) {
     <h2 className="section-title">Histórico</h2>
     <div className="cols">
       <Card>
-        <CardH icon={<IconTrophy {...IC} />} title="Recordes" right={<span className="badge neutro">todo o histórico</span>} />
-        <div className="list">
-          {records(runs).map((r) => {
-            const body = <><div className="grow stack" style={{ gap: 0 }}><b style={{ fontWeight: 500 }}>{r.lab}</b><span className="s">{r.sub}</span></div><span className="val" style={{ fontSize: 17 }}>{r.val}</span></>;
-            return r.id ? <a key={r.lab} className="item-row" href={href('treino', r.id)}>{body}</a> : <div key={r.lab} className="item-row">{body}</div>;
-          })}
-        </div>
+        <Recordes runs={runs} todasCorridas={E.runsOnly(all)} recorte={per !== 'tudo'} />
       </Card>
       <Card>
         <CardH icon={<IconTimeline {...IC} />} title="Linha do tempo · destaques" />

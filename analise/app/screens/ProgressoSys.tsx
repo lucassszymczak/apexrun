@@ -4,6 +4,7 @@
 import { useState } from 'react';
 import { IconRefresh } from '@tabler/icons-react';
 import * as E from '../../engine.mjs';
+import { PeriodoSel } from './PeriodoSel';
 import { href } from '../route';
 import { PageHead } from '../Shell';
 import { Card, CardH, Kpi, Conf, Scale, StateBadge, Stat, Rich, Bar } from '../ui';
@@ -19,7 +20,7 @@ const dd = (iso: string) => dayMon(iso);
 export function SysDetail({ sys, c }: { sys: string; c: any }) {
   const Body = { motor: Motor, resist: Resist, mec: Mec, carga: Carga, hidr: Hidr, recup: Recup }[sys] as (p: { c: any }) => any;
   return (<>
-    <PageHead title={SYS[sys]} sub="Progresso" back={href('progresso')} />
+    <PageHead title={SYS[sys]} sub="Progresso" back={href('progresso')} right={<PeriodoSel />} />
     {c.a.alert ? <p className="apoio muted">{noEmoji(c.a.alert)}</p> : null}
     <Body c={c} />
   </>);

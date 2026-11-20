@@ -10,6 +10,7 @@ import { applyTheme } from './theme';
 import { boot } from './store';
 import { App } from './App';
 import { runGarminSync } from './garmin-sync';
+import { syncTracks } from './track-sync';
 
 applyTheme();
 const root = createRoot(document.getElementById('root')!);
@@ -19,6 +20,7 @@ boot()
     root.render(<StrictMode><App /></StrictMode>);
     // Garmin: depois que a tela já apareceu, sem atrasar a abertura (no máximo a cada 15 min)
     setTimeout(() => { runGarminSync(); }, 2000);
+    setTimeout(() => { syncTracks(); }, 4000); // trajetos nos dois aparelhos
     document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') runGarminSync(); });
   });
 
