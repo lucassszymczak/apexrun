@@ -247,6 +247,7 @@ pre.formula { margin: 0; white-space: pre-wrap; font: 400 13px/18px var(--font-b
 .mk.ini { width: 14px; height: 14px; border-radius: 50%; background: var(--texto); border: 2.5px solid var(--noite); }
 .mk.fim { width: 16px; height: 16px; border-radius: 50%; background: var(--noite); border: 3px solid var(--texto); }
 .mk.cur { width: 16px; height: 16px; border-radius: 50%; background: var(--ciano); border: 3px solid var(--noite); }
+.mk.deriva { width: 18px; height: 18px; border-radius: 50%; background: var(--atencao); border: 3px solid var(--noite); outline: 2px solid var(--atencao); }
 
 .tv { position: relative; }
 .tv-map { position: fixed; top: 0; left: 0; right: 0; height: calc(100vh - var(--drawer-h) + 22px); z-index: 1; transition: height .2s; }
@@ -405,3 +406,29 @@ pre.formula { margin: 0; white-space: pre-wrap; font: 400 13px/18px var(--font-b
 .rail-garmin { margin-top: auto; padding: 12px; display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--texto-2); text-decoration: none; }
 .badge.origem { color: var(--texto-2); font-size: 11px; line-height: 14px; padding: 1px 6px; }
 .g-buscar { width: 100%; border: 0; background: transparent; color: inherit; cursor: pointer; padding: 10px 0; min-height: 56px; }
+
+/* ---------------- leitura do treino (Fase 2 · Etapa 5) ---------------- */
+.card.historia { background: var(--superficie-2); }
+.card.historia .insights li { align-items: flex-start; }
+.card.historia .insights svg { flex: none; margin-top: 2px; }
+.kpi.link-kpi { color: var(--ciano-forte); font-size: 13px; line-height: 18px; min-height: 44px; display: inline-flex; align-items: center; align-self: flex-start; text-decoration: none; }
+.kpi.chip-info, .chip-info { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 6px 12px; border-radius: var(--radius-pill); border: 1px solid var(--linha); background: var(--painel-mapa); color: var(--texto); font-size: 13px; line-height: 18px; text-decoration: none; }
+.selo { display: inline-flex; align-items: center; gap: 4px; border-radius: var(--radius-pill); padding: 2px 8px; font-size: 11px; line-height: 14px; font-weight: 500; letter-spacing: 0.4px; white-space: nowrap; justify-self: end; }
+.selo.pr { background: var(--violeta); color: var(--on-violeta); }
+.selo.ciclo { border: 1px solid var(--ciano-forte); color: var(--ciano-forte); }
+.esforcos { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.esforcos li > button, .esforcos li > div { width: 100%; min-height: 44px; display: grid; grid-template-columns: 64px 1fr auto auto; gap: 12px; align-items: center; background: none; border: 0; border-bottom: 1px solid var(--linha); color: var(--texto); font: inherit; text-align: left; padding: 6px 0; cursor: pointer; }
+.esforcos li > div { cursor: default; }
+.esforcos li:last-child > * { border-bottom: 0; }
+.esforcos .t { font-size: 20px; line-height: 24px; font-weight: 500; }
+.esforcos .p { font-size: 13px; }
+.stackbar { display: flex; height: 12px; border-radius: 6px; overflow: hidden; background: var(--superficie-2); gap: 2px; }
+.stackbar i { display: block; height: 100%; }
+.sw { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 8px; vertical-align: middle; }
+tr.fora td { color: var(--atencao); }
+.btn.quiet.on { border-color: var(--ciano-forte); color: var(--ciano-forte); }
+.btn.quiet .muted { margin-left: 4px; }
+.tv-vento { position: absolute; z-index: 5; top: calc(var(--safe-top) + 76px); right: calc(12px + var(--safe-right)); }
+@media (min-width: 1024px) { .tv-vento { right: 72px; } }
+.tv-legend.tres i { flex: 1; }
+.esforcos li > a { display: grid; grid-template-columns: 64px 1fr auto; gap: 12px; align-items: center; min-height: 52px; border-bottom: 1px solid var(--linha); color: var(--texto); padding: 6px 0; }

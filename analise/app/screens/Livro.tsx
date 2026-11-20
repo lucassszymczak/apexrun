@@ -1,6 +1,7 @@
 // LIVRO DE FÓRMULAS (Mais). Porta de renderKpis (app antigo) + busca. Textos = KPI_DOCS
 // e EXTRA_DOCS atuais. É o destino do "Ver no Livro de fórmulas" da Folha do KPI (?k=…).
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { LEITURA_DOCS } from '../leitura-docs';
 import { IconSearch, IconChevronRight } from '@tabler/icons-react';
 import * as E from '../../engine.mjs';
 import { href } from '../route';
@@ -8,7 +9,7 @@ import { PageHead } from '../Shell';
 import { Conf, Rich } from '../ui';
 import { noEmoji } from '../fmt';
 
-const CATS = ['Motor', 'Mecânica', 'Carga', 'Forma', 'Proprietário'];
+const CATS = ['Motor', 'Mecânica', 'Carga', 'Forma', 'Proprietário', 'Leitura do treino'];
 const norm = (s: string) => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
 
 export function Livro() {
@@ -19,6 +20,7 @@ export function Livro() {
     // Pace-GAP @ FC_REF (145) saiu da interface a pedido do Lucas (20/11)
     ...E.KPI_DOCS.filter((d: any) => !/^Pace-GAP/.test(d.name)),
     ...Object.keys(E.EXTRA_DOCS).map((k) => Object.assign({ key: k, cat: 'Extras' }, E.EXTRA_DOCS[k])),
+    ...LEITURA_DOCS,
   ], []);
   const isTarget = (d: any) => !!target && (d.key === target || d.name === target);
   useEffect(() => { if (openRef.current) openRef.current.scrollIntoView({ block: 'center' }); }, []);
@@ -47,6 +49,7 @@ export function Livro() {
                 <Rich as="p" className="apoio" html={k.desc} />
                 {k.formula ? <pre className="formula">{k.formula}</pre> : null}
                 {k.fields ? <p className="hint">Precisa de: {k.fields}</p> : null}
+                {k.fonte ? <p className="hint">Fonte: {k.fonte}</p> : null}
               </div>
             </details>
           ))}

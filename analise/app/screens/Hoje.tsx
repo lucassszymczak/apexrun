@@ -11,6 +11,7 @@ import { Card, CardH, Ring, StateBadge, Stat, Kpi, Rich, Empty, IC } from '../ui
 import { dec, signed, km, dur, dayMon, todayLabel, readyTone, workoutTitle, noEmoji, recoveryPt, recoveryTone, typeName } from '../fmt';
 import { MiniRoute } from './parts';
 import { ParaCompletarCard } from './ParaCompletar';
+import { HistoriaCard } from './Leitura';
 
 export function Hoje() {
   const { st } = useApex();
@@ -36,6 +37,8 @@ export function Hoje() {
   const pct = trainS.length ? Math.round(okN / trainS.length * 100) : 0;
   // ---- último treino (design: o mais recente, de qualquer modalidade) ----
   const last = ws[ws.length - 1];
+  // história: a da última corrida (a bike não tem leitura)
+  const lastRun = [...ws].reverse().find((x: any) => E.isRun(x)) || null;
   // Como no app antigo: a bike entra na carga (TRIMP), mas fica fora das métricas de corrida (EF, deriva, pace).
   const isBk = E.isBike(last), ef = isBk ? null : E.computeEF(last);
   let dec_: number | null = null; if (!isBk) { try { dec_ = E.computeDecoupling(last); } catch { /* idem app antigo */ } }
@@ -124,7 +127,7 @@ export function Hoje() {
   );
 
   const cycle = race ? (
-    <Card as="a" href={href('mais', 'maratona')} style={{ color: 'var(--texto)', textDecoration: 'none' }} aria-label={'Abrir ' + (race.name || 'Maratona')}>
+    <Card as="a" href={href('mais', 'maratona')} style={{ color: 'var(--texto)', textDecoration: 'none' }} aria-label={'Abrir ' + (race.name || 'o ciclo de prova')}>
       <div className="row between" style={{ alignItems: 'baseline' }}>
         <h2 className="lead">{noEmoji(race.name || 'Prova')}</h2>
         {blk ? <span className="tn" style={{ color: 'var(--magenta)', fontWeight: 500, fontSize: 15 }}>{blk.days >= 0 ? 'faltam ' + blk.days + ' dias' : 'prova há ' + (-blk.days) + ' dias'}</span> : null}
@@ -160,7 +163,7 @@ export function Hoje() {
     ) : null}
     <div className="cols">
       <div className="col">{ready}<ParaCompletarCard />{coach}{plan}</div>
-      <div className="col">{lastCard}{cycle}{recov}</div>
+      <div className="col">{lastCard}{lastRun ? <HistoriaCard w={lastRun} st={st} titulo={'Último treino · história · ' + dayMon(lastRun.date)} /> : null}{cycle}{recov}</div>
     </div>
   </>);
 }

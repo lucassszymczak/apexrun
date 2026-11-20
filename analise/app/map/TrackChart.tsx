@@ -6,7 +6,7 @@ import * as E from '../../engine.mjs';
 
 const W = 360;
 
-export function TrackChart({ tr, cursor, onCursor, height = 120, bike, label = 'Pace, FC e elevação ao longo do treino' }: { tr: Track; cursor: number | null; onCursor: (i: number) => void; height?: number; bike?: boolean; label?: string }) {
+export function TrackChart({ tr, cursor, onCursor, height = 120, bike, label = 'Pace, FC e elevação ao longo do treino', deriva }: { tr: Track; cursor: number | null; onCursor: (i: number) => void; height?: number; bike?: boolean; label?: string; deriva?: { i: number; km: number } | null }) {
   const H = height;
   const data = useMemo(() => {
     const n = tr.t.length, step = Math.max(1, Math.floor(n / 600));
@@ -60,12 +60,13 @@ export function TrackChart({ tr, cursor, onCursor, height = 120, bike, label = '
         onPointerDown={(e) => { (e.currentTarget as Element).setPointerCapture(e.pointerId); pickAt(e.clientX, e.currentTarget); }}
         onPointerMove={(e) => { if (e.buttons || e.pointerType === 'touch') pickAt(e.clientX, e.currentTarget); }}>
         {area ? <path d={area} fill="var(--superficie-2)" /> : null}
+        {deriva ? (() => { const dx = X(data.useDist ? (tr.dist[deriva.i] ?? 0) : tr.t[deriva.i]); return <g aria-hidden="true"><rect x={dx} y={0} width={Math.max(0, W - dx)} height={H} fill="var(--atencao)" fillOpacity={0.1} /><line x1={dx} x2={dx} y1={0} y2={H} stroke="var(--atencao)" strokeWidth={1.5} vectorEffect="non-scaling-stroke" /></g>; })() : null}
         <path d={line(data.hr, data.rh, 4, H * 0.62)} fill="none" stroke="var(--ciano)" strokeWidth={1.6} vectorEffect="non-scaling-stroke" />
         <path d={line(data.spd, data.rs, 4, H * 0.62)} fill="none" stroke="var(--magenta)" strokeWidth={1.6} vectorEffect="non-scaling-stroke" />
         {cx != null ? <line x1={cx} x2={cx} y1={0} y2={H} stroke="var(--texto)" strokeWidth={1} strokeDasharray="3 3" vectorEffect="non-scaling-stroke" /> : null}
       </svg>
       <div className="row between wrap legend" style={{ marginTop: 4 }}>
-        <span><span style={{ color: 'var(--magenta)' }}>—</span> {bike ? 'velocidade' : 'pace'} · <span style={{ color: 'var(--ciano)' }}>—</span> FC · área: elevação</span>
+        <span><span style={{ color: 'var(--magenta)' }}>—</span> {bike ? 'velocidade' : 'pace'} · <span style={{ color: 'var(--ciano)' }}>—</span> FC · área: elevação{deriva ? <> · <span style={{ color: 'var(--atencao)' }}>|</span> a deriva começa · km {deriva.km}</> : null}</span>
         <span className="tn" aria-live="polite">{readout}</span>
       </div>
     </div>

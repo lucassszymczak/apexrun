@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
+import { leituraDoc } from './leitura-docs';
 import { IconAlertTriangle, IconCircleCheck, IconAlertCircle, IconInfoCircle, IconX, IconBook2 } from '@tabler/icons-react';
 import * as E from '../engine.mjs';
 import { safeRich, noEmoji, type Tone } from './fmt';
@@ -126,7 +127,7 @@ export function Sheet({ title, onClose, children, labelId = 'sheet-title' }: { t
 // Apelidos de busca no Livro: "gap" casava primeiro com "Pace-GAP @ FC_REF (145)" (KPI
 // retirado da interface a pedido do Lucas, 20/11); o certo é o ritmo ajustado à inclinação.
 const DOC_ALIAS: Record<string, string> = { gap: 'ritmo ajustado' };
-export const docFor = (k: string) => E.kpiDoc(DOC_ALIAS[k] || k);
+export const docFor = (k: string): any => leituraDoc(k) || E.kpiDoc(DOC_ALIAS[k] || k);
 
 function KpiSheet({ info, onClose }: { info: KpiInfo; onClose: () => void }) {
   const doc = docFor(info.doc);
@@ -148,6 +149,7 @@ function KpiSheet({ info, onClose }: { info: KpiInfo; onClose: () => void }) {
       {doc ? <Rich as="p" className="hint" html={doc.desc} /> : null}
       {doc && doc.formula ? <pre className="formula">{doc.formula}</pre> : null}
       {doc && doc.fields ? <p className="hint">De onde vem o dado: {doc.fields}</p> : null}
+      {doc && doc.fonte ? <p className="hint">Fonte: {doc.fonte}</p> : null}
       {todo ? (
         <ul className="insights">
           {todo.map((t, i) => <li key={i}><span className="dot ciano" /><span><b>{t[1]}:</b> {noEmoji(t[2])}</span></li>)}

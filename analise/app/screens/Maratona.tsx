@@ -183,7 +183,7 @@ export function Maratona() {
   useEffect(() => { if (linked) E.save(); });
 
   if (!race) return (<>
-    <PageHead title="Maratona" back={href('mais')} />
+    <PageHead title="Ciclo de prova" back={href('mais')} />
     <Card><CardH icon={<IconFlag {...IC} />} title="Nenhum ciclo ativo" />
       <p className="apoio muted">Comece um novo ciclo de prova em Configurações › Novo ciclo de prova (maratona, meia ou personalizada). O app monta as fases automaticamente e acompanha o bloco até o dia da prova.</p>
       <a className="btn" href={href('mais', 'config')} style={{ alignSelf: 'flex-start' }}>Ir para Configurações</a></Card>
@@ -259,7 +259,7 @@ export function Maratona() {
 
   const stDot: Record<string, string> = { done: 'ok', adapted: 'ciano', missed: 'alerta', planned: 'neutro' };
   return (<>
-    <PageHead title={noEmoji(race.name || 'Maratona')} sub={(E.RACE_TYPES[E.raceTypeOf(race)] || {}).label || 'Prova'} back={href('mais')}
+    <PageHead title={noEmoji(race.name || 'Ciclo de prova')} sub={(E.RACE_TYPES[E.raceTypeOf(race)] || {}).label || 'Prova'} back={href('mais')}
       right={<button className="iconbtn" aria-label="Editar meta da prova" aria-pressed={editRace} onClick={() => setEditRace(!editRace)}><IconSettings size={22} stroke={1.75} /></button>} />
     <Card>
       <span className="cap">Missão · {noEmoji(race.name || 'Prova')}</span>

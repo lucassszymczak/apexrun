@@ -12,7 +12,7 @@
 // treinos novos e atualiza os já salvos (decisão do Lucas, 20/11; o backup guarda o antes).
 import { useSyncExternalStore, useEffect, useState } from 'react';
 import { getState, commit } from './store';
-import { readFit, findDuplicate, buildWorkout, formFrom, extrasOf, commitWorkout } from './actions';
+import { readFit, findDuplicate, buildWorkout, formFrom, extrasOf, commitWorkout, setLeitura } from './actions';
 import { queueAll, queuePut, queueDel, onQueueChange, type QueueItem } from './db';
 import { garminReady, garminStatus, garminList, garminFit, garminRpe, GarminError, type GarminAtividade, type GarminStatus } from './garmin';
 
@@ -194,7 +194,7 @@ export async function buscarTrajetos(ids?: string[]): Promise<{ ok: number; falh
       try {
         const buf = await garminFit(String(w.garminActivityId));
         const f = await readFit(new File([buf], w.garminActivityId + '.fit'), { weather: false });
-        if (f.track) { await putTrack(w.id, f.track); await pushTrack(w.id, f.track, { quiet: true }); r.ok++; } else r.falhas++;
+        if (f.track) { await putTrack(w.id, f.track); await pushTrack(w.id, f.track, { quiet: true }); await setLeitura(w.id, f.track); r.ok++; } else r.falhas++;
       } catch (e) {
         if (e instanceof GarminError && (e.codigo === 'limite' || e.codigo === 'garmin_fora' || e.codigo === 'sem_internet')) break;
         r.falhas++;

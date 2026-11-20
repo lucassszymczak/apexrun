@@ -1,4 +1,5 @@
 // TRAJETO do treino — extraído do .FIT na importação e guardado no IndexedDB por id.
+import { rumo, componente, classe } from '../wind.mjs';
 // - Pontos: posição em graus (o motor já converte semicírculos: fitNormRecords),
 //   tempo, FC, velocidade, altitude, distância e a INCLINAÇÃO SUAVIZADA do próprio
 //   motor (gradeSeries, a mesma usada nos KPIs por amostra).
@@ -124,11 +125,28 @@ export function kmMarks(tr: Track, every = 1): { km: number; i: number }[] {
 }
 
 // ---------------- cores ----------------
-export type ColorMode = 'fc' | 'pace' | 'zona' | 'grade';
+export type ColorMode = 'fc' | 'pace' | 'zona' | 'grade' | 'vento';
 export const PALETTE = ['var(--zona-1)', 'var(--zona-2)', 'var(--zona-3)', 'var(--zona-4)', 'var(--zona-5)'];
 
 // Banda 0..4 de cada ponto (FC contínua usa frac 0..1 dentro da faixa das zonas).
-export function colorer(tr: Track, mode: ColorMode, w: any, a: any): { band: (i: number) => number | null; legend: string[]; title: string } {
+export const PALETTE_VENTO = ['var(--ciano)', 'var(--texto-3)', 'var(--magenta)'];
+export type Colorer = { band: (i: number) => number | null; legend: string[]; title: string; palette?: string[] };
+export function colorer(tr: Track, mode: ColorMode, w: any, a: any): Colorer {
+  if (mode === 'vento') {
+    // vento (Fase 2 · item 2): classe por trecho do traçado (a favor 0 · lateral 1 · contra 2)
+    const v = w && w.leitura && w.leitura.vento;
+    const cls = new Array(tr.t.length).fill(null) as (number | null)[];
+    if (v && !v.fraco) {
+      const d = tr.draw;
+      for (let k = 1; k < d.length; k++) {
+        const p = d[k - 1], q = d[k];
+        if (tr.lat[p] == null || tr.lat[q] == null) continue;
+        const c = classe(componente(v.kmh, v.de, rumo(tr.lat[p]!, tr.lon[p]!, tr.lat[q]!, tr.lon[q]!)), v.kmh);
+        for (let i = p; i < q; i++) cls[i] = c > 0 ? 0 : c < 0 ? 2 : 1;
+      }
+    }
+    return { band: (i) => cls[i], legend: ['a favor', 'lateral', 'contra'], title: 'Vento · a favor, lateral ou contra', palette: PALETTE_VENTO };
+  }
   if (mode === 'zona' || mode === 'fc') {
     const b = E.zoneBoundsFor(w, a), mx = E.maxFor(w, a);
     const zoneOf = (hr: number) => (b ? E.hrZoneBounds(hr, b) : E.hrZone(hr, a.fcRep, mx));

@@ -19,6 +19,7 @@ import { type Track, type ColorMode, colorer, duration, idxAtTime, PALETTE } fro
 import { TrackSvg } from '../map/TrackSvg';
 import { TrackChart } from '../map/TrackChart';
 import { treinoBlocks } from './Treino';
+import { HistoriaCard, TirosCard, EsforcosCard, SubidaCard, VentoChip, idxDoKm } from './Leitura';
 import { delPhoto } from '../db';
 import { usePhotos, addPhotos, photoSummary, placeManually, moveToOffRoute, type PhotoView } from '../photos';
 import { privacyOf, privacyLabel } from '../privacy';
@@ -77,7 +78,12 @@ export function Treino({ id }: { id: string }) {
 
   const total = tr ? duration(tr) : 0;
   const cursor = tr ? idxAtTime(tr, t) : null;
-  const col = useMemo(() => (tr && w ? colorer(tr, color, w, a) : null), [tr, color, w, a]);
+  const L = (w && w.leitura) || {};
+  const temVento = !!(L.vento && !L.vento.fraco);
+  const corEf: ColorMode = color === 'vento' && !temVento ? 'fc' : color;
+  const col = useMemo(() => (tr && w ? colorer(tr, corEf, w, a) : null), [tr, corEf, w, a]);
+  const derivaI = tr && L.deriva && L.deriva.km ? idxDoKm(tr, L.deriva.km) : null;
+  const marca = derivaI != null ? { i: derivaI, label: 'A deriva começa no km ' + L.deriva.km } : null;
 
   // replay: o treino inteiro em ~10 s (1×); a barra e o relógio mostram o tempo real
   useEffect(() => {
@@ -155,11 +161,21 @@ export function Treino({ id }: { id: string }) {
       <span><b style={{ color: dc < 5 ? 'var(--ok)' : dc <= 8 ? 'var(--atencao)' : 'var(--alerta)', fontWeight: 500 }}>Deriva {signed(dc, 1)}%</b> · {dc < 5 ? 'base sólida até o fim' : dc <= 8 ? 'limítrofe' : 'alta — revise combustível, calor e pacing'}</span>
     </Kpi>
   ) : null;
+  const climaP = !bk && L.climaPadrao ? (
+    <Kpi doc="clima-padrao" value={'≈ ' + pace(L.climaPadrao.paceSkm) + '/km'} band={'correção de ' + String(L.climaPadrao.pct).replace('.', ',') + '% · temperatura + orvalho = ' + L.climaPadrao.somaF + ' °F'} conf={L.climaPadrao.conf} className="block tv-chip" label="Pace em clima padrão">
+      <span><b style={{ fontWeight: 500 }} className="tn">≈ {pace(L.climaPadrao.paceSkm)}/km em clima padrão</b> · calor e umidade custaram {String(L.climaPadrao.pct).replace('.', ',')}%</span>
+    </Kpi>
+  ) : null;
+  const derivaIni = L.deriva && L.deriva.km ? (
+    <Kpi doc="inicio-deriva" value={'km ' + L.deriva.km} band={'EF caiu 5% abaixo da base do começo (' + dec(L.deriva.base, 2) + ' → limiar ' + dec(L.deriva.limiar, 2) + ')'} conf={L.deriva.conf} className="block tv-chip" label="Início da deriva">
+      <span><b style={{ color: 'var(--atencao)', fontWeight: 500 }}>A deriva começa no km {L.deriva.km}</b> · marcado no mapa e no gráfico</span>
+    </Kpi>
+  ) : null;
   const legend = col && tr && tr.hasGps ? (
-    <div className="tv-legend" aria-label={col.title}>
+    <div className={'tv-legend' + (col.palette ? ' tres' : '')} aria-label={col.title}>
       <span className="faint">{col.legend[0]}</span>
-      {PALETTE.map((c, i) => <i key={i} style={{ background: c }} title={col.legend[i] || undefined} />)}
-      <span className="faint">{col.legend[4]}</span>
+      {(col.palette || PALETTE).map((c, i) => <i key={i} style={{ background: c }} title={col.legend[i] || undefined} />)}
+      <span className="faint">{col.legend[col.legend.length - 1]}</span>
       <span className="sr-only">{col.title}: {col.legend.filter(Boolean).join(', ')}</span>
     </div>
   ) : null;
@@ -173,15 +189,15 @@ export function Treino({ id }: { id: string }) {
       {!rm ? <Seg value={speed} onChange={setSpeed} label="Velocidade do replay" options={[['1', '1×'], ['2', '2×'], ['4', '4×']]} /> : null}
     </div>
   ) : null;
-  const chart = tr ? <TrackChart tr={tr} cursor={cursor} onCursor={pickIdx} bike={bk} /> : null;
+  const chart = tr ? <TrackChart tr={tr} cursor={cursor} onCursor={pickIdx} bike={bk} deriva={derivaI != null ? { i: derivaI, km: L.deriva.km } : null} /> : null;
 
   // ---------------- área do mapa ----------------
   let mapArea: any;
   if (loading) mapArea = <div className="trackmap" aria-busy="true" />;
   else if (tr && tr.hasGps && col) {
     mapArea = mode === 'ruas'
-      ? <Suspense fallback={<div className="trackmap" aria-busy="true" />}><RuasMap tr={tr} band={col.band} bandKey={color} cursor={cursor} onPick={pickIdx} photos={mapPhotos} onPhoto={setPhotoOpen} onFail={(why) => { ruasFailed = true; setMode('trajeto'); toast('Sem o mapa de ruas agora (' + why + '): mostrando só o trajeto.'); }} /></Suspense>
-      : <TrackSvg tr={tr} band={col.band} cursor={cursor} onPick={pickIdx} photos={mapPhotos} onPhoto={setPhotoOpen} />;
+      ? <Suspense fallback={<div className="trackmap" aria-busy="true" />}><RuasMap tr={tr} band={col.band} bandKey={corEf} palette={col.palette} marca={marca} cursor={cursor} onPick={pickIdx} photos={mapPhotos} onPhoto={setPhotoOpen} onFail={(why) => { ruasFailed = true; setMode('trajeto'); toast('Sem o mapa de ruas agora (' + why + '): mostrando só o trajeto.'); }} /></Suspense>
+      : <TrackSvg tr={tr} band={col.band} cursor={cursor} onPick={pickIdx} photos={mapPhotos} onPhoto={setPhotoOpen} palette={col.palette} marca={marca} />;
   } else if (noGps) {
     mapArea = (
       <div className="trackmap tv-empty">
@@ -210,8 +226,9 @@ export function Treino({ id }: { id: string }) {
       </div>
     </div>
     <div className="tv-ctl-colors" role="group" aria-label="Cor do trajeto">
-      {([['fc', 'FC'], ['pace', bk ? 'Velocidade' : 'Pace'], ['zona', 'Zona'], ['grade', 'Inclinação']] as const).map(([k, l]) => <button key={k} type="button" className="chip on-map" aria-pressed={color === k} onClick={() => setColor(k)}>{l}</button>)}
+      {([['fc', 'FC'], ['pace', bk ? 'Velocidade' : 'Pace'], ['zona', 'Zona'], ['grade', 'Inclinação'], ...(temVento ? [['vento', 'Vento']] : [])] as [ColorMode, string][]).map(([k, l]) => <button key={k} type="button" className="chip on-map" aria-pressed={corEf === k} onClick={() => setColor(k)}>{l}</button>)}
     </div>
+    {L.vento ? <div className="tv-vento"><VentoChip v={L.vento} /></div> : null}
   </>) : null;
 
   const top = (
@@ -247,9 +264,15 @@ export function Treino({ id }: { id: string }) {
     {legend}
     {replay}
     {nums}
+    {climaP}
     {deriva}
+    {derivaIni}
     {tr && tr.hasGps ? chart : null}
+    <HistoriaCard w={w} st={st} />
     <div className="only-mob tv-share-mob">{share}</div>
+    <TirosCard w={w} tr={tr} onPick={pickIdx} />
+    <EsforcosCard w={w} st={st} tr={tr} onPick={pickIdx} />
+    <SubidaCard w={w} />
     {B.splits}
     {fotos}
     <div className="tv-blocks">{B.hero}{B.motor}{B.resist}{B.mec}{B.carga}{B.hidr}{B.percep}{B.cond}{B.quality}</div>
