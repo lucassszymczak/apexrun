@@ -51,6 +51,7 @@ export function extrasOf(s: any): Record<string, any> {
     imp: s && s.imp ? s.imp : null, weather: s && s.weather ? s.weather : null,
     splitsOrig: s && s.splits ? s.splits : null,
     privacy: s && s.privacy ? s.privacy : null, // Etapa 3 (campo novo, opcional)
+    garminActivityId: s && s.garminActivityId ? String(s.garminActivityId) : null, // Fase 2 (origem Garmin)
   };
 }
 
@@ -117,6 +118,7 @@ export function buildWorkout(f: FormVals, extras: Record<string, any>, editingId
   } as Record<string, any>;
   // privacidade do treino (Etapa 3): campo novo e opcional — só existe se foi definido
   if (extras.privacy) w.privacy = extras.privacy;
+  if (extras.garminActivityId) w.garminActivityId = extras.garminActivityId;
   return { w };
 }
 
@@ -132,7 +134,7 @@ export function findDuplicate(w: any): { match: any; same: boolean } | null {
 }
 
 // choice: 'new' (sem duplicata) | 'edit' | 'replace' | 'keep'
-export function commitWorkout(w: any, choice: 'new' | 'edit' | 'replace' | 'keep', matchId?: string, track?: Track | null): string {
+export function commitWorkout(w: any, choice: 'new' | 'edit' | 'replace' | 'keep', matchId?: string, track?: Track | null, opts: { quiet?: boolean } = {}): string {
   const st = getState();
   let msg = 'Treino registrado';
   if (choice === 'edit') { const idx = st.workouts.findIndex((x: any) => x.id === w.id); st.workouts[idx] = w; msg = 'Treino atualizado'; }
@@ -143,7 +145,7 @@ export function commitWorkout(w: any, choice: 'new' | 'edit' | 'replace' | 'keep
   try { E.pruneStreams(st.workouts, 20); } catch { /* idem */ }
   try { E.linkSleepToWorkouts(); } catch { /* idem */ }
   commit();
-  toast(msg);
+  if (!opts.quiet) toast(msg);
   // trajeto vai para o IndexedDB pelo id do treino (o treino substituído perde o dele)
   if (choice === 'replace' && matchId && matchId !== w.id) { delTrack(matchId); movePhotos(matchId, w.id, track || null); }
   if (track) putTrack(w.id, track).catch((e) => toast('Não consegui guardar o trajeto neste aparelho: ' + (e && e.message ? e.message : e)));

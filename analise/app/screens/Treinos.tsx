@@ -10,6 +10,7 @@ import { PageHead } from '../Shell';
 import { Card, Empty, IC } from '../ui';
 import { privacyOf, privacyLabel } from '../privacy';
 import { PrivacyIcon } from './Privacidade';
+import { garminLocal, haQuantoSync, useGarminSync } from '../garmin-sync';
 import { dec, signed, km, dur, pace, dayMon, monthYear, workoutTitle, noEmoji } from '../fmt';
 import { MiniRoute } from './parts';
 
@@ -32,6 +33,13 @@ export function threeNumbers(w: any, a: any): { v: string; u: string; l: string 
     else out.push({ v: dur(w.durationSec), u: '', l: 'tempo' });
   }
   return out.slice(0, 3);
+}
+
+// origem do treino: "Garmin" (chegou pela conexão ou foi ligado a ela) ou ".FIT manual"
+function origem(w: any): string | null {
+  if (w.garminActivityId) return 'Garmin';
+  if (w.hrHist || w.stream || w.quality || w.sport || w.streamPruned) return '.FIT manual';
+  return null;
 }
 
 export function Treinos() {
@@ -61,9 +69,12 @@ export function Treinos() {
   const yearOpen: Record<string, boolean> = {}; const seenY: Record<string, boolean> = {};
   groups.forEach((g) => { const y = g.key.slice(0, 4); if (!seenY[y]) { seenY[y] = true; yearOpen[g.key] = true; } });
 
+  useGarminSync();
+  const gl = garminLocal();
+  const gSync = gl.status && gl.status.conectado ? haQuantoSync(gl.lastRun) : null;
   const sub = st.workouts.length ? (
     <span className="row" style={{ gap: 12 }}>
-      <span aria-live="polite">{rows.length} treino{rows.length === 1 ? '' : 's'}</span>
+      <span aria-live="polite">{rows.length} treino{rows.length === 1 ? '' : 's'}{gSync ? ' · ' + gSync : ''}</span>
       {ativos ? <button type="button" className="link tf-limpar" onClick={limpar}>Limpar filtros</button> : null}
     </span>
   ) : 'Importe pelo +';
@@ -116,7 +127,7 @@ export function Treinos() {
                         <span className="t">{workoutTitle(w)}</span>
                         <span className="row" style={{ gap: 6, flexShrink: 0 }}><span className="faint" title={privacyLabel(pv)} style={{ display: 'inline-flex' }}><PrivacyIcon p={pv} size={18} /></span><span className="badge neutro">{typeBadge(w)}</span></span>
                       </div>
-                      <span className="s">{dayMon(w.date)}{w.terrain ? ' · ' + noEmoji(w.terrain) : ''}{w.temp != null ? ' · ' + Math.round(w.temp) + ' °C' : ''}</span>
+                      <span className="s row" style={{ gap: 6, flexWrap: 'wrap' }}><span>{dayMon(w.date)}{w.terrain ? ' · ' + noEmoji(w.terrain) : ''}{w.temp != null ? ' · ' + Math.round(w.temp) + ' °C' : ''}</span>{origem(w) ? <span className="badge origem">{origem(w)}</span> : null}</span>
                       <span className="s tn">{dur(w.durationSec)}{ef != null ? ' · EF ' + dec(ef * 1000, 1) : ''}{dc != null ? ' · deriva ' + signed(dc, 1) + '%' : ''}{E.isBike(w) && tr != null ? ' · TRIMP ' + Math.round(tr) : ''}</span>
                       <div className="row tn" style={{ gap: 14 }}>
                         {nums.map((n, i) => <span key={i} title={n.l}><b style={{ fontWeight: 500, fontSize: 16 }}>{n.v}</b>{n.u ? <small className="muted"> {n.u}</small> : null}</span>)}

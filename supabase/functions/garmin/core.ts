@@ -12,6 +12,7 @@ export const GARMIN_BASE = 'https://personal.connectapi.garmin.com';
 export const TOKEN_PATH = '/personalapitoken-service/personal-api/personal-api-key/token';
 export const LIST_PATH = '/activitylist-service/activities/search/activities';
 export const FILE_PATH = '/download-service/files/activity/';
+export const DETAIL_PATH = '/activity-service/activity/';
 export const TIMEOUT_MS = 20000;
 export const MIN_LIST_GAP_S = 60;          // proteção do servidor (o app já espaça 15 min)
 export const BACKOFF_MIN = [1, 5, 15, 60]; // espera depois de erro do Garmin (minutos)
@@ -156,6 +157,7 @@ export async function handle(req: Request, deps: Deps): Promise<Response> {
         return json(ctx, 200, { ok: true });
       }
       case 'list':
+      case 'rpe':
       case 'fit': {
         const row = await deps.db.get(syncId);
         if (!row) return erro(ctx, 404, 'nao_conectado', 'O Garmin não está conectado.');
@@ -164,7 +166,7 @@ export async function handle(req: Request, deps: Deps): Promise<Response> {
         if (ctx.action === 'list' && !body.force && row.last_list_at && now() - Date.parse(row.last_list_at) < MIN_LIST_GAP_S * 1000) return json(ctx, 200, { atividades: [], recente: true });
         try {
           const token = await tokenFor(row, deps, now);
-          const r = ctx.action === 'list' ? await doList(row, body, token, deps, now, ctx) : await doFit(body, token, deps, ctx);
+          const r = ctx.action === 'list' ? await doList(row, body, token, deps, now, ctx) : ctx.action === 'rpe' ? await doRpe(body, token, deps, ctx) : await doFit(body, token, deps, ctx);
           if (row.status !== 'ok' || row.fails) { row.status = 'ok'; row.fails = 0; row.retry_at = null; }
           if (ctx.action === 'list') row.last_list_at = iso(now());
           await deps.db.upsert(row);
@@ -233,3 +235,17 @@ async function doFit(body: any, token: string, deps: Deps, ctx: Ctx) {
   return new Response(fit, { status: 200, headers: { 'Content-Type': 'application/octet-stream', ...cors(ctx.origin) } });
 }
 
+
+// Nota do treino que você dá no relógio/Garmin Connect: só os 3 campos de percepção do
+// resumo da atividade (SummaryDTO: directWorkoutRpe, directWorkoutFeel, perceivedWorkoutEffort).
+async function doRpe(body: any, token: string, deps: Deps, ctx: Ctx) {
+  const ids: string[] = (Array.isArray(body.activityIds) ? body.activityIds : []).map(String).filter((x: string) => /^\d{1,20}$/.test(x)).slice(0, 20);
+  if (!ids.length) return erro(ctx, 400, 'entrada_invalida', 'Informe as atividades.');
+  const out: any[] = [];
+  for (const id of ids) {
+    const r = await gfetch(deps, DETAIL_PATH + id, { headers: { Authorization: 'Bearer ' + token, Accept: 'application/json' } });
+    const j = await r.json(); const sm = (j && j.summaryDTO) || {};
+    out.push({ id, rpe: sm.directWorkoutRpe ?? null, feel: sm.directWorkoutFeel ?? null, esforco: sm.perceivedWorkoutEffort ?? null });
+  }
+  return json(ctx, 200, { notas: out });
+}

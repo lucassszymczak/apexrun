@@ -1,13 +1,14 @@
 // CONFIGURAÇÕES › GARMIN (Fase 2 · Etapa 1). design/telas-fase2/GarminConectar e GarminConectado.
 // A chave é colada uma vez, vai para a função "garmin" e o campo é limpo na hora.
 import { useEffect, useState } from 'react';
-import { IconDeviceWatch, IconEye, IconEyeOff, IconLock, IconRefresh, IconCircleFilled, IconAlertTriangle, IconCircleCheck, IconExternalLink } from '@tabler/icons-react';
+import { IconDeviceWatch, IconEye, IconEyeOff, IconLock, IconRefresh, IconCircleFilled, IconAlertTriangle, IconExternalLink } from '@tabler/icons-react';
 import { href } from '../route';
 import { PageHead } from '../Shell';
 import { Card, CardH, IC } from '../ui';
 import { toast } from '../store';
 import { dayMon } from '../fmt';
-import { garminReady, garminStatus, garminConnect, garminSettings, garminDisconnect, garminList, sinceDate, diasParaVencer, VALIDADES, GarminError, type GarminStatus, type Desde } from '../garmin';
+import { useGarminSync, useGarminQueue, runGarminSync, resumoTexto, garminLocal, RECENTE_DIAS } from '../garmin-sync';
+import { garminReady, garminStatus, garminConnect, garminSettings, garminDisconnect, sinceDate, diasParaVencer, VALIDADES, GarminError, type GarminStatus, type Desde } from '../garmin';
 
 const KEY_PAGE = 'https://connect.garmin.com/app/settings/personalApiToken';
 const brDate = (iso: string | null | undefined) => (iso ? new Date(iso).toLocaleDateString('pt-BR') : '—');
@@ -100,20 +101,21 @@ function Conectar({ trocando, onDone, onCancel }: { trocando: boolean; onDone: (
 
 function Conectado({ st, reload, onTrocar }: { st: GarminStatus; reload: () => void; onTrocar: () => void }) {
   const [busy, setBusy] = useState(false);
-  const [achados, setAchados] = useState<{ n: number; ult: { tipo: string; data: string; km: string }[] } | null>(null);
   const [filtros, setFiltros] = useState(st.filtros || { corrida: true, bike: true });
   const dias = diasParaVencer(st.keyExpiresAt);
   const vencida = st.status === 'chave_vencida' || st.status === 'chave_invalida' || (dias != null && dias < 0);
   const perto = !vencida && dias != null && dias <= 30;
+  const sync = useGarminSync();
+  const fila = useGarminQueue();
+  const resumo = garminLocal().resumo;
   const sincronizar = async () => {
     setBusy(true);
     try {
-      const r = await garminList({ force: true });
-      const at = r.atividades.slice().sort((a, b) => String(b.inicio).localeCompare(String(a.inicio)));
-      setAchados({ n: at.length, ult: at.slice(0, 5).map((a) => ({ tipo: a.tipo === 'bike' ? 'Pedal' : 'Corrida', data: dayMon(String(a.inicioLocal || a.inicio).slice(0, 10)), km: a.distanciaM ? (a.distanciaM / 1000).toFixed(2).replace('.', ',') + ' km' : '—' })) });
+      const r = await runGarminSync({ force: true });
+      const err = garminLocal().erro;
+      if (r) toast('Garmin: ' + resumoTexto(r)); else if (err) toast(err.msg);
       reload();
-    } catch (e: any) { toast(e.message || 'Não deu para sincronizar agora.'); reload(); }
-    finally { setBusy(false); }
+    } finally { setBusy(false); }
   };
   const salvarFiltros = (f: { corrida: boolean; bike: boolean }) => { setFiltros(f); garminSettings({ filtros: f }).then(() => toast('Preferência salva')).catch((e) => toast(e.message)); };
   const desconectar = async () => {
@@ -131,15 +133,16 @@ function Conectado({ st, reload, onTrocar }: { st: GarminStatus; reload: () => v
       </div>
       {perto ? <p className="apoio row" style={{ gap: 8, color: 'var(--atencao)' }}><IconAlertTriangle size={18} stroke={1.75} aria-hidden="true" />Faltam {dias} dias para a chave vencer. Gere outra no Garmin Connect e troque aqui.</p> : null}
       {vencida ? <button type="button" className="btn-primary" onClick={onTrocar}>Renovar chave</button>
-        : <button type="button" className="btn-primary" onClick={sincronizar} disabled={busy}><IconRefresh size={20} stroke={1.75} aria-hidden="true" />{busy ? 'Sincronizando…' : 'Sincronizar agora'}</button>}
+        : <button type="button" className="btn-primary" onClick={sincronizar} disabled={busy || sync.rodando}><IconRefresh size={20} stroke={1.75} aria-hidden="true" />{busy || sync.rodando ? (sync.total ? 'Baixando ' + sync.feito + ' de ' + sync.total + '…' : 'Sincronizando…') : 'Sincronizar agora'}</button>}
     </Card>
-    {achados ? (
+    {resumo || fila.length || garminLocal().erro ? (
       <Card>
-        <CardH title="Última sincronização" right={<span className="apoio muted">{achados.n} no Garmin</span>} />
-        {achados.ult.length ? <ul className="list" style={{ listStyle: 'none', padding: 0, margin: 0 }}>{achados.ult.map((a, i) => (
-          <li key={i} className="item-row" style={{ minHeight: 44 }}><IconCircleCheck size={18} stroke={1.75} color="var(--ok)" aria-hidden="true" /><span className="grow">{a.tipo} · {a.data}</span><span className="tn apoio">{a.km}</span></li>))}</ul>
-          : <p className="apoio muted">Nenhum treino no período escolhido.</p>}
-        <p className="hint">Nesta etapa o app só confere a conexão. Na próxima, os treinos novos entram em "Para completar".</p>
+        <CardH title="Última sincronização" right={resumo ? <span className="apoio muted">{haQuanto(resumo.at)}</span> : undefined} />
+        {garminLocal().erro && !vencida ? <p className="apoio row" style={{ gap: 8, color: 'var(--atencao)' }}><IconAlertTriangle size={18} stroke={1.75} aria-hidden="true" />{garminLocal().erro!.msg} O app tenta de novo mais tarde.</p> : null}
+        {resumo ? <p className="apoio">{resumoTexto(resumo)}{resumo.salvos ? ' · ' + resumo.salvos + ' antigo' + (resumo.salvos === 1 ? '' : 's') + ' salvo' + (resumo.salvos === 1 ? '' : 's') + ' direto' : ''}</p> : null}
+        {fila.length ? <ul className="list" style={{ listStyle: 'none', padding: 0, margin: 0 }}>{fila.slice(0, 5).map((q) => (
+          <li key={q.id}><a className="item-row" href={href('completar', q.id)} style={{ minHeight: 44 }}><span className="grow">{(q.w && q.w.modal === 'bike' ? 'Pedal' : 'Corrida') + ' · ' + dayMon(q.w && q.w.date)}</span><span className="tn apoio">{q.w && q.w.distKm ? String(q.w.distKm.toFixed(2)).replace('.', ',') + ' km' : ''}</span><span className="badge atencao">Para completar</span></a></li>))}</ul> : null}
+        <p className="hint">Treinos dos últimos {RECENTE_DIAS} dias vão para "Para completar" (sono e dor). Os mais antigos entram já salvos, com o RPE do Garmin.</p>
       </Card>
     ) : null}
     <Card>

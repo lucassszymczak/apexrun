@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "Apex Performance — conferência de dados e dashboards de treino de corrida.",
+  "description": "Apex Performance \u2014 confer\u00eancia de dados e dashboards de treino de corrida.",
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && tsc -p tsconfig.analise.json --noEmit && vite build",
@@ -23,7 +23,8 @@
     "db:login": "npx --yes supabase login",
     "db:link": "npx --yes supabase link",
     "db:push": "npx --yes supabase db push",
-    "test:offline": "node scripts/offline-analise.mjs"
+    "test:offline": "node scripts/offline-analise.mjs",
+    "test:garmin": "node scripts/garmin-app.mjs"
   },
   "dependencies": {
     "@fontsource/outfit": "^5.3.0",
