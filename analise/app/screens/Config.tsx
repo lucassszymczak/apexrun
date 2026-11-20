@@ -2,7 +2,7 @@
 // renderSyncCard, exportData e importData (app antigo), mais o download do backup
 // automático (IndexedDB) e a aparência automática. Mesmas regras de salvar e validar.
 import { useEffect, useRef, useState } from 'react';
-import { IconUser, IconFlag, IconBike, IconPalette, IconRefresh, IconDatabase, IconDownload, IconUpload, IconCopy, IconTrash, IconRotate, IconMap } from '@tabler/icons-react';
+import { IconDeviceWatch, IconChevronRight, IconUser, IconFlag, IconBike, IconPalette, IconRefresh, IconDatabase, IconDownload, IconUpload, IconCopy, IconTrash, IconRotate, IconMap } from '@tabler/icons-react';
 import * as E from '../../engine.mjs';
 import { useApex, commit, getState, toast, syncNow, syncJoin, useSyncStatus, backupStatus, refresh } from '../store';
 import { href, go } from '../route';
@@ -158,6 +158,17 @@ function Mapa() {
   );
 }
 
+// ---------------- Garmin (Fase 2): leva à tela Configurações › Garmin ----------------
+function GarminLink() {
+  return (
+    <a className="card item-row" href={href('mais', 'garmin')} style={{ flexDirection: 'row', textDecoration: 'none', color: 'inherit' }}>
+      <IconDeviceWatch {...IC} color="var(--ciano)" aria-hidden="true" />
+      <div className="grow stack" style={{ gap: 0 }}><span className="t">Garmin</span><span className="s">Treinos do relógio entrando sozinhos</span></div>
+      <IconChevronRight size={20} stroke={1.75} className="faint" aria-hidden="true" />
+    </a>
+  );
+}
+
 // ---------------- privacidade padrão (Etapa 3; campo opcional e aditivo no atleta) ----------------
 function PrivacidadePadrao() {
   const [p, setP] = useState<Privacy>(() => defaultPrivacy(getState().athlete));
@@ -302,7 +313,7 @@ export function Config() {
     <PageHead title="Configurações" back={href('mais')} right={null} />
     <div className="cols">
       <div className="col"><Atleta /><ZonasBike /></div>
-      <div className="col"><NovoCiclo /><Mapa /><PrivacidadePadrao /><Aparencia /><Sync /><Dados /></div>
+      <div className="col"><NovoCiclo /><GarminLink /><Mapa /><PrivacidadePadrao /><Aparencia /><Sync /><Dados /></div>
     </div>
   </>);
 }

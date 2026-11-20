@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Treino · leitura nova</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500&amp;display=swap">
+<style>
+body{margin:0;background:#0d0f1a}
+a{color:#22d3ee;text-decoration:none}a:hover{color:#a5f3fc}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; height: 844px; overflow: hidden; background: #0d0f1a; color: #f2f2f7; font-family: Outfit, system-ui, sans-serif">
+
+  <svg width="390" height="440" viewBox="0 0 390 440" role="img" aria-label="Trajeto da Meia de Floripa colorido por {{corNome}}" style="position: absolute; top: 0; left: 0">
+    <g style="opacity: {{baseOpacity}}">
+      <path d="M0 0 L260 0 C205 60 110 140 0 210 Z" fill="#0f2233"/>
+      <rect x="250" y="300" width="110" height="60" rx="10" fill="#132219"/>
+      <path d="M0 410 L390 220 M0 440 L390 300 M70 0 L230 440 M270 0 L370 440 M0 300 L390 90" stroke="#1a1f2c" stroke-width="7" fill="none"/>
+    </g>
+    <polyline points="79.3,362.6 107.6,341 136,335.6 160.3,308.6 188.6,297.8 212.9,265.4 241.3,249.2 265.6,211.4 293.9,189.8 318.2,152 331.7,119.6 312.8,108.8 287.2,135.8 260.2,168.2 229.1,189.8 200.8,216.8 172.4,238.4 145.4,265.4 117.1,287 92.8,319.4 79.3,362.6" fill="none" stroke="#2a3042" stroke-width="9" stroke-linejoin="round"/>
+    <path d="M79.3 362.6 L107.6 341 L136 335.6 L160.3 308.6 L188.6 297.8" fill="none" stroke="{{c0}}" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M188.6 297.8 L212.9 265.4 L241.3 249.2 L265.6 211.4 L293.9 189.8" fill="none" stroke="{{c1}}" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M293.9 189.8 L318.2 152 L331.7 119.6 L312.8 108.8 L287.2 135.8" fill="none" stroke="{{c2}}" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M287.2 135.8 L260.2 168.2 L229.1 189.8 L200.8 216.8 L172.4 238.4" fill="none" stroke="{{c3}}" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M172.4 238.4 L145.4 265.4 L117.1 287 L92.8 319.4 L79.3 362.6" fill="none" stroke="{{c4}}" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+    <g font-family="Outfit, system-ui, sans-serif" font-size="10" font-weight="500" text-anchor="middle" fill="#f2f2f7">
+      <circle cx="212.9" cy="265.4" r="9" fill="#0d0f1a" stroke="#f2f2f7" stroke-width="1.5"/><text x="212.9" y="268.9">5</text>
+      <circle cx="331.7" cy="119.6" r="9" fill="#0d0f1a" stroke="#f2f2f7" stroke-width="1.5"/><text x="331.7" y="123.1">10</text>
+      <circle cx="200.8" cy="216.8" r="9" fill="#0d0f1a" stroke="#f2f2f7" stroke-width="1.5"/><text x="200.8" y="220.3">15</text>
+      <circle cx="92.8" cy="319.4" r="9" fill="#0d0f1a" stroke="#f2f2f7" stroke-width="1.5"/><text x="92.8" y="322.9">20</text>
+    </g>
+    <g transform="translate(160 238)">
+      <circle r="11" fill="#0d0f1a" stroke="#fbbf24" stroke-width="2"/>
+      <path d="M-4 -4 L0 4 L4 -4" fill="none" stroke="#fbbf24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+    <circle cx="79.3" cy="362.6" r="7" fill="#f2f2f7" stroke="#0d0f1a" stroke-width="3"/>
+    <circle cx="{{runnerX}}" cy="{{runnerY}}" r="8" fill="#22d3ee" stroke="#0d0f1a" stroke-width="3"/>
+  </svg>
+
+  <div style="position: absolute; top: 52px; left: 12px; right: 12px; display: flex; align-items: center; gap: 4px; background: rgba(13, 15, 26, 0.86); border: 1px solid #2a3042; border-radius: 14px; padding: 4px">
+    <a href="Hoje.dc.html" aria-label="Voltar" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; color: #f2f2f7">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l14 0"/><path d="M5 12l6 6"/><path d="M5 12l6 -6"/></svg>
+    </a>
+    <div style="display: flex; flex-direction: column; flex-grow: 1; min-width: 0">
+      <h1 style="margin: 0; font-size: 16px; line-height: 20px; font-weight: 500">Meia de Floripa</h1>
+      <span style="font-size: 11px; line-height: 14px; color: #a3a9b8">29 ago · 19 °C · plano/urbano</span>
+    </div>
+    <button aria-label="Privacidade deste treino" style="width: 44px; height: 44px; border: none; background: transparent; color: #22d3ee; display: flex; align-items: center; justify-content: center">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a12 12 0 0 0 8.5 3a12 12 0 0 1 -8.5 15a12 12 0 0 1 -8.5 -15a12 12 0 0 0 8.5 -3"/></svg>
+    </button>
+  </div>
+
+  <div role="group" aria-label="Fundo do mapa" style="position: absolute; top: 112px; left: 12px; display: flex; background: rgba(13, 15, 26, 0.86); border: 1px solid #2a3042; border-radius: 999px; padding: 3px">
+    <sc-for list="{{fundos}}" as="f" hint-placeholder-count="2">
+      <button onClick="{{f.pick}}" aria-pressed="{{f.on}}" style="border: none; border-radius: 999px; padding: 6px 12px; font-family: Outfit, system-ui, sans-serif; font-size: 13px; line-height: 16px; background: {{f.bg}}; color: {{f.fg}}">{{f.label}}</button>
+    </sc-for>
+  </div>
+
+  <sc-if value="{{isVento}}" hint-placeholder-val="{{ false }}">
+    <div style="position: absolute; top: 112px; right: 12px; display: flex; align-items: center; gap: 6px; background: rgba(13, 15, 26, 0.86); border: 1px solid #2a3042; border-radius: 999px; padding: 6px 12px; font-size: 13px; line-height: 16px">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f2f2f7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="transform: rotate(135deg)"><path d="M12 5l0 14"/><path d="M18 13l-6 6"/><path d="M6 13l6 6"/></svg>
+      Vento 18 km/h
+    </div>
+  </sc-if>
+
+  <div role="group" aria-label="Cor do trajeto" style="position: absolute; top: 384px; left: 12px; right: 12px; display: flex; gap: 6px">
+    <sc-for list="{{cores}}" as="c" hint-placeholder-count="5">
+      <button onClick="{{c.pick}}" aria-pressed="{{c.on}}" style="border: 1px solid {{c.border}}; border-radius: 999px; padding: 6px 10px; font-family: Outfit, system-ui, sans-serif; font-size: 13px; line-height: 16px; background: {{c.bg}}; color: {{c.fg}}">{{c.label}}</button>
+    </sc-for>
+  </div>
+
+  <div style="position: absolute; left: 0; right: 0; top: 424px; bottom: 0; background: #161a26; border-radius: 22px 22px 0 0; padding: 8px 16px 26px; display: flex; flex-direction: column; gap: 9px">
+    <div style="width: 36px; height: 4px; border-radius: 2px; background: #2a3042; align-self: center"></div>
+
+    <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 11px; line-height: 14px; color: #a3a9b8">
+      <span style="display: flex; align-items: center; gap: 4px">{{legendaEsq}}
+        <sc-for list="{{legenda}}" as="sw" hint-placeholder-count="5"><span style="display: inline-block; width: 16px; height: 6px; border-radius: 2px; background: {{sw.c}}"></span></sc-for>
+        {{legendaDir}}</span>
+      <span style="color: #f2f2f7">{{legendaNota}}</span>
+    </div>
+
+    <div style="display: flex; align-items: center; gap: 12px">
+      <button onClick="{{togglePlay}}" aria-label="{{playLabel}}" style="width: 44px; height: 44px; flex-shrink: 0; border-radius: 50%; border: none; background: #22d3ee; color: #0d0f1a; display: flex; align-items: center; justify-content: center">
+        <sc-if value="{{playing}}" hint-placeholder-val="{{ false }}">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>
+        </sc-if>
+        <sc-if value="{{paused}}" hint-placeholder-val="{{ true }}">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4v16l13 -8z"/></svg>
+        </sc-if>
+      </button>
+      <div style="display: flex; flex-direction: column; gap: 2px; flex-grow: 1; min-width: 0">
+        <input type="range" min="0" max="1000" step="1" value="{{tVal}}" onChange="{{scrub}}" aria-label="Posição do replay" style="width: 100%; accent-color: #22d3ee; margin: 0">
+        <div style="display: flex; justify-content: space-between; font-size: 11px; line-height: 14px; color: #a3a9b8; font-variant-numeric: tabular-nums">
+          <span>km {{km}}</span><span>{{tempo}} / 2:42:03</span>
+        </div>
+      </div>
+    </div>
+
+    <section aria-label="História do treino" style="background: #1f2433; border-radius: 12px; padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; font-size: 13px; line-height: 18px">
+      <div style="display: flex; gap: 8px; align-items: flex-start"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink: 0; margin-top: 1px"><path d="M5 12l5 5l10 -10"/></svg><span>Ritmo estável: deriva de 2,6%.</span></div>
+      <div style="display: flex; gap: 8px; align-items: flex-start"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink: 0; margin-top: 1px"><path d="M12 9v4"/><path d="M12 16h.01"/><circle cx="12" cy="12" r="9"/></svg><span>Cadência de 167 spm, abaixo da meta de 173.</span></div>
+      <div style="display: flex; gap: 8px; align-items: flex-start"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22d3ee" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink: 0; margin-top: 1px"><path d="M5 12l14 0"/><path d="M13 18l6 -6"/><path d="M13 6l6 6"/></svg><span>Amanhã: descanso ou rodagem leve (TRIMP 343).</span></div>
+    </section>
+
+    <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; font-variant-numeric: tabular-nums">
+      <button style="text-align: left; background: transparent; border: none; padding: 0; color: #f2f2f7; font-family: Outfit, system-ui, sans-serif">
+        <span style="display: block; font-size: 22px; line-height: 26px; font-weight: 500">21,20</span>
+        <span style="display: block; font-size: 11px; line-height: 14px; color: #a3a9b8">km · D+ 80 m</span>
+      </button>
+      <button style="text-align: left; background: transparent; border: none; padding: 0; color: #f2f2f7; font-family: Outfit, system-ui, sans-serif">
+        <span style="display: block; font-size: 22px; line-height: 26px; font-weight: 500; color: #e8459a">7:39</span>
+        <span style="display: block; font-size: 11px; line-height: 14px; color: #a3a9b8">≈ 7:31 em clima padrão</span>
+      </button>
+      <button style="text-align: left; background: transparent; border: none; padding: 0; color: #f2f2f7; font-family: Outfit, system-ui, sans-serif">
+        <span style="display: block; font-size: 22px; line-height: 26px; font-weight: 500">167</span>
+        <span style="display: block; font-size: 11px; line-height: 14px; color: #a3a9b8">bpm · pico 196</span>
+      </button>
+    </div>
+
+    <div>
+      <svg width="358" height="48" viewBox="0 0 358 48" preserveAspectRatio="none" role="img" aria-label="Pace e FC ao longo do treino; a deriva começa perto do km 17" style="display: block">
+        <path d="M0 46 L60 42 L120 38 L180 40 L240 34 L300 37 L358 39 L358 48 L0 48 Z" fill="#1f2433"/>
+        <rect x="286" y="0" width="72" height="48" fill="#fbbf24" opacity="0.10"/>
+        <path d="M0 20 L30 18 L60 16 L90 17 L120 15 L150 16 L180 14 L210 16 L240 15 L270 17 L300 18 L330 20 L358 22" fill="none" stroke="#e8459a" stroke-width="1.75"/>
+        <path d="M0 38 L30 32 L60 30 L90 29 L120 28 L150 28 L180 27 L210 27 L240 26 L270 26 L300 22 L330 17 L358 12" fill="none" stroke="#22d3ee" stroke-width="1.75"/>
+        <line x1="286" x2="286" y1="0" y2="48" stroke="#fbbf24" stroke-width="1.5"/>
+        <line x1="{{cursorX}}" x2="{{cursorX}}" y1="0" y2="48" stroke="#f2f2f7" stroke-width="1" stroke-dasharray="3 3"/>
+      </svg>
+      <div style="display: flex; gap: 12px; font-size: 11px; line-height: 14px; color: #a3a9b8; margin-top: 4px">
+        <span><span style="color: #e8459a">—</span> pace</span><span><span style="color: #22d3ee">—</span> FC</span><span style="color: #fbbf24">| a deriva começa · km 17</span>
+      </div>
+    </div>
+
+    <a href="#" style="margin-top: auto; height: 48px; border-radius: 12px; background: #e8459a; color: #0d0f1a; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 16px; font-weight: 500">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="12" r="3"/><circle cx="18" cy="6" r="3"/><circle cx="18" cy="18" r="3"/><path d="M8.7 10.7l6.6 -3.4"/><path d="M8.7 13.3l6.6 3.4"/></svg>
+      Compartilhar
+    </a>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { t: 1, playing: false, fundo: 'ruas', cor: 'vento' };
+    this.pts = [[79.3,362.6],[107.6,341],[136,335.6],[160.3,308.6],[188.6,297.8],[212.9,265.4],[241.3,249.2],[265.6,211.4],[293.9,189.8],[318.2,152],[331.7,119.6],[312.8,108.8],[287.2,135.8],[260.2,168.2],[229.1,189.8],[200.8,216.8],[172.4,238.4],[145.4,265.4],[117.1,287],[92.8,319.4],[79.3,362.6]];
+    this.cum = [0];
+    for (let i = 1; i < this.pts.length; i++) {
+      const a = this.pts[i - 1], b = this.pts[i];
+      this.cum.push(this.cum[i - 1] + Math.hypot(b[0] - a[0], b[1] - a[1]));
+    }
+  }
+  componentWillUnmount() { if (this.timer) clearInterval(this.timer); }
+  stop() { if (this.timer) { clearInterval(this.timer); this.timer = null; } }
+  pos(t) {
+    const total = this.cum[this.cum.length - 1], d = t * total;
+    let i = 1;
+    while (i < this.cum.length - 1 && this.cum[i] < d) i++;
+    const seg = this.cum[i] - this.cum[i - 1] || 1, f = Math.max(0, Math.min(1, (d - this.cum[i - 1]) / seg));
+    const a = this.pts[i - 1], b = this.pts[i];
+    return [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f];
+  }
+  renderVals() {
+    const s = this.state;
+    const ramp = ['#a5f3fc', '#22d3ee', '#8b7cf6', '#c24fc8', '#e0337f'];
+    const paletas = {
+      fc: { nome: 'FC', c: ['#22d3ee', '#8b7cf6', '#8b7cf6', '#c24fc8', '#e0337f'], esq: 'Z1', dir: 'Z5', leg: ramp, nota: '' },
+      pace: { nome: 'pace', c: ['#a5f3fc', '#22d3ee', '#8b7cf6', '#22d3ee', '#e0337f'], esq: 'lento', dir: 'rápido', leg: ramp, nota: '' },
+      zona: { nome: 'zona de FC', c: ['#22d3ee', '#8b7cf6', '#8b7cf6', '#8b7cf6', '#c24fc8'], esq: 'Z1', dir: 'Z5', leg: ramp, nota: '' },
+      incl: { nome: 'inclinação', c: ['#80879a', '#e8459a', '#22d3ee', '#80879a', '#e8459a'], esq: 'descida', dir: 'subida', leg: ['#22d3ee', '#80879a', '#80879a', '#e8459a', '#e8459a'], nota: '' },
+      vento: { nome: 'vento', c: ['#22d3ee', '#22d3ee', '#80879a', '#e8459a', '#e8459a'], esq: 'a favor', dir: 'contra', leg: ['#22d3ee', '#80879a', '#e8459a'], nota: 'Volta contra: ≈ +9 s/km' }
+    };
+    const p = paletas[s.cor];
+    const cores = [['fc', 'FC'], ['pace', 'Pace'], ['zona', 'Zona'], ['incl', 'Inclinação'], ['vento', 'Vento']].map(([id, label]) => ({
+      label,
+      on: s.cor === id ? 'true' : 'false',
+      bg: s.cor === id ? '#f2f2f7' : 'rgba(13, 15, 26, 0.86)',
+      fg: s.cor === id ? '#0d0f1a' : '#f2f2f7',
+      border: s.cor === id ? '#f2f2f7' : '#2a3042',
+      pick: () => this.setState({ cor: id })
+    }));
+    const fundos = [['ruas', 'Ruas'], ['trajeto', 'Só trajeto']].map(([id, label]) => ({
+      label,
+      on: s.fundo === id ? 'true' : 'false',
+      bg: s.fundo === id ? '#22d3ee' : 'transparent',
+      fg: s.fundo === id ? '#0d0f1a' : '#f2f2f7',
+      pick: () => this.setState({ fundo: id })
+    }));
+    const [rx, ry] = this.pos(s.t);
+    const secs = Math.round(s.t * 9723);
+    const h = Math.floor(secs / 3600), m = Math.floor((secs % 3600) / 60), sec = secs % 60;
+    return {
+      c0: p.c[0], c1: p.c[1], c2: p.c[2], c3: p.c[3], c4: p.c[4],
+      corNome: p.nome, legendaEsq: p.esq, legendaDir: p.dir, legendaNota: p.nota,
+      legenda: p.leg.map((c) => ({ c })),
+      isVento: s.cor === 'vento',
+      cores, fundos,
+      baseOpacity: s.fundo === 'ruas' ? 1 : 0,
+      runnerX: rx.toFixed(1), runnerY: ry.toFixed(1),
+      cursorX: (s.t * 358).toFixed(1),
+      tVal: Math.round(s.t * 1000),
+      km: (s.t * 21.2).toFixed(1).replace('.', ','),
+      tempo: h + ':' + String(m).padStart(2, '0') + ':' + String(sec).padStart(2, '0'),
+      playing: s.playing, paused: !s.playing,
+      playLabel: s.playing ? 'Pausar replay' : 'Reproduzir trajeto',
+      togglePlay: () => {
+        if (this.state.playing) { this.stop(); this.setState({ playing: false }); return; }
+        const start = this.state.t >= 1 ? 0 : this.state.t;
+        this.setState({ playing: true, t: start });
+        this.timer = setInterval(() => {
+          const nt = Math.min(1, this.state.t + 0.004);
+          if (nt >= 1) { this.stop(); this.setState({ t: 1, playing: false }); }
+          else this.setState({ t: nt });
+        }, 40);
+      },
+      scrub: (e) => { this.stop(); this.setState({ playing: false, t: Number(e.target.value) / 1000 }); }
+    };
+  }
+}
+</script>
+</body>
+</html>

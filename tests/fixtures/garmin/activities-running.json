@@ -1,0 +1,4 @@
+[
+  { "activityId": 90000000001, "activityName": "Corrida sintética A", "startTimeLocal": "2026-11-10 06:10:00", "startTimeGMT": "2026-11-10 09:10:00", "activityType": { "typeId": 1, "typeKey": "running", "parentTypeId": 17 }, "distance": 8012.4, "duration": 2700.5, "averageHR": 148 },
+  { "activityId": 90000000002, "activityName": "Esteira sintética", "startTimeLocal": "2026-11-12 18:00:00", "startTimeGMT": "2026-11-12 21:00:00", "activityType": { "typeId": 18, "typeKey": "treadmill_running", "parentTypeId": 1 }, "distance": 5000, "duration": 1800, "averageHR": 140 }
+]

@@ -15,6 +15,7 @@
   --ciano-forte: #22d3ee; /* controle ativo com texto pequeno (segmentados, chips, links) */
   --on-ciano: #0d0f1a;    /* texto e ícone sobre --ciano-forte */
   --violeta: #5b3fd0;
+  --on-violeta: #f2f2f7; /* texto sobre violeta (6,1:1) */
   --foco: var(--ciano);
   --zona-1: #a5f3fc;
   --zona-2: #22d3ee;
@@ -42,6 +43,7 @@
   --ciano-forte: #0e7490; /* 5,4:1 sobre branco · 4,7:1 sobre #EEF0F5 */
   --on-ciano: #ffffff;    /* 5,4:1 sobre #0E7490 */
   --violeta: #5b3fd0;
+  --on-violeta: #ffffff; /* 6,9:1 */
   --zona-1: #0891b2;
   --zona-2: #4c67d6;
   --zona-3: #6d4bd8;

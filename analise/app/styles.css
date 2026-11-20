@@ -390,3 +390,11 @@ pre.formula { margin: 0; white-space: pre-wrap; font: 400 13px/18px var(--font-b
 .tf-chip[aria-pressed="true"] { border-color: var(--ciano-forte); color: var(--ciano-forte); background: var(--superficie-2); font-weight: 500; }
 .tf-limpar { min-height: 0; font-size: 13px; position: relative; }
 .tf-limpar::after { content: ""; position: absolute; inset: -14px -6px; }
+
+/* ======================= GARMIN (Fase 2) ======================= */
+.g-passos { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; }
+.g-passos li { display: flex; gap: 12px; align-items: flex-start; font-size: 15px; line-height: 22px; }
+.g-n { flex-shrink: 0; width: 26px; height: 26px; border-radius: 999px; border: 1px solid var(--ciano-forte); color: var(--ciano-forte); display: inline-flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 500; }
+.g-passos a svg { vertical-align: -2px; margin-left: 2px; }
+.g-chave { display: flex; gap: 8px; align-items: center; }
+.g-chave input { flex: 1; min-width: 0; }

@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Treino · tiros, esforços e subida</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500&amp;display=swap">
+<style>
+body{margin:0;background:#0d0f1a}
+a{color:#22d3ee;text-decoration:none}a:hover{color:#a5f3fc}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; height: 1480px; overflow: hidden; background: #0d0f1a; color: #f2f2f7; font-family: Outfit, system-ui, sans-serif; font-variant-numeric: tabular-nums">
+
+  <svg width="390" height="240" viewBox="0 0 390 240" role="img" aria-label="Trajeto de ida e volta com os 6 tiros destacados" style="display: block">
+    <polyline points="36,190 354,136 362,145 354,154 36,208" fill="none" stroke="#2a3042" stroke-width="9" stroke-linejoin="round" stroke-linecap="round"/>
+    <polyline points="36,190 354,136 362,145 354,154 36,208" fill="none" stroke="#80879a" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+    <g stroke="#22d3ee" stroke-width="6" stroke-linecap="round">
+      <line x1="61.4" y1="185.7" x2="131.4" y2="173.8"/>
+      <line x1="156.8" y1="169.5" x2="226.8" y2="157.6"/>
+      <line x1="252.2" y1="153.3" x2="322.2" y2="141.4"/>
+      <line x1="322.2" y1="159.4" x2="252.2" y2="171.3"/>
+      <line x1="226.8" y1="175.6" x2="156.8" y2="187.5"/>
+    </g>
+    <line x1="131.4" y1="191.8" x2="61.4" y2="203.7" stroke="#fbbf24" stroke-width="6" stroke-linecap="round"/>
+    <g font-family="Outfit, system-ui, sans-serif" font-size="10" font-weight="500" text-anchor="middle" fill="#f2f2f7">
+      <circle cx="96.4" cy="162" r="9" fill="#0d0f1a" stroke="#22d3ee" stroke-width="1.5"/><text x="96.4" y="165.5">1</text>
+      <circle cx="191.8" cy="146" r="9" fill="#0d0f1a" stroke="#22d3ee" stroke-width="1.5"/><text x="191.8" y="149.5">2</text>
+      <circle cx="287.2" cy="130" r="9" fill="#0d0f1a" stroke="#22d3ee" stroke-width="1.5"/><text x="287.2" y="133.5">3</text>
+      <circle cx="287.2" cy="182" r="9" fill="#0d0f1a" stroke="#22d3ee" stroke-width="1.5"/><text x="287.2" y="185.5">4</text>
+      <circle cx="191.8" cy="198" r="9" fill="#0d0f1a" stroke="#22d3ee" stroke-width="1.5"/><text x="191.8" y="201.5">5</text>
+      <circle cx="96.4" cy="214" r="9" fill="#0d0f1a" stroke="#fbbf24" stroke-width="1.5"/><text x="96.4" y="217.5">6</text>
+    </g>
+    <circle cx="36" cy="199" r="7" fill="#f2f2f7" stroke="#0d0f1a" stroke-width="3"/>
+    <g font-family="Outfit, system-ui, sans-serif" font-size="11" fill="#a3a9b8">
+      <rect x="230" y="218" width="16" height="5" rx="2" fill="#22d3ee"/><text x="250" y="224">tiro</text>
+      <rect x="282" y="218" width="16" height="5" rx="2" fill="#80879a"/><text x="302" y="224">recuperação</text>
+    </g>
+  </svg>
+
+  <div style="position: absolute; top: 52px; left: 12px; right: 12px; display: flex; align-items: center; gap: 4px; background: rgba(13, 15, 26, 0.86); border: 1px solid #2a3042; border-radius: 14px; padding: 4px">
+    <a href="Hoje.dc.html" aria-label="Voltar" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; color: #f2f2f7">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l14 0"/><path d="M5 12l6 6"/><path d="M5 12l6 -6"/></svg>
+    </a>
+    <div style="display: flex; flex-direction: column; flex-grow: 1; min-width: 0">
+      <h1 style="margin: 0; font-size: 16px; line-height: 20px; font-weight: 500">Qualidade · 6 × 800 m</h1>
+      <span style="font-size: 11px; line-height: 14px; color: #a3a9b8">Exemplo · treino estruturado do relógio</span>
+    </div>
+    <button aria-label="Privacidade deste treino" style="width: 44px; height: 44px; border: none; background: transparent; color: #22d3ee; display: flex; align-items: center; justify-content: center">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a12 12 0 0 0 8.5 3a12 12 0 0 1 -8.5 15a12 12 0 0 1 -8.5 -15a12 12 0 0 0 8.5 -3"/></svg>
+    </button>
+  </div>
+
+  <div style="padding: 12px 16px 34px; display: flex; flex-direction: column; gap: 20px">
+
+    <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px">
+      <div><span style="display: block; font-size: 22px; line-height: 26px; font-weight: 500">9,60</span><span style="display: block; font-size: 11px; line-height: 14px; color: #a3a9b8">km · D+ 38 m</span></div>
+      <div><span style="display: block; font-size: 22px; line-height: 26px; font-weight: 500">58:12</span><span style="display: block; font-size: 11px; line-height: 14px; color: #a3a9b8">tempo total</span></div>
+      <div><span style="display: block; font-size: 22px; line-height: 26px; font-weight: 500">157</span><span style="display: block; font-size: 11px; line-height: 14px; color: #a3a9b8">bpm médio</span></div>
+    </div>
+
+    <section aria-label="História do treino" style="background: #1f2433; border-radius: 12px; padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; font-size: 13px; line-height: 18px">
+      <div style="display: flex; gap: 8px; align-items: flex-start"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink: 0; margin-top: 1px"><path d="M5 12l5 5l10 -10"/></svg><span>5 primeiros tiros no alvo, com variação de 4 s/km.</span></div>
+      <div style="display: flex; gap: 8px; align-items: flex-start"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink: 0; margin-top: 1px"><path d="M12 9v4"/><path d="M12 16h.01"/><circle cx="12" cy="12" r="9"/></svg><span>O 6º tiro caiu para 4:52/km, com FC de 179.</span></div>
+      <div style="display: flex; gap: 8px; align-items: flex-start"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22d3ee" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink: 0; margin-top: 1px"><path d="M5 12l14 0"/><path d="M13 18l6 -6"/><path d="M13 6l6 6"/></svg><span>Amanhã: rodagem leve, em Z2.</span></div>
+    </section>
+
+    <section aria-labelledby="h-tiros" style="display: flex; flex-direction: column; gap: 10px">
+      <div>
+        <span style="display: block; font-size: 11px; line-height: 14px; color: #a3a9b8; text-transform: uppercase; letter-spacing: 0.06em">Tiros · 6 × 800 m</span>
+        <h2 id="h-tiros" style="margin: 2px 0 0; font-size: 18px; line-height: 24px; font-weight: 500">Regulares até o 5º tiro</h2>
+      </div>
+
+      <svg width="358" height="88" viewBox="0 0 358 88" role="img" aria-label="Pace de cada tiro contra a faixa alvo de 4:40 a 4:50 por km; o 6º tiro ficou fora, em 4:52" style="display: block">
+        <rect x="40" y="8" width="318" height="40" rx="4" fill="#22d3ee" opacity="0.10"/>
+        <g font-family="Outfit, system-ui, sans-serif" font-size="10" fill="#80879a">
+          <text x="0" y="12">4:40</text><text x="0" y="52">4:50</text><text x="0" y="72">4:55</text>
+        </g>
+        <polyline points="62,24 120,32 178,20 236,36 294,28 352,56" fill="none" stroke="#80879a" stroke-width="1.5"/>
+        <g fill="#22d3ee">
+          <circle cx="62" cy="24" r="5"/><circle cx="120" cy="32" r="5"/><circle cx="178" cy="20" r="5"/><circle cx="236" cy="36" r="5"/><circle cx="294" cy="28" r="5"/>
+        </g>
+        <circle cx="352" cy="56" r="5" fill="#fbbf24"/><circle cx="352" cy="56" r="8.5" fill="none" stroke="#fbbf24" stroke-width="1.5"/>
+        <g font-family="Outfit, system-ui, sans-serif" font-size="10" fill="#a3a9b8" text-anchor="middle">
+          <text x="62" y="84">1</text><text x="120" y="84">2</text><text x="178" y="84">3</text><text x="236" y="84">4</text><text x="294" y="84">5</text><text x="352" y="84">6</text>
+        </g>
+      </svg>
+      <span style="font-size: 11px; line-height: 14px; color: #a3a9b8">Faixa clara = alvo do treino (4:40 a 4:50/km). Mais alto = mais rápido.</span>
+
+      <table style="width: 100%; border-collapse: collapse; font-size: 13px; line-height: 18px">
+        <thead>
+          <tr style="color: #a3a9b8; font-size: 11px; line-height: 14px; text-align: right">
+            <th scope="col" style="text-align: left; font-weight: 400; padding: 0 0 6px">#</th>
+            <th scope="col" style="font-weight: 400; padding: 0 0 6px">Tempo</th>
+            <th scope="col" style="font-weight: 400; padding: 0 0 6px">Pace</th>
+            <th scope="col" style="font-weight: 400; padding: 0 0 6px">FC</th>
+            <th scope="col" style="font-weight: 400; padding: 0 0 6px">Recup.</th>
+          </tr>
+        </thead>
+        <tbody style="text-align: right">
+          <tr style="border-top: 1px solid #2a3042"><th scope="row" style="text-align: left; font-weight: 500; padding: 8px 0">1</th><td>3:47</td><td>4:44</td><td>168</td><td style="color: #a3a9b8">2:00</td></tr>
+          <tr style="border-top: 1px solid #2a3042"><th scope="row" style="text-align: left; font-weight: 500; padding: 8px 0">2</th><td>3:49</td><td>4:46</td><td>172</td><td style="color: #a3a9b8">2:00</td></tr>
+          <tr style="border-top: 1px solid #2a3042"><th scope="row" style="text-align: left; font-weight: 500; padding: 8px 0">3</th><td>3:46</td><td>4:43</td><td>174</td><td style="color: #a3a9b8">2:00</td></tr>
+          <tr style="border-top: 1px solid #2a3042"><th scope="row" style="text-align: left; font-weight: 500; padding: 8px 0">4</th><td>3:50</td><td>4:47</td><td>176</td><td style="color: #a3a9b8">2:00</td></tr>
+          <tr style="border-top: 1px solid #2a3042"><th scope="row" style="text-align: left; font-weight: 500; padding: 8px 0">5</th><td>3:48</td><td>4:45</td><td>177</td><td style="color: #a3a9b8">2:00</td></tr>
+          <tr style="border-top: 1px solid #2a3042; border-bottom: 1px solid #2a3042"><th scope="row" style="text-align: left; font-weight: 500; padding: 8px 0; color: #fbbf24">6 · fora do alvo</th><td>3:54</td><td style="color: #fbbf24">4:52</td><td>179</td><td style="color: #a3a9b8">—</td></tr>
+        </tbody>
+      </table>
+
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 13px; line-height: 18px">
+        <span style="display: flex; align-items: center; gap: 6px; color: #a3a9b8">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="7"/><path d="M12 9v3l1.5 1.5"/><path d="M16.51 17.35l-.35 3.83a2 2 0 0 1 -2 1.82h-4.32a2 2 0 0 1 -2 -1.82l-.35 -3.83m.01 -10.7l.35 -3.83a2 2 0 0 1 2 -1.82h4.32a2 2 0 0 1 2 1.82l.35 3.83"/></svg>
+          Origem: treino estruturado
+        </span>
+        <a href="#" style="min-height: 44px; display: flex; align-items: center">Trocar origem</a>
+      </div>
+    </section>
+
+    <section aria-labelledby="h-esforcos" style="display: flex; flex-direction: column; gap: 10px">
+      <div>
+        <span style="display: block; font-size: 11px; line-height: 14px; color: #a3a9b8; text-transform: uppercase; letter-spacing: 0.06em">Melhores esforços</span>
+        <h2 id="h-esforcos" style="margin: 2px 0 0; font-size: 18px; line-height: 24px; font-weight: 500">Novo recorde nos 400 m</h2>
+      </div>
+      <div style="display: flex; flex-direction: column">
+        <div style="display: flex; align-items: center; gap: 12px; padding: 10px 0; border-top: 1px solid #2a3042">
+          <span style="width: 52px; color: #a3a9b8; font-size: 13px">400 m</span>
+          <span style="flex-grow: 1"><span style="font-size: 18px; line-height: 22px; font-weight: 500">1:49</span> <span style="font-size: 12px; color: #a3a9b8">4:33/km</span></span>
+          <span style="display: inline-flex; align-items: center; gap: 6px; background: #5b3fd0; color: #f2f2f7; border-radius: 999px; padding: 4px 10px; font-size: 12px; line-height: 16px">
+            <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M5 0 L10 5 L5 10 L0 5 Z" fill="#f2f2f7"/></svg>Recorde pessoal</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 12px; padding: 10px 0; border-top: 1px solid #2a3042">
+          <span style="width: 52px; color: #a3a9b8; font-size: 13px">800 m</span>
+          <span style="flex-grow: 1"><span style="font-size: 18px; line-height: 22px; font-weight: 500">3:46</span> <span style="font-size: 12px; color: #a3a9b8">4:43/km</span></span>
+          <span style="display: inline-flex; align-items: center; border: 1px solid #22d3ee; color: #22d3ee; border-radius: 999px; padding: 3px 10px; font-size: 12px; line-height: 16px">Melhor do ciclo</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 12px; padding: 10px 0; border-top: 1px solid #2a3042; border-bottom: 1px solid #2a3042">
+          <span style="width: 52px; color: #a3a9b8; font-size: 13px">5 km</span>
+          <span style="flex-grow: 1"><span style="font-size: 18px; line-height: 22px; font-weight: 500">29:40</span> <span style="font-size: 12px; color: #a3a9b8">5:56/km</span></span>
+          <span style="font-size: 12px; color: #80879a">com recuperações</span>
+        </div>
+      </div>
+      <span style="font-size: 11px; line-height: 14px; color: #a3a9b8">Compara com o ciclo da maratona e com todo o histórico.</span>
+    </section>
+
+    <section aria-labelledby="h-subida" style="display: flex; flex-direction: column; gap: 10px">
+      <div>
+        <span style="display: block; font-size: 11px; line-height: 14px; color: #a3a9b8; text-transform: uppercase; letter-spacing: 0.06em">Custo da subida</span>
+        <h2 id="h-subida" style="margin: 2px 0 0; font-size: 18px; line-height: 24px; font-weight: 500">Subidas acima de 5% custaram 1:07/km</h2>
+        <span style="display: block; margin-top: 2px; font-size: 12px; line-height: 16px; color: #a3a9b8">Pace real × pace equivalente no plano (GAP)</span>
+      </div>
+
+      <svg width="358" height="12" viewBox="0 0 358 12" role="img" aria-label="Tempo por faixa de inclinação: 74% no plano" style="display: block">
+        <rect x="0" y="0" width="8.2" height="12" fill="#22d3ee"/>
+        <rect x="9.2" y="0" width="31.8" height="12" fill="#a5f3fc"/>
+        <rect x="42" y="0" width="262.7" height="12" fill="#80879a"/>
+        <rect x="305.7" y="0" width="39" height="12" fill="#c24fc8"/>
+        <rect x="345.7" y="0" width="12.3" height="12" fill="#e0337f"/>
+      </svg>
+
+      <table style="width: 100%; border-collapse: collapse; font-size: 13px; line-height: 18px">
+        <thead>
+          <tr style="color: #a3a9b8; font-size: 11px; line-height: 14px; text-align: right">
+            <th scope="col" style="text-align: left; font-weight: 400; padding: 0 0 6px">Inclinação</th>
+            <th scope="col" style="font-weight: 400; padding: 0 0 6px">Tempo</th>
+            <th scope="col" style="font-weight: 400; padding: 0 0 6px">Real</th>
+            <th scope="col" style="font-weight: 400; padding: 0 0 6px">GAP</th>
+            <th scope="col" style="font-weight: 400; padding: 0 0 6px">FC</th>
+          </tr>
+        </thead>
+        <tbody style="text-align: right">
+          <tr style="border-top: 1px solid #2a3042"><th scope="row" style="text-align: left; font-weight: 400; padding: 8px 0"><span style="display: inline-block; width: 10px; height: 10px; border-radius: 2px; background: #e0337f; margin-right: 6px"></span>&gt; 5%</th><td>2:10</td><td style="color: #fbbf24">7:05</td><td>5:58</td><td>161</td></tr>
+          <tr style="border-top: 1px solid #2a3042"><th scope="row" style="text-align: left; font-weight: 400; padding: 8px 0"><span style="display: inline-block; width: 10px; height: 10px; border-radius: 2px; background: #c24fc8; margin-right: 6px"></span>2 a 5%</th><td>6:30</td><td>6:22</td><td>5:55</td><td>156</td></tr>
+          <tr style="border-top: 1px solid #2a3042"><th scope="row" style="text-align: left; font-weight: 400; padding: 8px 0"><span style="display: inline-block; width: 10px; height: 10px; border-radius: 2px; background: #80879a; margin-right: 6px"></span>Plano ±2%</th><td>42:52</td><td>5:48</td><td>5:47</td><td>158</td></tr>
+          <tr style="border-top: 1px solid #2a3042"><th scope="row" style="text-align: left; font-weight: 400; padding: 8px 0"><span style="display: inline-block; width: 10px; height: 10px; border-radius: 2px; background: #a5f3fc; margin-right: 6px"></span>−5 a −2%</th><td>5:20</td><td>5:41</td><td>5:59</td><td>150</td></tr>
+          <tr style="border-top: 1px solid #2a3042; border-bottom: 1px solid #2a3042"><th scope="row" style="text-align: left; font-weight: 400; padding: 8px 0"><span style="display: inline-block; width: 10px; height: 10px; border-radius: 2px; background: #22d3ee; margin-right: 6px"></span>&lt; −5%</th><td>1:20</td><td>5:30</td><td>6:12</td><td>146</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <a href="#" style="height: 48px; border-radius: 12px; background: #e8459a; color: #0d0f1a; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 16px; font-weight: 500">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="12" r="3"/><circle cx="18" cy="6" r="3"/><circle cx="18" cy="18" r="3"/><path d="M8.7 10.7l6.6 -3.4"/><path d="M8.7 13.3l6.6 3.4"/></svg>
+      Compartilhar
+    </a>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1480}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

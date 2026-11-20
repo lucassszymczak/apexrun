@@ -1,5 +1,5 @@
 // MAIS (celular): lista dos destinos que no computador ficam no trilho lateral.
-import { IconFlag, IconReportAnalytics, IconMoon, IconBarbell, IconBook2, IconSettings, IconChevronRight } from '@tabler/icons-react';
+import { IconDeviceWatch, IconFlag, IconReportAnalytics, IconMoon, IconBarbell, IconBook2, IconSettings, IconChevronRight } from '@tabler/icons-react';
 import { href } from '../route';
 import { PageHead } from '../Shell';
 import { Card } from '../ui';
@@ -10,6 +10,7 @@ const ITEMS = [
   ['recuperacao', 'Recuperação', 'Sono, FC de repouso, HRV e Apple Saúde', IconMoon],
   ['forca', 'Força e canela', 'Programa de reforço e protocolo de canela', IconBarbell],
   ['livro', 'Livro de fórmulas', 'O que cada número significa', IconBook2],
+  ['garmin', 'Garmin', 'Treinos do relógio entrando sozinhos', IconDeviceWatch],
   ['config', 'Configurações', 'Atleta, ciclo, zonas, aparência, sincronizar e dados', IconSettings],
 ] as const;
 

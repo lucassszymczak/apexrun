@@ -1,0 +1,3 @@
+[
+  { "activityId": 90000000003, "activityName": "Pedal sintético", "startTimeLocal": "2026-11-11 07:00:00", "startTimeGMT": "2026-11-11 10:00:00", "activityType": { "typeId": 2, "typeKey": "cycling", "parentTypeId": 17 }, "distance": 30500, "duration": 3900, "averageHR": 131 }
+]
