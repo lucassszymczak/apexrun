@@ -12,6 +12,9 @@ import { Card, Kpi, Sheet, Seg, Empty, IC } from '../ui';
 import { dec, signed, pace, dayMon, workoutTitle, noEmoji, dur as hShort } from '../fmt';
 import { deleteWorkout, reimportFit, setWorkoutPrivacy } from '../actions';
 import { getTrack, onTrackChange } from '../db';
+import { fetchRemoteTrack } from '../track-sync';
+import { buscarTrajetos } from '../garmin-sync';
+import { garminReady } from '../garmin';
 import { type Track, type ColorMode, colorer, duration, idxAtTime, PALETTE } from '../track';
 import { TrackSvg } from '../map/TrackSvg';
 import { TrackChart } from '../map/TrackChart';
@@ -35,7 +38,8 @@ function useTrack(id: string): { tr: Track | null; loading: boolean } {
   const [s, setS] = useState<{ tr: Track | null; loading: boolean }>({ tr: null, loading: true });
   useEffect(() => {
     let alive = true;
-    const load = () => getTrack(id).then((tr) => { if (alive) setS({ tr, loading: false }); });
+    // sem trajeto aqui? tenta a versão leve que o outro aparelho subiu (Fase 2 · Etapa 3)
+    const load = () => getTrack(id).then(async (tr) => { if (!tr) { try { tr = await fetchRemoteTrack(id); } catch { /* sem internet */ } } if (alive) setS({ tr, loading: false }); });
     load();
     const off = onTrackChange((x) => { if (x === id) load(); });
     return () => { alive = false; off(); };
@@ -286,6 +290,7 @@ export function Treino({ id }: { id: string }) {
         <Sheet title="Treino" onClose={() => setMenu(false)}>
           <a className="btn quiet" href={href('editar', w.id)} onClick={() => setMenu(false)}><IconPencil {...IC} aria-hidden="true" />Editar</a>
           <button type="button" className="btn quiet" onClick={() => fileRef.current?.click()} disabled={!!busy}><IconFileUpload {...IC} aria-hidden="true" />{busy || 'Reimportar .FIT'}</button>
+          {!tr && w.garminActivityId && garminReady() ? <button type="button" className="btn quiet" disabled={!!busy} onClick={async () => { setBusy('Buscando no Garmin…'); try { const r = await buscarTrajetos([w.id]); toast(r && r.ok ? 'Trajeto adicionado. Nada nas análises mudou.' : 'Não deu para buscar agora. Tente de novo mais tarde.'); setMenu(false); } finally { setBusy(null); } }}><IconRoute {...IC} aria-hidden="true" />Buscar trajeto no Garmin</button> : null}
           <p className="hint">Reimportar acrescenta o trajeto (mapa e replay) de um treino antigo. RPE, notas, análises e números não mudam.</p>
           <button type="button" className="btn danger" onClick={() => { if (confirm('Excluir este treino?')) { deleteWorkout(w.id); setMenu(false); go('treinos'); } }}><IconTrash {...IC} aria-hidden="true" />Excluir</button>
         </Sheet>

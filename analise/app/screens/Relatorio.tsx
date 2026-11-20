@@ -2,6 +2,8 @@
 // heatmap de consistência e um card por semana, com os mesmos números. Só leitura.
 import { IconCalendarStats } from '@tabler/icons-react';
 import * as E from '../../engine.mjs';
+import { PeriodoSel } from './PeriodoSel';
+import { usePeriodo, filtra } from '../periodo';
 import { useApex } from '../store';
 import { href } from '../route';
 import { PageHead } from '../Shell';
@@ -14,14 +16,15 @@ function RCard({ l, v, d }: { l: string; v: string; d: string }) {
 
 export function Relatorio() {
   const { st } = useApex();
-  const a = st.athlete, ws = E.sortedWorkouts();
-  if (!ws.length) return (<><PageHead title="Relatório semanal" back={href('mais')} /><Card><Empty>Nenhum treino ainda.</Empty></Card></>);
+  const per = usePeriodo();
+  const a = st.athlete, ws = filtra(E.sortedWorkouts(), per, st);
+  if (!ws.length) return (<><PageHead title="Relatório semanal" back={href('mais')} right={<PeriodoSel />} /><Card><Empty>Nenhum treino neste período.</Empty></Card></>);
   const hm = E.consistencyHeatmap(ws, a, 18);
   const pctAct = hm.total ? Math.round(hm.active / hm.total * 100) : 0;
   const byWeek: Record<string, any[]> = {}; ws.forEach((w: any) => { const k = E.isoWeekKey(w.date); (byWeek[k] = byWeek[k] || []).push(w); });
   const keys = Object.keys(byWeek).sort().reverse();
   return (<>
-    <PageHead title="Relatório semanal" sub="Um card por semana: números, motor e a lição da semana" back={href('mais')} />
+    <PageHead title="Relatório semanal" sub="Um card por semana: números, motor e a lição da semana" back={href('mais')} right={<PeriodoSel />} />
     <Card>
       <CardH icon={<IconCalendarStats {...IC} />} title="Consistência" right={<span className="badge ciano">{hm.active} dias ativos</span>} />
       <div className="heat" role="img" aria-label={`Treinou em ${hm.active} de ${hm.total} dias nas últimas 18 semanas`}>

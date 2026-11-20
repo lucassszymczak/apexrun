@@ -3,6 +3,8 @@
 // (segurança → recuperação → desempenho). Só os emojis viram ícones/pontos.
 import { IconMessageCircle, IconTarget } from '@tabler/icons-react';
 import * as E from '../../engine.mjs';
+import { PeriodoSel } from './PeriodoSel';
+import { usePeriodo, filtra, ehAtual, comTreinos } from '../periodo';
 import { useApex } from '../store';
 import { href } from '../route';
 import { PageHead } from '../Shell';
@@ -98,12 +100,13 @@ const DOT_WORD: Record<string, string> = { g: 'ok', w: 'atenção', c: 'alerta' 
 
 export function Coach() {
   const { st } = useApex();
-  const a = st.athlete, ws = E.sortedWorkouts();
-  if (!ws.length) return (<><PageHead title="Leitura do Coach" back={href('hoje')} /><Card><Empty>Nenhum treino ainda.</Empty></Card></>);
-  const cx = E.coachContext(ws, a);
-  const r = coachReading(ws, a, cx);
+  const per = usePeriodo(), pAtual = ehAtual(per, st) ? per : '12m';
+  const a = st.athlete, ws = filtra(E.sortedWorkouts(), pAtual, st);
+  if (!ws.length) return (<><PageHead title="Leitura do Coach" back={href('hoje')} right={<PeriodoSel soAtual />} /><Card><Empty>Nenhum treino neste período.</Empty></Card></>);
+  const cx = comTreinos(ws, () => E.coachContext(ws, a));
+  const r = comTreinos(ws, () => coachReading(ws, a, cx));
   return (<>
-    <PageHead title="Leitura do Coach" sub="Prioridade em segurança (tíbia) e desempenho (motor, pace)" back={href('hoje')} />
+    <PageHead title="Leitura do Coach" sub="Prioridade em segurança (tíbia) e desempenho (motor, pace)" back={href('hoje')} right={<PeriodoSel soAtual />} />
     <Card>
       <CardH icon={<IconMessageCircle {...IC} />} title={r.hl} />
       <p className="muted">{r.sub}</p>

@@ -1,13 +1,13 @@
 // CONFIGURAÇÕES › GARMIN (Fase 2 · Etapa 1). design/telas-fase2/GarminConectar e GarminConectado.
 // A chave é colada uma vez, vai para a função "garmin" e o campo é limpo na hora.
 import { useEffect, useState } from 'react';
-import { IconDeviceWatch, IconEye, IconEyeOff, IconLock, IconRefresh, IconCircleFilled, IconAlertTriangle, IconExternalLink } from '@tabler/icons-react';
+import { IconDeviceWatch, IconEye, IconEyeOff, IconLock, IconRefresh, IconCircleFilled, IconAlertTriangle, IconExternalLink, IconRoute } from '@tabler/icons-react';
 import { href } from '../route';
 import { PageHead } from '../Shell';
 import { Card, CardH, IC } from '../ui';
 import { toast } from '../store';
 import { dayMon } from '../fmt';
-import { useGarminSync, useGarminQueue, runGarminSync, resumoTexto, garminLocal, RECENTE_DIAS } from '../garmin-sync';
+import { useGarminSync, useGarminQueue, runGarminSync, resumoTexto, garminLocal, RECENTE_DIAS, buscarTrajetos, semTrajetoGarmin, pausarGarmin } from '../garmin-sync';
 import { garminReady, garminStatus, garminConnect, garminSettings, garminDisconnect, sinceDate, diasParaVencer, VALIDADES, GarminError, type GarminStatus, type Desde } from '../garmin';
 
 const KEY_PAGE = 'https://connect.garmin.com/app/settings/personalApiToken';
@@ -117,6 +117,16 @@ function Conectado({ st, reload, onTrocar }: { st: GarminStatus; reload: () => v
       reload();
     } finally { setBusy(false); }
   };
+  const [semTraj, setSemTraj] = useState<number | null>(null);
+  const [buscando, setBuscando] = useState(false);
+  useEffect(() => { semTrajetoGarmin().then(setSemTraj); }, [sync.rodando]);
+  const buscar = async () => {
+    setBuscando(true);
+    try {
+      const r = await buscarTrajetos();
+      if (r) toast(r.ok + ' trajeto' + (r.ok === 1 ? '' : 's') + ' adicionado' + (r.ok === 1 ? '' : 's') + (r.faltam ? ' · ' + r.faltam + ' para depois' : '') + '. Nenhum número mudou.');
+    } finally { setBuscando(false); }
+  };
   const salvarFiltros = (f: { corrida: boolean; bike: boolean }) => { setFiltros(f); garminSettings({ filtros: f }).then(() => toast('Preferência salva')).catch((e) => toast(e.message)); };
   const desconectar = async () => {
     if (!confirm('Desconectar o Garmin? A chave e o acesso são apagados do servidor do app. Você também pode excluir a chave no Garmin Connect.')) return;
@@ -149,6 +159,12 @@ function Conectado({ st, reload, onTrocar }: { st: GarminStatus; reload: () => v
       <CardH title="O que trazer" />
       <label className="switch"><span>Corridas</span><input type="checkbox" role="switch" checked={filtros.corrida} onChange={(e) => salvarFiltros({ ...filtros, corrida: e.target.checked })} /></label>
       <label className="switch"><span>Pedais</span><input type="checkbox" role="switch" checked={filtros.bike} onChange={(e) => salvarFiltros({ ...filtros, bike: e.target.checked })} /></label>
+      <button type="button" className="item-row g-buscar" onClick={buscar} disabled={sync.rodando}>
+        <span className="grow stack" style={{ gap: 0, textAlign: 'left' }}><span className="t">Buscar trajeto dos treinos antigos</span>
+          <span className="s">{sync.rodando && buscando ? 'Baixando ' + sync.feito + ' de ' + sync.total + '… · toque em Pausar para parar' : semTraj == null ? 'Mapa e replay para os treinos que ainda não têm' : semTraj ? semTraj + ' treino' + (semTraj === 1 ? '' : 's') + ' do Garmin sem trajeto neste aparelho' : 'Todos os treinos do Garmin já têm trajeto'}</span></span>
+        <IconRoute size={20} stroke={1.75} aria-hidden="true" />
+      </button>
+      {sync.rodando && buscando ? <button type="button" className="btn quiet" onClick={() => pausarGarmin()}>Pausar</button> : null}
     </Card>
     <p className="apoio muted">O app avisa 30 dias antes de a chave vencer. A Garmin também manda e-mail uma semana antes.</p>
     <div className="row" style={{ gap: 8 }}>

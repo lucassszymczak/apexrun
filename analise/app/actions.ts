@@ -6,6 +6,7 @@ import { commit, getState, toast } from './store';
 import { buildTrack, totalDist, duration, type Track } from './track';
 import { putTrack, delTrack, delPhotosOf, getPhotos, putPhoto } from './db';
 import { refitPhotos } from './photos';
+import { pushTrack, deleteRemoteTrack } from './track-sync';
 
 // ---------------- .FIT ----------------
 // Mesma sequência do handleFitFile antigo. O leitor (@garmin/fitsdk 21) agora vem
@@ -148,7 +149,8 @@ export function commitWorkout(w: any, choice: 'new' | 'edit' | 'replace' | 'keep
   if (!opts.quiet) toast(msg);
   // trajeto vai para o IndexedDB pelo id do treino (o treino substituído perde o dele)
   if (choice === 'replace' && matchId && matchId !== w.id) { delTrack(matchId); movePhotos(matchId, w.id, track || null); }
-  if (track) putTrack(w.id, track).catch((e) => toast('Não consegui guardar o trajeto neste aparelho: ' + (e && e.message ? e.message : e)));
+  if (track) putTrack(w.id, track).then(() => pushTrack(w.id, track, opts)).catch((e) => toast('Não consegui guardar o trajeto neste aparelho: ' + (e && e.message ? e.message : e)));
+  if (choice === 'replace' && matchId && matchId !== w.id) deleteRemoteTrack(matchId);
   return w.id;
 }
 
@@ -171,6 +173,7 @@ export function deleteWorkout(id: string) {
   commit();
   delTrack(id);
   delPhotosOf(id);
+  deleteRemoteTrack(id);
   toast('Treino excluído');
 }
 
@@ -193,6 +196,7 @@ export async function reimportFit(w: any, file: File): Promise<string> {
   if (!m.ok) throw new Error('Este .FIT não parece ser deste treino: ' + m.why + '.');
   if (!r.track) throw new Error('O arquivo não tem registros de trajeto.');
   await putTrack(w.id, r.track);
+  pushTrack(w.id, r.track);
   await refitPhotos(w.id, r.track).catch(() => {});
   return r.track.hasGps ? 'Trajeto adicionado. Nada nas análises mudou.' : 'Séries adicionadas (o arquivo não tem GPS). Nada nas análises mudou.';
 }
