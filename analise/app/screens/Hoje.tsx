@@ -8,6 +8,7 @@ import { PageHead } from '../Shell';
 import { Card, CardH, Ring, StateBadge, Stat, Kpi, Rich, Empty, IC } from '../ui';
 import { dec, signed, km, dur, dayMon, todayLabel, readyTone, workoutTitle, noEmoji, recoveryPt, recoveryTone, typeName } from '../fmt';
 import { MiniRoute } from './parts';
+import { ParaCompletarCard } from './ParaCompletar';
 
 export function Hoje() {
   const { st } = useApex();
@@ -155,7 +156,7 @@ export function Hoje() {
       </Card>
     ) : null}
     <div className="cols">
-      <div className="col">{ready}{coach}{plan}</div>
+      <div className="col">{ready}<ParaCompletarCard />{coach}{plan}</div>
       <div className="col">{lastCard}{cycle}{recov}</div>
     </div>
   </>);

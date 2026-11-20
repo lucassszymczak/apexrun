@@ -34,6 +34,7 @@ function deps(): Deps {
       if (String(url).includes('/token')) return auth === 'ApiKey ' + KEY && garmin.mode === 'ok' ? new Response(jwt(garmin.tokenExp)) : new Response('', { status: 401 });
       if (!auth.startsWith('Bearer h.')) return new Response('', { status: 401 });
       if (String(url).includes('/activitylist-service/')) { const t = new URL(url).searchParams.get('activityType')!; return new Response(JSON.stringify(LIST[t] || [])); }
+      if (String(url).includes('/activity-service/activity/')) return new Response(JSON.stringify({ activityId: 1, summaryDTO: { directWorkoutRpe: 60, directWorkoutFeel: 75, distance: 1 } }));
       if (String(url).includes('/download-service/')) return new Response(zipSync({ '90000000001_ACTIVITY.fit': FIT }));
       return new Response('', { status: 404 });
     }) as any,
@@ -92,6 +93,11 @@ describe('listar e baixar', () => {
     await call({ action: 'connect', syncId: SYNC, apiKey: KEY });
     const r = await call({ action: 'fit', syncId: SYNC, activityId: '90000000001' });
     expect(r.status).toBe(200); expect(Array.from(r.body)).toEqual(Array.from(FIT));
+  });
+  it('nota do treino (RPE do relógio): só os campos de percepção', async () => {
+    await call({ action: 'connect', syncId: SYNC, apiKey: KEY });
+    const r = await call({ action: 'rpe', syncId: SYNC, activityIds: ['90000000001', 'x'] });
+    expect(r.body.notas).toEqual([{ id: '90000000001', rpe: 60, feel: 75, esforco: null }]);
   });
   it('token vencido: pede outro com a chave guardada', async () => {
     await call({ action: 'connect', syncId: SYNC, apiKey: KEY });

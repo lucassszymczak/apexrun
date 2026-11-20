@@ -31,6 +31,7 @@ export const garminConnect = (apiKey: string, since: string | null, validadeDias
 export const garminSettings = (s: { filtros?: { corrida: boolean; bike: boolean }; since?: string | null }) => call('settings', s).then(js);
 export const garminDisconnect = () => call('disconnect').then(js);
 export const garminList = (o: { since?: string | null; force?: boolean } = {}): Promise<{ atividades: GarminAtividade[]; mais?: boolean; recente?: boolean }> => call('list', o).then(js);
+export const garminRpe = (activityIds: string[]): Promise<{ notas: { id: string; rpe: number | null; feel: number | null }[] }> => call('rpe', { activityIds }).then(js);
 export async function garminFit(activityId: string): Promise<ArrayBuffer> { return (await call('fit', { activityId })).arrayBuffer(); }
 
 // "Trazer treinos desde" → data AAAA-MM-DD

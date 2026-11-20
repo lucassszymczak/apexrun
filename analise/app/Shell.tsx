@@ -3,6 +3,7 @@ import { IconHome, IconRoute, IconTrendingUp, IconDots, IconPlus, IconChevronLef
 import { href, useRoute } from './route';
 import { Simbolo, IC } from './ui';
 import { useToasts, useApex } from './store';
+import { useGarminQueue, useGarminSync, haQuantoSync, garminLocal } from './garmin-sync';
 
 export const MAIS = [
   ['maratona', 'Maratona'],
@@ -27,17 +28,21 @@ export function Shell({ children }: { children: ReactNode }) {
   const cur = (s: string) => (sec === s ? 'page' : undefined);
   const curMais = (k: string) => (r.name === 'mais' && r.arg === k ? 'page' : undefined);
   const toasts = useToasts();
+  const fila = useGarminQueue();
+  useGarminSync();
+  const gl = garminLocal();
   return (
-    <div className={'app' + (r.name === 'treino' ? ' immersive' : r.name === 'compartilhar' ? ' focus' : '')}>
+    <div className={'app' + (r.name === 'treino' ? ' immersive' : r.name === 'compartilhar' || r.name === 'completar' ? ' focus' : '') + (fila.length ? ' tem-fila' : '')}>
       <a href="#conteudo" className="sr-only">Pular para o conteúdo</a>
       <nav className="rail" aria-label="Navegação principal">
         <a className="logo" href={href('hoje')}><Simbolo size={30} /><span>Apex <em>Performance</em></span></a>
-        <a className="item" href={href('hoje')} aria-current={cur('hoje')}><IconHome {...IC} aria-hidden="true" />Hoje</a>
+        <a className="item" href={href('hoje')} aria-current={cur('hoje')}><IconHome {...IC} aria-hidden="true" />Hoje{fila.length ? <span className="rail-count" aria-label={fila.length + ' para completar'}>{fila.length}</span> : null}</a>
         <a className="item" href={href('treinos')} aria-current={cur('treinos')}><IconRoute {...IC} aria-hidden="true" />Treinos</a>
         <a className="item" href={href('progresso')} aria-current={cur('progresso')}><IconTrendingUp {...IC} aria-hidden="true" />Progresso</a>
         <span className="grp">Mais</span>
         {MAIS.map(([k, l]) => <a key={k} className="item sm" href={href('mais', k)} aria-current={curMais(k)}>{l}</a>)}
         <a className="btn-primary" href={href('importar')}><IconPlus size={18} stroke={2.25} aria-hidden="true" />Importar treino</a>
+        {gl.status && gl.status.conectado ? <a className="rail-garmin" href={href('mais', 'garmin')}><span className="dot ok" aria-hidden="true" />Garmin{haQuantoSync(gl.lastRun) ? ' · ' + haQuantoSync(gl.lastRun) : ''}</a> : null}
       </nav>
       <main id="conteudo" className="main" tabIndex={-1}>{children}</main>
       <nav className="bottomnav" aria-label="Navegação principal">
