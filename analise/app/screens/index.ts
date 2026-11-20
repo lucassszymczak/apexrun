@@ -14,3 +14,4 @@ export { Forca } from './Forca';
 export { Livro } from './Livro';
 export { Config } from './Config';
 export { Compartilhar } from './Compartilhar';
+export { Garmin } from './Garmin';
