@@ -1,5 +1,5 @@
 // ============================================================================
-// MOTOR DO APEX — extraído AUTOMATICAMENTE de analise/index.html (Etapa 0 da Fase 1).
+// MOTOR DO APEX — extraído AUTOMATICAMENTE de legacy/analise-v1/index.html (Etapa 0 da Fase 1).
 // NÃO EDITE À MÃO. Cada declaração abaixo é cópia byte a byte da página original;
 // analise/engine.test.mjs falha se alguma divergir. Regenere com:
 //   node scripts/extract-engine.mjs
@@ -15,7 +15,7 @@ export function getState() { return state; }
 var toast = function () {};
 export function setToast(fn) { toast = typeof fn === "function" ? fn : function () {}; }
 
-// ---- declarações copiadas de analise/index.html ----
+// ---- declarações copiadas de legacy/analise-v1/index.html ----
 var GAP_UP=0.035, GAP_DOWN=0.015;
 function clamp(x,lo,hi){return Math.max(lo,Math.min(hi,x));}
 function mean(a){return a.length?a.reduce(function(x,y){return x+y;},0)/a.length:0;}
@@ -769,9 +769,16 @@ function mergeDaily(rows){
   var linked=linkSleepToWorkouts();
   return{added:added,updated:updated,linked:linked};
 }
+var SB=(typeof window!=="undefined"&&window.__APEX_SB__)||{};
+var SYNC_CODE_KEY="apex.analise.synccode";
+function sbReady(){return !!(SB.url&&SB.anon&&SB.url.indexOf("__")<0&&SB.anon.indexOf("__")<0&&typeof crypto!=="undefined"&&crypto.subtle);}
+function getSyncCode(){try{return localStorage.getItem(SYNC_CODE_KEY)||null;}catch(e){return null;}}
+function setSyncCode(c){try{if(c)localStorage.setItem(SYNC_CODE_KEY,c);else localStorage.removeItem(SYNC_CODE_KEY);}catch(e){}}
+function syncEnabled(){return sbReady()&&!!getSyncCode();}
 function normalizeSyncCode(raw){return (raw||"").toString().trim().toLowerCase().replace(/\s+/g,"");}
 function newSyncCode(){var alpha="23456789abcdefghjkmnpqrstuvwxyz";function g(){var s="";for(var i=0;i<4;i++)s+=alpha[Math.floor(Math.random()*alpha.length)];return s;}return "apex-"+g()+"-"+g()+"-"+g();}
 function syncHashId(code){var data=new TextEncoder().encode("apexv1:"+normalizeSyncCode(code));return crypto.subtle.digest("SHA-256",data).then(function(buf){var b=new Uint8Array(buf),h="";for(var i=0;i<b.length;i++)h+=("0"+b[i].toString(16)).slice(-2);return h;});}
+function sbRpc(fn,body){return fetch(SB.url.replace(/\/$/,"")+"/rest/v1/rpc/"+fn,{method:"POST",headers:{apikey:SB.anon,Authorization:"Bearer "+SB.anon,"Content-Type":"application/json"},body:JSON.stringify(body)}).then(function(r){if(!r.ok)return r.text().then(function(t){throw new Error("HTTP "+r.status+" "+t.slice(0,120));});return r.text().then(function(t){return t?JSON.parse(t):null;});});}
 function syncTs(x){if(x==null)return 0;if(typeof x==="number")return x;var t=Date.parse(x);return isNaN(t)?0:t;}
 function syncStripEmpty(o){var out={};for(var k in o)if(o[k]!=null&&o[k]!=="")out[k]=o[k];return out;}
 function syncMergeDeleted(a,b){var m={};(a||[]).concat(b||[]).forEach(function(d){if(d&&d.id){if(!m[d.id]||syncTs(d.at)>syncTs(m[d.id].at))m[d.id]={id:d.id,at:d.at};}});return Object.keys(m).map(function(k){return m[k];});}
@@ -780,10 +787,42 @@ function syncMergeDaily(ad,bd){var byDate={};(ad||[]).concat(bd||[]).forEach(fun
 function syncMergeRace(ar,br){if(!ar)return br||null;if(!br)return ar||null;return syncTs(ar.updatedAt)>=syncTs(br.updatedAt)?ar:br;}
 function syncMergePlanWeeks(ap,bp){ap=ap||{};bp=bp||{};var out={};for(var k in ap)out[k]=ap[k];for(var j in bp){var cur=out[j];if(!cur||syncTs(bp[j]&&bp[j].updatedAt)>=syncTs(cur.updatedAt))out[j]=bp[j];}return out;}
 function syncMergeStates(a,b){a=a||{};b=b||{};var deleted=syncMergeDeleted(a.deleted,b.deleted);var workouts=syncMergeWorkouts(a.workouts,b.workouts,deleted);var daily=syncMergeDaily(a.daily,b.daily);var aa=a.athlete||{},ba=b.athlete||{};var athlete=syncTs(aa.updatedAt)>=syncTs(ba.updatedAt)?(a.athlete||b.athlete||{}):(b.athlete||a.athlete||{});var race=syncMergeRace(a.race,b.race);var planWeeks=syncMergePlanWeeks(a.planWeeks,b.planWeeks);var updatedAt=new Date(Math.max(syncTs(a.updatedAt),syncTs(b.updatedAt))).toISOString();return{athlete:athlete,workouts:workouts,daily:daily,deleted:deleted,race:race,planWeeks:planWeeks,updatedAt:updatedAt};}
+function currentPayload(){return{athlete:state.athlete,workouts:state.workouts,daily:state.daily||[],deleted:state.deleted||[],race:state.race||null,races:state.races||[],planWeeks:state.planWeeks||{},updatedAt:state.updatedAt||new Date().toISOString()};}
+function applyMerged(m){state.athlete=Object.assign({},DEFAULT_ATHLETE,m.athlete||state.athlete);state.workouts=m.workouts||[];state.daily=m.daily||[];state.deleted=m.deleted||[];if(m.race!==undefined)state.race=m.race||state.race;if(m.races!==undefined)state.races=m.races||[];if(m.planWeeks!==undefined)state.planWeeks=m.planWeeks||{};state.updatedAt=m.updatedAt;delete state.seeded;try{pruneStreams(state.workouts,20);}catch(e){}save();}
+function syncPull(){var code=getSyncCode();return syncHashId(code).then(function(id){return sbRpc("analise_sync_get",{p_sync_id:id});}).then(function(rows){return rows&&rows[0]?rows[0]:null;});}
+function syncPush(){var code=getSyncCode();return syncHashId(code).then(function(id){return sbRpc("analise_sync_put",{p_sync_id:id,p_payload:currentPayload()});});}
 function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});}
 function fmtDate(iso){if(!iso)return"—";var p=iso.split("-");return p[2]+"/"+p[1];}
 function fmtDateFull(iso){var d=new Date(iso+"T00:00:00");return d.toLocaleDateString("pt-BR",{day:"2-digit",month:"short"});}
 function parseDur(str){if(!str)return null;str=str.trim();var p=str.split(":").map(Number);if(p.some(isNaN))return null;if(p.length===3)return p[0]*3600+p[1]*60+p[2];if(p.length===2)return p[0]*60+p[1];if(p.length===1)return p[0]*60;return null;}
+var KPI_TODO={
+ efficiency:[["🏃","No treino","Rodagens fáceis constantes (Z1–Z2) e cadência ~173 constroem economia."],["💪","Força","Força 2×/semana e drills melhoram a economia de corrida."],["📆","Rotina","Compare rodagens fáceis parecidas; a régua é você vs. você."]],
+ decoupling:[["🏃","No treino","Longões fáceis e constantes (Z2) ensinam o motor a não cair no fim."],["💪","Força","Core e posterior firmes seguram a técnica quando o cansaço chega."],["🥤","Rotina","Água + carboidrato nos longos evitam a queda por combustível."]],
+ trimp:[["🔁","No treino","Alterne puxado e leve; suba ~10%/semana e descarregue a cada 3–4."],["💪","Força","Força aumenta sua tolerância à carga sem precisar de mais km."],["🛌","Rotina","Depois de um dia alto, priorize sono e comida — é onde a carga vira ganho."]],
+ form:[["📅","No treino","Fase de carga pede paciência: não empilhe qualidade; agende uma descarga."],["💪","Força","Mantenha força leve pra sustentar a técnica sob fadiga."],["🏁","Rotina","Pra uma prova, deixe o TSB subir pra perto de zero/positivo antes."]],
+ ac:[["📈","No treino","Suba no máximo ~10%/semana; evite pular de volume após uma pausa."],["💪","Força","Base de força deixa você aguentar mais carga com menos risco de lesão."],["⚠️","Rotina","Acima de 1,5, segure a semana e durma mais."]],
+ vo2:[["🏃","No treino","Intervalados fortes (ex.: 5×3 min em Z4–Z5) são o que mais sobe o VO₂máx."],["💪","Força","Economia melhor (força + cadência) faz render mais com o mesmo VO₂."],["📆","Rotina","Base aeróbica grande e peso saudável elevam o número ao longo dos meses."]],
+ hrv:[["🟢","No treino","HRV acima do seu normal = verde pra qualidade; bem abaixo = troque por fácil."],["🧘","Corpo","Respiração lenta e mobilidade ajudam o tônus de recuperação."],["🛌","Rotina","Sono regular, menos álcool e jantar mais cedo elevam a HRV com o tempo."]],
+ cadência:[["🎵","No treino","Metrônomo a ~173 spm em trechos fáceis até virar natural."],["💪","Força","Pliometria leve e mobilidade de quadril encurtam a passada com eficiência."],["📈","Rotina","Suba ~5% por vez; o sinal certo é FC menor no mesmo pace."]],
+ gap:[["⛰️","No treino","Treine em relevo variado; o GAP deixa esses treinos comparáveis."],["🐢","No treino","Largue conservador em subida e aproveite as descidas com técnica."],["📊","Rotina","Compare o GAP (não o pace bruto) entre terrenos diferentes."]],
+ hill:[["⛰️","No treino","Tiros em subida (6–10×30–60s) constroem força específica."],["💪","Força","Agachamento e panturrilha melhoram a potência de subida."],["🧗","Rotina","Inclua rotas com rampa 1–2×/semana quando a tíbia permitir."]],
+ distribution:[["🟢","No treino","Proteja o fácil de verdade (Z1–Z2); evite o Z3 cinzento."],["⚡","No treino","Concentre a intensidade numa fatia pequena e bem feita."],["📊","Rotina","Mire ~80% fácil / 20% forte no volume semanal."]]
+};
+function _norm(s){return (s||"").toString().toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"");}
+var EXTRA_DOCS={
+  baseline:{name:"Baseline 5K",conf:"alta",formula:"marco zero do ciclo (teste ou prova de ~5 km mais recente)",desc:"Seu ponto de partida de referência: o pace (e o GAP) do 5K que ancora as comparações e as projeções de prova. <b>Objetivo: melhorar o pace no mesmo esforço ao longo do ciclo.</b>",fields:"teste/prova de ~5 km"},
+  fcrep:{name:"FC de repouso",conf:"média",formula:"menor FC em repouso (do Apple Watch) — média/mediana do período",desc:"Termômetro de recuperação e adaptação. <b>Tendência de queda = adaptando bem; subida de +3 a +5 bpm sobre o seu normal = fadiga/estresse — considere aliviar.</b> É individual: compare com você mesmo.",fields:"FC de repouso (Apple Watch) ou informado"},
+  hrv:{name:"HRV (SDNN)",conf:"média",formula:"SDNN (ms) do Apple Watch · comparado ao seu baseline do período",desc:"A variação entre batimentos: <b>maior/estável = sistema nervoso mais recuperado</b>. O que importa é a <b>tendência vs. você</b>, não o número cru. Acima do seu normal = verde para qualidade; bem abaixo = priorize um dia fácil.",fields:"HRV SDNN (Apple Watch) ou informado"},
+  hidratacao:{name:"Hidratação",conf:"média",formula:"DURANTE (métrica) = água durante ÷ horas (ml/h) · faixa 400–900\nANTES (meta) ≈ 5–7 ml/kg (peso), + duração/calor\nDEPOIS (meta) ≈ 125% do déficit estimado (suor estimado − durante)",desc:"Lê a hidratação em <b>três momentos</b>, cada um com seu benefício. <b>Durante</b> é a métrica de desempenho: ml/h segura o pace e a <b>deriva cardíaca</b> (400–900, menos em treino curto/frio). <b>Antes</b> (meta pelo seu peso): chegar hidratado <b>baixa a FC inicial e a deriva</b> — pouco antes + deriva alta = largada desidratada. <b>Depois</b> (repor o déficit): reidratar <b>acelera a recuperação</b> — pouco depois + FC de repouso subindo no dia seguinte = déficit cobrando. Metas ajustadas por <b>duração e calor</b>. Estimativas de apoio — não substituem a sede nem orientação individual.",fields:"água antes/durante/depois (ml) · peso · duração · temperatura · decoupling · FC repouso (dia seguinte)"},
+  "fc-morro":{name:"Custo de FC do morro",conf:"exploratório",formula:"ajusta FC ≈ a + b·v_GAP nos km planos (|inclinação| ≤ 2%) das últimas corridas fáceis\nresíduo = FC real − FC prevista, por faixa de inclinação (média ponderada por minuto)",desc:"Quanto a sua <b>FC real</b> foge do que o seu próprio pace (velocidade-GAP) prevê, faixa a faixa de inclinação. <b>Subida com resíduo positivo</b> = subir custa mais FC do que o GAP (Minetti) assume para você. <b>Descida com resíduo negativo</b> = a FC fica <i>abaixo</i> do previsto — ela <b>subestima o impacto excêntrico</b> da descida (relevante para a tíbia). É <b>análise</b>, não um alvo: a FC real e as zonas continuam intactas no TRIMP e nas zonas. Precisa de splits por km com <b>FC + Δelevação</b>. Versão por amostra (1 Hz do .FIT) aparece em “Perfil de inclinação”.",fields:"splits por km: FC, Δelevação, tempo"}
+};
+function kpiDoc(key){
+  if(EXTRA_DOCS[key])return EXTRA_DOCS[key];
+  var q=_norm(key),list=(typeof KPI_DOCS!=="undefined"?KPI_DOCS:[]);
+  for(var i=0;i<list.length;i++)if(list[i].key===key)return list[i];
+  for(var j=0;j<list.length;j++)if(_norm(list[j].name).indexOf(q)>=0)return list[j];
+  return null;
+}
 function easyRuns(ws){return ws.filter(function(w){return(w.type==="facil"||w.type==="longão"||w.type==="regenerativo")&&w.hrAvg&&w.durationSec;});}
 function isBike(w){return !!w&&(w.modal==="bike"||/cycl|bike|bicicl/i.test((w.sport||"").toString()));}
 function isRun(w){return !isBike(w);}
@@ -915,6 +954,7 @@ function progContext(){
   var lagLow=ml.n<3;
   return {a:a,ws:ws,runs:runs,bikes:bikes,bike:bike,easy:easy,efPts:efPts,gapPts:gapPts,cadPts:cadPts,fit:fit,ac:ac,pol:pol,cons:cons,trend:trend,decPts:decPts,loadBars:loadBars,weeklyKm:weeklyKm,avgWeeklyKm:avgWeeklyKm,latestEF:latestEF,efDelta:efDelta,efTarget:efTarget,latestCad:latestCad,latestDec:latestDec,tsb:tsb,ctl:ctl,last:last,dailyArr:dailyArr,restTr:restTr,hrvTr:hrvTr,sleepLast:sleepLast,vo2Last:vo2Last,dctx:dctx,recov:recov,vo2Eff:vo2Eff,fcRepEff:fcRepEff,td:td,hillAgg:hillAgg,score:score,rd:rd,confMap:confMap,byDateAsc:byDateAsc,effHist:effHist,mechHist:mechHist,ml:ml,lagLow:lagLow};
 }
+function pgBand(b){return b==="g"?"var(--good)":b==="w"?"var(--warn)":b==="c"?"var(--crit)":"var(--muted)";}
 function coachInsight(ws,a,x){
   var parts=[];
   // 1) perfil / baseline
@@ -1068,6 +1108,13 @@ function cycleSummaryText(race,sum){
   L.push("— Apex Run Performance");
   return L.join("\n");
 }
+function archiveCycle(race){
+  if(!race)return;
+  var sum=cycleSummary(race);
+  if(!state.races)state.races=[];
+  state.races.unshift({race:Object.assign({},race),summary:sum,archivedAt:new Date().toISOString()});
+  if(state.races.length>24)state.races=state.races.slice(0,24);
+}
 function runZoneHrRanges(a){
   var rep=a&&a.fcRep,mx=a&&a.fcMax;if(!rep||!mx||mx<=rep)return null;
   function hr(p){return Math.round(rep+p*(mx-rep));}
@@ -1211,6 +1258,60 @@ function mAnalyze(s,info){
   if(s.adapt&&s.adapt.modal)note=mAdaptLabel(s.adapt.modal)+(s.adapt.note?" ("+s.adapt.note+")":"")+" · "+note;
   else if(isBike(w))note="feito de bike · "+note;
   return {cls:cls,label:label,txt:note};}
+function mDowToday(){return ((new Date().getDay()+6)%7)+1;}
+function mSeedSteps(){return [
+  {rep:false,label:"Aquecimento",durSec:1200,distKm:null,zone:"Z2"},
+  {rep:true,times:5,segs:[{label:"Forte",durSec:120,distKm:null,zone:"Z4"},{label:"Recuperação",durSec:60,distKm:null,zone:"Z2"}]},
+  {rep:false,label:"Desaquecimento",durSec:600,distKm:null,zone:"Z2"}];}
+function mCloneSession(s){try{return JSON.parse(JSON.stringify(s));}catch(e){return Object.assign({},s);}}
+function mZoneOptsDesc(sel){var o='<option value=""'+(!sel?" selected":"")+'>—</option>';M_ZONES.forEach(function(z){o+='<option value="'+z+'"'+(sel===z?" selected":"")+'>'+z+' · '+M_ZDESC[z]+'</option>';});return o;}
+function mParsePlan(raw){
+  var out={type:null,steps:[],zone:null,durMin:null,distKm:null,adapt:null,title:""};
+  if(!raw)return out;
+  var text=(""+raw).replace(/\r/g,"\n");
+  var cut=text.search(/dados do treino|planejado|realizado|ritmo m[ée]dio|\bZP\b/i);
+  var head=cut>=0?text.slice(0,cut):text,totals=cut>=0?text.slice(cut):"";
+  var dT=totals.match(/dura[çc][aã]o[^0-9]*(\d{1,2}):(\d{2})/i);if(dT)out.durMin=(+dT[1])+(+dT[2])/60;
+  var kT=totals.match(/dist[aâ]ncia[^0-9]*(\d+(?:[.,]\d+)?)\s*km/i);if(kT)out.distKm=parseFloat(kT[1].replace(",","."));
+  var closers=/aquec|desaq|arrefec|volta\s*[aà]\s*calma|rodagem|long[aã]o|regenerativo/i;
+  var skip=/estrutura do treino|ar livre|esteira|zonas de ritmo|dados do treino/i;
+  function parseSeg(l){
+    var zone=null,zm=l.match(/z\s*([1-5])/i);if(zm)zone="Z"+zm[1];
+    var durSec=null,dm=l.match(/(\d{1,2}):(\d{2})/);
+    if(dm)durSec=(+dm[1])*60+(+dm[2]);
+    else{var mm=l.match(/(\d+(?:[.,]\d+)?)\s*min/i);if(mm)durSec=Math.round(parseFloat(mm[1].replace(",","."))*60);}
+    var distKm=null,km=l.match(/(\d+(?:[.,]\d+)?)\s*km/i);
+    if(km)distKm=parseFloat(km[1].replace(",","."));
+    else if(!dm){var me=l.match(/(\d{2,4})\s*m\b/i);if(me)distKm=(+me[1])/1000;}
+    var label=l.replace(/@?\s*z\s*[1-5].*/i,"").replace(/\d{1,2}:\d{2}.*/,"").replace(/\d+(?:[.,]\d+)?\s*(min|km|m)\b.*/i,"").replace(/[·|@:–—-]+\s*$/,"").trim();
+    label=label.replace(/^\d+[\).\s]*/,"").trim();
+    return {label:label,durSec:durSec,distKm:distKm,zone:zone,has:(zone!=null||durSec!=null||distKm!=null)};
+  }
+  var lines=head.split(/[\n·•|/]+/).map(function(l){return l.trim();}).filter(Boolean),cur=null,pending=null;
+  lines.forEach(function(l){
+    var tM=l.match(/(\d+)\s*(?:vez\w*|x|×)/i);
+    if(/repet/i.test(l)||tM){
+      var times=tM?parseInt(tM[1],10):(l.match(/repet\w*\s*(\d+)/i)?parseInt(l.match(/repet\w*\s*(\d+)/i)[1],10):1);if(!times)times=1;
+      cur={rep:true,times:times,segs:[]};out.steps.push(cur);pending=null;
+      var rest=l.replace(/.*?(?:vez\w*|×|x)\s*/i,"");if(rest===l)rest=l.replace(/repet\w*\s*\d+\s*/i,"");rest=rest.trim();
+      if(rest){var sg=parseSeg(rest);if(sg.has)cur.segs.push({label:sg.label,durSec:sg.durSec,distKm:sg.distKm,zone:sg.zone});}
+      return;
+    }
+    var seg=parseSeg(l),isCloser=closers.test(l);
+    if(!seg.has){if(isCloser)cur=null;var lbl=l.replace(/^\d+[\).\s]*/,"").trim();if(lbl&&!skip.test(lbl))pending=lbl;return;}
+    var label=seg.label||pending||"";
+    if(cur&&!isCloser&&!closers.test(label)){cur.segs.push({label:label,durSec:seg.durSec,distKm:seg.distKm,zone:seg.zone});}
+    else{cur=null;out.steps.push({rep:false,label:label,durSec:seg.durSec,distKm:seg.distKm,zone:seg.zone});}
+    pending=null;
+  });
+  out.steps=out.steps.filter(function(st){return st.rep?(st.segs&&st.segs.length):true;});
+  var hasRep=out.steps.some(function(st){return st.rep;});
+  if(hasRep)out.type="intervalado";
+  else if(out.steps.length>1)out.type="fartlek";
+  else if(out.steps.length===1){var s0=out.steps[0];out.type="rodagem";out.zone=s0.zone;if(s0.durSec)out.durMin=s0.durSec/60;if(s0.distKm)out.distKm=s0.distKm;out.steps=[];}
+  else out.type="rodagem";
+  return out;
+}
 function tsbState(t){if(t==null)return"—";if(t>5)return"fresco (bom para teste/prova)";if(t>=-10)return"equilibrado";if(t>=-30)return"em treino pesado (normal na construção)";return"muito carregado";}
 function hydroHas(w){return !!w&&(w.waterBefore!=null||w.waterDuring!=null||w.waterAfter!=null);}
 function hydroTotal(w){if(!hydroHas(w))return null;return (w.waterBefore||0)+(w.waterDuring||0)+(w.waterAfter||0);}
@@ -1244,6 +1345,154 @@ function hydroNextDayRecovery(w){
   return {date:next,restingDelta:rt?rt.deltaAbs:null,hrvDeltaPct:ht?ht.deltaPct:null,restingHR:d.restingHR,hrv:d.hrv};
 }
 function typeLabel(t){return{facil:"Fácil",longão:"Longão",tempo:"Tempo",limiar:"Limiar",intervalado:"Intervalado",regenerativo:"Regenerativo",teste:"Teste",prova:"Prova",bike:"Bike",bike_int:"Bike forte"}[t]||t;}
+function weeklyLesson(wk,a,wkDaily){
+  var hasPain=wk.some(function(w){return w.pain;});
+  var hasTest=wk.some(function(w){return w.type==="teste"||w.type==="prova";});
+  var closer=wk.some(function(w){var p=computePacing(w);return p&&p.closer;});
+  var pol=polarization(wk,a);
+  var runsN=runsOnly(wk).length, bikesN=bikesOnly(wk).length;
+  var out=[];
+  if(bikesN&&!runsN)out.push("<b>Semana só de bike</b> — o cross-training segurou a base aeróbica sem castigar a canela; a carga não zerou, e é isso que preserva o fitness (CTL) na pausa.");
+  else if(bikesN&&runsN)out.push("Corrida + bike na mesma semana: a bike acrescenta carga aeróbica com baixo impacto — bom jeito de subir o volume sem subir o risco na tíbia.");
+  if(hasTest)out.push("Semana com marco de esforço — teste/prova registrado dá o ponto de referência do ciclo.");
+  if(closer)out.push("Seu padrão de fechamento forte (closer) apareceu de novo — arma natural de prova.");
+  // recuperação da semana (Apple Watch)
+  if(wkDaily&&wkDaily.length){
+    var sleepVals=wkDaily.map(function(e){return e.sleepH;}).filter(function(x){return x!=null;});
+    var avgSleep=sleepVals.length?mean(sleepVals):null;
+    var rest=wkDaily.map(function(e){return e.restingHR;}).filter(function(x){return x!=null;});
+    var restUp=rest.length>=2&&rest[rest.length-1]>rest[0]+2;
+    if(avgSleep!=null&&avgSleep<6.5)out.push("<b>Sono médio de "+avgSleep.toFixed(1)+"h — abaixo do ideal;</b> a recuperação (e a adaptação) cobram isso. Proteja as noites antes das sessões-chave.");
+    else if(avgSleep!=null&&avgSleep>=7.5)out.push("Sono médio de "+avgSleep.toFixed(1)+"h sustentou bem a carga.");
+    if(restUp)out.push("<b>FC de repouso subindo na semana</b> — sinal de fadiga acumulada ou estresse; considere um dia leve.");
+  }
+  // distribuição (não vale para semana de teste/prova — esforço forte é esperado)
+  if(pol&&pol.easyPct<70&&!hasTest&&wk.length>1)out.push("Só "+Math.round(pol.easyPct)+"% do tempo em zona fácil — a semana pendeu para o forte demais; puxe o fácil para baixo.");
+  if(hasPain)out.push("<b>Sinal de dor articular registrado — recuar cedo separa um recuo de dias de uma lesão de meses.</b> Priorize reforço estrutural e reavalie antes de voltar ao volume.");
+  if(!out.length)out.push("Semana de construção: consistência &gt; pressa. Um corredor lesionado tem pace zero.");
+  return out.join(" ");
+}
+var FC_CIRCUITO_A=[
+  {n:1,nome:"Agachamento búlgaro",detalhe:"elástico sob o pé da frente, alças nos ombros",reps:"3×8/perna",
+   sentir:"Glúteo e quadríceps da perna da frente. Se sentir só joelho/frente da coxa, pé muito atrás — traga à frente.",
+   evoEx:"Menos tremor, mais controle na descida, pausar embaixo.",
+   evoCorrida:"Mais estabilidade em terreno irregular, quadríceps menos fatigado em ladeira."},
+  {n:2,nome:"Terra romeno unipodal",detalhe:"com elástico",reps:"3×8/perna",
+   sentir:"Isquiotibiais alongando e glúteo. Nunca a lombar — se reclama, está curvando a coluna em vez de dobrar no quadril.",
+   evoEx:"Equilíbrio mais longo sem cair, descida mais funda.",
+   evoCorrida:"Impulso mais forte na propulsão, posterior de coxa menos sobrecarregada."},
+  {n:3,nome:"Ponte de glúteo unipodal",detalhe:"",reps:"3×10/perna",
+   sentir:"Glúteo da perna de apoio contraindo forte no topo. Se dominar posterior de coxa/lombar, aproxime o calcanhar do quadril e empurre pelo calcanhar.",
+   evoEx:"Subir sem o quadril torcer para o lado.",
+   evoCorrida:"Quadril mais estável, menos compensação — protege diretamente a tíbia."},
+  {n:4,nome:"Elevação de panturrilha",detalhe:"bipodal por ora",reps:"3×12",
+   sentir:"Panturrilha (gastrocnêmio/sóleo) queimando, subida completa na ponta dos pés.",
+   evoEx:"Mais reps antes da fadiga; depois unipodal e degrau quando a tíbia liberar.",
+   evoCorrida:"Panturrilha menos fatigada no fim dos 10 km, mola de impulso mais eficiente."}
+];
+var FC_QUADRIL=[
+  {n:5,nome:"Abdução de quadril com elástico",detalhe:"acima dos joelhos, em pé ou deitado de lado",reps:"3×15/lado",flag:"key",flagText:"Chave p/ canela",
+   sentir:"Glúteo médio, um palmo abaixo da crista ilíaca, na lateral. Não na lombar, não no topo da coxa.",
+   evoEx:"Mais reps sem a perna cair para frente.",
+   evoCorrida:"O que mais protege a canela — quadril firme = joelho não colapsa = tíbia não torce. Nota-se como menos balanço lateral e menos sensibilidade tibial."},
+  {n:6,nome:"Caminhada de caranguejo com elástico",detalhe:"passos laterais em semi-agachamento",reps:"3×10 passos/lado",
+   sentir:"Glúteo médio queimando na lateral, tensão constante no elástico (tornozelos/acima do joelho).",
+   evoEx:"Manter joelhos afastados sem colapsar em todo o percurso.",
+   evoCorrida:"Mesma proteção do anterior, com mais transferência dinâmica."}
+];
+var FC_CIRCUITO_B=[
+  {n:7,nome:"Remada com elástico",detalhe:"ancorado",reps:"3×12",
+   sentir:"Meio das costas, escápulas se aproximando. Não os braços/bíceps dominando.",
+   evoEx:"Puxada mais controlada, elástico mais forte.",
+   evoCorrida:"Tronco mais ereto no fim da prova, respiração mais livre."},
+  {n:8,nome:"Flexão de braço",detalhe:"",reps:"3×máx",
+   sentir:"Peito e tríceps, core firme, corpo em linha reta sem afundar o quadril.",
+   evoEx:"Mais reps com técnica.",
+   evoCorrida:"Braços cansam menos no balanço, ombros menos tensos."},
+  {n:9,nome:"Prancha frontal",detalhe:"",reps:"3×30–45 s",
+   sentir:"Abdômen sustentando a linha. Se a lombar dói, o quadril caiu.",
+   evoEx:"Mais tempo sem tremor/queda de quadril.",
+   evoCorrida:"Tronco não afunda quando cansa — economia de corrida direta."},
+  {n:10,nome:"Prancha lateral",detalhe:"",reps:"3×20–30 s/lado",
+   sentir:"Oblíquo do lado de baixo sustentando o quadril elevado.",
+   evoEx:"Mais tempo com quadril alto e estável.",
+   evoCorrida:"Menos oscilação lateral do tronco a cada passada."},
+  {n:11,nome:"Pallof press",detalhe:"elástico ancorado ao lado, resistir à rotação",reps:"3×10/lado",
+   sentir:"Core inteiro travado resistindo à rotação. O objetivo é não girar.",
+   evoEx:"Resistir a elástico mais forte sem rodar.",
+   evoCorrida:"Menos rotação desperdiçada de tronco, energia vai para frente."}
+];
+var FC_CANELA=[
+  {n:12,nome:"Dorsiflexão resistida",detalhe:"tibial anterior, elástico leve, descida 3 s",reps:"3×15/pé",
+   sentir:"Músculo na frente da canela, lateral externa à crista da tíbia. Queimação ali é o alvo.",
+   evoEx:"Aguentar elástico médio (hoje leve) com descida controlada.",
+   evoCorrida:"Pé bate menos no chão, aterrissagem mais silenciosa."},
+  {n:13,nome:"Desaceleração de tibial",detalhe:"descida de ponta controlada",reps:"3×12",flag:"novo",flagText:"Novo",
+   sentir:"Frente da canela ao segurar a descida. Em pé, levante a ponta dos pés e baixe bem devagar (4–5 s), como freando — é a função real na corrida.",
+   evoEx:"Descida cada vez mais lenta e sem solavanco.",
+   evoCorrida:"Menos impacto por passada, sensibilidade tibial reduzindo."},
+  {n:14,nome:"Elevação de panturrilha excêntrica",detalhe:"bipodal no plano por ora",reps:"3×12",
+   sentir:"Panturrilha na subida; controle no alongamento lento da descida (3–4 s).",
+   evoEx:"Descida mais lenta e controlada; unipodal/degrau só quando a palpação melhorar.",
+   evoCorrida:"Melhor absorção de impacto no meio-pé."},
+  {n:15,nome:"Short foot + agarrar toalha com os dedos",detalhe:"",reps:"2×15",
+   sentir:"Musculatura sob a sola do pé, arco encurtando e subindo.",
+   evoEx:"Sustentar o arco sem cãibra.",
+   evoCorrida:"Pé mais estável no apoio — protege também a fáscia plantar."},
+  {n:16,nome:"Inversão / eversão com elástico",detalhe:"leve",reps:"2×15/direção",
+   sentir:"Laterais do tornozelo — interna na inversão, externa na eversão.",
+   evoEx:"Controle nas duas direções com elástico médio.",
+   evoCorrida:"Tornozelo mais estável em terreno irregular, menos torção na tíbia."}
+];
+var FC_FASE1=[
+  {dow:"Seg",tags:[{t:"Força A",kind:"forcaA"},{t:"Canela",kind:"canela"}]},
+  {dow:"Ter",sub:"descanso de corrida",tags:[{t:"Canela",kind:"canela"}]},
+  {dow:"Qua",tags:[{t:"5 km",kind:"corrida"},{t:"Canela",kind:"canela"}]},
+  {dow:"Qui",tags:[{t:"Força B",kind:"forcaB"},{t:"Canela",kind:"canela"}]},
+  {dow:"Sex",sub:"pernas leves",tags:[{t:"Canela",kind:"canela"}]},
+  {dow:"Sáb",tags:[{t:"10 km",kind:"corrida"},{t:"Canela",kind:"canela"}]},
+  {dow:"Dom",tags:[{t:"Descanso",kind:"descanso"}]}
+];
+var FC_FASE2=[
+  {dow:"Seg",sub:"recuperação",tags:[{t:"Canela",kind:"canela"}]},
+  {dow:"Ter",tags:[{t:"5 km",kind:"corrida"},{t:"Força A",kind:"forcaA"},{t:"Canela",kind:"canela"}]},
+  {dow:"Qua",sub:"recuperação",tags:[{t:"Canela",kind:"canela"}]},
+  {dow:"Qui",tags:[{t:"5 km",kind:"corrida"},{t:"Força B",kind:"forcaB"},{t:"Canela",kind:"canela"}]},
+  {dow:"Sex",sub:"recuperação",tags:[{t:"Canela",kind:"canela"}]},
+  {dow:"Sáb",tags:[{t:"10 km",kind:"corrida"},{t:"Canela",kind:"canela"}]},
+  {dow:"Dom",tags:[{t:"Descanso",kind:"descanso"}]}
+];
+var KPI_DOCS=[
+ {cat:"Motor",name:"Pace-GAP @ FC_REF (145)",conf:"alta*",formula:"mediana da velocidade-GAP nas amostras com FC (defasada) em 145±3 bpm, min 10–45\nfallback: regressão robusta (Theil-Sen) FC ~ v_GAP, lida em 145 — só interpola, nunca extrapola",desc:"Na <b>mesma FC</b>, quanto pace de plano você produz. É o comparador do treino guiado por FC — o pace bruto deixou de comparar em terreno ondulado. <b>Menor = melhor.</b> Confiança: <b>Alta ≥15 min</b> na banda · <b>Moderada 8–15 min</b> ou regressão (R²≥0,5) · <b>Baixa</b> · <b>Dados insuficientes</b> se 145 estiver fora da faixa de FC observada. Contexto exibido sem correção: temperatura, elevação e duração. <b>Limitações:</b> precisa do stream por amostra do .FIT (reimporte treinos antigos); indoor/sem FC não entra. <b>Sobreposição com outros KPIs:</b> o EF mede economia em qualquer intensidade (a FC tem intercepto); o Pace-GAP@145 fixa a FC e remove esse viés — são complementares. <b>Fonte:</b> Vesterinen et al., 2014, J Strength Cond Res 28(4):902–908.",fields:"stream 1 Hz do .FIT: FC, velocidade, altitude (grade via GAP)"},
+ {cat:"Motor",key:"imp",name:"IMP · Índice do Motor Padronizado",conf:"média",formula:"v_padrao = mediana da velocidade-GAP nas amostras PLANAS (|grade|≤2%), min 10–30, com FC (defasada) em 145±3, em sessão de clima padrão (8–18 °C e orvalho ≤14)\nIMP = 100 × v_padrao ÷ v_baseline\nbaseline = média das 3 primeiras sessões no padrão (conf ≥ Moderada) → 100 (congelado)",desc:"Tira a condição da jogada: mede o motor a <b>145 bpm, no plano, em clima padrão</b>, como um índice (baseline = 100). <b>Sobe = motor melhor.</b> Sessões <b>fora do padrão</b> (calor, úmido, fora da base) não entram — ficam só no Pace-GAP@145. No gráfico, a linha <b>Todas as condições</b> é o Pace-GAP@145 no mesmo índice; a distância para o IMP é o <b>custo do contexto</b> (quanto o calor/altitude te tiram). <b>Confiança:</b> Moderada ≥8 min · Baixa 5–8 min · Dados insuficientes &lt;5 min (IMP nunca passa de Moderada na Fase 1). <b>Clima:</b> buscado automaticamente no Open-Meteo pelo GPS inicial + horário — nunca usa o sensor de pulso do relógio. <b>Sobreposição:</b> o Pace-GAP@145 mede o motor em qualquer condição; o IMP fixa também o clima e o terreno. <b>Fonte:</b> Vesterinen et al., 2014/2017.",fields:"stream 1 Hz (plano, 145±3) + clima do Open-Meteo (GPS + horário)"},
+ {cat:"Motor",key:"calor-sens",name:"Sensibilidade ao calor",conf:"exploratório",formula:"do modelo FC = a + b·v_GAP + c·temperatura + d·minuto (IMP Fase 2)\nsensibilidade = c (bpm/°C), com IC 95%\nse o IC incluir zero → c = 0 (sem correção de calor)",desc:"Quanto a <b>sua</b> FC sobe por grau de temperatura, estimado do seu próprio histórico — não de tabela. Vem do coeficiente <b>c</b> do modelo individual do IMP Fase 2 (regressão robusta sobre várias sessões, de ≥8 °C de amplitude). Se o intervalo de confiança incluir zero, o app assume <b>sem efeito de calor</b> e não corrige. <b>Exploratório</b> — nunca usa coeficientes da literatura; serve para interpretar o custo do contexto no IMP. <b>Fonte:</b> Vesterinen et al., 2017.",fields:"modelo FC~v_GAP+temp+min das sessões fáceis + clima do Open-Meteo"},
+ {cat:"Motor",key:"teste-motor",name:"Teste do Motor",conf:"alta",formula:"circuito plano fixo, mesmo horário · estágios por FC-alvo (ex.: 10 min aquec. + 6 min @135 + 6 min @145)\nmétrica por estágio = mediana da velocidade bruta nos últimos 3 min\nmarca o estágio se a FC média sair de ±3 bpm do alvo",desc:"Um teste controlado para ler o motor direto: no <b>mesmo circuito, horário e estágios de FC</b>, mede a velocidade sustentada em cada alvo. <b>Mais rápido no mesmo alvo de FC = motor melhor.</b> Estágios acima de 145 ficam desativados até a tíbia liberar. Mostra temperatura e orvalho; fora do padrão climático recebe etiqueta, e a confiança é <b>Alta</b> quando circuito, horário e clima batem. Usa a velocidade <b>bruta</b> (circuito plano), não o GAP. <b>Sobreposição:</b> o IMP padroniza as rodagens do dia a dia; o Teste do Motor é a medida limpa e repetível. <b>Fonte:</b> Vesterinen et al., 2017, J Strength Cond Res 31(1):233–243.",fields:"stream 1 Hz de uma sessão tipo 'Teste do Motor' + clima"},
+ {cat:"Motor",name:"Efficiency Factor (EF)",conf:"alta",formula:"EF = velocidade_GAP (m/s) ÷ FC_média (bpm)",desc:"Quanta velocidade você entrega por batimento. <b>Sobe = motor mais eficiente.</b> Compare sempre rodagens fáceis parecidas; a régua é você vs. você. Alvo: partir de ~0,0139 e subir +5 a +8%.",fields:"velocidade-GAP, FC média"},
+ {cat:"Motor",key:"arvore-ef",name:"Árvore da Eficiência (decomposição do EF)",conf:"média",formula:"m/batimento = (passos/batimento) × (m/passo)\nm/batimento = v_GAP×60 ÷ FC (= EF×60)\npassos/batimento = spm ÷ FC · m/passo = v_GAP×60 ÷ spm\nΔln(m/bat) = Δln(passos/bat) + Δln(m/passo) vs. média das 3 anteriores",desc:"Abre o EF em duas alavancas: <b>quantos passos você dá por batimento</b> (cardio-mecânico) e <b>quanto cada passo avança</b> (passada-GAP). Usa as médias das amostras válidas da sessão, então a identidade fecha exata. A decomposição em log diz que fração da variação do EF veio da cadência e que fração veio da passada. Rótulos: cadência↑ e EF estável = <i>passada encurtou sem custo (ganho mecânico)</i>; cadência↑ e EF↑ = <i>economia</i>; cadência↑ e EF↓ = <i>cadência com custo — revisar</i>; cadência estável e EF↑ = <i>motor: mais passada na mesma FC</i>. <b>Confiança: Moderada</b> — a identidade é exata, a interpretação é exploratória. <b>Sobreposição:</b> é o EF por outro ângulo; não é um KPI novo de economia, e sim o <i>porquê</i> dele mudar.",fields:"stream 1 Hz: velocidade-GAP, FC, cadência (spm)"},
+ {cat:"Motor",key:"decoupling-mec",name:"Decoupling mecânico (passada)",conf:"média",formula:"mecânico% = (passada-GAP_1ª_metade − passada-GAP_2ª_metade) ÷ 1ª × 100\n(só sessões ≥40 min de tempo válido)",desc:"O irmão mecânico do decoupling cardíaco: quanto a <b>passada-GAP (m/passo)</b> encurta entre a 1ª e a 2ª metade. <b>Positivo = passada caiu no fim (fadiga mecânica).</b> Cruzado com o cardíaco vira uma matriz: FC sobe + passada estável → <i>deriva cardiovascular</i> (calor/hidratação/duração); ambos cedem → <i>fadiga global</i>; ambos estáveis → <i>sessão sob controle</i>. <b>Confiança: Moderada</b> (Exploratória com &lt;3 sessões). <b>Sobreposição:</b> complementa o decoupling cardíaco — um olha o coração, o outro a mecânica; juntos separam calor de fadiga real.",fields:"stream 1 Hz: velocidade-GAP, cadência; decoupling cardíaco (splits com FC)"},
+ {cat:"Mecânica",key:"cad-ref",name:"Cadência @ ritmo-ref",conf:"média",formula:"mediana do spm nas amostras com pace-GAP em RITMO_REF ± 15 s/km (min 5 min)\nadesão = % do tempo em movimento com spm entre 170 e 176\nRITMO_REF = mediana do pace-GAP das sessões fáceis, arredondada a 5 s/km",desc:"Cadência comparada <b>sempre no mesmo ritmo</b> (não no mesmo esforço): remove o efeito de correr mais rápido/devagar. Mostra também a <b>adesão</b> — quanto do tempo você passou na faixa-alvo 170–176 spm. Linhas de referência: <b>meta 173</b>, baseline 168. <b>Confiança:</b> Alta ≥10 min no ritmo-ref · Moderada 5–10 min · Dados insuficientes &lt;5 min. <b>Sobreposição:</b> a Cadência média (seção Mecânica) é bruta; esta fixa o ritmo para comparar maçãs com maçãs. <b>Fonte:</b> Heiderscheit et al., 2011, Med Sci Sports Exerc 43(2):296–302.",fields:"stream 1 Hz: cadência (spm), velocidade-GAP"},
+ {cat:"Mecânica",key:"perfil-incl",name:"Perfil de inclinação (resíduo de FC)",conf:"exploratório",formula:"modelo pessoal: FC ≈ a + b·v_GAP (Theil-Sen) nas amostras planas (|grade|≤2%) das últimas 6 sessões fáceis\nresíduo = FC real (defasada) − FC prevista, agregado por faixa: <−5% · −5 a −2% · ±2% · 2 a 5% · >5%",desc:"Indicador <b>exploratório</b>: compara a sua FC real com a que o modelo GAP prevê, faixa a faixa de inclinação. <b>Resíduo positivo em subida</b> = subir custa mais do que o GAP (Minetti) assume para você; <b>≈0</b> = o GAP está calibrado para o seu caso. Por faixa mostra resíduo (bpm), cadência, passada-GAP e minutos (mínimo 3 min para exibir). <b>Nunca</b> altera os coeficientes do GAP automaticamente — só reporta, para você decidir. <b>Sobreposição:</b> o GAP (Carga) assume custos fixos de subida/descida; este perfil mede o <i>seu</i> desvio em relação a eles. Precisa de ao menos 2 sessões fáceis com stream; usa a defasagem de FC do ciclo (3.3).",fields:"stream 1 Hz de várias sessões: FC, velocidade-GAP, inclinação, cadência"},
+ {cat:"Motor",name:"Decoupling (pace:FC)",conf:"alta",formula:"decoupling% = (EF_1ª_metade − EF_2ª_metade) ÷ EF_1ª_metade × 100",desc:"Quanto a relação pace÷FC se deteriora entre a 1ª e a 2ª metade. <b>&lt;5% base sólida · 5–8% limítrofe · &gt;8% investigar.</b> Negativo nos longões = você fica mais eficiente no fim (closer).",fields:"splits com FC por km, ou metades manuais"},
+ {cat:"Motor",key:"vo2",name:"VO₂máx",conf:"média",formula:"estimativa de relógio/TECP (erro ~5–10%)",desc:"O tamanho bruto do motor aeróbico. Homem 30–39: <b>bom 36–42 · excelente 43–52</b>. O EF é o quanto você aproveita desse teto.",fields:"informado por você"},
+ {cat:"Motor",name:"Custo cardíaco do km",conf:"média",formula:"custo_km = FC_média_do_km ÷ velocidade_GAP_do_km",desc:"O inverso do EF, por km: revela qual trecho foi caro (subida? fadiga?). <b>Menor e mais estável = esforço melhor distribuído.</b>",fields:"splits por km"},
+ {cat:"Motor",name:"Hill / Climb Performance",conf:"baixa",formula:"efic. = velocidade real na subida ÷ prevista pelo GAP",desc:"Como você se sai nas subidas: perda de velocidade por % de rampa e FC extra. <b>Perder menos que o previsto = força de subida melhorando.</b> Ativo com splits que tragam Δelevação por km.",fields:"splits com Δelevação por km"},
+ {cat:"Mecânica",name:"Cadência",conf:"alta",formula:"cadência = passos_de_um_pé × 2",desc:"Passos por minuto. Cadência maior encurta a passada e costuma baixar a FC no mesmo pace. Alvo ~173 spm. <b>Sinal de ouro: mesmo pace, cadência maior, FC menor.</b>",fields:"cadence"},
+ {cat:"Mecânica",name:"Pacing Strategy",conf:"média",formula:"Δ = (pace_2ª − pace_1ª) ÷ pace_1ª",desc:"Classifica como você distribuiu o esforço: even / negative split / positive split. <b>Você é closer</b> — largar conservador e fechar forte é sua arma.",fields:"splits por km"},
+ {cat:"Mecânica",name:"Pace Stability",conf:"média",formula:"desvio-padrão do pace-GAP entre os km",desc:"Quanto você mantém o ritmo planejado. Menor variação = melhor controle.",fields:"splits por km"},
+ {cat:"Carga",name:"Carga interna (TRIMP)",conf:"alta",formula:"FCr = (FC−FCrep)÷(FCmáx−FCrep)\nTRIMP = Σ(min × FCr × 0,64·e^(1,92·FCr))",desc:"A dose fisiológica da sessão via FC — melhor que distância para comparar treinos. Padrão certo é ondulado: sobe ~10%/semana, descarga a cada 3–4.",fields:"FC média, duração, FC repouso, FCmáx"},
+ {cat:"Carga",key:"ac",name:"Razão aguda:crônica (A:C)",conf:"média",formula:"A:C = carga_aguda(7d) ÷ carga_crônica(28d média semanal)",desc:"Detecta salto de carga. <b>0,8–1,3 sweet spot · 1,3–1,5 atenção · &gt;1,5 risco.</b> É sobre a variação da sua carga, não um valor absoluto.",fields:"TRIMP diário (≥4 semanas)"},
+ {cat:"Carga",name:"GAP · Ritmo ajustado à inclinação",conf:"alta*",formula:"subida: +3,5% de custo por +1%\ndescida: −1,5% de crédito por −1%\naplicar km a km · nunca elevação líquida",desc:"Traduz seu pace num terreno ondulado para o equivalente no plano. Base de quase todos os KPIs (EF, decoupling e pace usam a velocidade-GAP).",fields:"altitude/Δelev por km, distância"},
+ {cat:"Forma",name:"Fitness / Fatigue / Form (CTL·ATL·TSB)",conf:"média",formula:"CTL = média exp. da carga, 42 dias\nATL = média exp. da carga, 7 dias\nTSB = CTL_ontem − ATL_ontem",desc:"Fitness (capacidade), Fatigue (cansaço) e Form (frescor). <b>TSB &gt;+5 fresco · −10 a +5 equilibrado · −10 a −30 treino pesado.</b>",fields:"TRIMP diário acumulado"},
+ {cat:"Forma",name:"Aderência ao polarizado (80/20)",conf:"alta",formula:"% fácil = tempo em Z1–Z2 ÷ tempo total (alvo ~80)",desc:"% do tempo em zona fácil vs. forte, com <b>tempo REAL em zona</b> quando o .FIT traz o histograma de FC. <b>Abaixo de 75% = treinando forte demais no volume.</b>",fields:"histograma de FC do .FIT (ou FC média)"},
+ {cat:"Forma",name:"Training Distribution",conf:"média",formula:"volume por intensidade: fácil (Z1–2) · moderado (Z3) · forte (Z4–5)",desc:"Abre o 80/20 em faixas. Flagra o clássico excesso na intensidade moderada (Z3 cinzento). Base ideal = maioria fácil + uma fatia de qualidade.",fields:"histograma de FC do .FIT"},
+ {cat:"Forma",name:"Performance Trend",conf:"média",formula:"Δ = (média_atual − média_anterior) ÷ média_anterior\n↗ &gt;+2% · → −2..+2% · ↘ &lt;−2%",desc:"Direção da forma numa janela configurável. É a 'manchete'; EF/GAP são a 'reportagem'.",fields:"EF/GAP · ≥3 sessões por janela"},
+ {cat:"Forma",name:"Consistency",conf:"média",formula:"% de sessões completadas · streak",desc:"<b>Consistência &gt; heroísmo</b> — o maior preditor de evolução na base. Alvo prático: ≥85% das sessões.",fields:"datas dos treinos"},
+ {cat:"Proprietário",name:"Athlete Performance Score",conf:"média",formula:"Score = 30% Eficiência + 25% Consistência + 25% Resist. fadiga + 20% Volume",desc:"Nota única 0–100 do seu estado, média ponderada transparente. <b>Nunca decida treino só pelo score</b> — abra os componentes.",fields:"agrega EF, consistência, decoupling, volume"},
+ {cat:"Proprietário",name:"Running Readiness",conf:"média",formula:"estado do dia (0–100) a partir de forma, sono, HRV e FC de repouso",desc:"Prontidão para qualidade hoje. <b>90–100 Peak · 80–89 Ready · 70–79 Moderate · 60–69 Caution · &lt;60 Recovery.</b> Incorpora o que o Apple Watch mede (sono, HRV, FC de repouso). Indicador esportivo, não diagnóstico médico.",fields:"forma (TSB) + diário: sono, HRV, FC repouso"},
+ {cat:"Proprietário",name:"Recovery Status",conf:"média",formula:"good / moderate / needs recovery",desc:"Olha para trás: quão recuperado, via FC de repouso e HRV vs. seu baseline, sono e carga recente. <b>FC repouso alta + HRV baixa = recuar.</b>",fields:"diário: FC repouso, HRV, sono (Apple Watch)"},
+ {cat:"Proprietário",name:"Race Prediction",conf:"baixa",formula:"T2 = T1 × (D2 ÷ D1)^1,06   (Riegel)",desc:"Estima o tempo potencial em 5/10/21/42 km a partir de um esforço-âncora recente. <b>Sempre uma faixa, nunca uma garantia.</b>",fields:"distância, velocidade de um esforço-âncora"},
+ {cat:"Proprietário",name:"Athlete Profile",conf:"média",formula:"síntese narrativa dos KPIs",desc:"Um retrato que muda sozinho: nível, ponto forte, foco, estilo, tendência, readiness e score — atualizado a cada treino.",fields:"EF, cadência, pacing, trend, readiness"}
+];
 function parseSplits(txt){
   if(!txt||!txt.trim())return null;
   var out=[];var lines=txt.split(/\n/);
@@ -1281,20 +1530,25 @@ export {
   defaultRace, RACE_TYPES, PHASE_META, raceTypeOf, seedWorkouts, uid,
   seedDaily, load, touch, _saveWarned, _isQuotaErr, _stripStream,
   save, sortedWorkouts, sortedDaily, _dailyByDate, linkSleepToWorkouts, workoutDayReadiness,
-  nextWorkoutSuggestion, mergeDaily, normalizeSyncCode, newSyncCode, syncHashId, syncTs,
-  syncStripEmpty, syncMergeDeleted, syncMergeWorkouts, syncMergeDaily, syncMergeRace, syncMergePlanWeeks,
-  syncMergeStates, esc, fmtDate, fmtDateFull, parseDur, easyRuns,
-  isBike, isRun, runsOnly, bikesOnly, bikeSummary, kmH,
-  coachContext, week7Km, hojeVerdict, hojeAction, hojeCoachLines, progContext,
-  coachInsight, focusLine, ciArrow, bestAnchor, M_DOW, M_MON,
-  M_MONL, M_ZONES, M_ZDESC, M_TYPES, M_ADAPT, mType,
-  mIsStructured, mAdaptLabel, mParseClock, mClock, mPad2, mIsoLocal,
-  mAddDays, mMonday, mDateBR, mKmTxt, mWeekInfo, mWeekRange,
-  mDaysToRace, mBlock, mPhaseFracs, mPhase, cycleRunsInRange, cycleSummary,
-  mWeekMonFromKey, cycleSummaryText, runZoneHrRanges, mPaceByZone, weeklyReadiness, readyBand,
-  consistencyHeatmap, mSessSteps, mSessMinutes, mSessKm, mSessZoneSecs, mPeakZone,
-  mZoneMix, mSessSummary, mSessDate, mWorkoutById, mLinkWeek, mSessStatus,
-  M_STATUS, mAnalyze, tsbState, hydroHas, hydroTotal, hydroRateMlH,
-  hydroStatus, hydroPhaseAvg, hydroTotalAvg, hydroPlan, hydroDurStat, hydroPhaseStat,
-  hydroNextDayRecovery, typeLabel, parseSplits,
+  nextWorkoutSuggestion, mergeDaily, SB, SYNC_CODE_KEY, sbReady, getSyncCode,
+  setSyncCode, syncEnabled, normalizeSyncCode, newSyncCode, syncHashId, sbRpc,
+  syncTs, syncStripEmpty, syncMergeDeleted, syncMergeWorkouts, syncMergeDaily, syncMergeRace,
+  syncMergePlanWeeks, syncMergeStates, currentPayload, applyMerged, syncPull, syncPush,
+  esc, fmtDate, fmtDateFull, parseDur, KPI_TODO, _norm,
+  EXTRA_DOCS, kpiDoc, easyRuns, isBike, isRun, runsOnly,
+  bikesOnly, bikeSummary, kmH, coachContext, week7Km, hojeVerdict,
+  hojeAction, hojeCoachLines, progContext, pgBand, coachInsight, focusLine,
+  ciArrow, bestAnchor, M_DOW, M_MON, M_MONL, M_ZONES,
+  M_ZDESC, M_TYPES, M_ADAPT, mType, mIsStructured, mAdaptLabel,
+  mParseClock, mClock, mPad2, mIsoLocal, mAddDays, mMonday,
+  mDateBR, mKmTxt, mWeekInfo, mWeekRange, mDaysToRace, mBlock,
+  mPhaseFracs, mPhase, cycleRunsInRange, cycleSummary, mWeekMonFromKey, cycleSummaryText,
+  archiveCycle, runZoneHrRanges, mPaceByZone, weeklyReadiness, readyBand, consistencyHeatmap,
+  mSessSteps, mSessMinutes, mSessKm, mSessZoneSecs, mPeakZone, mZoneMix,
+  mSessSummary, mSessDate, mWorkoutById, mLinkWeek, mSessStatus, M_STATUS,
+  mAnalyze, mDowToday, mSeedSteps, mCloneSession, mZoneOptsDesc, mParsePlan,
+  tsbState, hydroHas, hydroTotal, hydroRateMlH, hydroStatus, hydroPhaseAvg,
+  hydroTotalAvg, hydroPlan, hydroDurStat, hydroPhaseStat, hydroNextDayRecovery, typeLabel,
+  weeklyLesson, FC_CIRCUITO_A, FC_QUADRIL, FC_CIRCUITO_B, FC_CANELA, FC_FASE1,
+  FC_FASE2, KPI_DOCS, parseSplits,
 };

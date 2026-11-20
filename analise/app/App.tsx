@@ -1,0 +1,41 @@
+import { useEffect, type ReactNode } from 'react';
+import { useRoute } from './route';
+import { Shell, PageHead } from './Shell';
+import { KpiProvider, Card } from './ui';
+import { Hoje } from './screens/Hoje';
+import * as S from './screens/index';
+
+function Stub({ title }: { title: string }): ReactNode {
+  return (<><PageHead title={title} /><Card><p className="muted">Em construção.</p></Card></>);
+}
+
+function Screen() {
+  const r = useRoute();
+  switch (r.name) {
+    case 'hoje': return <Hoje />;
+    case 'coach': return S.Coach ? <S.Coach /> : <Stub title="Leitura do Coach" />;
+    case 'treinos': return S.Treinos ? <S.Treinos /> : <Stub title="Treinos" />;
+    case 'treino': return S.Treino ? <S.Treino id={r.arg || ''} /> : <Stub title="Treino" />;
+    case 'importar': return S.Importar ? <S.Importar /> : <Stub title="Importar treino" />;
+    case 'editar': return S.TreinoForm ? <S.TreinoForm id={r.arg} /> : <Stub title="Editar treino" />;
+    case 'progresso': return S.Progresso ? <S.Progresso sys={r.arg} /> : <Stub title="Progresso" />;
+    case 'mais': {
+      const m: Record<string, any> = { maratona: S.Maratona, relatorio: S.Relatorio, recuperacao: S.Recuperacao, forca: S.Forca, livro: S.Livro, config: S.Config };
+      if (!r.arg) return S.Mais ? <S.Mais /> : <Stub title="Mais" />;
+      const C = m[r.arg];
+      return C ? <C sub={r.parts[2] || null} /> : <Stub title="Mais" />;
+    }
+    default: return <Hoje />;
+  }
+}
+
+export function App() {
+  const r = useRoute();
+  // título da aba do navegador acompanha a tela
+  useEffect(() => { document.title = 'Apex Performance'; }, [r.name]);
+  return (
+    <KpiProvider>
+      <Shell><Screen /></Shell>
+    </KpiProvider>
+  );
+}

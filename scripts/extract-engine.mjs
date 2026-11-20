@@ -22,8 +22,8 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const require = createRequire(resolve(root, 'package.json'));
 const { parse } = require('@babel/parser');
 
-// Página de origem: hoje analise/index.html; depois da Etapa 1, legacy/analise-v1/index.html.
-export const SOURCE_CANDIDATES = ['analise/index.html', 'legacy/analise-v1/index.html'];
+// Página de origem: a página antiga, movida para legacy/analise-v1/ na Etapa 1 (publicada em /analise-v1/).
+export const SOURCE_CANDIDATES = ['legacy/analise-v1/index.html'];
 
 export function findSource() {
   for (const rel of SOURCE_CANDIDATES) {
@@ -86,6 +86,7 @@ export const ROOTS = [
   'linkSleepToWorkouts', 'workoutDayReadiness', 'nextWorkoutSuggestion', 'mergeDaily',
   // sincronização (merge puro + código)
   'syncMergeStates', 'normalizeSyncCode', 'newSyncCode', 'syncHashId',
+  'currentPayload', 'applyMerged', 'getSyncCode', 'setSyncCode', 'syncEnabled', 'syncPull', 'syncPush', 'sbReady',
   // Hoje / Coach / Progresso
   'coachContext', 'progContext', 'week7Km', 'hojeVerdict', 'hojeAction', 'hojeCoachLines', 'coachInsight',
   'focusLine', 'ciArrow', 'bestAnchor', 'bikeSummary', 'kmH', 'easyRuns', 'tsbState', 'typeLabel',
@@ -99,6 +100,17 @@ export const ROOTS = [
   'hydroDurStat', 'hydroPhaseStat', 'hydroNextDayRecovery',
   // entrada manual
   'parseDur', 'parseSplits', 'esc', 'fmtDate', 'fmtDateFull',
+  // Livro de fórmulas e Folha do KPI (textos atuais, copiados como estão)
+  'kpiDoc', 'KPI_DOCS', 'KPI_TODO', 'EXTRA_DOCS',
+  // Maratona: tipos de sessão, zonas, rótulos e parsing do plano colado
+  'M_TYPES', 'M_ADAPT', 'M_STATUS', 'M_MON', 'M_MONL', 'M_ZONES', 'mSessDate', 'mZoneOptsDesc', 'mSeedSteps',
+  'mCloneSession', 'mParsePlan', 'mDowToday', 'archiveCycle', 'cycleRunsInRange',
+  // Força e canela (conteúdo do programa)
+  'FC_CIRCUITO_A', 'FC_QUADRIL', 'FC_CIRCUITO_B', 'FC_CANELA', 'FC_FASE1', 'FC_FASE2',
+  // Progresso: sistemas, recordes e auxiliares de leitura
+  'mean', 'ciArrow', 'pgBand',
+  // Relatório semanal
+  'weeklyLesson',
 ];
 
 // Nomes que NÃO entram: a "cola" do módulo os substitui (estado/toast) ou são da interface.
@@ -119,7 +131,11 @@ export function selectEngine(decls) {
     seen.add(d);
     for (const id of identifiersOf(d.node)) if (top.has(id) && !d.names.includes(id)) stack.push(id);
   }
-  return [...seen].sort((a, b) => a.start - b.start);
+  const out = [...seen].sort((a, b) => a.start - b.start);
+  // Trava: o motor não pode arrastar código de tela da página antiga.
+  const ui = out.flatMap((d) => d.names).filter((n) => n !== 'progContext' && /^(render|prog[A-Z]|openModal$|lineChart$|barChart$|card$|el$|\$$)/.test(n));
+  if (ui.length) throw new Error('o motor puxou código de interface: ' + ui.join(', ') + ' — tire a raiz que o chama');
+  return out;
 }
 
 function build() {
@@ -155,6 +171,17 @@ function build() {
   out.push('');
   const dest = resolve(root, 'analise/engine.mjs');
   writeFileSync(dest, out.join('\n'));
+  // Tipos para o app novo (TypeScript): o motor é JS puro, então tudo é `any`.
+  const dts = [
+    '// Gerado por scripts/extract-engine.mjs — tipos do motor (JS puro, sem tipagem).',
+    '/* eslint-disable */',
+    'export declare function setState(s: any): any;',
+    'export declare function getState(): any;',
+    'export declare function setToast(fn: (msg: string) => void): void;',
+    ...names.map((n) => 'export declare const ' + n + ': any;'),
+    '',
+  ];
+  writeFileSync(resolve(root, 'analise/engine.d.mts'), dts.join('\n'));
   console.log('[extract-engine] ' + sel.length + ' declarações (' + names.length + ' nomes) → analise/engine.mjs');
 }
 

@@ -135,17 +135,23 @@ async function capture(name) {
   const browserDiffs = deepDiff(engineNew, engine, '$', [], 200);
 
   // 2) telas — texto visível de cada aba, sistema do Progresso e detalhe de cada treino
-  const views = await page.evaluate(([tabs, sys]) => {
+  const viewsAll = await page.evaluate(([tabs, sys]) => {
     const out = {};
     const txt = () => document.getElementById('view').innerText.replace(/[ \t]+\n/g, '\n').trim();
+    // mesmo texto sem os gráficos (eixos e rótulos de SVG), para comparar números de verdade
+    const noCharts = {};
+    const txtNoCharts = () => { const c = document.getElementById('view').cloneNode(true); c.querySelectorAll('svg').forEach((n) => n.remove()); document.body.appendChild(c); c.style.position = 'absolute'; c.style.left = '-99999px'; const t = c.innerText.replace(/[ \t]+\n/g, '\n').trim(); c.remove(); return t; };
+    let lastKey = null;
     const go = (tab, ps, ts) => { window.currentTab = tab; window.progSys = ps || null; window.treinoSel = ts || null; window.render(); return txt(); };
-    for (const t of tabs) out['tab:' + t] = go(t);
-    for (const s of sys) out['progresso:' + s] = go('progresso', s);
+    const goK = (key, tab, ps, ts) => { out[key] = go(tab, ps, ts); noCharts[key] = txtNoCharts(); };
+    for (const t of tabs) goK('tab:' + t, t);
+    for (const s of sys) goK('progresso:' + s, 'progresso', s);
     const ws = window.sortedWorkouts();
-    ws.forEach((w, i) => { out['treino:@w' + i + ':' + w.date] = go('treinos', null, w.id); });
+    ws.forEach((w, i) => { goK('treino:@w' + i + ':' + w.date, 'treinos', null, w.id); });
     go('hoje');
-    return out;
+    return { out, noCharts };
   }, [TABS, PROG_SYS]);
+  const views = viewsAll.out, viewsNoCharts = viewsAll.noCharts;
 
   const browserVersion = browser.version();
   await browser.close();
@@ -153,7 +159,7 @@ async function capture(name) {
   const meta = { source: rel, now: GOLDEN_NOW, tz: GOLDEN_TZ, pageErrors: errors, browser: chromium.name() + ' ' + browserVersion,
     sameBrowserCheck: { identical: browserDiffs.length === 0, diffs: browserDiffs } };
   writeFileSync(resolve(sc.outDir, name + '.engine.json'), JSON.stringify({ meta, engine }, null, 1));
-  writeFileSync(resolve(sc.outDir, name + '.views.json'), JSON.stringify({ meta, views }, null, 1));
+  writeFileSync(resolve(sc.outDir, name + '.views.json'), JSON.stringify({ meta, views, viewsNoCharts }, null, 1));
   console.log(`[golden] ${name}: ${engine.workouts.length} treinos, ${Object.keys(views).length} telas → ${sc.outDir.replace(root + '/', '')}/` + (errors.length ? `  (erros na página: ${errors.length})` : ''));
   console.log(`  mesmo navegador (antigo × novo): ` + (browserDiffs.length ? `${browserDiffs.length} DIFERENÇAS\n    ` + browserDiffs.slice(0, 10).join('\n    ') : 'idêntico, valor a valor'));
   if (errors.length) console.log('  ' + errors.join('\n  '));
