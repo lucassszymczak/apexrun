@@ -3,11 +3,16 @@
 // para a sync) e handleFitFile (ler .FIT + clima).
 import * as E from '../engine.mjs';
 import { commit, getState, toast } from './store';
+import { buildTrack, totalDist, duration, type Track } from './track';
+import { putTrack, delTrack } from './db';
 
 // ---------------- .FIT ----------------
 // Mesma sequência do handleFitFile antigo. O leitor (@garmin/fitsdk 21) agora vem
 // do npm, junto com o app — não depende mais do CDN (funciona offline).
-export async function readFitFile(file: File): Promise<any> {
+export type FitRead = { w: any; track: Track | null; name: string; messages: any };
+export async function readFitFile(file: File): Promise<any> { return (await readFit(file)).w; }
+// Lê o .FIT: treino (motor, igual ao app antigo) + trajeto (novo, separado).
+export async function readFit(file: File, opts: { weather?: boolean } = {}): Promise<FitRead> {
   const buf = await file.arrayBuffer();
   const SDK: any = await import('@garmin/fitsdk');
   const bytes = new Uint8Array(buf);
@@ -16,6 +21,9 @@ export async function readFitFile(file: File): Promise<any> {
   const decoder = new SDK.Decoder(stream);
   const res = decoder.read();
   const w = E.fitMessagesToWorkout(res.messages);
+  let track: Track | null = null;
+  try { track = buildTrack(res.messages); } catch (e) { console.warn('[apex] trajeto não montado', e); }
+  if (opts.weather === false) return { w, track, name: file.name, messages: res.messages };
   // clima automático (Open-Meteo): só corrida com GPS; melhor esforço, não bloqueia
   let when = w.date ? new Date(w.date + 'T12:00:00Z') : new Date();
   if (w.geo && w.geo.lat != null) {
@@ -24,7 +32,7 @@ export async function readFitFile(file: File): Promise<any> {
   }
   const needWeather = w.modal !== 'bike' && w.geo && w.geo.lat != null;
   w.weather = needWeather ? (await E.fetchWeather(w.geo, when, getState().athlete)) || null : null;
-  return w;
+  return { w, track, name: file.name, messages: res.messages };
 }
 
 // ---------------- formulário ----------------
@@ -109,7 +117,7 @@ export function findDuplicate(w: any): { match: any; same: boolean } | null {
 }
 
 // choice: 'new' (sem duplicata) | 'edit' | 'replace' | 'keep'
-export function commitWorkout(w: any, choice: 'new' | 'edit' | 'replace' | 'keep', matchId?: string): string {
+export function commitWorkout(w: any, choice: 'new' | 'edit' | 'replace' | 'keep', matchId?: string, track?: Track | null): string {
   const st = getState();
   let msg = 'Treino registrado';
   if (choice === 'edit') { const idx = st.workouts.findIndex((x: any) => x.id === w.id); st.workouts[idx] = w; msg = 'Treino atualizado'; }
@@ -121,6 +129,9 @@ export function commitWorkout(w: any, choice: 'new' | 'edit' | 'replace' | 'keep
   try { E.linkSleepToWorkouts(); } catch { /* idem */ }
   commit();
   toast(msg);
+  // trajeto vai para o IndexedDB pelo id do treino (o treino substituído perde o dele)
+  if (choice === 'replace' && matchId && matchId !== w.id) delTrack(matchId);
+  if (track) putTrack(w.id, track).catch((e) => toast('Não consegui guardar o trajeto neste aparelho: ' + (e && e.message ? e.message : e)));
   return w.id;
 }
 
@@ -130,8 +141,33 @@ export function deleteWorkout(id: string) {
   st.deleted = (st.deleted || []).filter((d: any) => d.id !== id);
   st.deleted.push({ id, at: new Date().toISOString() });
   commit();
+  delTrack(id);
   toast('Treino excluído');
 }
+
+// REIMPORTAR .FIT num treino já salvo: reconhece pelo dia, distância e duração e SÓ
+// acrescenta o trajeto e as séries. Nenhum campo do treino (RPE, notas, números,
+// análises) muda — o treino nem é regravado.
+export function fitMatches(w: any, fw: any): { ok: boolean; why: string } {
+  if (fw.date !== w.date) return { ok: false, why: 'o arquivo é de ' + fw.date.split('-').reverse().join('/') + ' e o treino, de ' + w.date.split('-').reverse().join('/') };
+  const near = (a: number, b: number, tol: number) => a > 0 && b > 0 && Math.abs(a - b) / b <= tol;
+  const dOk = (!w.distKm && !fw.distKm) || near(fw.distKm, w.distKm, 0.05);
+  const tOk = near(fw.durationSec, w.durationSec, 0.05);
+  if (!dOk && !tOk) return { ok: false, why: 'distância e duração não batem (' + fw.distKm + ' km × ' + w.distKm + ' km)' };
+  if (!dOk) return { ok: false, why: 'a distância não bate (' + fw.distKm + ' km no arquivo × ' + w.distKm + ' km no treino)' };
+  if (!tOk) return { ok: false, why: 'a duração não bate (' + E.hms(fw.durationSec) + ' × ' + E.hms(w.durationSec) + ')' };
+  return { ok: true, why: '' };
+}
+export async function reimportFit(w: any, file: File): Promise<string> {
+  const r = await readFit(file, { weather: false });
+  const m = fitMatches(w, r.w);
+  if (!m.ok) throw new Error('Este .FIT não parece ser deste treino: ' + m.why + '.');
+  if (!r.track) throw new Error('O arquivo não tem registros de trajeto.');
+  await putTrack(w.id, r.track);
+  return r.track.hasGps ? 'Trajeto adicionado. Nada nas análises mudou.' : 'Séries adicionadas (o arquivo não tem GPS). Nada nas análises mudou.';
+}
+// Usado pelo teste de fumaça / verificação: o trajeto não altera o treino.
+export function _trackSummary(tr: Track) { return { km: totalDist(tr) / 1000, sec: duration(tr), pts: tr.t.length, draw: tr.draw.length }; }
 
 // §5 do app antigo (recalcKpis): recalcula os KPIs das sessões que ainda têm stream e
 // refaz as etiquetas de clima. Mesma lógica; o alert virou mensagem de retorno.

@@ -1,25 +1,16 @@
-// TREINO — detalhe. Porta de renderTreinoDetalhe + renderSleepInfo + banner do .FIT
-// (app antigo). O mapa, a gaveta e o replay entram na Etapa 2.
-import { useState } from 'react';
-import { IconDotsVertical, IconPencil, IconTrash, IconEngine, IconHeartbeat, IconShoe, IconChartBar, IconDroplet, IconCloud, IconMoodCheck, IconDatabase, IconChartLine } from '@tabler/icons-react';
+// BLOCOS do Treino — porta de renderTreinoDetalhe + renderSleepInfo + banner do .FIT
+// (app antigo). Mesmos cálculos. A tela (mapa, gaveta, replay) está em TreinoView.tsx;
+// estes blocos vão para a gaveta (celular) e para o painel lateral (computador).
+import { IconEngine, IconHeartbeat, IconShoe, IconChartBar, IconDroplet, IconCloud, IconMoodCheck, IconDatabase, IconChartLine } from '@tabler/icons-react';
 import * as E from '../../engine.mjs';
-import { useApex } from '../store';
-import { href, go } from '../route';
-import { PageHead } from '../Shell';
-import { Card, CardH, Kpi, KV, Stat, Sheet, StateBadge, Empty, IC } from '../ui';
+import { Card, CardH, Kpi, KV, Stat, StateBadge, IC } from '../ui';
 import { LineChart, BarChart, ZONE_COLORS, toneColor } from '../charts';
-import { dec, signed, dur, pace, dayMonYear, workoutTitle, noEmoji, bandPt, readyTone, toneOfVar } from '../fmt';
-import { deleteWorkout } from '../actions';
+import { dec, signed, dur, pace, noEmoji, bandPt, readyTone, toneOfVar } from '../fmt';
 import { typeBadge } from './Treinos';
 
-export function Treino({ id }: { id: string }) {
-  const { st } = useApex();
+export function treinoBlocks(w: any, st: any) {
   const a = st.athlete;
-  const w = st.workouts.find((x: any) => x.id === id);
-  const [menu, setMenu] = useState(false);
-  if (!w) return (<><PageHead title="Treino" back={href('treinos')} right={null} /><Card><Empty>Treino não encontrado. Ele pode ter sido excluído em outro aparelho.</Empty></Card></>);
   const bk = E.isBike(w);
-  const sub = [dayMonYear(w.date), w.temp != null ? Math.round(w.temp) + ' °C' : null, w.terrain ? noEmoji(w.terrain) : null].filter(Boolean).join(' · ');
   const g0 = !bk && w.distKm ? E.computeGap(w) : null;
 
   // ---------------- resumo ----------------
@@ -213,19 +204,5 @@ export function Treino({ id }: { id: string }) {
     </Card>
   ) : null;
 
-  const menuBtn = <button className="iconbtn" aria-label="Mais ações do treino" aria-haspopup="dialog" onClick={() => setMenu(true)}><IconDotsVertical size={22} stroke={1.75} /></button>;
-  return (<>
-    <PageHead title={workoutTitle(w)} sub={sub} back={href('treinos')} right={menuBtn} />
-    <div className="cols">
-      <div className="col">{hero}{splits}{bk ? null : motor}{resist}</div>
-      <div className="col">{mec}{carga}{hidr}{percep}{cond}{quality}</div>
-    </div>
-    {menu ? (
-      <Sheet title="Treino" onClose={() => setMenu(false)}>
-        <a className="btn quiet" href={href('editar', w.id)} onClick={() => setMenu(false)}><IconPencil {...IC} aria-hidden="true" />Editar</a>
-        <button className="btn danger" onClick={() => { if (confirm('Excluir este treino?')) { deleteWorkout(w.id); setMenu(false); go('treinos'); } }}><IconTrash {...IC} aria-hidden="true" />Excluir</button>
-        <p className="hint">Reimportar .FIT (para ver o mapa de treinos antigos) chega na próxima etapa.</p>
-      </Sheet>
-    ) : null}
-  </>);
+  return { hero, splits, motor: bk ? null : motor, resist, mec, carga, hidr, percep, cond, quality };
 }

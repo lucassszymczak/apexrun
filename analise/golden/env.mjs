@@ -8,7 +8,7 @@
 export const GOLDEN_TZ = 'America/Sao_Paulo';
 export const GOLDEN_NOW = '2026-11-19T12:00:00-03:00';
 
-process.env.TZ = GOLDEN_TZ;
+if (typeof process !== 'undefined' && process.env) process.env.TZ = GOLDEN_TZ; // no navegador o fuso vem do contexto do teste
 
 const RealDate = Date;
 let restore = null;

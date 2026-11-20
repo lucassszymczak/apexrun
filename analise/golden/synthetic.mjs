@@ -61,7 +61,9 @@ function iso(d) { return d.toISOString().slice(0, 10); }
 function addDays(isoDate, n) { const d = new Date(isoDate + 'T12:00:00Z'); d.setUTCDate(d.getUTCDate() + n); return iso(d); }
 
 // Monta o payload (formato do localStorage) usando o motor E (precisa de setState).
-export function buildSynthetic(E) {
+// opts.onMessages(id, messages): recebe as mensagens .FIT de cada treino gerado (usado
+// para montar os trajetos nos testes do mapa). Não muda o estado gerado.
+export function buildSynthetic(E, opts = {}) {
   const R = rng(20261119);
   const athlete = Object.assign({}, E.DEFAULT_ATHLETE, { fcRef: 145, bandFc: 3, alert: '' });
   E.setState({ athlete, workouts: [], daily: [] });
@@ -81,8 +83,10 @@ export function buildSynthetic(E) {
   ];
   for (const [off, type, min, speed, o] of plan) {
     const date = addDays(day0, off);
-    const w = E.fitMessagesToWorkout(fitMessages(R, Object.assign({ date, min, speed, seed: n }, o)));
+    const msgs = fitMessages(R, Object.assign({ date, min, speed, seed: n }, o));
+    const w = E.fitMessagesToWorkout(msgs);
     w.id = 'syn' + (n++);
+    if (opts.onMessages) opts.onMessages(w.id, msgs);
     w.type = type;
     w.updatedAt = date + 'T12:00:00.000Z';
     w.rpe = 3 + (n % 5);
@@ -95,10 +99,12 @@ export function buildSynthetic(E) {
   }
   ws[ws.length - 1].pain = true; // dor no último → alerta de recuo
   // Teste do Motor: aquecimento 10' + 135 bpm 6' + 145 bpm 6'
-  const mt = E.fitMessagesToWorkout(fitMessages(R, {
+  const mtMsgs = fitMessages(R, {
     date: addDays(day0, 60), min: 22, speed: 2.7, seed: 99, hrBase: 120,
     stages: (i) => (i < 600 ? 2.5 : i < 960 ? 2.75 : 3.0),
-  }));
+  });
+  const mt = E.fitMessagesToWorkout(mtMsgs);
+  if (opts.onMessages) opts.onMessages('synMotor', mtMsgs);
   Object.assign(mt, { id: 'synMotor', type: 'teste_motor', updatedAt: addDays(day0, 60) + 'T12:00:00.000Z', weather: { tempC: 14, dewC: 9, rh: 70, windKmh: 6, tags: [], inStandard: true } });
   ws.push(mt);
   // bikes (indoor sem distância e outdoor com histograma de FC)

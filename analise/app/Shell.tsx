@@ -28,7 +28,7 @@ export function Shell({ children }: { children: ReactNode }) {
   const curMais = (k: string) => (r.name === 'mais' && r.arg === k ? 'page' : undefined);
   const toasts = useToasts();
   return (
-    <div className="app">
+    <div className={'app' + (r.name === 'treino' ? ' immersive' : '')}>
       <a href="#conteudo" className="sr-only">Pular para o conteúdo</a>
       <nav className="rail" aria-label="Navegação principal">
         <a className="logo" href={href('hoje')}><Simbolo size={30} /><span>Apex <em>Performance</em></span></a>

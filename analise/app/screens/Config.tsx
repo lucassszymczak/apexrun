@@ -2,7 +2,7 @@
 // renderSyncCard, exportData e importData (app antigo), mais o download do backup
 // automático (IndexedDB) e a aparência automática. Mesmas regras de salvar e validar.
 import { useEffect, useRef, useState } from 'react';
-import { IconUser, IconFlag, IconBike, IconPalette, IconRefresh, IconDatabase, IconDownload, IconUpload, IconCopy, IconTrash, IconRotate } from '@tabler/icons-react';
+import { IconUser, IconFlag, IconBike, IconPalette, IconRefresh, IconDatabase, IconDownload, IconUpload, IconCopy, IconTrash, IconRotate, IconMap } from '@tabler/icons-react';
 import * as E from '../../engine.mjs';
 import { useApex, commit, getState, toast, syncNow, syncJoin, useSyncStatus, backupStatus, refresh } from '../store';
 import { href, go } from '../route';
@@ -138,6 +138,24 @@ function ZonasBike() {
   );
 }
 
+// ---------------- mapa (novo na Fase 1; campos opcionais e aditivos no atleta) ----------------
+function Mapa() {
+  const a = getState().athlete;
+  const [m, setM] = useState<'ruas' | 'trajeto'>(a.mapaPadrao === 'trajeto' ? 'trajeto' : 'ruas');
+  const [c, setC] = useState<string>(['fc', 'pace', 'zona', 'grade'].includes(a.corPadrao) ? a.corPadrao : 'fc');
+  const save = (mm: string, cc: string) => { const A = getState().athlete; A.mapaPadrao = mm; A.corPadrao = cc; A.updatedAt = new Date().toISOString(); commit(); toast('Padrão do mapa salvo'); };
+  return (
+    <Card>
+      <CardH icon={<IconMap {...IC} />} title="Mapa" />
+      <p className="apoio muted">Como o treino abre. “Só trajeto” desenha o percurso sem mapa de ruas e funciona sem internet.</p>
+      <Seg value={m} onChange={(v) => { setM(v); save(v, c); }} label="Fundo padrão do mapa" options={[['ruas', 'Ruas'], ['trajeto', 'Só trajeto']]} />
+      <div className="row wrap" style={{ gap: 6 }} role="group" aria-label="Cor padrão do trajeto">
+        {([['fc', 'FC'], ['pace', 'Pace'], ['zona', 'Zona'], ['grade', 'Inclinação']] as const).map(([k, l]) => <button key={k} type="button" className="chip" aria-pressed={c === k} onClick={() => { setC(k); save(m, k); }}>{l}</button>)}
+      </div>
+    </Card>
+  );
+}
+
 // ---------------- aparência ----------------
 function Aparencia() {
   const [p, setP] = useState<ThemePref>(themePref());
@@ -269,7 +287,7 @@ export function Config() {
     <PageHead title="Configurações" back={href('mais')} right={null} />
     <div className="cols">
       <div className="col"><Atleta /><ZonasBike /></div>
-      <div className="col"><NovoCiclo /><Aparencia /><Sync /><Dados /></div>
+      <div className="col"><NovoCiclo /><Mapa /><Aparencia /><Sync /><Dados /></div>
     </div>
   </>);
 }

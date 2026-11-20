@@ -1,7 +1,7 @@
 // Telas do app (cada uma porta o conteúdo da tela antiga correspondente).
 // Telas ainda não portadas ficam undefined e o App mostra "em construção".
 export { Treinos } from './Treinos';
-export { Treino } from './Treino';
+export { Treino } from './TreinoView';
 export { Importar } from './Importar';
 export { TreinoForm } from './TreinoForm';
 export { Coach } from './Coach';

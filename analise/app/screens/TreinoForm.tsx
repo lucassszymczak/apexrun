@@ -10,13 +10,15 @@ import { Card, CardH, Sheet, StateBadge } from '../ui';
 import { dec, dur, dayMon, typeName } from '../fmt';
 import { RUN_TYPES, BIKE_TYPES, formFrom, extrasOf, buildWorkout, findDuplicate, commitWorkout, type FormVals } from '../actions';
 
-type Props = { id?: string | null; prefill?: any; fromFit?: boolean; onCancel?: () => void; step?: string };
+// decided: escolha feita na Conferência quando o arquivo coincide com um treino já salvo
+type Props = { id?: string | null; prefill?: any; fromFit?: boolean; onCancel?: () => void; step?: string;
+  track?: any; decided?: { choice: 'new' | 'replace' | 'keep'; matchId?: string } | null; onSaved?: (id: string) => void; hideResumo?: boolean; top?: any };
 
 function Field({ id, label, help, children }: { id: string; label: string; help?: string; children: any }) {
   return <div className="field"><label htmlFor={id}>{label}</label>{children}{help ? <span className="help">{help}</span> : null}</div>;
 }
 
-export function TreinoForm({ id = null, prefill = null, fromFit = false, onCancel, step }: Props) {
+export function TreinoForm({ id = null, prefill = null, fromFit = false, onCancel, step, track = null, decided = null, onSaved, hideResumo, top }: Props) {
   const { st } = useApex();
   const w = id ? st.workouts.find((x: any) => x.id === id) : null;
   const src = w || prefill || null;
@@ -35,15 +37,17 @@ export function TreinoForm({ id = null, prefill = null, fromFit = false, onCance
     const r = buildWorkout(f, extras, w ? w.id : null);
     if ('error' in r) { setErr(r.error); return; }
     setErr(null);
-    if (w) { commitWorkout(r.w, 'edit'); go('treino', r.w.id); return; }
+    const done = (wid: string) => (onSaved ? onSaved(wid) : go('treino', wid));
+    if (w) { commitWorkout(r.w, 'edit'); done(r.w.id); return; }
+    if (decided) { commitWorkout(r.w, decided.choice, decided.matchId, track); done(r.w.id); return; }
     const d = findDuplicate(r.w);
     if (d) { setDup({ w: r.w, match: d.match, same: d.same }); return; }
-    commitWorkout(r.w, 'new'); go('treino', r.w.id);
+    commitWorkout(r.w, 'new', undefined, track); done(r.w.id);
   };
   const pick = (choice: 'replace' | 'keep' | 'cancel') => {
     const d = dup!; setDup(null);
     if (choice === 'cancel') return; // mantém o formulário aberto para ajustes
-    commitWorkout(d.w, choice, d.match.id); go('treino', d.w.id);
+    commitWorkout(d.w, choice, d.match.id, track); if (onSaved) onSaved(d.w.id); else go('treino', d.w.id);
   };
 
   const inp = (k: string, props: Record<string, any> = {}) => (
@@ -53,7 +57,7 @@ export function TreinoForm({ id = null, prefill = null, fromFit = false, onCance
   // ---------------- resumo do arquivo (conferência) ----------------
   const q = src && src.quality;
   const sameDay = prefill ? st.workouts.filter((x: any) => x.date === f.date) : [];
-  const resumo = fromFit && prefill ? (
+  const resumo = fromFit && prefill && !hideResumo ? (
     <Card>
       <div className="row between"><span className="cap">Arquivo lido</span><span className="cap">{dayMon(prefill.date)} · {E.isBike(prefill) ? 'bike' : 'corrida'}</span></div>
       <div className="grid-4" style={{ gridTemplateColumns: 'repeat(3, minmax(0,1fr))' }}>
@@ -84,6 +88,7 @@ export function TreinoForm({ id = null, prefill = null, fromFit = false, onCance
         <div className="stack" style={{ gap: 0 }}><h1>{w ? 'Editar treino' : 'Novo treino'}</h1>{step ? <span className="sub">{step}</span> : null}</div>
       </div>
     </header>
+    {top}
     <form className="col" onSubmit={(e) => { e.preventDefault(); save(); }} noValidate>
       {resumo}
       <Card>

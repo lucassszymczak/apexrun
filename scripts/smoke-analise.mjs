@@ -45,7 +45,7 @@ try {
   const EMOJI = /[\p{Extended_Pictographic}\u{1F1E6}-\u{1F1FF}]/u;
   for (const r of ROUTES) {
     await page.goto(`http://localhost:${PORT}/analise/#/${r}`);
-    await page.waitForSelector('.main > *', { timeout: 15000 });
+    await page.waitForSelector('.main > *', { timeout: 15000, state: 'attached' });
     await page.waitForTimeout(80);
     const txt = await page.evaluate(() => document.querySelector('.app').innerText);
     const em = txt.match(EMOJI);
@@ -91,14 +91,113 @@ try {
   const bytes = Buffer.from(enc.close());
   await page.goto(`http://localhost:${PORT}/analise/#/importar`);
   await page.setInputFiles('#fitFile', { name: 'corrida.fit', mimeType: 'application/octet-stream', buffer: bytes });
+  await page.waitForSelector('h1:has-text("Conferência")', { timeout: 15000 });
+  ok('o .FIT é lido e abre a Conferência (passo 2)', await page.locator('text=Achados').count() > 0);
+  await page.getByRole('button', { name: 'Continuar' }).click();
   await page.waitForSelector('text=Arquivo lido', { timeout: 15000 });
-  ok('o .FIT é lido e abre o passo de completar', true);
+  ok('Continuar leva ao passo 3 · completar', true);
   await page.getByRole('button', { name: '6', exact: true }).click(); // RPE
   await page.getByRole('button', { name: 'Salvar treino' }).click();
   await page.waitForFunction(() => /#\/treino\//.test(location.hash), null, { timeout: 10000 });
   const saved = await page.evaluate(() => { const s = JSON.parse(localStorage.getItem('apex.analise.v1')); return s.workouts.find((w) => w.date === '2026-11-18'); });
   ok('depois de salvar, abre o Treino', true, await page.evaluate(() => location.hash));
   ok('treino gravado com os dados do relógio + RPE', saved && saved.distKm === 5 && saved.durationSec === 1800 && saved.rpe === 6 && !!saved.hrHist && !!saved.stream, saved ? saved.distKm + ' km · RPE ' + saved.rpe : 'não salvo');
+
+  // critério 11a: .FIT sem GPS → o gráfico assume o lugar do mapa
+  await page.waitForSelector('text=Treino sem GPS', { timeout: 10000 });
+  ok('treino sem GPS: mostra o estado "sem GPS" com o gráfico', await page.locator('.tv-empty [role="slider"]').count() > 0);
+
+  console.log('\n== Treino com mapa (sem rede, como em modo avião) ==');
+  // .FIT de corrida COM GPS: circuito de ~6 km, com subida e descida
+  const SEMI = 2147483648 / 180, enc2 = new Encoder(), st2 = new Date('2026-11-17T09:00:00Z'), N2 = 2100;
+  enc2.onMesg(Profile.MesgNum.FILE_ID, { manufacturer: 'development', product: 1, timeCreated: st2, type: 'activity' });
+  for (let i = 0; i <= N2; i++) {
+    const a = (i / N2) * 2 * Math.PI, lat = -25.39 + 0.0085 * Math.sin(a), lon = -51.46 + 0.0094 * Math.cos(a);
+    enc2.onMesg(Profile.MesgNum.RECORD, { timestamp: new Date(st2.getTime() + i * 1000), distance: 2.86 * i, enhancedSpeed: 2.6 + 0.6 * Math.sin(a * 3), heartRate: Math.round(135 + 30 * Math.sin(a * 2) ** 2), enhancedAltitude: 1100 + 25 * Math.sin(a), cadence: 86, positionLat: Math.round(lat * SEMI), positionLong: Math.round(lon * SEMI) });
+  }
+  enc2.onMesg(Profile.MesgNum.SESSION, { timestamp: new Date(st2.getTime() + N2 * 1000), startTime: st2, sport: 'running', totalDistance: 2.86 * N2, totalTimerTime: N2, totalElapsedTime: N2, avgHeartRate: 150, maxHeartRate: 166 });
+  const gpsFit = Buffer.from(enc2.close());
+  await page.goto(`http://localhost:${PORT}/analise/#/importar`);
+  await page.setInputFiles('#fitFile', { name: 'circuito.fit', mimeType: 'application/octet-stream', buffer: gpsFit });
+  await page.waitForSelector('h1:has-text("Conferência")', { timeout: 15000 });
+  ok('passo 2 · Conferência mostra o trajeto com GPS', await page.locator('text=Trajeto com GPS').count() > 0);
+  await page.getByRole('button', { name: 'Continuar' }).click();
+  await page.getByRole('button', { name: 'Salvar treino' }).click();
+  await page.waitForFunction(() => /#\/treino\//.test(location.hash));
+  const gpsId = await page.evaluate(() => location.hash.split('/').pop());
+  // sem rede, "Ruas" falha e o app troca sozinho para "Só trajeto"
+  await page.waitForSelector('.trackmap > svg', { timeout: 15000 });
+  ok('critério 5 · "Só trajeto" funciona sem internet (troca sozinho quando o mapa de ruas não carrega)', await page.locator('button[aria-pressed="true"]', { hasText: 'Só trajeto' }).count() === 1);
+  const nSeg = await page.locator('.trackmap > svg polyline').count();
+  ok('trajeto colorido desenhado', nSeg >= 2, nSeg - 1 + ' trecho(s) de cor');
+  const nKm = await page.locator('.trackmap > svg g text').count();
+  ok('marcos de km desenhados', nKm >= 5, nKm + ' marcos');
+  ok('largada e chegada desenhadas', await page.locator('.trackmap > svg > circle').count() >= 2);
+  // critério 7: os 4 modos de cor mudam a legenda
+  const legend = async () => page.locator('.tv-panel .tv-legend .sr-only').innerText();
+  const L = {};
+  for (const name of ['FC', 'Pace', 'Zona', 'Inclinação']) { await page.getByRole('button', { name, exact: true }).click(); L[name] = await legend(); }
+  ok('critério 7 · os 4 modos de cor trocam a legenda', new Set(Object.values(L)).size === 4, Object.values(L).map((x) => x.split(':')[0]).join(' | '));
+  ok('inclinação usa as 5 faixas do motor', /< −5%, −5 a −2%, ±2%, 2 a 5%, > 5%/.test(L['Inclinação']));
+  // critério 6: replay ~10 s; arrastar o gráfico move o ponto; tocar no trajeto move o cursor do gráfico
+  const slider = page.locator('.tv-panel input[type="range"]');
+  const max = +(await slider.getAttribute('max'));
+  await page.getByRole('button', { name: 'Reproduzir o trajeto' }).first().click();
+  const t0 = Date.now();
+  await page.waitForFunction((m) => { const el = document.querySelector('.tv-panel input[type="range"]'); return el && +el.value >= m; }, max, { timeout: 20000, polling: 100 });
+  const secs = (Date.now() - t0) / 1000;
+  ok('critério 6 · o play percorre o trajeto inteiro em ~10 s (1×)', secs > 8 && secs < 12.5, secs.toFixed(1) + ' s');
+  const curPos = () => page.evaluate(() => { const c = [...document.querySelectorAll('.trackmap > svg > circle')].find((x) => x.getAttribute('fill') === 'var(--ciano)'); return c ? c.getAttribute('cx') + ',' + c.getAttribute('cy') : null; });
+  const chart = page.locator('.tv-panel svg[role="slider"]');
+  const bb = await chart.boundingBox();
+  const posBefore = await curPos();
+  await chart.click({ position: { x: bb.width * 0.3, y: bb.height / 2 } });
+  const posAfter = await curPos();
+  const v30 = +(await slider.inputValue());
+  ok('arrastar/tocar no gráfico move o ponto no mapa', posBefore !== posAfter && v30 > max * 0.2 && v30 < max * 0.4, Math.round(v30 / max * 100) + '% do treino');
+  // toca num ponto do trajeto (a ~70% do circuito) → o cursor do gráfico vai para lá
+  const tap = await page.evaluate(() => { const svg = document.querySelector('.trackmap > svg'); const pl = svg.querySelectorAll('polyline'); const pts = [...pl].slice(1).flatMap((p) => p.getAttribute('points').trim().split(' ')); const vis = (k) => { const [x, y] = pts[k].split(',').map(Number); const pt = svg.createSVGPoint(); pt.x = x; pt.y = y; const q = pt.matrixTransform(svg.getScreenCTM()); const el = document.elementFromPoint(q.x, q.y); return el && el.closest('.trackmap') ? { x: q.x, y: q.y, k } : null; };
+    for (let k = Math.floor(pts.length * 0.6); k < Math.floor(pts.length * 0.9); k++) { const r = vis(k); if (r) return { ...r, frac: k / pts.length }; } return null; });
+  await page.mouse.click(tap.x, tap.y);
+  const vTap = +(await slider.inputValue());
+  const ro = await page.locator('.tv-panel [role="slider"]').getAttribute('aria-valuetext');
+  ok('tocar no trajeto move o cursor do gráfico', Math.abs(vTap / max - tap.frac) < 0.1, 'tocou a ' + Math.round(tap.frac * 100) + '% do traçado → cursor a ' + Math.round(vTap / max * 100) + '% · ' + ro);
+  // espaço = play/pausa
+  await page.locator('.tv-title').click();
+  await page.keyboard.press('Space'); await page.waitForTimeout(400);
+  const vSpace = +(await slider.inputValue());
+  await page.keyboard.press('Space');
+  ok('teclado: espaço inicia/pausa o replay', vSpace > vTap);
+
+  console.log('\n== treino antigo sem trajeto + Reimportar .FIT ==');
+  const wBefore = await page.evaluate((id) => JSON.stringify(JSON.parse(localStorage.getItem('apex.analise.v1')).workouts.find((w) => w.id === id)), gpsId);
+  await page.evaluate((id) => new Promise((res) => { const rq = indexedDB.open('apex-performance'); rq.onsuccess = () => { const tx = rq.result.transaction('tracks', 'readwrite'); tx.objectStore('tracks').delete(id); tx.oncomplete = res; }; }), gpsId);
+  await page.goto(`http://localhost:${PORT}/analise/#/treinos`); await page.goto(`http://localhost:${PORT}/analise/#/treino/${gpsId}`);
+  await page.waitForSelector('text=Reimporte o .FIT para ver o mapa; nada nas análises muda.', { timeout: 10000 });
+  ok('critério 11 · treino antigo sem trajeto mostra o aviso de reimportar', true);
+  await page.setInputFiles('#reimportFile', { name: 'outro.fit', mimeType: 'application/octet-stream', buffer: bytes });
+  await page.waitForEvent('dialog', { timeout: 10000 }).then((d) => { ok('reimportar um .FIT de OUTRO treino é recusado', /não parece ser deste treino/.test(d.message()), d.message().slice(0, 80)); return d.dismiss(); });
+  await page.setInputFiles('#reimportFile', { name: 'circuito.fit', mimeType: 'application/octet-stream', buffer: gpsFit });
+  await page.waitForSelector('.trackmap > svg', { timeout: 15000 });
+  const wAfter = await page.evaluate((id) => JSON.stringify(JSON.parse(localStorage.getItem('apex.analise.v1')).workouts.find((w) => w.id === id)), gpsId);
+  ok('reimportar o .FIT certo traz o mapa de volta', true);
+  ok('reimportar não muda nada no treino (byte a byte)', wBefore === wAfter);
+
+  console.log('\n== desempenho do mapa ==');
+  // trajetos do cenário sintético → IndexedDB; mede o longão de 2h (~20 km, ~7200 pontos)
+  await page.evaluate(async () => {
+    const E = await import('/analise/engine.mjs'); const S = await import('/analise/golden/synthetic.mjs');
+    const T = await import('/analise/app/track.ts'); const D = await import('/analise/app/db.ts');
+    const jobs = []; S.buildSynthetic(E, { onMessages: (id, m) => jobs.push([id, m]) });
+    for (const [id, m] of jobs) await D.putTrack(id, T.buildTrack(m));
+  });
+  await page.reload(); await page.waitForSelector('.main > *', { state: 'attached' });
+  await page.goto(`http://localhost:${PORT}/analise/#/treinos`);
+  const tOpen = Date.now();
+  await page.goto(`http://localhost:${PORT}/analise/#/treino/syn22`);
+  await page.waitForSelector('.trackmap > svg polyline', { timeout: 10000 });
+  const ms = Date.now() - tOpen;
+  ok('trajeto de ~20 km (2h, ~7200 pontos) aparece em menos de 1 s ("Só trajeto")', ms < 1000, ms + ' ms');
 
   console.log('\n== Folha do KPI ==');
   await page.goto(`http://localhost:${PORT}/analise/#/hoje`);

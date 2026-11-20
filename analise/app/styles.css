@@ -233,3 +233,74 @@ pre.formula { margin: 0; white-space: pre-wrap; font: 400 13px/18px var(--font-b
 .scale-track i:first-child { border-radius: 4px 0 0 4px; } .scale-track i:last-of-type { border-radius: 0 4px 4px 0; }
 .scale-mk { position: absolute; top: -4px; width: 4px; height: 16px; margin-left: -2px; border-radius: 2px; background: var(--texto); border: 1px solid var(--noite); }
 .scale-labels { display: flex; justify-content: space-between; font-size: 11px; line-height: 14px; color: var(--texto-3); gap: 4px; }
+
+/* ======================= TREINO com mapa (Etapa 2) ======================= */
+.app.immersive .main { padding: 0; max-width: none; margin: 0; gap: 0; }
+.main-pad { padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+.trackmap { position: absolute; inset: 0; background: var(--noite); overflow: hidden; touch-action: none; }
+.trackmap > svg { width: 100%; height: 100%; display: block; cursor: crosshair; }
+.trackmap.tv-empty { display: flex; align-items: center; justify-content: center; touch-action: auto; overflow-y: auto; padding: 72px 0 calc(var(--drawer-h, 0px) + 16px); }
+.mapzoom { position: absolute; right: 12px; top: 128px; display: flex; flex-direction: column; gap: 6px; }
+.mapzoom button { width: 44px; height: 44px; border-radius: var(--radius-sm); border: 1px solid var(--linha); background: var(--painel-mapa); color: var(--texto); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
+/* marcadores do MapLibre */
+.mk.km { width: 22px; height: 22px; border-radius: 50%; background: var(--noite); border: 1.5px solid var(--texto); color: var(--texto); font: 500 11px/19px var(--font-brand); text-align: center; }
+.mk.ini { width: 14px; height: 14px; border-radius: 50%; background: var(--texto); border: 2.5px solid var(--noite); }
+.mk.fim { width: 16px; height: 16px; border-radius: 50%; background: var(--noite); border: 3px solid var(--texto); }
+.mk.cur { width: 16px; height: 16px; border-radius: 50%; background: var(--ciano); border: 3px solid var(--noite); }
+
+.tv { position: relative; }
+.tv-map { position: fixed; top: 0; left: 0; right: 0; height: calc(100vh - var(--drawer-h) + 22px); z-index: 1; transition: height .2s; }
+.tv-top { position: absolute; top: 12px; left: 12px; right: 12px; z-index: 5; display: flex; align-items: center; gap: 4px; background: var(--painel-mapa); border: 1px solid var(--linha); border-radius: 14px; padding: 2px 4px; }
+.tv-title { font-size: 16px; line-height: 20px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tv-ctl-top { position: absolute; top: 76px; left: 12px; z-index: 5; }
+.seg.on-map { background: var(--painel-mapa); }
+.tv-ctl-colors { position: absolute; left: 12px; right: 12px; z-index: 5; display: flex; gap: 6px; flex-wrap: wrap; bottom: 32px; }
+.chip.on-map { background: var(--painel-mapa); color: var(--texto); }
+.chip.on-map[aria-pressed="true"] { background: var(--texto); color: var(--noite); }
+.tv-legend { display: flex; align-items: center; gap: 4px; font-size: 11px; line-height: 14px; }
+.tv-legend i { display: inline-block; width: 16px; height: 6px; border-radius: 2px; }
+.tv-replay { display: flex; align-items: center; gap: 12px; }
+.tv-replay input[type="range"] { width: 100%; accent-color: var(--ciano); margin: 0; min-height: 24px; }
+.tv-replay .seg button { min-height: 32px; padding: 0 10px; }
+.tv-play { width: 44px; height: 44px; flex-shrink: 0; border-radius: 50%; border: 0; background: var(--ciano); color: var(--noite); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
+.tv-nums { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; font-variant-numeric: tabular-nums; }
+.tv-nums .kpi.block { flex-direction: column; align-items: flex-start; gap: 0; }
+.tv-n { display: block; font-size: 22px; line-height: 26px; font-weight: 500; }
+.tv-l { display: block; font-size: 11px; line-height: 14px; color: var(--texto-2); }
+.kpi.tv-chip { background: var(--superficie-2); border-radius: var(--radius-sm); padding: 7px 10px; font-size: 13px; line-height: 18px; }
+.tv-blocks { display: flex; flex-direction: column; gap: 12px; }
+.tv-blocks .card { background: var(--superficie-2); }
+.tv-blocks .card .stat, .tv-blocks .card .kpi.stat { background: var(--superficie); }
+.tv-panel .card { background: var(--superficie-2); }
+.tv-replaybar { display: none; }
+
+/* gaveta (celular): 3 alturas */
+.tv { --drawer-h: 248px; }
+.tv.snap-mid { --drawer-h: 58vh; }
+.tv.snap-max { --drawer-h: calc(100vh - 72px); }
+.tv-panel { position: fixed; left: 0; right: 0; bottom: 0; z-index: 10; height: var(--drawer-h); background: var(--superficie); border-radius: var(--radius-xl) var(--radius-xl) 0 0; border-top: 1px solid var(--linha); display: flex; flex-direction: column; transition: height .2s; }
+.tv-handle { align-self: stretch; height: 28px; border: 0; background: transparent; color: var(--texto-3); display: flex; align-items: center; justify-content: center; gap: 6px; cursor: grab; touch-action: none; flex-shrink: 0; }
+.tv-handle i { width: 36px; height: 4px; border-radius: 2px; background: var(--linha); }
+.tv-panel-in { overflow-y: auto; padding: 0 16px calc(24px + env(safe-area-inset-bottom)); display: flex; flex-direction: column; gap: 12px; flex: 1; overscroll-behavior: contain; }
+.tv-map .mapzoom { top: auto; bottom: 84px; }
+@media (prefers-reduced-motion: reduce) { .tv-panel, .tv-map { transition: none; } }
+
+/* computador: mapa ao centro + painel fixo à direita; replay sobre o mapa */
+@media (min-width: 1024px) {
+  .tv { display: grid; grid-template-columns: minmax(0, 1fr) 420px; height: 100vh; --drawer-h: 0px; }
+  .tv-map { position: relative; inset: auto; height: 100vh; transition: none; }
+  .tv-panel { position: relative; height: 100vh; border-radius: 0; border-top: 0; border-left: 1px solid var(--linha); }
+  .tv-panel-in { padding: 20px; }
+  .tv-panel-in > .tv-legend, .tv-panel-in > .tv-replay { display: none; }
+  .tv-top { right: auto; width: min(520px, calc(100% - 24px)); }
+  .tv-ctl-colors { bottom: 112px; left: 12px; right: auto; }
+  .tv-replaybar { display: flex !important; flex-direction: column; gap: 8px; position: absolute; left: 12px; right: 12px; bottom: 12px; z-index: 5; background: var(--painel-mapa); border: 1px solid var(--linha); border-radius: var(--radius-md); padding: 10px 14px; }
+  .tv-map .mapzoom { bottom: auto; top: 76px; }
+}
+.app.immersive .bottomnav { display: none; }
+.trackmap.ruas .maplibregl-ctrl-top-right { top: 76px; }
+@media (max-width: 1023px) { .trackmap.ruas .maplibregl-ctrl-top-right { top: 128px; } }
+.trackmap.ruas .maplibregl-ctrl-attrib { background: var(--painel-mapa); color: var(--texto-2); border: 1px solid var(--linha); }
+.trackmap.ruas .maplibregl-ctrl-attrib a { color: var(--texto-2); }
+.trackmap.ruas .maplibregl-ctrl-attrib-button { filter: invert(var(--attrib-invert, 1)); }
+[data-theme="light"] .trackmap.ruas { --attrib-invert: 0; }
