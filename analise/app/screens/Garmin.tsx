@@ -138,7 +138,7 @@ function Conectado({ st, reload, onTrocar }: { st: GarminStatus; reload: () => v
     {resumo || fila.length || garminLocal().erro ? (
       <Card>
         <CardH title="Última sincronização" right={resumo ? <span className="apoio muted">{haQuanto(resumo.at)}</span> : undefined} />
-        {garminLocal().erro && !vencida ? <p className="apoio row" style={{ gap: 8, color: 'var(--atencao)' }}><IconAlertTriangle size={18} stroke={1.75} aria-hidden="true" />{garminLocal().erro!.msg} O app tenta de novo mais tarde.</p> : null}
+        {garminLocal().erro && !vencida ? <p className="apoio row" style={{ gap: 8, color: 'var(--atencao)' }}><IconAlertTriangle size={18} stroke={1.75} aria-hidden="true" />{garminLocal().erro!.msg}</p> : null}
         {resumo ? <p className="apoio">{resumoTexto(resumo)}{resumo.salvos ? ' · ' + resumo.salvos + ' antigo' + (resumo.salvos === 1 ? '' : 's') + ' salvo' + (resumo.salvos === 1 ? '' : 's') + ' direto' : ''}</p> : null}
         {fila.length ? <ul className="list" style={{ listStyle: 'none', padding: 0, margin: 0 }}>{fila.slice(0, 5).map((q) => (
           <li key={q.id}><a className="item-row" href={href('completar', q.id)} style={{ minHeight: 44 }}><span className="grow">{(q.w && q.w.modal === 'bike' ? 'Pedal' : 'Corrida') + ' · ' + dayMon(q.w && q.w.date)}</span><span className="tn apoio">{q.w && q.w.distKm ? String(q.w.distKm.toFixed(2)).replace('.', ',') + ' km' : ''}</span><span className="badge atencao">Para completar</span></a></li>))}</ul> : null}

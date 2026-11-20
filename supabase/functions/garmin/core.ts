@@ -239,10 +239,11 @@ async function doFit(body: any, token: string, deps: Deps, ctx: Ctx) {
 // Nota do treino que você dá no relógio/Garmin Connect: só os 3 campos de percepção do
 // resumo da atividade (SummaryDTO: directWorkoutRpe, directWorkoutFeel, perceivedWorkoutEffort).
 async function doRpe(body: any, token: string, deps: Deps, ctx: Ctx) {
-  const ids: string[] = (Array.isArray(body.activityIds) ? body.activityIds : []).map(String).filter((x: string) => /^\d{1,20}$/.test(x)).slice(0, 20);
+  const ids: string[] = (Array.isArray(body.activityIds) ? body.activityIds : []).map(String).filter((x: string) => /^\d{1,20}$/.test(x)).slice(0, 10);
   if (!ids.length) return erro(ctx, 400, 'entrada_invalida', 'Informe as atividades.');
   const out: any[] = [];
-  for (const id of ids) {
+  for (const [k, id] of ids.entries()) {
+    if (k) await new Promise((res) => setTimeout(res, 400)); // sem rajada: o Garmin limita chamadas seguidas
     const r = await gfetch(deps, DETAIL_PATH + id, { headers: { Authorization: 'Bearer ' + token, Accept: 'application/json' } });
     const j = await r.json(); const sm = (j && j.summaryDTO) || {};
     out.push({ id, rpe: sm.directWorkoutRpe ?? null, feel: sm.directWorkoutFeel ?? null, esforco: sm.perceivedWorkoutEffort ?? null });

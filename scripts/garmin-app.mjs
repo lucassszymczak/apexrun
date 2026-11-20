@@ -47,7 +47,7 @@ const vite = spawn(process.execPath, [resolve(root, 'node_modules/vite/bin/vite.
 await new Promise((res) => vite.stdout.on('data', (b) => { if (/Local:/.test(String(b))) res(); }));
 const browser = await chromium.launch();
 const calls = [];
-let mode = { status: 'ok', keyDays: 360, listErr: null, offline: false };
+let mode = { status: 'ok', keyDays: 360, listErr: null, offline: false, fitLimit: false };
 async function page0(state = payload) {
   const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, timezoneId: GOLDEN_TZ, locale: 'pt-BR' });
   await ctx.addInitScript((p) => { if (!sessionStorage.getItem('__g')) { localStorage.clear(); localStorage.setItem('apex.analise.v1', p); localStorage.setItem('apex.analise.synccode', 'ABCD-EFGH-JKLM-NPQR'); localStorage.setItem('apex.theme', 'dark'); sessionStorage.setItem('__g', '1'); } }, state);
@@ -64,6 +64,7 @@ async function page0(state = payload) {
     if (b.action === 'status') return J({ conectado: true, status: mode.status, keyExpiresAt: new Date(Date.parse(GOLDEN_NOW) + mode.keyDays * 86400000).toISOString(), filtros: { corrida: true, bike: true } });
     if (b.action === 'list') return mode.listErr ? J({ erro: mode.listErr, mensagem: 'O Garmin está fora do ar agora.', retryAt: GOLDEN_NOW }, 503) : J({ atividades: ACTS.map(({ rpe, ...a }) => a) });
     if (b.action === 'rpe') return J({ notas: b.activityIds.map((id) => ({ id, rpe: (ACTS.find((a) => a.id === id) || {}).rpe ?? null, feel: 75 })) });
+    if (b.action === 'fit' && mode.fitLimit) return J({ erro: 'limite', mensagem: 'O Garmin pediu para esperar um pouco.', retryAt: GOLDEN_NOW }, 503);
     if (b.action === 'fit') return r.fulfill({ contentType: 'application/octet-stream', body: Buffer.from(FITS[b.activityId] || []) });
     return J({ ok: true });
   });
@@ -142,6 +143,19 @@ try {
   await page.goto(`http://localhost:${PORT}/analise/#/hoje`); await waitSync(page);
   const e1 = await page.evaluate(() => JSON.parse(localStorage.getItem('apex.garmin.v1')).erro);
   ok('Garmin fora do ar: abre normal, aviso discreto, sem repetir', e1 && e1.codigo === 'garmin_fora' && !errors.length && (await page.locator('.ready').count()) === 1, e1 && e1.msg);
+  await ctx.close();
+  mode = { status: 'ok', keyDays: 360, listErr: null, offline: false, fitLimit: true };
+  ({ ctx, page, errors } = await page0());
+  await page.goto(`http://localhost:${PORT}/analise/#/hoje`); await waitSync(page);
+  const lim = await page.evaluate(() => JSON.parse(localStorage.getItem('apex.garmin.v1')));
+  const sL = await st(page);
+  ok('Garmin pede pausa no meio: guarda o que já entrou (ligações e notas) e avisa sem travar', lim.erro && lim.erro.codigo === 'limite' && lim.resumo && lim.resumo.pendentes === 2 && sL.workouts.find((w) => w.id === 'syn21').garminActivityId === '7001' && !errors.length, lim.resumo && 'pendentes ' + lim.resumo.pendentes);
+  mode.fitLimit = false;
+  await page.evaluate(() => { const l = JSON.parse(localStorage.getItem('apex.garmin.v1')); delete l.lastRun; localStorage.setItem('apex.garmin.v1', JSON.stringify(l)); });
+  await page.reload(); await page.waitForSelector('.main > *');
+  await page.waitForFunction(() => { const l = JSON.parse(localStorage.getItem('apex.garmin.v1')); return l.resumo && !l.erro && l.resumo.novos === 2; }, null, { timeout: 30000 }).catch(() => {});
+  const l3 = await page.evaluate(() => JSON.parse(localStorage.getItem('apex.garmin.v1')));
+  ok('na abertura seguinte, continua de onde parou', l3.resumo.novos === 2 && !l3.erro, JSON.stringify({ novos: l3.resumo.novos, existiam: l3.resumo.existiam }));
   await ctx.close();
   mode = { status: 'ok', keyDays: 360, listErr: null, offline: true };
   ({ ctx, page, errors } = await page0());

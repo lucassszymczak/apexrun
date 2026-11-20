@@ -20,8 +20,8 @@ export const RECENTE_DIAS = 14;
 export const INTERVALO_MIN = 15;
 const LS = 'apex.garmin.v1'; // estado local do app (não é dado de treino): última execução, status, ignorados
 
-export type Resumo = { novos: number; fila: number; salvos: number; existiam: number; rpe: number; falhas: number; at: string };
-type Local = { lastRun?: string; status?: GarminStatus | null; resumo?: Resumo | null; erro?: { codigo: string; msg: string } | null };
+export type Resumo = { novos: number; fila: number; salvos: number; existiam: number; rpe: number; falhas: number; pendentes?: number; at: string };
+type Local = { rpeVisto?: Record<string, string>; lastRun?: string; status?: GarminStatus | null; resumo?: Resumo | null; erro?: { codigo: string; msg: string } | null };
 function readLocal(): Local { try { return JSON.parse(localStorage.getItem(LS) || '{}') || {}; } catch { return {}; } }
 function writeLocal(p: Partial<Local>) { try { localStorage.setItem(LS, JSON.stringify({ ...readLocal(), ...p })); } catch { /* sem storage */ } }
 
@@ -72,12 +72,23 @@ export async function runGarminSync(opts: { force?: boolean; now?: Date } = {}):
       if (d && d.same && !d.match.garminActivityId) { ligar.push([a, d.match]); res.existiam++; continue; }
       novos.push(a);
     }
-    // 3) notas (RPE) do Garmin para tudo o que pode receber nota
-    const precisa = [...atividades.filter((a) => porId.has(a.id)).map((a) => a.id), ...ligar.map(([a]) => a.id), ...novos.map((a) => a.id)];
+    // 3) notas (RPE) do Garmin — só o que precisa: novos, recém-ligados, treinos dos últimos
+    //    14 dias (você pode mudar a nota depois) e os que nunca foram conferidos. Em lotes de
+    //    10, com pausa: o Garmin limita chamadas seguidas (visto em 20/11, resposta 429).
+    const limite14 = new Date(now.getTime() - RECENTE_DIAS * 86400000).toISOString().slice(0, 10);
+    const visto = { ...(loc.rpeVisto || {}) };
+    const precisa = [
+      ...atividades.filter((a) => porId.has(a.id) && (!visto[a.id] || dateOf(a) >= limite14)).map((a) => a.id),
+      ...ligar.map(([a]) => a.id), ...novos.map((a) => a.id),
+    ];
     const notas = new Map<string, number | null>();
-    for (let i = 0; i < precisa.length; i += 20) {
-      try { for (const n of (await garminRpe(precisa.slice(i, i + 20))).notas) notas.set(n.id, rpe10(n.rpe)); } catch (e) { if (!(e instanceof GarminError)) throw e; break; }
+    let pausaGarmin = false;
+    for (let i = 0; i < precisa.length; i += 10) {
+      if (i) await pausa(2500);
+      try { for (const n of (await garminRpe(precisa.slice(i, i + 10))).notas) { notas.set(n.id, rpe10(n.rpe)); visto[n.id] = now.toISOString().slice(0, 10); } }
+      catch (e) { if (!(e instanceof GarminError)) throw e; if (e.codigo === 'limite' || e.codigo === 'garmin_fora') pausaGarmin = true; break; }
     }
+    writeLocal({ rpeVisto: visto });
     // 4) liga os importados à mão e atualiza as notas dos já salvos
     let mudou = false;
     const agora = now.toISOString();
@@ -92,7 +103,7 @@ export async function runGarminSync(opts: { force?: boolean; now?: Date } = {}):
     set({ total: novos.length, feito: 0 });
     const limite = new Date(now.getTime() - RECENTE_DIAS * 86400000).toISOString().slice(0, 10);
     for (const a of novos) {
-      if (parar) break;
+      if (parar || pausaGarmin) break;
       try {
         const buf = await garminFit(a.id);
         const r = await readFit(new File([buf], a.id + '.fit'));
@@ -109,17 +120,20 @@ export async function runGarminSync(opts: { force?: boolean; now?: Date } = {}):
           else res.falhas++;
         }
       } catch (e) {
+        if (e instanceof GarminError && (e.codigo === 'limite' || e.codigo === 'garmin_fora')) { pausaGarmin = true; break; }
         if (e instanceof GarminError && e.codigo !== 'entrada_invalida') throw e;
         res.falhas++;
       }
       set({ feito: view.feito + 1 });
-      await pausa(1000);
+      await pausa(1500);
     }
-    writeLocal({ resumo: res, erro: null });
+    res.pendentes = Math.max(0, novos.length - res.novos - res.falhas);
+    // pausa pedida pelo Garmin: guarda o que já entrou e continua sozinho na próxima abertura
+    writeLocal({ resumo: res, erro: pausaGarmin ? { codigo: 'limite', msg: 'O Garmin pediu uma pausa. O que já chegou está salvo; o app continua sozinho na próxima abertura (ou em Sincronizar agora daqui a alguns minutos).' } : null });
     return res;
   } catch (e: any) {
     // sem internet: silêncio (tenta de novo na próxima abertura); o resto vira aviso discreto
-    if (e instanceof GarminError && e.codigo !== 'sem_internet') writeLocal({ erro: { codigo: e.codigo, msg: e.message } });
+    if (e instanceof GarminError && e.codigo !== 'sem_internet') writeLocal({ erro: { codigo: e.codigo, msg: e.codigo === 'limite' ? 'O Garmin pediu uma pausa. O app continua sozinho na próxima abertura (ou em Sincronizar agora daqui a alguns minutos).' : e.codigo === 'garmin_fora' ? 'O Garmin não respondeu agora. O app tenta de novo sozinho mais tarde.' : e.message } });
     if (e instanceof GarminError && e.codigo === 'sem_internet') writeLocal({ lastRun: undefined });
     return null;
   } finally {
@@ -133,6 +147,7 @@ export function resumoTexto(r: Resumo): string {
   p.push(r.existiam + ' já existia' + (r.existiam === 1 ? '' : 'm') + ' (ignorado' + (r.existiam === 1 ? ')' : 's)'));
   if (r.rpe) p.push(r.rpe + ' nota' + (r.rpe === 1 ? '' : 's') + ' de RPE atualizada' + (r.rpe === 1 ? '' : 's'));
   if (r.falhas) p.push(r.falhas + ' não abriu');
+  if (r.pendentes) p.push(r.pendentes + ' ainda por baixar');
   return p.join(' · ');
 }
 
