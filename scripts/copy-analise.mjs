@@ -1,6 +1,7 @@
-// Copia a página de análise autônoma para dentro do build do Vite (dist/),
-// para que o mesmo deploy do GitHub Pages a sirva em /apexrun/analise/.
-// Roda como "postbuild" (npm executa após "build").
+// Copia a página de análise ANTIGA (legacy/analise-v1/) para dentro do build do
+// Vite (dist/analise-v1/), para que o mesmo deploy do GitHub Pages a sirva em
+// /apexrun/analise-v1/ — o plano B da Fase 1. O app novo é gerado pelo próprio
+// Vite em dist/analise/. Roda como "postbuild" (npm executa após "build").
 //
 // Também injeta as chaves PÚBLICAS do Supabase (do ambiente, como no build do
 // Vite) para habilitar a sincronização opcional entre aparelhos. A chave anon é
@@ -11,9 +12,9 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const srcDir = resolve(root, 'analise');
+const srcDir = resolve(root, 'legacy/analise-v1');
 const src = resolve(srcDir, 'index.html');
-const destDir = resolve(root, 'dist/analise');
+const destDir = resolve(root, 'dist/analise-v1');
 const dest = resolve(destDir, 'index.html');
 
 // Assets estáticos da página autônoma (ícones do app + manifest PWA) que

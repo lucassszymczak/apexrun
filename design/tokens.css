@@ -1,0 +1,84 @@
+/* Apex Performance — tokens da marca (fonte: design system "Apex Performance", 19/11/2026) */
+
+:root,
+[data-theme="dark"] {
+  --noite: #0d0f1a;
+  --superficie: #161a26;
+  --superficie-2: #1f2433;
+  --linha: #2a3042;
+  --texto: #f2f2f7;
+  --texto-2: #a3a9b8;
+  --texto-3: #80879a;
+  --magenta: #e8459a;
+  --on-magenta: #0d0f1a;
+  --ciano: #22d3ee;
+  --violeta: #5b3fd0;
+  --foco: var(--ciano);
+  --zona-1: #a5f3fc;
+  --zona-2: #22d3ee;
+  --zona-3: #8b7cf6;
+  --zona-4: #c24fc8;
+  --zona-5: #e0337f;
+  --ok: #34d399;
+  --atencao: #fbbf24;
+  --alerta: #f87171;
+  --painel-mapa: rgba(13, 15, 26, 0.86);
+  color-scheme: dark;
+}
+
+[data-theme="light"] {
+  --noite: #f6f7fb;
+  --superficie: #ffffff;
+  --superficie-2: #eef0f5;
+  --linha: #dadde6;
+  --texto: #0d0f1a;
+  --texto-2: #4b5263;
+  --texto-3: #6b7182;
+  --magenta: #c42a7c;
+  --on-magenta: #ffffff;
+  --ciano: #0891b2;
+  --violeta: #5b3fd0;
+  --zona-1: #0891b2;
+  --zona-2: #4c67d6;
+  --zona-3: #6d4bd8;
+  --zona-4: #9a3dbd;
+  --zona-5: #b0226c;
+  --ok: #047857;
+  --atencao: #b45309;
+  --alerta: #b91c1c;
+  --painel-mapa: rgba(246, 247, 251, 0.9);
+  color-scheme: light;
+}
+
+:root {
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 22px;
+  --radius-pill: 999px;
+
+  --font-brand: "Outfit", system-ui, sans-serif;
+}
+
+/* Estilos de texto (tamanho / altura de linha / peso) */
+.display { font: 500 48px/52px var(--font-brand); letter-spacing: -0.5px; }
+.titulo-1 { font: 500 32px/38px var(--font-brand); }
+.titulo-2 { font: 500 20px/26px var(--font-brand); }
+.subtitulo { font: 500 16px/22px var(--font-brand); }
+.corpo { font: 400 15px/22px var(--font-brand); }
+.apoio { font: 400 13px/18px var(--font-brand); }
+.legenda { font: 500 11px/14px var(--font-brand); letter-spacing: 0.4px; }
+.numero-grande { font: 500 40px/44px var(--font-brand); font-variant-numeric: tabular-nums; }
+.numero { font: 500 20px/24px var(--font-brand); font-variant-numeric: tabular-nums; }
+
+:focus-visible {
+  outline: 2px solid var(--foco);
+  outline-offset: 2px;
+}

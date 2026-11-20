@@ -40,3 +40,6 @@ pnpm-debug.log*
 *.tcx
 *.gpx
 !tests/fixtures/**
+
+# Dados pessoais do Lucas para o golden master (backup do app, .FIT, fotos) — nunca vão para o git
+fixtures/privado/

@@ -1,0 +1,9094 @@
+{
+ "meta": {
+  "source": "legacy/analise-v1/index.html",
+  "now": "2026-11-19T12:00:00-03:00",
+  "tz": "America/Sao_Paulo",
+  "pageErrors": [],
+  "browser": "chromium 157.0.8103.78",
+  "sameBrowserCheck": {
+   "identical": true,
+   "diffs": []
+  }
+ },
+ "engine": {
+  "meta": {
+   "nWorkouts": 27,
+   "nDaily": 75,
+   "hasRace": true
+  },
+  "workouts": [
+   {
+    "key": "@w0:2026-09-07",
+    "type": "facil",
+    "modal": "corrida",
+    "gap": {
+     "gapTimeSec": 2865.033650271285,
+     "gapSpeed": 2.7155003918586877,
+     "gapPace": 368.2562532482371,
+     "confidence": "alta"
+    },
+    "ef": 0.018857641610129774,
+    "decoupling": 1.7051875896729733,
+    "pacing": {
+     "label": "negative split",
+     "deltaPct": -1.0781134437048459,
+     "closer": false,
+     "lastGainSec": -0.5128205128204968
+    },
+    "paceStability": {
+     "stdSec": 3.5160402880509114,
+     "cvPct": 0.9547247357679262
+    },
+    "trimp": 55.76985594120923,
+    "hrCostKm": 53.02890046774614,
+    "zoneSeconds": [
+     1599,
+     1282,
+     0,
+     0,
+     0
+    ],
+    "hill": {
+     "climbKm": 0,
+     "gainM": 20,
+     "effVsModel": null,
+     "speedLossPctPerGrade": null,
+     "hrExtra": null
+    },
+    "kmH": 9.725,
+    "dayReadiness": {
+     "rd": {
+      "score": 77,
+      "band": "Moderate"
+     },
+     "tsb": 0,
+     "sleepH": 7.4
+    },
+    "typeLabel": "Fácil",
+    "hydro": {
+     "has": false,
+     "total": null,
+     "rate": null,
+     "status": null,
+     "plan": {
+      "kg": 82,
+      "durMin": 48,
+      "temp": 27,
+      "tempKnown": true,
+      "antesTarget": 492,
+      "rate": null,
+      "durFloor": 400,
+      "estSweat": 1023,
+      "deficit": 1023,
+      "depoisTarget": 1279
+     },
+     "durStat": {
+      "label": "—",
+      "c": "var(--muted)"
+     },
+     "antesStat": {
+      "label": "—",
+      "c": "var(--muted)"
+     },
+     "depoisStat": {
+      "label": "—",
+      "c": "var(--muted)"
+     },
+     "nextDay": {
+      "date": "2026-09-08",
+      "restingDelta": -1,
+      "hrvDeltaPct": -7.142857142857142,
+      "restingHR": 65,
+      "hrv": 52
+     }
+    },
+    "stream": {
+     "n": 961,
+     "paceGap": {
+      "paceSec": 368.76545530594944,
+      "vGap": 2.71175075,
+      "confidence": "Alta",
+      "minInBand": 34,
+      "method": "mediana"
+     },
+     "eff": {
+      "vgapMean": 2.7101068501971093,
+      "hrMean": 144.47174770039422,
+      "spmMean": 176.1208935611038,
+      "mPerBeat": 1.1255239422246075,
+      "stepsPerBeat": 1.2190680625414987,
+      "mPerStep": 0.9232658756379266,
+      "validMin": 38.1,
+      "n": 761
+     },
+     "mech": {
+      "pct": null,
+      "confidence": "Dados insuficientes",
+      "validMin": 38.1
+     },
+     "imp": {
+      "vPadrao": 2.721116,
+      "minInBand": 19.8,
+      "confidence": "Moderada"
+     },
+     "cad": {
+      "spm": null,
+      "confidence": "Dados insuficientes",
+      "minInRange": 0,
+      "adherencePct": 71.8
+     },
+     "hrLag": {
+      "lagSec": 27,
+      "corr": 0.604
+     },
+     "motor": [
+      {
+       "name": "Aquecimento",
+       "targetHr": null,
+       "speed": 2.641,
+       "pace": 379,
+       "hrMean": 144,
+       "min": 10,
+       "flagged": false
+      },
+      {
+       "name": "135 bpm",
+       "targetHr": 135,
+       "speed": 2.651,
+       "pace": 377,
+       "hrMean": 144,
+       "min": 6,
+       "flagged": true
+      },
+      {
+       "name": "145 bpm",
+       "targetHr": 145,
+       "speed": 2.727,
+       "pace": 367,
+       "hrMean": 145,
+       "min": 6,
+       "flagged": false
+      }
+     ]
+    }
+   },
+   {
+    "key": "@w1:2026-09-09",
+    "type": "facil",
+    "modal": "corrida",
+    "gap": {
+     "gapTimeSec": 3061.037300642538,
+     "gapSpeed": 2.7735695995007563,
+     "gapPace": 360.5462073783908,
+     "confidence": "alta"
+    },
+    "ef": 0.02024503357299822,
+    "decoupling": 2.8637329594293712,
+    "pacing": {
+     "label": "negative split",
+     "deltaPct": -1.6620436213237884,
+     "closer": false,
+     "lastGainSec": -8.51020408163265
+    },
+    "paceStability": {
+     "stdSec": 11.447019548884112,
+     "cvPct": 3.191275350466729
+    },
+    "trimp": 49.55568705607892,
+    "hrCostKm": 49.39483041083954,
+    "zoneSeconds": [
+     3078,
+     43,
+     0,
+     0,
+     0
+    ],
+    "hill": {
+     "climbKm": 4,
+     "gainM": 96,
+     "effVsModel": 1.0642444158949254,
+     "speedLossPctPerGrade": 0.5769954247884557,
+     "hrExtra": 1
+    },
+    "kmH": 9.796153846153846,
+    "dayReadiness": {
+     "rd": {
+      "score": 67,
+      "band": "Caution"
+     },
+     "tsb": -5.154577725966558,
+     "sleepH": 6.4
+    },
+    "typeLabel": "Fácil",
+    "hydro": {
+     "has": false,
+     "total": null,
+     "rate": null,
+     "status": null,
+     "plan": {
+      "kg": 82,
+      "durMin": 52,
+      "temp": 27,
+      "tempKnown": true,
+      "antesTarget": 492,
+      "rate": null,
+      "durFloor": 400,
+      "estSweat": 1109,
+      "deficit": 1109,
+      "depoisTarget": 1386
+     },
+     "durStat": {
+      "label": "—",
+      "c": "var(--muted)"
+     },
+     "antesStat": {
+      "label": "—",
+      "c": "var(--muted)"
+     },
+     "depoisStat": {
+      "label": "—",
+      "c": "var(--muted)"
+     },
+     "nextDay": {
+      "date": "2026-09-10",
+      "restingDelta": -1.5,
+      "hrvDeltaPct": 0.9174311926605505,
+      "restingHR": 64,
+      "hrv": 55
+     }
+    },
+    "climate": {
+     "tags": [],
+     "inStandard": true
+    },
+    "stream": {
+     "n": 1041,
+     "paceGap": {
+      "paceSec": 322.88692945322447,
+      "vGap": 3.097059399999239,
+      "confidence": "Moderada",
+      "minInBand": 6.9,
+      "method": "regressão",
+      "r2": 0.67
+     },
+     "eff": {
+      "vgapMean": 2.7822403882282987,
+      "hrMean": 137.20451843043995,
+      "spmMean": 176.09274673008323,
+      "mPerBeat": 1.2166831326209602,
+      "stepsPerBeat": 1.2834325628959433,
+      "mPerStep": 0.9479914783178249,
+      "validMin": 42.1,
+      "n": 841
+     },
+     "mech": {
+      "pct": -0.7,
+      "confidence": "Moderada",
+      "half1": 0.9446601964417268,
+      "half2": 0.9514906074724501,
+      "validMin": 42.1
+     },
+     "imp": {
+      "vPadrao": null,
+      "minInBand": 0,
+      "confidence": "Dados insuficientes"
+     },
+     "cad": {
+      "spm": null,
+      "confidence": "Dados insuficientes",
+      "minInRange": 0,
+      "adherencePct": 73.9
+     },
+     "hrLag": {
+      "lagSec": 27,
+      "corr": 0.803
+     },
+     "motor": [
+      {
+       "name": "Aquecimento",
+       "targetHr": null,
+       "speed": 2.786,
+       "pace": 359,
+       "hrMean": 131,
+       "min": 10,
+       "flagged": false
+      },
+      {
+       "name": "135 bpm",
+       "targetHr": 135,
+       "speed": 2.704,
+       "pace": 370,
+       "hrMean": 134,
+       "min": 6,
+       "flagged": false
+      },
+      {
+       "name": "145 bpm",
+       "targetHr": 145,
+       "speed": 2.635,
+       "pace": 380,
+       "hrMean": 142,
+       "min": 6,
+       "flagged": true
+      }
+     ]
+    }
+   },
+   {
+    "key": "@w2:2026-09-10",
+    "type": "bike",
+    "modal": "bike",
+    "gap": {
+     "gapTimeSec": null,
+     "gapSpeed": null,
+     "gapPace": null,
+     "confidence": "sem dados"
+    },
+    "ef": null,
+    "decoupling": null,
+    "pacing": null,
+    "paceStability": null,
+    "trimp": 49.323674733403585,
+    "hrCostKm": null,
+    "zoneSeconds": [
+     3300,
+     300,
+     0,
+     0,
+     0
+    ],
+    "hill": null,
+    "kmH": null,
+    "dayReadiness": {
+     "rd": {
+      "score": 68,
+      "band": "Caution"
+     },
+     "tsb": -9.75896267679415,
+     "sleepH": 7.6
+    },
+    "typeLabel": "Bike",
+    "hydro": {
+     "has": false,
+     "total": null,
+     "rate": null,
+     "status": null,
+     "plan": {
+      "kg": 82,
+      "durMin": 60,
+      "temp": 18,
+      "tempKnown": false,
+      "antesTarget": 410,
+      "rate": null,
+      "durFloor": 400,
+      "estSweat": 873,
+      "deficit": 873,
+      "depoisTarget": 1091
+     },
+     "durStat": {
+      "label": "—",
+      "c": "var(--muted)"
+     },
+     "antesStat": {
+      "label": "—",
+      "c": "var(--muted)"
+     },
+     "depoisStat": {
+      "label": "—",
+      "c": "var(--muted)"
+     },
+     "nextDay": {
+      "date": "2026-09-11",
+      "restingDelta": -3,
+      "hrvDeltaPct": -7.2727272727272725,
+      "restingHR": 62,
+      "hrv": 51
+     }
+    }
+   },
+   {
+    "key": "@w3:2026-09-12",
+    "type": "longão",
+    "modal": "corrida",
+    "gap": {
+     "gapTimeSec": 4478.217961281254,
+     "gapSpeed": 2.6327436721339903,
+     "gapPace": 379.83188814938546,
+     "confidence": "alta"
+    },
+    "ef": 0.019217107095868543,
+    "decoupling": 3.9748526385182585,
+    "pacing": {
+     "label": "negative split",
+     "deltaPct": -1.0547260098225082,
+     "closer": false,
+     "lastGainSec": 0.7146144994246697
+    },
+    "paceStability": {
+     "stdSec": 3.5957634679174197,
+     "cvPct": 0.9467841841915271
+    },
+    "trimp": 71.5111317540698,
+    "hrCostKm": 52.0369686764658,
+    "zoneSeconds": [
+     4501,
+     0,
+     0,
+     0,
+     0
+    ],
+    "hill": {
+     "climbKm": 0,
+     "gainM": 30,
+     "effVsModel": null,
+     "speedLossPctPerGrade": null,
+     "hrExtra": null
+    },
+    "kmH": 9.431999999999999,
+    "dayReadiness": {
+     "rd": {
+      "score": 65,
+      "band": "Caution"
+     },
+     "tsb": -11.40411840468716,
+     "sleepH": 7.4
+    },
+    "typeLabel": "Longão",
+    "hydro": {
+     "has": true,
+     "total": 1580,
+     "rate": 424,
+     "status": {
+      "label": "adequada",
+      "c": "var(--good)"
+     },
+     "plan": {
+      "kg": 82,
+      "durMin": 75,
+      "temp": 27,
+      "tempKnown": true,
+      "antesTarget": 574,
+      "antes": 600,
+      "rate": 424,
+      "durFloor": 400,
+      "estSweat": 1599,
+      "deficit": 1069,
+      "depoisTarget": 1336,
+      "depois": 450
+     },
+     "durStat": {
+      "label": "adequada",
+      "c": "var(--good)"
+     },
+     "antesStat": {
+      "label": "bom",
+      "c": "var(--good)"
+     },
+     "depoisStat": {
+      "label": "baixo",
+      "c": "var(--crit)"
+     },
+     "nextDay": {
+      "date": "2026-09-13",
+      "restingDelta": 0,
+      "hrvDeltaPct": -7.4074074074074066,
+      "restingHR": 65,
+      "hrv": 50
+     }
+    },
+    "stream": {
+     "n": 1501,
+     "paceGap": {
+      "paceSec": null,
+      "vGap": null,
+      "confidence": "Dados insuficientes",
+      "minInBand": 0,
+      "method": null,
+      "hrRange": [
+       133,
+       140
+      ]
+     },
+     "eff": {
+      "vgapMean": 2.6302285096079965,
+      "hrMean": 137.7194465795542,
+      "spmMean": 175.84319754035357,
+      "mPerBeat": 1.1459072374743975,
+      "stepsPerBeat": 1.2768218425767275,
+      "mPerStep": 0.8974683853793306,
+      "validMin": 65.1,
+      "n": 1301
+     },
+     "mech": {
+      "pct": 1.6,
+      "confidence": "Moderada",
+      "half1": 0.904574027314417,
+      "half2": 0.8904441989277884,
+      "validMin": 65.1
+     },
+     "imp": {
+      "vPadrao": null,
+      "minInBand": 0,
+      "confidence": "Dados insuficientes"
+     },
+     "cad": {
+      "spm": null,
+      "confidence": "Dados insuficientes",
+      "minInRange": 0,
+      "adherencePct": 80.6
+     },
+     "hrLag": {
+      "lagSec": 21,
+      "corr": -0.001
+     },
+     "motor": [
+      {
+       "name": "Aquecimento",
+       "targetHr": null,
+       "speed": 2.577,
+       "pace": 388,
+       "hrMean": 134,
+       "min": 10,
+       "flagged": false
+      },
+      {
+       "name": "135 bpm",
+       "targetHr": 135,
+       "speed": 2.577,
+       "pace": 388,
+       "hrMean": 135,
+       "min": 6,
+       "flagged": false
+      },
+      {
+       "name": "145 bpm",
+       "targetHr": 145,
+       "speed": 2.64,
+       "pace": 379,
+       "hrMean": 136,
+       "min": 6,
+       "flagged": true
+      }
+     ]
+    }
+   },
+   {
+    "key": "@w4:2026-09-14",
+    "type": "facil",
+    "modal": "corrida",
+    "gap": {
+     "gapTimeSec": 3076.7431591577824,
+     "gapSpeed": 2.671656220485468,
+     "gapPace": 374.29965439875696,
+     "confidence": "alta"
+    },
+    "ef": 0.019501140295514367,
+    "decoupling": 8.543445586102132,
+    "pacing": {
+     "label": "positive split",
+     "deltaPct": 4.65900328753159,
+     "closer": false,
+     "lastGainSec": 8.068181818181813
+    },
+    "paceStability": {
+     "stdSec": 30.541302603137495,
+     "cvPct": 8.172265876268543
+    },
+    "trimp": 48.9722809264192,
+    "hrCostKm": 51.27905265262971,
+    "zoneSeconds": [
+     3001,
+     0,
+     0,
+     0,
+     0
+    ],
+    "hill": {
+     "climbKm": 0,
+     "gainM": 21,
+     "effVsModel": null,
+     "speedLossPctPerGrade": null,
+     "hrExtra": null
+    },
+    "kmH": 9.864,
+    "dayReadiness": {
+     "rd": {
+      "score": 57,
+      "band": "Recovery"
+     },
+     "tsb": -14.484890020901226,
+     "sleepH": 6.2
+    },
+    "typeLabel": "Fácil",
+    "hydro": {
+     "has": false,
+     "total": null,
+     "rate": null,
+     "status": null,
+     "plan": {
+      "kg": 82,
+      "durMin": 50,
+      "temp": 27,
+      "tempKnown": true,
+      "antesTarget": 492,
+      "rate": null,
+      "durFloor": 400,
+      "estSweat": 1066,
+      "deficit": 1066,
+      "depoisTarget": 1333
+     },
+     "durStat": {
+      "label": "—",
+      "c": "var(--muted)"
+     },
+     "antesStat": {
+      "label": "—",
+      "c": "var(--muted)"
+     },
+     "depoisStat": {
+      "label": "—",
+      "c": "var(--muted)"
+     },
+     "nextDay": {
+      "date": "2026-09-15",
+      "restingDelta": -1,
+      "hrvDeltaPct": 11.11111111111111,
+      "restingHR": 64,
+      "hrv": 60
+     }
+    },
+    "climate": {
+     "tags": [],
+     "inStandard": true
+    },
+    "stream": {
+     "n": 1000,
+     "paceGap": {
+      "paceSec": null,
+      "vGap": null,
+      "confidence": "Dados insuficientes",
+      "minInBand": 0,
+      "method": null,
+      "hrRange": [
+       133,
+       141
+      ]
+     },
+     "eff": {
+      "vgapMean": 2.750359671249998,
+      "hrMean": 137.48875,
+      "spmMean": 176.1725,
+      "mPerBeat": 1.2002551501486476,
+      "stepsPerBeat": 1.2813593839495958,
+      "mPerStep": 0.9367045383076239,
+      "validMin": 40,
+      "n": 800
+     },
+     "mech": {
+      "pct": 1.3,
+      "confidence": "Moderada",
+      "half1": 0.942860388038848,
+      "half2": 0.9306112365835563,
+      "validMin": 40
+     },
+     "imp": {
+      "vPadrao": null,
+      "minInBand": 0,
+      "confidence": "Dados insuficientes"
+     },
+     "cad": {
+      "spm": null,
+      "confidence": "Dados insuficientes",
+      "minInRange": 0,
+      "adherencePct": 71.2
+     },
+     "hrLag": {
+      "lagSec": 15,
+      "corr": 0.213
+     },
+     "motor": [
+      {
+       "name": "Aquecimento",
+       "targetHr": null,
+       "speed": 2.678,
+       "pace": 373,
+       "hrMean": 136,
+       "min": 10,
+       "flagged": false
+      },
+      {
+       "name": "135 bpm",
+       "targetHr": 135,
+       "speed": 2.694,
+       "pace": 371,
+       "hrMean": 136,
+       "min": 6,
+       "flagged": false
+      },
+      {
+       "name": "145 bpm",
+       "targetHr": 145,
+       "speed": 2.772,
+       "pace": 361,
+       "hrMean": 138,
+       "min": 6,
+       "flagged": true
+      }
+     ]
+    }
+   },
+   {
+    "key": "@w5:2026-09-16",
+    "type": "tempo",
+    "modal": "corrida",
+    "gap": {
+     "gapTimeSec": 2688.922217390074,
+     "gapSpeed": 3.064424826686851,
+     "gapPace": 326.3255118191837,
+     "confidence": "alta"
+    },
+    "ef": 0.020566609575079536,
+    "decoupling": 2.9605770148660286,
+    "pacing": {
+     "label": "even",
+     "deltaPct": -0.7893869715333608,
+     "closer": false,
+     "lastGainSec": -1.2916666666666856
+    },
+    "paceStability": {
+     "stdSec": 3.335624147971086,
+     "cvPct": 1.0215206385413862
+    },
+    "trimp": 60.393878261371185,
+    "hrCostKm": 48.622501261058375,
+    "zoneSeconds": [
+     74,
+     2627,
+     0,
+     0,
+     0
+    ],
+    "hill": {
+     "climbKm": 0,
+     "gainM": 21,
+     "effVsModel": null,
+     "speedLossPctPerGrade": null,
+     "hrExtra": null
+    },
+    "kmH": 10.986666666666666,
+    "dayReadiness": {
+     "rd": {
+      "score": 59,
+      "band": "Recovery"
+     },
+     "tsb": -14.417236437223671,
+     "sleepH": 6.7
+    },
+    "typeLabel": "Tempo",
+    "hydro": {
+     "has": false,
+     "total": null,
+     "rate": null,
+     "status": null,
+     "plan": {
+      "kg": 82,
+      "durMin": 45,
+      "temp": 27,
+      "tempKnown": true,
+      "antesTarget": 492,
+      "rate": null,
+      "durFloor": 400,
+      "estSweat": 959,
+      "deficit": 959,
+      "depoisTarget": 1199
+     },
+     "durStat": {
+      "label": "—",
+      "c": "var(--muted)"
+     },
+     "antesStat": {
+      "label": "—",
+      "c": "var(--muted)"
+     },
+     "depoisStat": {
+      "label": "—",
+      "c": "var(--muted)"
+     },
+     "nextDay": {
+      "date": "2026-09-17",
+      "restingDelta": 2,
+      "hrvDeltaPct": -1.8518518518518516,
+      "restingHR": 67,
+      "hrv": 53
+     }
+    },
+    "stream": {
+     "n": 901,
+     "paceGap": {
+      "paceSec": null,
+      "vGap": null,
+      "confidence": "Dados insuficientes",
+      "minInBand": 0,
+      "method": null,
+      "hrRange": [
+       146,
+       154
+      ]
+     },
+     "eff": {
+      "vgapMean": 3.06327702211127,
+      "hrMean": 149.79315263908703,
+      "spmMean": 177.09272467902997,
+      "mPerBeat": 1.227002824151231,
+      "stepsPerBeat": 1.18224846435884,
+      "mPerStep": 1.0378552911182355,
+      "validMin": 35.1,
+      "n": 701
+     },
+     "mech": {
+      "pct": null,
+      "confidence": "Dados insuficientes",
+      "validMin": 35.1
+     },
+     "imp": {
+      "vPadrao": null,
+      "minInBand": 3.9,
+      "confidence": "Dados insuficientes"
+     },
+     "cad": {
+      "spm": null,
+      "confidence": "Dados insuficientes",
+      "minInRange": 0,
+      "adherencePct": 49.2
+     },
+     "hrLag": {
+      "lagSec": 9,
+      "corr": 0.395
+     },
+     "motor": [
+      {
+       "name": "Aquecimento",
+       "targetHr": null,
+       "speed": 2.968,
+       "pace": 337,
+       "hrMean": 148,
+       "min": 10,
+       "flagged": false
+      },
+      {
+       "name": "135 bpm",
+       "targetHr": 135,
+       "speed": 2.997,
+       "pace": 334,
+       "hrMean": 148,
+       "min": 6,
+       "flagged": true
+      },
+      {
+       "name": "145 bpm",
+       "targetHr": 145,
+       "speed": 3.09,
+       "pace": 324,
+       "hrMean": 150,
+       "min": 6,
+       "flagged": true
+      }
+     ]
+    }
+   },
+   {
+    "key": "@w6:2026-09-19",
+    "type": "longão",
+    "modal": "corrida",
+    "gap": {
+     "gapTimeSec": 4993.620132815509,
+     "gapSpeed": 2.697441864166253,
+     "gapPace": 370.72161342357157,
+     "confidence": "alta"
+    },
+    "ef": 0.019546680175117778,
+    "decoupling": 4.96350362463095,
+    "pacing": {
+     "label": "negative split",
+     "deltaPct": -1.145712206141207,
+     "closer": true,
+     "lastGainSec": 19.733224222585932
+    },
+    "paceStability": {
+     "stdSec": 15.524300110174396,
+     "cvPct": 4.20555231974266
+    },
+    "trimp": 85.45151874925035,
+    "hrCostKm": 51.159582652452876,
+    "zoneSeconds": [
+     4289,
+     812,
+     0,
+     0,
+     0
+    ],
+    "hill": {
+     "climbKm": 5,
+     "gainM": 173,
+     "effVsModel": 1.0737860290581598,
+     "speedLossPctPerGrade": 1.100869249220486,
+     "hrExtra": 3
+    },
+    "kmH": 9.508235294117647,
+    "dayReadiness": {
+     "rd": {
+      "score": 55,
+      "band": "Recovery"
+     },
+     "tsb": -12.452115028373875,
+     "sleepH": 7.1
+    },
+    "typeLabel": "Longão",
+    "hydro": {
+     "has": true,
+     "total": 1510,
+     "rate": 395.2941176470588,
+     "status": {
+      "label": "baixa",
+      "c": "var(--warn)"
+     },
+     "plan": {
+      "kg": 82,
+      "durMin": 85,
+      "temp": 27,
+      "tempKnown": true,
+      "antesTarget": 574,
+      "antes": 500,
+      "rate": 395,
+      "durFloor": 400,
+      "estSweat": 1812,
+      "deficit": 1252,
+      "depoisTarget": 1565,
+      "depois": 450
+     },
+     "durStat": {
+      "label": "baixa",
+      "c": "var(--warn)"
+     },
+     "antesStat": {
+      "label": "bom",
+      "c": "var(--good)"
+     },
+     "depoisStat": {
+      "label": "baixo",
+      "c": "var(--crit)"
+     },
+     "nextDay": {
+      "date": "2026-09-20",
+      "restingDelta": -1,
+      "hrvDeltaPct": 4.672897196261682,
+      "restingHR": 64,
+      "hrv": 56
+     }
+    },
+    "climate": {
+     "tags": [],
+     "inStandard": true
+    },
+    "stream": {
+     "n": 1701,
+     "paceGap": {
+      "paceSec": 330.79415738127483,
+      "vGap": 3.0230279999999987,
+      "confidence": "Moderada",
+      "minInBand": 7.1,
+      "method": "regressão",
+      "r2": 0.69
+     },
+     "eff": {
+      "vgapMean": 2.713285280146571,
+      "hrMean": 139.4043970686209,
+      "spmMean": 175.92938041305797,
+      "mPerBeat": 1.1678047481433347,
+      "stepsPerBeat": 1.2620073979908817,
+      "mPerStep": 0.9253549147195826,
+      "validMin": 75.1,
+      "n": 1501
+     },
+     "mech": {
+      "pct": 2.2,
+      "confidence": "Moderada",
+      "half1": 0.9359736348052784,
+      "half2": 0.914988809185026,
+      "validMin": 75.1
+     },
+     "imp": {
+      "vPadrao": null,
+      "minInBand": 0,
+      "confidence": "Dados insuficientes"
+     },
+     "cad": {
+      "spm": null,
+      "confidence": "Dados insuficientes",
+      "minInRange": 0,
+      "adherencePct": 78.7
+     },
+     "hrLag": {
+      "lagSec": 18,
+      "corr": 0.656
+     },
+     "motor": [
+      {
+       "name": "Aquecimento",
+       "targetHr": null,
+       "speed": 2.511,
+       "pace": 398,
+       "hrMean": 135,
+       "min": 10,
+       "flagged": false
+      },
+      {
+       "name": "135 bpm",
+       "targetHr": 135,
+       "speed": 2.481,
+       "pace": 403,
+       "hrMean": 139,
+       "min": 6,
+       "flagged": true
+      },
+      {
+       "name": "145 bpm",
+       "targetHr": 145,
+       "speed": 2.708,
+       "pace": 369,
+       "hrMean": 135,
+       "min": 6,
+       "flagged": true
+      }
+     ]
+    }
+   },
+   {
+    "key": "@w7:2026-09-21",
+    "type": "regenerativo",
+    "modal": "corrida",
+    "gap": {
+     "gapTimeSec": 2342.2551546331006,
+     "gapSpeed": 2.6128664880486343,
+     "gapPace": 382.72143049560464,
+     "confidence": "alta"
+    },
+    "ef": 0.019499003642153987,
+    "decoupling": 2.8356374263444626,
+    "pacing": {
+     "label": "negative split",
+     "deltaPct": -1.1824324324324371,
+     "closer": false,
+     "lastGainSec": 0.39999999999997726
+    },
+    "paceStability": {
+     "stdSec": 3.861270792293199,
+     "cvPct": 0.9893299520612251
+    },
+    "trimp": 34.649044523960825,
+    "hrCostKm": 51.28467168641102,
+    "zoneSeconds": [
+     2401,
+     0,
+     0,
+     0,
+     0
+    ],
+    "hill": {
+     "climbKm": 0,
+     "gainM": 16,
+     "effVsModel": null,
+     "speedLossPctPerGrade": null,
+     "hrExtra": null
+    },
+    "kmH": 9.180000000000001,
+    "dayReadiness": {
+     "rd": {
+      "score": 58,
+      "band": "Recovery"
+     },
+     "tsb": -15.887512016061507,
+     "sleepH": 6.8
+    },
+    "typeLabel": "Regenerativo",
+    "hydro": {
+     "has": false,
+     "total": null,
+     "rate": null,
+     "status": null,
+     "plan": {
+      "kg": 82,
+      "durMin": 40,
+      "temp": 27,
+      "tempKnown": true,
+      "antesTarget": 492,
+      "rate": null,
+      "durFloor": 400,
+      "estSweat": 853,
+      "deficit": 853,
+      "depoisTarget": 1066
+     },
+     "durStat": {
+      "label": "—",
+      "c": "var(--muted)"
+     },
+     "antesStat": {
+      "label": "—",
+      "c": "var(--muted)"
+     },
+     "depoisStat": {
+      "label": "—",
+      "c": "var(--muted)"
+     },
+     "nextDay": {
+      "date": "2026-09-22",
+      "restingDelta": -1,
+      "hrvDeltaPct": 5.555555555555555,
+      "restingHR": 64,
+      "hrv": 57
+     }
+    },
+    "stream": {
+     "n": 801,
+     "paceGap": {
+      "paceSec": null,
+      "vGap": null,
+      "confidence": "Dados insuficientes",
+      "minInBand": 0,
+      "method": null,
+      "hrRange": [
+       132,
+       139
+      ]
+     },
+     "eff": {
+      "vgapMean": 2.558220429284528,
+      "hrMean": 134.95174708818635,
+      "spmMean": 175.6006655574043,
+      "mPerBeat": 1.1373933948166608,
+      "stepsPerBeat": 1.3012107612260497,
+      "mPerStep": 0.8741038951637364,
+      "validMin": 30.1,
+      "n": 601
+     },
+     "mech": {
+      "pct": null,
+      "confidence": "Dados insuficientes",
+      "validMin": 30.1
+     },
+     "imp": {
+      "vPadrao": null,
+      "minInBand": 0,
+      "confidence": "Dados insuficientes"
+     },
+     "cad": {
+      "spm": null,
+      "confidence": "Dados insuficientes",
+      "minInRange": 0,
+      "adherencePct": 85.2
+     },
+     "hrLag": {
+      "lagSec": 18,
+      "corr": 0.257
+     },
+     "motor": [
+      {
+       "name": "Aquecimento",
+       "targetHr": null,
+       "speed": 2.498,
+       "pace": 400,
+       "hrMean": 133,
+       "min": 10,
+       "flagged": false
+      },
+      {
+       "name": "135 bpm",
+       "targetHr": 135,
+       "speed": 2.518,
+       "pace": 397,
+       "hrMean": 134,
+       "min": 6,
+       "flagged": false
+      },
+      {
+       "name": "145 bpm",
+       "targetHr": 145,
+       "speed": 2.583,
+       "pace": 387,
+       "hrMean": 134,
+       "min": 6,
+       "flagged": true
+      }
+     ]
+    }
+   },
+   {
+    "key": "@w8:2026-09-23",
+    "type": "facil",
+    "modal": "corrida",
+    "gap": {
+     "gapTimeSec": 3245.476608889776,
+     "gapSpeed": 2.8069837185227415,
+     "gapPace": 356.2542929626538,
+     "confidence": "alta"
+    },
+    "ef": 0.020488932251990815,
+    "decoupling": 2.640637954035951,
+    "pacing": {
+     "label": "negative split",
+     "deltaPct": -1.0302197802197801,
+     "closer": false,
+     "lastGainSec": 0.375
+    },
+    "paceStability": {
+     "stdSec": 3.246098128619187,
+     "cvPct": 0.9003707963840878
+    },
+    "trimp": 51.885006934376236,
+    "hrCostKm": 48.80683813588357,
+    "zoneSeconds": [
+     3301,
+     0,
+     0,
+     0,
+     0
+    ],
+    "hill": {
+     "climbKm": 0,
+     "gainM": 22,
+     "effVsModel": null,
+     "speedLossPctPerGrade": null,
+     "hrExtra": null
+    },
+    "kmH": 9.938181818181818,
+    "dayReadiness": {
+     "rd": {
+      "score": 65,
+      "band": "Caution"
+     },
+     "tsb": -13.440673087225939,
+     "sleepH": 7.8
+    },
+    "typeLabel": "Fácil",
+    "hydro": {
+     "has": false,
+     "total": null,
+     "rate": null,
+     "status": null,
+     "plan": {
+      "kg": 82,
+      "durMin": 55,
+      "temp": 27,
+      "tempKnown": true,
+      "antesTarget": 492,
+      "rate": null,
+      "durFloor": 400,
+      "estSweat": 1173,
+      "deficit": 1173,
+      "depoisTarget": 1466
+     },
+     "durStat": {
+      "label": "—",
+      "c": "var(--muted)"
+     },
+     "antesStat": {
+      "label": "—",
+      "c": "var(--muted)"
+     },
+     "depoisStat": {
+      "label": "—",
+      "c": "var(--muted)"
+     },
+     "nextDay": {
+      "date": "2026-09-24",
+      "restingDelta": -1,
+      "hrvDeltaPct": -4.504504504504505,
+      "restingHR": 63,
+      "hrv": 53
+     }
+    },
+    "climate": {
+     "tags": [],
+     "inStandard": true
+    },
+    "stream": {
+     "n": 1101,
+     "paceGap": {
+      "paceSec": null,
+      "vGap": null,
+      "confidence": "Dados insuficientes",
+      "minInBand": 0,
+      "method": null,
+      "hrRange": [
+       134,
+       140
+      ]
+     },
+     "eff": {
+      "vgapMean": 2.7703980882352934,
+      "hrMean": 137.6348501664817,
+      "spmMean": 176.30188679245282,
+      "mPerBeat": 1.2077165419445357,
+      "stepsPerBeat": 1.2809392866646774,
+      "mPerStep": 0.9428366781451448,
+      "validMin": 45.1,
+      "n": 901
+     },
+     "mech": {
+      "pct": 1.5,
+      "confidence": "Moderada",
+      "half1": 0.9498367463574136,
+      "half2": 0.93590638310564,
+      "validMin": 45.1
+     },
+     "imp": {
+      "vPadrao": null,
+      "minInBand": 0,
+      "confidence": "Dados insuficientes"
+     },
+     "cad": {
+      "spm": null,
+      "confidence": "Dados insuficientes",
+      "minInRange": 0,
+      "adherencePct": 65.5
+     },
+     "hrLag": {
+      "lagSec": 21,
+      "corr": 0.251
+     },
+     "motor": [
+      {
+       "name": "Aquecimento",
+       "targetHr": null,
+       "speed": 2.697,
+       "pace": 371,
+       "hrMean": 136,
+       "min": 10,
+       "flagged": false
+      },
+      {
+       "name": "135 bpm",
+       "targetHr": 135,
+       "speed": 2.721,
+       "pace": 368,
+       "hrMean": 137,
+       "min": 6,
+       "flagged": false
+      },
+      {
+       "name": "145 bpm",
+       "targetHr": 145,
+       "speed": 2.785,
+       "pace": 359,
+       "hrMean": 137,
+       "min": 6,
+       "flagged": true
+      }
+     ]
+    }
+   },
+   {
+    "key": "@w9:2026-09-26",
+    "type": "longão",
+    "modal": "corrida",
+    "gap": {
+     "gapTimeSec": 5673.537503646812,
+     "gapSpeed": 2.673816818915728,
+     "gapPace": 373.99719865832645,
+     "confidence": "alta"
+    },
+    "ef": 0.019660417786145058,
+    "decoupling": 2.8928807931595313,
+    "pacing": {
+     "label": "negative split",
+     "deltaPct": -1.0183019191092348,
+     "closer": false,
+     "lastGainSec": 5.278431372549051
+    },
+    "paceStability": {
+     "stdSec": 3.4740364241827475,
+     "cvPct": 0.9294899926169581
+    },
+    "trimp": 87.37945959140316,
+    "hrCostKm": 50.86361901753239,
+    "zoneSeconds": [
+     5701,
+     0,
+     0,
+     0,
+     0
+    ],
+    "hill": {
+     "climbKm": 0,
+     "gainM": 38,
+     "effVsModel": null,
+     "speedLossPctPerGrade": null,
+     "hrExtra": null
+    },
+    "kmH": 9.581052631578947,
+    "dayReadiness": {
+     "rd": {
+      "score": 64,
+      "band": "Caution"
+     },
+     "tsb": -10.314867676272215,
+     "sleepH": 6.9
+    },
+    "typeLabel": "Longão",
+    "hydro": {
+     "has": true,
+     "total": 1440,
+     "rate": 372.63157894736844,
+     "status": {
+      "label": "baixa",
+      "c": "var(--warn)"
+     },
+     "plan": {
+      "kg": 82,
+      "durMin": 95,
+      "temp": 27,
+      "tempKnown": true,
+      "antesTarget": 656,
+      "antes": 400,
+      "rate": 373,
+      "durFloor": 400,
+      "estSweat": 2025,
+      "deficit": 1435,
+      "depoisTarget": 1794,
+      "depois": 450
+     },
+     "durStat": {
+      "label": "baixa",
+      "c": "var(--warn)"
+     },
+     "antesStat": {
+      "label": "pouco",
+      "c": "var(--warn)"
+     },
+     "depoisStat": {
+      "label": "baixo",
+      "c": "var(--crit)"
+     },
+     "nextDay": {
+      "date": "2026-09-27",
+      "restingDelta": -2,
+      "hrvDeltaPct": 7.142857142857142,
+      "restingHR": 63,
+      "hrv": 60
+     }
+    },
+    "stream": {
+     "n": 1901,
+     "paceGap": {
+      "paceSec": null,
+      "vGap": null,
+      "confidence": "Dados insuficientes",
+      "minInBand": 0,
+      "method": null,
+      "hrRange": [
+       132,
+       138
+      ]
+     },
+     "eff": {
+      "vgapMean": 2.6747899265138164,
+      "hrMean": 136.04879482657262,
+      "spmMean": 175.97766019988242,
+      "mPerBeat": 1.1796311448066066,
+      "stepsPerBeat": 1.2934892986314865,
+      "mPerStep": 0.911975959951627,
+      "validMin": 85.1,
+      "n": 1701
+     },
+     "mech": {
+      "pct": 1.6,
+      "confidence": "Moderada",
+      "half1": 0.9194261981236278,
+      "half2": 0.9046022187602808,
+      "validMin": 85.1
+     },
+     "imp": {
+      "vPadrao": null,
+      "minInBand": 0,
+      "confidence": "Dados insuficientes"
+     },
+     "cad": {
+      "spm": null,
+      "confidence": "Dados insuficientes",
+      "minInRange": 0,
+      "adherencePct": 77.3
+     },
+     "hrLag": {
+      "lagSec": 12,
+      "corr": 0.196
+     },
+     "motor": [
+      {
+       "name": "Aquecimento",
+       "targetHr": null,
+       "speed": 2.6,
+       "pace": 385,
+       "hrMean": 134,
+       "min": 10,
+       "flagged": false
+      },
+      {
+       "name": "135 bpm",
+       "targetHr": 135,
+       "speed": 2.617,
+       "pace": 382,
+       "hrMean": 134,
+       "min": 6,
+       "flagged": false
+      },
+      {
+       "name": "145 bpm",
+       "targetHr": 145,
+       "speed": 2.678,
+       "pace": 373,
+       "hrMean": 135,
+       "min": 6,
+       "flagged": true
+      }
+     ]
+    }
+   },
+   {
+    "key": "@w10:2026-09-28",
+    "type": "facil",
+    "modal": "corrida",
+    "gap": {
+     "gapTimeSec": 2945.715794736073,
+     "gapSpeed": 2.8312303633987335,
+     "gapPace": 353.203332702167,
+     "confidence": "alta"
+    },
+    "ef": 0.020665915061304625,
+    "decoupling": 1.8836840489510571,
+    "pacing": {
+     "label": "positive split",
+     "deltaPct": 2.0685548594211203,
+     "closer": false,
+     "lastGainSec": -23.47794117647055
+    },
+    "paceStability": {
+     "stdSec": 12.134215437278241,
+     "cvPct": 3.459371670935175
+    },
+    "trimp": 48.261032718118656,
+    "hrCostKm": 48.38885658019688,
+    "zoneSeconds": [
+     2821,
+     180,
+     0,
+     0,
+     0
+    ],
+    "hill": {
+     "climbKm": 4,
+     "gainM": 93,
+     "effVsModel": 1.0650462069277118,
+     "speedLossPctPerGrade": 0.9128194008300013,
+     "hrExtra": 4
+    },
+    "kmH": 10.008,
+    "dayReadiness": {
+     "rd": {
+      "score": 61,
+      "band": "Caution"
+     },
+     "tsb": -13.932629489335989,
+     "sleepH": 6.9
+    },
+    "typeLabel": "Fácil",
+    "hydro": {
+     "has": false,
+     "total": null,
+     "rate": null,
+     "status": null,
+     "plan": {
+      "kg": 82,
+      "durMin": 50,
+      "temp": 27,
+      "tempKnown": true,
+      "antesTarget": 492,
+      "rate": null,
+      "durFloor": 400,
+      "estSweat": 1066,
+      "deficit": 1066,
+      "depoisTarget": 1333
+     },
+     "durStat": {
+      "label": "—",
+      "c": "var(--muted)"
+     },
+     "antesStat": {
+      "label": "—",
+      "c": "var(--muted)"
+     },
+     "depoisStat": {
+      "label": "—",
+      "c": "var(--muted)"
+     },
+     "nextDay": {
+      "date": "2026-09-29",
+      "restingDelta": -1.5,
+      "hrvDeltaPct": 4.424778761061947,
+      "restingHR": 63,
+      "hrv": 59
+     }
+    },
+    "climate": {
+     "tags": [
+      "acima da faixa-padrão"
+     ],
+     "inStandard": false
+    },
+    "stream": {
+     "n": 1001,
+     "paceGap": {
+      "paceSec": 314.3901133615295,
+      "vGap": 3.1807616000000003,
+      "confidence": "Moderada",
+      "minInBand": 5.2,
+      "method": "regressão",
+      "r2": 0.66
+     },
+     "eff": {
+      "vgapMean": 2.872689415106116,
+      "hrMean": 138.49937578027465,
+      "spmMean": 176.2796504369538,
+      "mPerBeat": 1.2444919981431064,
+      "stepsPerBeat": 1.2727829959076242,
+      "mPerStep": 0.9777723320821525,
+      "validMin": 40.1,
+      "n": 801
+     },
+     "mech": {
+      "pct": -0.3,
+      "confidence": "Moderada",
+      "half1": 0.9766481568056891,
+      "half2": 0.9791225377854436,
+      "validMin": 40.1
+     },
+     "imp": {
+      "vPadrao": null,
+      "minInBand": 0,
+      "confidence": "Dados insuficientes"
+     },
+     "cad": {
+      "spm": null,
+      "confidence": "Dados insuficientes",
+      "minInRange": 0,
+      "adherencePct": 66
+     },
+     "hrLag": {
+      "lagSec": 18,
+      "corr": 0.831
+     },
+     "motor": [
+      {
+       "name": "Aquecimento",
+       "targetHr": null,
+       "speed": 2.766,
+       "pace": 361,
+       "hrMean": 132,
+       "min": 10,
+       "flagged": false
+      },
+      {
+       "name": "135 bpm",
+       "targetHr": 135,
+       "speed": 2.615,
+       "pace": 382,
+       "hrMean": 140,
+       "min": 6,
+       "flagged": true
+      },
+      {
+       "name": "145 bpm",
+       "targetHr": 145,
+       "speed": 2.96,
+       "pace": 338,
+       "hrMean": 133,
+       "min": 6,
+       "flagged": true
+      }
+     ]
+    }
+   },
+   {
+    "key": "@w11:2026-10-01",
+    "type": "intervalado",
+    "modal": null,
+    "gap": {
+     "gapTimeSec": 2002.972640887161,
+     "gapSpeed": 2.995547656278753,
+     "gapPace": 333.82877348119354,
+     "confidence": "alta"
+    },
+    "ef": 0.01826553448950459,
+    "decoupling": 7.681939843665954,
+    "pacing": {
+     "label": "positive split",
+     "deltaPct": 8.290155440414496,
+     "closer": false,
+     "lastGainSec": -38.39999999999998
+    },
+    "paceStability": {
+     "stdSec": 37.367553467770236,
+     "cvPct": 11.194252661898224
+    },
+    "trimp": 66.28814424477937,
+    "hrCostKm": 54.74791885091574,
+    "zoneSeconds": [
+     0,
+     0,
+     2010,
+     0,
+     0
+    ],
+    "hill": {
+     "climbKm": 0,
+     "gainM": 8,
+     "effVsModel": null,
+     "speedLossPctPerGrade": null,
+     "hrExtra": null
+    },
+    "kmH": 10.746268656716417,
+    "dayReadiness": {
+     "rd": {
+      "score": 65,
+      "band": "Caution"
+     },
+     "tsb": -9.759343888281968,
+     "sleepH": null
+    },
+    "typeLabel": "Intervalado",
+    "hydro": {
+     "has": false,
+     "total": null,
+     "rate": null,
+     "status": null,
+     "plan": {
+      "kg": 82,
+      "durMin": 33.5,
+      "temp": 18,
+      "tempKnown": true,
+      "antesTarget": 410,
+      "rate": null,
+      "durFloor": 300,
+      "estSweat": 488,
+      "deficit": 488,
+      "depoisTarget": 610
+     },
+     "durStat": {
+      "label": "—",
+      "c": "var(--muted)"
+     },
+     "antesStat": {
+      "label": "—",
+      "c": "var(--muted)"
+     },
+     "depoisStat": {
+      "label": "—",
+      "c": "var(--muted)"
+     },
+     "nextDay": {
+      "date": "2026-10-02",
+      "restingDelta": 1,
+      "hrvDeltaPct": -7.017543859649122,
+      "restingHR": 65,
+      "hrv": 53
+     }
+    }
+   },
+   {
+    "key": "@w12:2026-10-03",
+    "type": "longão",
+    "modal": "corrida",
+    "gap": {
+     "gapTimeSec": 5936.774201047757,
+     "gapSpeed": 2.7102260343942914,
+     "gapPace": 368.9729149190651,
+     "confidence": "alta"
+    },
+    "ef": 0.019782671783899936,
+    "decoupling": 4.043510751990167,
+    "pacing": {
+     "label": "negative split",
+     "deltaPct": -1.1333333333333333,
+     "closer": false,
+     "lastGainSec": 0.9333333333333371
+    },
+    "paceStability": {
+     "stdSec": 3.3401162316337056,
+     "cvPct": 0.9003883540426422
+    },
+    "trimp": 96.39666955033816,
+    "hrCostKm": 50.549289343911916,
+    "zoneSeconds": [
+     5997,
+     4,
+     0,
+     0,
+     0
+    ],
+    "hill": {
+     "climbKm": 0,
+     "gainM": 41,
+     "effVsModel": null,
+     "speedLossPctPerGrade": null,
+     "hrExtra": null
+    },
+    "kmH": 9.654,
+    "dayReadiness": {
+     "rd": {
+      "score": 63,
+      "band": "Caution"
+     },
+     "tsb": -11.182127487374446,
+     "sleepH": 6.9
+    },
+    "typeLabel": "Longão",
+    "hydro": {
+     "has": false,
+     "total": null,
+     "rate": null,
+     "status": null,
+     "plan": {
+      "kg": 82,
+      "durMin": 100,
+      "temp": 27,
+      "tempKnown": true,
+      "antesTarget": 656,
+      "rate": null,
+      "durFloor": 400,
+      "estSweat": 2132,
+      "deficit": 2132,
+      "depoisTarget": 2665
+     },
+     "durStat": {
+      "label": "—",
+      "c": "var(--muted)"
+     },
+     "antesStat": {
+      "label": "—",
+      "c": "var(--muted)"
+     },
+     "depoisStat": {
+      "label": "—",
+      "c": "var(--muted)"
+     },
+     "nextDay": {
+      "date": "2026-10-04",
+      "restingDelta": 0.5,
+      "hrvDeltaPct": 10.526315789473683,
+      "restingHR": 65,
+      "hrv": 63
+     }
+    },
+    "stream": {
+     "n": 2001,
+     "paceGap": {
+      "paceSec": null,
+      "vGap": null,
+      "confidence": "Dados insuficientes",
+      "minInBand": 0,
+      "method": null,
+      "hrRange": [
+       132,
+       140
+      ]
+     },
+     "eff": {
+      "vgapMean": 2.6941073606329806,
+      "hrMean": 137.98445308162133,
+      "spmMean": 176.06440866185451,
+      "mPerBeat": 1.1714830042654214,
+      "stepsPerBeat": 1.2759727978753368,
+      "mPerStep": 0.9181097012538944,
+      "validMin": 90.1,
+      "n": 1801
+     },
+     "mech": {
+      "pct": 1.4,
+      "confidence": "Moderada",
+      "half1": 0.9247380253521265,
+      "half2": 0.9115643452546881,
+      "validMin": 90.1
+     },
+     "imp": {
+      "vPadrao": null,
+      "minInBand": 0,
+      "confidence": "Dados insuficientes"
+     },
+     "cad": {
+      "spm": null,
+      "confidence": "Dados insuficientes",
+      "minInRange": 0,
+      "adherencePct": 76
+     },
+     "hrLag": {
+      "lagSec": 15,
+      "corr": 0.046
+     },
+     "motor": [
+      {
+       "name": "Aquecimento",
+       "targetHr": null,
+       "speed": 2.633,
+       "pace": 380,
+       "hrMean": 133,
+       "min": 10,
+       "flagged": false
+      },
+      {
+       "name": "135 bpm",
+       "targetHr": 135,
+       "speed": 2.63,
+       "pace": 380,
+       "hrMean": 134,
+       "min": 6,
+       "flagged": false
+      },
+      {
+       "name": "145 bpm",
+       "targetHr": 145,
+       "speed": 2.697,
+       "pace": 371,
+       "hrMean": 136,
+       "min": 6,
+       "flagged": true
+      }
+     ]
+    }
+   },
+   {
+    "key": "@w13:2026-10-05",
+    "type": "facil",
+    "modal": "corrida",
+    "gap": {
+     "gapTimeSec": 3104.0583451461953,
+     "gapSpeed": 2.8188903129615275,
+     "gapPace": 354.74952515956517,
+     "confidence": "alta"
+    },
+    "ef": 0.019440622848010534,
+    "decoupling": 1.7258064534145996,
+    "pacing": {
+     "label": "negative split",
+     "deltaPct": -1.3047940184723623,
+     "closer": false,
+     "lastGainSec": 3.4166666666666856
+    },
+    "paceStability": {
+     "stdSec": 3.0216990467803444,
+     "cvPct": 0.8519900384187604
+    },
+    "trimp": 61.52707011207775,
+    "hrCostKm": 51.43868114813695,
+    "zoneSeconds": [
+     1351,
+     1770,
+     0,
+     0,
+     0
+    ],
+    "hill": {
+     "climbKm": 0,
+     "gainM": 22,
+     "effVsModel": null,
+     "speedLossPctPerGrade": null,
+     "hrExtra": null
+    },
+    "kmH": 10.096153846153845,
+    "dayReadiness": {
+     "rd": {
+      "score": 54,
+      "band": "Recovery"
+     },
+     "tsb": -14.832416466365592,
+     "sleepH": 7.4
+    },
+    "typeLabel": "Fácil",
+    "hydro": {
+     "has": true,
+     "total": 750,
+     "rate": null,
+     "status": null,
+     "plan": {
+      "kg": 82,
+      "durMin": 52,
+      "temp": 27,
+      "tempKnown": true,
+      "antesTarget": 492,
+      "antes": 300,
+      "rate": null,
+      "durFloor": 400,
+      "estSweat": 1109,
+      "deficit": 1109,
+      "depoisTarget": 1386,
+      "depois": 450
+     },
+     "durStat": {
+      "label": "—",
+      "c": "var(--muted)"
+     },
+     "antesStat": {
+      "label": "pouco",
+      "c": "var(--warn)"
+     },
+     "depoisStat": {
+      "label": "baixo",
+      "c": "var(--crit)"
+     },
+     "nextDay": {
+      "date": "2026-10-06",
+      "restingDelta": -0.5,
+      "hrvDeltaPct": -6.086956521739131,
+      "restingHR": 64,
+      "hrv": 54
+     }
+    },
+    "climate": {
+     "tags": [
+      "acima da faixa-padrão"
+     ],
+     "inStandard": false
+    },
+    "stream": {
+     "n": 1041,
+     "paceGap": {
+      "paceSec": 355.04063617601355,
+      "vGap": 2.816579,
+      "confidence": "Alta",
+      "minInBand": 35.1,
+      "method": "mediana"
+     },
+     "eff": {
+      "vgapMean": 2.8133090695600464,
+      "hrMean": 144.92508917954817,
+      "spmMean": 176.5089179548157,
+      "mPerBeat": 1.164729620862801,
+      "stepsPerBeat": 1.2179320982589716,
+      "mPerStep": 0.9563173698499092,
+      "validMin": 42.1,
+      "n": 841
+     },
+     "mech": {
+      "pct": 1.3,
+      "confidence": "Moderada",
+      "half1": 0.962453660769111,
+      "half2": 0.95025846557564,
+      "validMin": 42.1
+     },
+     "imp": {
+      "vPadrao": 2.83214,
+      "minInBand": 20.1,
+      "confidence": "Moderada"
+     },
+     "cad": {
+      "spm": null,
+      "confidence": "Dados insuficientes",
+      "minInRange": 0,
+      "adherencePct": 62.3
+     },
+     "hrLag": {
+      "lagSec": 24,
+      "corr": 0.634
+     },
+     "motor": [
+      {
+       "name": "Aquecimento",
+       "targetHr": null,
+       "speed": 2.747,
+       "pace": 364,
+       "hrMean": 145,
+       "min": 10,
+       "flagged": false
+      },
+      {
+       "name": "135 bpm",
+       "targetHr": 135,
+       "speed": 2.747,
+       "pace": 364,
+       "hrMean": 145,
+       "min": 6,
+       "flagged": true
+      },
+      {
+       "name": "145 bpm",
+       "targetHr": 145,
+       "speed": 2.823,
+       "pace": 354,
+       "hrMean": 146,
+       "min": 6,
+       "flagged": false
+      }
+     ]
+    }
+   },
+   {
+    "key": "@w14:2026-10-08",
+    "type": "bike_int",
+    "modal": "bike",
+    "gap": {
+     "gapTimeSec": 4970.647699757869,
+     "gapSpeed": 8.308776339552653,
+     "gapPace": 120.35466585370145,
+     "confidence": "estimada"
+    },
+    "ef": 0.058927491769876966,
+    "decoupling": null,
+    "pacing": null,
+    "paceStability": null,
+    "trimp": 111.63731231256546,
+    "hrCostKm": 16.970007885371903,
+    "zoneSeconds": [
+     900,
+     1800,
+     1500,
+     700,
+     200
+    ],
+    "hill": null,
+    "kmH": 29.152941176470584,
+    "dayReadiness": {
+     "rd": {
+      "score": 65,
+      "band": "Caution"
+     },
+     "tsb": -10.544523013149528,
+     "sleepH": 7.2
+    },
+    "typeLabel": "Bike forte",
+    "hydro": {
+     "has": false,
+     "total": null,
+     "rate": null,
+     "status": null,
+     "plan": {
+      "kg": 82,
+      "durMin": 85,
+      "temp": 21,
+      "tempKnown": true,
+      "antesTarget": 533,
+      "rate": null,
+      "durFloor": 400,
+      "estSweat": 1429,
+      "deficit": 1429,
+      "depoisTarget": 1786
+     },
+     "durStat": {
+      "label": "—",
+      "c": "var(--muted)"
+     },
+     "antesStat": {
+      "label": "—",
+      "c": "var(--muted)"
+     },
+     "depoisStat": {
+      "label": "—",
+      "c": "var(--muted)"
+     },
+     "nextDay": {
+      "date": "2026-10-09",
+      "restingDelta": -3,
+      "hrvDeltaPct": -5.982905982905983,
+      "restingHR": 62,
+      "hrv": 55
+     }
+    }
+   },
+   {
+    "key": "@w15:2026-10-10",
+    "type": "longão",
+    "modal": "corrida",
+    "gap": {
+     "gapTimeSec": 6162.672159195876,
+     "gapSpeed": 2.761788970812431,
+     "gapPace": 362.0841456636825,
+     "confidence": "alta"
+    },
+    "ef": 0.02030727184420905,
+    "decoupling": 2.7953545455957793,
+    "pacing": {
+     "label": "negative split",
+     "deltaPct": -1.9513826940231984,
+     "closer": false,
+     "lastGainSec": 18.3125
+    },
+    "paceStability": {
+     "stdSec": 16.4031758075222,
+     "cvPct": 4.552848970867618
+    },
+    "trimp": 98.42007558294995,
+    "hrCostKm": 49.243443810260814,
+    "zoneSeconds": [
+     6292,
+     9,
+     0,
+     0,
+     0
+    ],
+    "hill": {
+     "climbKm": 6,
+     "gainM": 221,
+     "effVsModel": 1.077124735236105,
+     "speedLossPctPerGrade": 1.0461010110656854,
+     "hrExtra": 5
+    },
+    "kmH": 9.725714285714286,
+    "dayReadiness": {
+     "rd": {
+      "score": 56,
+      "band": "Recovery"
+     },
+     "tsb": -15.344853127151357,
+     "sleepH": 6.2
+    },
+    "typeLabel": "Longão",
+    "hydro": {
+     "has": false,
+     "total": null,
+     "rate": null,
+     "status": null,
+     "plan": {
+      "kg": 82,
+      "durMin": 105,
+      "temp": 27,
+      "tempKnown": true,
+      "antesTarget": 656,
+      "rate": null,
+      "durFloor": 400,
+      "estSweat": 2239,
+      "deficit": 2239,
+      "depoisTarget": 2799
+     },
+     "durStat": {
+      "label": "—",
+      "c": "var(--muted)"
+     },
+     "antesStat": {
+      "label": "—",
+      "c": "var(--muted)"
+     },
+     "depoisStat": {
+      "label": "—",
+      "c": "var(--muted)"
+     },
+     "nextDay": {
+      "date": "2026-10-11",
+      "restingDelta": 0.5,
+      "hrvDeltaPct": 5.982905982905983,
+      "restingHR": 65,
+      "hrv": 62
+     }
+    },
+    "stream": {
+     "n": 2101,
+     "paceGap": {
+      "paceSec": null,
+      "vGap": null,
+      "confidence": "Dados insuficientes",
+      "minInBand": 0,
+      "method": null,
+      "hrRange": [
+       127,
+       142
+      ]
+     },
+     "eff": {
+      "vgapMean": 2.7677131891109954,
+      "hrMean": 136.50499736980535,
+      "spmMean": 176.17148869016307,
+      "mPerBeat": 1.2165326877870957,
+      "stepsPerBeat": 1.2905863674199218,
+      "mPerStep": 0.9426201287242243,
+      "validMin": 95.1,
+      "n": 1901
+     },
+     "mech": {
+      "pct": 1.8,
+      "confidence": "Moderada",
+      "half1": 0.9512619519413356,
+      "half2": 0.9341606978684855,
+      "validMin": 95.1
+     },
+     "imp": {
+      "vPadrao": null,
+      "minInBand": 0,
+      "confidence": "Dados insuficientes"
+     },
+     "cad": {
+      "spm": null,
+      "confidence": "Dados insuficientes",
+      "minInRange": 0,
+      "adherencePct": 68.9
+     },
+     "hrLag": {
+      "lagSec": 33,
+      "corr": 0.816
+     },
+     "motor": [
+      {
+       "name": "Aquecimento",
+       "targetHr": null,
+       "speed": 2.544,
+       "pace": 393,
+       "hrMean": 138,
+       "min": 10,
+       "flagged": false
+      },
+      {
+       "name": "135 bpm",
+       "targetHr": 135,
+       "speed": 2.532,
+       "pace": 395,
+       "hrMean": 139,
+       "min": 6,
+       "flagged": true
+      },
+      {
+       "name": "145 bpm",
+       "targetHr": 145,
+       "speed": 2.743,
+       "pace": 365,
+       "hrMean": 135,
+       "min": 6,
+       "flagged": true
+      }
+     ]
+    }
+   },
+   {
+    "key": "@w16:2026-10-12",
+    "type": "facil",
+    "modal": "corrida",
+    "gap": {
+     "gapTimeSec": 2986.4511124834407,
+     "gapSpeed": 2.832793734555703,
+     "gapPace": 353.0084057309031,
+     "confidence": "alta"
+    },
+    "ef": 0.01953650851417726,
+    "decoupling": 2.0000027601124284,
+    "pacing": {
+     "label": "even",
+     "deltaPct": -0.9427732249888332,
+     "closer": false,
+     "lastGainSec": -6.494565217391312
+    },
+    "paceStability": {
+     "stdSec": 4.311425026993755,
+     "cvPct": 1.219813697324906
+    },
+    "trimp": 59.89284197785387,
+    "hrCostKm": 51.186218830980955,
+    "zoneSeconds": [
+     909,
+     2092,
+     0,
+     0,
+     0
+    ],
+    "hill": {
+     "climbKm": 0,
+     "gainM": 21,
+     "effVsModel": null,
+     "speedLossPctPerGrade": null,
+     "hrExtra": null
+    },
+    "kmH": 10.152000000000001,
+    "dayReadiness": {
+     "rd": {
+      "score": 55,
+      "band": "Recovery"
+     },
+     "tsb": -17.347162908247924,
+     "sleepH": 6.3
+    },
+    "typeLabel": "Fácil",
+    "hydro": {
+     "has": false,
+     "total": null,
+     "rate": null,
+     "status": null,
+     "plan": {
+      "kg": 82,
+      "durMin": 50,
+      "temp": 27,
+      "tempKnown": true,
+      "antesTarget": 492,
+      "rate": null,
+      "durFloor": 400,
+      "estSweat": 1066,
+      "deficit": 1066,
+      "depoisTarget": 1333
+     },
+     "durStat": {
+      "label": "—",
+      "c": "var(--muted)"
+     },
+     "antesStat": {
+      "label": "—",
+      "c": "var(--muted)"
+     },
+     "depoisStat": {
+      "label": "—",
+      "c": "var(--muted)"
+     },
+     "nextDay": {
+      "date": "2026-10-13",
+      "restingDelta": -4,
+      "hrvDeltaPct": -11.11111111111111,
+      "restingHR": 61,
+      "hrv": 52
+     }
+    },
+    "climate": {
+     "tags": [
+      "vento"
+     ],
+     "inStandard": true
+    },
+    "stream": {
+     "n": 1001,
+     "paceGap": {
+      "paceSec": 352.7869463185271,
+      "vGap": 2.834572,
+      "confidence": "Alta",
+      "minInBand": 35.1,
+      "method": "mediana"
+     },
+     "eff": {
+      "vgapMean": 2.8329088239700324,
+      "hrMean": 145.30586766541822,
+      "spmMean": 176.5692883895131,
+      "mPerBeat": 1.1697705823524338,
+      "stepsPerBeat": 1.2151559412320647,
+      "mPerStep": 0.9626505888342084,
+      "validMin": 40.1,
+      "n": 801
+     },
+     "mech": {
+      "pct": 1.2,
+      "confidence": "Moderada",
+      "half1": 0.9685854387812155,
+      "half2": 0.9567941222462384,
+      "validMin": 40.1
+     },
+     "imp": {
+      "vPadrao": 2.8465785,
+      "minInBand": 20.1,
+      "confidence": "Moderada"
+     },
+     "cad": {
+      "spm": null,
+      "confidence": "Dados insuficientes",
+      "minInRange": 0,
+      "adherencePct": 59.9
+     },
+     "hrLag": {
+      "lagSec": 39,
+      "corr": 0.521
+     },
+     "motor": [
+      {
+       "name": "Aquecimento",
+       "targetHr": null,
+       "speed": 2.744,
+       "pace": 364,
+       "hrMean": 144,
+       "min": 10,
+       "flagged": false
+      },
+      {
+       "name": "135 bpm",
+       "targetHr": 135,
+       "speed": 2.776,
+       "pace": 360,
+       "hrMean": 145,
+       "min": 6,
+       "flagged": true
+      },
+      {
+       "name": "145 bpm",
+       "targetHr": 145,
+       "speed": 2.841,
+       "pace": 352,
+       "hrMean": 145,
+       "min": 6,
+       "flagged": false
+      }
+     ]
+    }
+   },
+   {
+    "key": "@w17:2026-10-17",
+    "type": "prova",
+    "modal": "corrida",
+    "gap": {
+     "gapTimeSec": 3700.9550878182695,
+     "gapSpeed": 3.2180882278744436,
+     "gapPace": 310.7435002366305,
+     "confidence": "alta"
+    },
+    "ef": 0.0199881256389717,
+    "decoupling": 2.6855720230603053,
+    "pacing": {
+     "label": "negative split",
+     "deltaPct": -1.0111847656428972,
+     "closer": false,
+     "lastGainSec": -1.0049950049950098
+    },
+    "paceStability": {
+     "stdSec": 2.8082903677545974,
+     "cvPct": 0.9038606676872226
+    },
+    "trimp": 113.88463855815857,
+    "hrCostKm": 50.02970353809751,
+    "zoneSeconds": [
+     25,
+     3232,
+     464,
+     0,
+     0
+    ],
+    "hill": {
+     "climbKm": 0,
+     "gainM": 30,
+     "effVsModel": null,
+     "speedLossPctPerGrade": null,
+     "hrExtra": null
+    },
+    "kmH": 11.525806451612903,
+    "dayReadiness": {
+     "rd": {
+      "score": 68,
+      "band": "Caution"
+     },
+     "tsb": -4.646833913050628,
+     "sleepH": 6.4
+    },
+    "typeLabel": "Prova",
+    "hydro": {
+     "has": true,
+     "total": 1050,
+     "rate": null,
+     "status": null,
+     "plan": {
+      "kg": 82,
+      "durMin": 62,
+      "temp": 27,
+      "tempKnown": true,
+      "antesTarget": 574,
+      "antes": 600,
+      "rate": null,
+      "durFloor": 400,
+      "estSweat": 1322,
+      "deficit": 1322,
+      "depoisTarget": 1653,
+      "depois": 450
+     },
+     "durStat": {
+      "label": "—",
+      "c": "var(--muted)"
+     },
+     "antesStat": {
+      "label": "bom",
+      "c": "var(--good)"
+     },
+     "depoisStat": {
+      "label": "baixo",
+      "c": "var(--crit)"
+     },
+     "nextDay": {
+      "date": "2026-10-18",
+      "restingDelta": -1.5,
+      "hrvDeltaPct": 5.982905982905983,
+      "restingHR": 62,
+      "hrv": 62
+     }
+    },
+    "stream": {
+     "n": 1241,
+     "paceGap": {
+      "paceSec": null,
+      "vGap": null,
+      "confidence": "Dados insuficientes",
+      "minInBand": 0,
+      "method": null,
+      "hrRange": [
+       158,
+       165
+      ]
+     },
+     "eff": {
+      "vgapMean": 3.213824148414989,
+      "hrMean": 161.91450528338137,
+      "spmMean": 177.5369836695485,
+      "mPerBeat": 1.1909337496811105,
+      "stepsPerBeat": 1.09648597177149,
+      "mPerStep": 1.0861367863713112,
+      "validMin": 52.1,
+      "n": 1041
+     },
+     "mech": {
+      "pct": 1.2,
+      "confidence": "Moderada",
+      "half1": 1.0929274104079896,
+      "half2": 1.0794399145792453,
+      "validMin": 52.1
+     },
+     "imp": {
+      "vPadrao": null,
+      "minInBand": 0,
+      "confidence": "Dados insuficientes"
+     },
+     "cad": {
+      "spm": null,
+      "confidence": "Dados insuficientes",
+      "minInRange": 0,
+      "adherencePct": 37.4
+     },
+     "hrLag": {
+      "lagSec": 18,
+      "corr": 0.412
+     },
+     "motor": [
+      {
+       "name": "Aquecimento",
+       "targetHr": null,
+       "speed": 3.138,
+       "pace": 319,
+       "hrMean": 159,
+       "min": 10,
+       "flagged": false
+      },
+      {
+       "name": "135 bpm",
+       "targetHr": 135,
+       "speed": 3.14,
+       "pace": 319,
+       "hrMean": 160,
+       "min": 6,
+       "flagged": true
+      },
+      {
+       "name": "145 bpm",
+       "targetHr": 145,
+       "speed": 3.216,
+       "pace": 311,
+       "hrMean": 162,
+       "min": 6,
+       "flagged": true
+      }
+     ]
+    }
+   },
+   {
+    "key": "@w18:2026-10-21",
+    "type": "facil",
+    "modal": "corrida",
+    "gap": {
+     "gapTimeSec": 2839.978108315726,
+     "gapSpeed": 2.8415711995702617,
+     "gapPace": 351.91798120393133,
+     "confidence": "alta"
+    },
+    "ef": 0.019462816435412752,
+    "decoupling": 1.748154832605041,
+    "pacing": {
+     "label": "negative split",
+     "deltaPct": -1.1149825783972125,
+     "closer": false,
+     "lastGainSec": 0.8571428571428328
+    },
+    "paceStability": {
+     "stdSec": 3.400699150955944,
+     "cvPct": 0.9581609827022713
+    },
+    "trimp": 57.66373518995334,
+    "hrCostKm": 51.38002525577397,
+    "zoneSeconds": [
+     401,
+     2480,
+     0,
+     0,
+     0
+    ],
+    "hill": {
+     "climbKm": 0,
+     "gainM": 20,
+     "effVsModel": null,
+     "speedLossPctPerGrade": null,
+     "hrExtra": null
+    },
+    "kmH": 10.0875,
+    "dayReadiness": {
+     "rd": {
+      "score": 71,
+      "band": "Moderate"
+     },
+     "tsb": -4.1380199880894,
+     "sleepH": null
+    },
+    "typeLabel": "Fácil",
+    "hydro": {
+     "has": false,
+     "total": null,
+     "rate": null,
+     "status": null,
+     "plan": {
+      "kg": 82,
+      "durMin": 48,
+      "temp": 27,
+      "tempKnown": true,
+      "antesTarget": 492,
+      "rate": null,
+      "durFloor": 400,
+      "estSweat": 1023,
+      "deficit": 1023,
+      "depoisTarget": 1279
+     },
+     "durStat": {
+      "label": "—",
+      "c": "var(--muted)"
+     },
+     "antesStat": {
+      "label": "—",
+      "c": "var(--muted)"
+     },
+     "depoisStat": {
+      "label": "—",
+      "c": "var(--muted)"
+     },
+     "nextDay": {
+      "date": "2026-10-22",
+      "restingDelta": -1.5,
+      "hrvDeltaPct": -0.8403361344537815,
+      "restingHR": 61,
+      "hrv": 59
+     }
+    },
+    "climate": {
+     "tags": [
+      "vento"
+     ],
+     "inStandard": true
+    },
+    "stream": {
+     "n": 961,
+     "paceGap": {
+      "paceSec": 355.2821935406855,
+      "vGap": 2.814664,
+      "confidence": "Alta",
+      "minInBand": 35.1,
+      "method": "mediana"
+     },
+     "eff": {
+      "vgapMean": 2.8122930532194483,
+      "hrMean": 145.83574244415243,
+      "spmMean": 176.3784494086728,
+      "mPerBeat": 1.157038599490003,
+      "stepsPerBeat": 1.2094322451590813,
+      "mPerStep": 0.9566791394236501,
+      "validMin": 38.1,
+      "n": 761
+     },
+     "mech": {
+      "pct": null,
+      "confidence": "Dados insuficientes",
+      "validMin": 38.1
+     },
+     "imp": {
+      "vPadrao": 2.8266489999999997,
+      "minInBand": 20.1,
+      "confidence": "Moderada"
+     },
+     "cad": {
+      "spm": null,
+      "confidence": "Dados insuficientes",
+      "minInRange": 0,
+      "adherencePct": 67.5
+     },
+     "hrLag": {
+      "lagSec": 30,
+      "corr": 0.51
+     },
+     "motor": [
+      {
+       "name": "Aquecimento",
+       "targetHr": null,
+       "speed": 2.739,
+       "pace": 365,
+       "hrMean": 146,
+       "min": 10,
+       "flagged": false
+      },
+      {
+       "name": "135 bpm",
+       "targetHr": 135,
+       "speed": 2.742,
+       "pace": 365,
+       "hrMean": 145,
+       "min": 6,
+       "flagged": true
+      },
+      {
+       "name": "145 bpm",
+       "targetHr": 145,
+       "speed": 2.83,
+       "pace": 353,
+       "hrMean": 146,
+       "min": 6,
+       "flagged": false
+      }
+     ]
+    }
+   },
+   {
+    "key": "@w19:2026-10-24",
+    "type": "longão",
+    "modal": "corrida",
+    "gap": {
+     "gapTimeSec": 6568.86748916743,
+     "gapSpeed": 2.7341090423299645,
+     "gapPace": 365.74986019863195,
+     "confidence": "alta"
+    },
+    "ef": 0.019957000308977842,
+    "decoupling": 2.7784710444805865,
+    "pacing": {
+     "label": "negative split",
+     "deltaPct": -1.1537099059642073,
+     "closer": false,
+     "lastGainSec": 2.0220588235293917
+    },
+    "paceStability": {
+     "stdSec": 3.107479796399697,
+     "cvPct": 0.8498078954648731
+    },
+    "trimp": 104.0000087873517,
+    "hrCostKm": 50.10773084721258,
+    "zoneSeconds": [
+     6601,
+     0,
+     0,
+     0,
+     0
+    ],
+    "hill": {
+     "climbKm": 0,
+     "gainM": 45,
+     "effVsModel": null,
+     "speedLossPctPerGrade": null,
+     "hrExtra": null
+    },
+    "kmH": 9.796363636363637,
+    "dayReadiness": {
+     "rd": {
+      "score": 73,
+      "band": "Moderate"
+     },
+     "tsb": -2.142328467788701,
+     "sleepH": 7
+    },
+    "typeLabel": "Longão",
+    "hydro": {
+     "has": false,
+     "total": null,
+     "rate": null,
+     "status": null,
+     "plan": {
+      "kg": 82,
+      "durMin": 110,
+      "temp": 27,
+      "tempKnown": true,
+      "antesTarget": 656,
+      "rate": null,
+      "durFloor": 400,
+      "estSweat": 2345,
+      "deficit": 2345,
+      "depoisTarget": 2931
+     },
+     "durStat": {
+      "label": "—",
+      "c": "var(--muted)"
+     },
+     "antesStat": {
+      "label": "—",
+      "c": "var(--muted)"
+     },
+     "depoisStat": {
+      "label": "—",
+      "c": "var(--muted)"
+     },
+     "nextDay": {
+      "date": "2026-10-25",
+      "restingDelta": -1.5,
+      "hrvDeltaPct": -7.563025210084033,
+      "restingHR": 61,
+      "hrv": 55
+     }
+    },
+    "stream": {
+     "n": 2201,
+     "paceGap": {
+      "paceSec": null,
+      "vGap": null,
+      "confidence": "Dados insuficientes",
+      "minInBand": 0,
+      "method": null,
+      "hrRange": [
+       133,
+       139
+      ]
+     },
+     "eff": {
+      "vgapMean": 2.73545746976512,
+      "hrMean": 136.92003998001,
+      "spmMean": 176.21289355322338,
+      "mPerBeat": 1.1987101976443288,
+      "stepsPerBeat": 1.2869766440248633,
+      "mPerStep": 0.9314156579372785,
+      "validMin": 100.1,
+      "n": 2001
+     },
+     "mech": {
+      "pct": 1.3,
+      "confidence": "Moderada",
+      "half1": 0.9375753645095712,
+      "half2": 0.9253341252758779,
+      "validMin": 100.1
+     },
+     "imp": {
+      "vPadrao": null,
+      "minInBand": 0,
+      "confidence": "Dados insuficientes"
+     },
+     "cad": {
+      "spm": null,
+      "confidence": "Dados insuficientes",
+      "minInRange": 0,
+      "adherencePct": 70.2
+     },
+     "hrLag": {
+      "lagSec": 30,
+      "corr": 0.251
+     },
+     "motor": [
+      {
+       "name": "Aquecimento",
+       "targetHr": null,
+       "speed": 2.673,
+       "pace": 374,
+       "hrMean": 134,
+       "min": 10,
+       "flagged": false
+      },
+      {
+       "name": "135 bpm",
+       "targetHr": 135,
+       "speed": 2.68,
+       "pace": 373,
+       "hrMean": 135,
+       "min": 6,
+       "flagged": false
+      },
+      {
+       "name": "145 bpm",
+       "targetHr": 145,
+       "speed": 2.739,
+       "pace": 365,
+       "hrMean": 136,
+       "min": 6,
+       "flagged": true
+      }
+     ]
+    }
+   },
+   {
+    "key": "@w20:2026-10-27",
+    "type": "facil",
+    "modal": "corrida",
+    "gap": {
+     "gapTimeSec": 3060.5973082556943,
+     "gapSpeed": 2.898127099593909,
+     "gapPace": 345.0504293411155,
+     "confidence": "alta"
+    },
+    "ef": 0.021000921011550065,
+    "decoupling": 2.16841690950954,
+    "pacing": {
+     "label": "positive split",
+     "deltaPct": 1.697212164777759,
+     "closer": false,
+     "lastGainSec": 5.123563218390814
+    },
+    "paceStability": {
+     "stdSec": 16.346431725844898,
+     "cvPct": 4.761858047277847
+    },
+    "trimp": 51.564920517593464,
+    "hrCostKm": 47.616959249073936,
+    "zoneSeconds": [
+     2960,
+     161,
+     0,
+     0,
+     0
+    ],
+    "hill": {
+     "climbKm": 3,
+     "gainM": 107,
+     "effVsModel": null,
+     "speedLossPctPerGrade": null,
+     "hrExtra": null
+    },
+    "kmH": 10.234615384615383,
+    "dayReadiness": {
+     "rd": {
+      "score": 63,
+      "band": "Caution"
+     },
+     "tsb": -4.423043676404603,
+     "sleepH": 6.9
+    },
+    "typeLabel": "Fácil",
+    "hydro": {
+     "has": true,
+     "total": 950,
+     "rate": null,
+     "status": null,
+     "plan": {
+      "kg": 82,
+      "durMin": 52,
+      "temp": 27,
+      "tempKnown": true,
+      "antesTarget": 492,
+      "antes": 500,
+      "rate": null,
+      "durFloor": 400,
+      "estSweat": 1109,
+      "deficit": 1109,
+      "depoisTarget": 1386,
+      "depois": 450
+     },
+     "durStat": {
+      "label": "—",
+      "c": "var(--muted)"
+     },
+     "antesStat": {
+      "label": "bom",
+      "c": "var(--good)"
+     },
+     "depoisStat": {
+      "label": "baixo",
+      "c": "var(--crit)"
+     },
+     "nextDay": {
+      "date": "2026-10-28",
+      "restingDelta": 4,
+      "hrvDeltaPct": -1.694915254237288,
+      "restingHR": 66,
+      "hrv": 58
+     }
+    },
+    "climate": {
+     "tags": [],
+     "inStandard": true
+    },
+    "stream": {
+     "n": 1041,
+     "paceGap": {
+      "paceSec": 327.4661228109299,
+      "vGap": 3.053751,
+      "confidence": "Moderada",
+      "minInBand": 11.3,
+      "method": "mediana"
+     },
+     "eff": {
+      "vgapMean": 2.915628200356719,
+      "hrMean": 139.0309155766944,
+      "spmMean": 176.48275862068965,
+      "mPerBeat": 1.2582646909557411,
+      "stepsPerBeat": 1.2693778062860808,
+      "mPerStep": 0.991245226381534,
+      "validMin": 42.1,
+      "n": 841
+     },
+     "mech": {
+      "pct": 1.3,
+      "confidence": "Moderada",
+      "half1": 0.9976776113060749,
+      "half2": 0.985040785256707,
+      "validMin": 42.1
+     },
+     "imp": {
+      "vPadrao": null,
+      "minInBand": 0.2,
+      "confidence": "Dados insuficientes"
+     },
+     "cad": {
+      "spm": null,
+      "confidence": "Dados insuficientes",
+      "minInRange": 0,
+      "adherencePct": 61.6
+     },
+     "hrLag": {
+      "lagSec": 21,
+      "corr": 0.783
+     },
+     "motor": [
+      {
+       "name": "Aquecimento",
+       "targetHr": null,
+       "speed": 2.657,
+       "pace": 376,
+       "hrMean": 140,
+       "min": 10,
+       "flagged": false
+      },
+      {
+       "name": "135 bpm",
+       "targetHr": 135,
+       "speed": 2.845,
+       "pace": 352,
+       "hrMean": 136,
+       "min": 6,
+       "flagged": false
+      },
+      {
+       "name": "145 bpm",
+       "targetHr": 145,
+       "speed": 2.973,
+       "pace": 336,
+       "hrMean": 135,
+       "min": 6,
+       "flagged": true
+      }
+     ]
+    }
+   },
+   {
+    "key": "@w21:2026-11-01",
+    "type": "facil",
+    "modal": "corrida",
+    "gap": {
+     "gapTimeSec": 2983.5389401024563,
+     "gapSpeed": 2.86572428637596,
+     "gapPace": 348.9519228190007,
+     "confidence": "alta"
+    },
+    "ef": 0.019900863099833056,
+    "decoupling": 1.9197874129351384,
+    "pacing": {
+     "label": "even",
+     "deltaPct": -0.9897903514924762,
+     "closer": false,
+     "lastGainSec": -6.113636363636317
+    },
+    "paceStability": {
+     "stdSec": 4.130141937923041,
+     "cvPct": 1.182426748262117
+    },
+    "trimp": 58.983169028964255,
+    "hrCostKm": 50.249076885936105,
+    "zoneSeconds": [
+     1513,
+     1488,
+     0,
+     0,
+     0
+    ],
+    "hill": {
+     "climbKm": 0,
+     "gainM": 21,
+     "effVsModel": null,
+     "speedLossPctPerGrade": null,
+     "hrExtra": null
+    },
+    "kmH": 10.26,
+    "dayReadiness": {
+     "rd": {
+      "score": 76,
+      "band": "Moderate"
+     },
+     "tsb": 2.6777486955919123,
+     "sleepH": 6.6
+    },
+    "typeLabel": "Fácil",
+    "hydro": {
+     "has": false,
+     "total": null,
+     "rate": null,
+     "status": null,
+     "plan": {
+      "kg": 82,
+      "durMin": 50,
+      "temp": 27,
+      "tempKnown": true,
+      "antesTarget": 492,
+      "rate": null,
+      "durFloor": 400,
+      "estSweat": 1066,
+      "deficit": 1066,
+      "depoisTarget": 1333
+     },
+     "durStat": {
+      "label": "—",
+      "c": "var(--muted)"
+     },
+     "antesStat": {
+      "label": "—",
+      "c": "var(--muted)"
+     },
+     "depoisStat": {
+      "label": "—",
+      "c": "var(--muted)"
+     },
+     "nextDay": {
+      "date": "2026-11-02",
+      "restingDelta": 1,
+      "hrvDeltaPct": 12.068965517241379,
+      "restingHR": 64,
+      "hrv": 65
+     }
+    },
+    "stream": {
+     "n": 1001,
+     "paceGap": {
+      "paceSec": 349.2371264210459,
+      "vGap": 2.863384,
+      "confidence": "Alta",
+      "minInBand": 35.1,
+      "method": "mediana"
+     },
+     "eff": {
+      "vgapMean": 2.8602502915106127,
+      "hrMean": 144.6267166042447,
+      "spmMean": 176.4943820224719,
+      "mPerBeat": 1.1866066071336088,
+      "stepsPerBeat": 1.220344250125166,
+      "mPerStep": 0.9723539952041427,
+      "validMin": 40.1,
+      "n": 801
+     },
+     "mech": {
+      "pct": 1.1,
+      "confidence": "Moderada",
+      "half1": 0.9776032287958775,
+      "half2": 0.9671612960572806,
+      "validMin": 40.1
+     },
+     "imp": {
+      "vPadrao": 2.878,
+      "minInBand": 20.1,
+      "confidence": "Moderada"
+     },
+     "cad": {
+      "spm": null,
+      "confidence": "Dados insuficientes",
+      "minInRange": 0,
+      "adherencePct": 62.9
+     },
+     "hrLag": {
+      "lagSec": 27,
+      "corr": 0.593
+     },
+     "motor": [
+      {
+       "name": "Aquecimento",
+       "targetHr": null,
+       "speed": 2.788,
+       "pace": 359,
+       "hrMean": 144,
+       "min": 10,
+       "flagged": false
+      },
+      {
+       "name": "135 bpm",
+       "targetHr": 135,
+       "speed": 2.805,
+       "pace": 357,
+       "hrMean": 144,
+       "min": 6,
+       "flagged": true
+      },
+      {
+       "name": "145 bpm",
+       "targetHr": 145,
+       "speed": 2.88,
+       "pace": 347,
+       "hrMean": 145,
+       "min": 6,
+       "flagged": false
+      }
+     ]
+    }
+   },
+   {
+    "key": "@w22:2026-11-04",
+    "type": "longão",
+    "modal": "corrida",
+    "gap": {
+     "gapTimeSec": 6867.551026109517,
+     "gapSpeed": 2.7433360055677523,
+     "gapPace": 364.5196935302291,
+     "confidence": "alta"
+    },
+    "ef": 0.019879246417157624,
+    "decoupling": 3.580569067398455,
+    "pacing": {
+     "label": "negative split",
+     "deltaPct": -1.1169054694165836,
+     "closer": false,
+     "lastGainSec": -0.38888888888891415
+    },
+    "paceStability": {
+     "stdSec": 3.2768106683647686,
+     "cvPct": 0.8990847497679713
+    },
+    "trimp": 112.09958996304083,
+    "hrCostKm": 50.30371770717162,
+    "zoneSeconds": [
+     6901,
+     0,
+     0,
+     0,
+     0
+    ],
+    "hill": {
+     "climbKm": 0,
+     "gainM": 47,
+     "effVsModel": null,
+     "speedLossPctPerGrade": null,
+     "hrExtra": null
+    },
+    "kmH": 9.829565217391304,
+    "dayReadiness": {
+     "rd": {
+      "score": 79,
+      "band": "Moderate"
+     },
+     "tsb": 2.2233505196705483,
+     "sleepH": 7.4
+    },
+    "typeLabel": "Longão",
+    "hydro": {
+     "has": false,
+     "total": null,
+     "rate": null,
+     "status": null,
+     "plan": {
+      "kg": 82,
+      "durMin": 115,
+      "temp": 27,
+      "tempKnown": true,
+      "antesTarget": 656,
+      "rate": null,
+      "durFloor": 400,
+      "estSweat": 2452,
+      "deficit": 2452,
+      "depoisTarget": 3065
+     },
+     "durStat": {
+      "label": "—",
+      "c": "var(--muted)"
+     },
+     "antesStat": {
+      "label": "—",
+      "c": "var(--muted)"
+     },
+     "depoisStat": {
+      "label": "—",
+      "c": "var(--muted)"
+     },
+     "nextDay": {
+      "date": "2026-11-05",
+      "restingDelta": -2,
+      "hrvDeltaPct": -4.273504273504273,
+      "restingHR": 61,
+      "hrv": 56
+     }
+    },
+    "climate": {
+     "tags": [],
+     "inStandard": true
+    },
+    "stream": {
+     "n": 2301,
+     "paceGap": {
+      "paceSec": null,
+      "vGap": null,
+      "confidence": "Dados insuficientes",
+      "minInBand": 0,
+      "method": null,
+      "hrRange": [
+       133,
+       140
+      ]
+     },
+     "eff": {
+      "vgapMean": 2.743753711803904,
+      "hrMean": 138.09614469300334,
+      "spmMean": 176.20371251784866,
+      "mPerBeat": 1.1921058554835602,
+      "stepsPerBeat": 1.2759495416006066,
+      "mPerStep": 0.9342891835582547,
+      "validMin": 105.1,
+      "n": 2101
+     },
+     "mech": {
+      "pct": 1.5,
+      "confidence": "Moderada",
+      "half1": 0.9414594511869746,
+      "half2": 0.9272029684797217,
+      "validMin": 105.1
+     },
+     "imp": {
+      "vPadrao": null,
+      "minInBand": 0,
+      "confidence": "Dados insuficientes"
+     },
+     "cad": {
+      "spm": null,
+      "confidence": "Dados insuficientes",
+      "minInRange": 0,
+      "adherencePct": 71.8
+     },
+     "hrLag": {
+      "lagSec": 12,
+      "corr": 0.087
+     },
+     "motor": [
+      {
+       "name": "Aquecimento",
+       "targetHr": null,
+       "speed": 2.684,
+       "pace": 373,
+       "hrMean": 134,
+       "min": 10,
+       "flagged": false
+      },
+      {
+       "name": "135 bpm",
+       "targetHr": 135,
+       "speed": 2.689,
+       "pace": 372,
+       "hrMean": 135,
+       "min": 6,
+       "flagged": false
+      },
+      {
+       "name": "145 bpm",
+       "targetHr": 145,
+       "speed": 2.742,
+       "pace": 365,
+       "hrMean": 136,
+       "min": 6,
+       "flagged": true
+      }
+     ]
+    }
+   },
+   {
+    "key": "@w23:2026-11-06",
+    "type": "teste_motor",
+    "modal": "corrida",
+    "gap": {
+     "gapTimeSec": 1314.2543537642764,
+     "gapSpeed": 2.716369163834105,
+     "gapPace": 368.1384744437749,
+     "confidence": "alta"
+    },
+    "ef": 0.02190620293414601,
+    "decoupling": -5.5242418769727015,
+    "pacing": {
+     "label": "negative split",
+     "deltaPct": -12.083968780837884,
+     "closer": true,
+     "lastGainSec": 43.333333333333314
+    },
+    "paceStability": {
+     "stdSec": 25.408367324117684,
+     "cvPct": 6.970321202771144
+    },
+    "trimp": 14.264202030420233,
+    "hrCostKm": 45.649170831028094,
+    "zoneSeconds": [
+     1321,
+     0,
+     0,
+     0,
+     0
+    ],
+    "hill": {
+     "climbKm": 0,
+     "gainM": 8,
+     "effVsModel": null,
+     "speedLossPctPerGrade": null,
+     "hrExtra": null
+    },
+    "kmH": 9.736363636363636,
+    "dayReadiness": {
+     "rd": {
+      "score": 70,
+      "band": "Moderate"
+     },
+     "tsb": -5.021594966908346,
+     "sleepH": 6.9
+    },
+    "typeLabel": "teste_motor",
+    "hydro": {
+     "has": false,
+     "total": null,
+     "rate": null,
+     "status": null,
+     "plan": {
+      "kg": 82,
+      "durMin": 22,
+      "temp": 27,
+      "tempKnown": true,
+      "antesTarget": 492,
+      "rate": null,
+      "durFloor": 400,
+      "estSweat": 469,
+      "deficit": 469,
+      "depoisTarget": 586
+     },
+     "durStat": {
+      "label": "—",
+      "c": "var(--muted)"
+     },
+     "antesStat": {
+      "label": "—",
+      "c": "var(--muted)"
+     },
+     "depoisStat": {
+      "label": "—",
+      "c": "var(--muted)"
+     },
+     "nextDay": {
+      "date": "2026-11-07",
+      "restingDelta": -2,
+      "hrvDeltaPct": 17.24137931034483,
+      "restingHR": 61,
+      "hrv": 68
+     }
+    },
+    "climate": {
+     "tags": [],
+     "inStandard": true
+    },
+    "stream": {
+     "n": 441,
+     "paceGap": {
+      "paceSec": null,
+      "vGap": null,
+      "confidence": "Dados insuficientes",
+      "minInBand": 0,
+      "method": null,
+      "hrRange": [
+       123,
+       132
+      ]
+     },
+     "eff": {
+      "vgapMean": 2.8532670186721987,
+      "hrMean": 127.06639004149378,
+      "spmMean": 176.53941908713693,
+      "mPerBeat": 1.347295858994873,
+      "stepsPerBeat": 1.3893478757796427,
+      "mPerStep": 0.9697325504160201,
+      "validMin": 12.1,
+      "n": 241
+     },
+     "mech": {
+      "pct": null,
+      "confidence": "Dados insuficientes",
+      "validMin": 12.1
+     },
+     "imp": {
+      "vPadrao": null,
+      "minInBand": 0,
+      "confidence": "Dados insuficientes"
+     },
+     "cad": {
+      "spm": null,
+      "confidence": "Dados insuficientes",
+      "minInRange": 0,
+      "adherencePct": 63.9
+     },
+     "hrLag": {
+      "lagSec": 6,
+      "corr": 0.895
+     },
+     "motor": [
+      {
+       "name": "Aquecimento",
+       "targetHr": null,
+       "speed": 2.499,
+       "pace": 400,
+       "hrMean": 122,
+       "min": 10,
+       "flagged": false
+      },
+      {
+       "name": "135 bpm",
+       "targetHr": 135,
+       "speed": 2.74,
+       "pace": 365,
+       "hrMean": 125,
+       "min": 6,
+       "flagged": true
+      },
+      {
+       "name": "145 bpm",
+       "targetHr": 145,
+       "speed": 2.993,
+       "pace": 334,
+       "hrMean": 130,
+       "min": 6,
+       "flagged": true
+      }
+     ]
+    }
+   },
+   {
+    "key": "@w24:2026-11-08",
+    "type": "facil",
+    "modal": "corrida",
+    "gap": {
+     "gapTimeSec": 2985.5189470670325,
+     "gapSpeed": 2.8738722319712537,
+     "gapPace": 347.9625812432439,
+     "confidence": "alta"
+    },
+    "ef": 0.020675339798354342,
+    "decoupling": 3.1744085880193063,
+    "pacing": {
+     "label": "even",
+     "deltaPct": -0.9857938839782057,
+     "closer": false,
+     "lastGainSec": -4.073275862069011
+    },
+    "paceStability": {
+     "stdSec": 3.731956796687637,
+     "cvPct": 1.0718342311713556
+    },
+    "trimp": 50.15608430647117,
+    "hrCostKm": 48.3667987928109,
+    "zoneSeconds": [
+     3001,
+     0,
+     0,
+     0,
+     0
+    ],
+    "hill": {
+     "climbKm": 0,
+     "gainM": 22,
+     "effVsModel": null,
+     "speedLossPctPerGrade": null,
+     "hrExtra": null
+    },
+    "kmH": 10.296,
+    "dayReadiness": {
+     "rd": {
+      "score": 76,
+      "band": "Moderate"
+     },
+     "tsb": -1.0737894098103666,
+     "sleepH": 7.5
+    },
+    "typeLabel": "Fácil",
+    "hydro": {
+     "has": true,
+     "total": 850,
+     "rate": null,
+     "status": null,
+     "plan": {
+      "kg": 82,
+      "durMin": 50,
+      "temp": 27,
+      "tempKnown": true,
+      "antesTarget": 492,
+      "antes": 400,
+      "rate": null,
+      "durFloor": 400,
+      "estSweat": 1066,
+      "deficit": 1066,
+      "depoisTarget": 1333,
+      "depois": 450
+     },
+     "durStat": {
+      "label": "—",
+      "c": "var(--muted)"
+     },
+     "antesStat": {
+      "label": "pouco",
+      "c": "var(--warn)"
+     },
+     "depoisStat": {
+      "label": "baixo",
+      "c": "var(--crit)"
+     },
+     "nextDay": {
+      "date": "2026-11-09",
+      "restingDelta": -1,
+      "hrvDeltaPct": 8.47457627118644,
+      "restingHR": 62,
+      "hrv": 64
+     }
+    },
+    "stream": {
+     "n": 1001,
+     "paceGap": {
+      "paceSec": null,
+      "vGap": null,
+      "confidence": "Dados insuficientes",
+      "minInBand": 0,
+      "method": null,
+      "hrRange": [
+       135,
+       143
+      ]
+     },
+     "eff": {
+      "vgapMean": 2.8696139588014984,
+      "hrMean": 139.1385767790262,
+      "spmMean": 176.6267166042447,
+      "mPerBeat": 1.237448603499327,
+      "stepsPerBeat": 1.269430237774787,
+      "mPerStep": 0.9748063081185767,
+      "validMin": 40.1,
+      "n": 801
+     },
+     "mech": {
+      "pct": 1.3,
+      "confidence": "Moderada",
+      "half1": 0.9811626571410175,
+      "half2": 0.9685101392813775,
+      "validMin": 40.1
+     },
+     "imp": {
+      "vPadrao": null,
+      "minInBand": 0,
+      "confidence": "Dados insuficientes"
+     },
+     "cad": {
+      "spm": null,
+      "confidence": "Dados insuficientes",
+      "minInRange": 0,
+      "adherencePct": 59.5
+     },
+     "hrLag": {
+      "lagSec": 15,
+      "corr": 0.134
+     },
+     "motor": [
+      {
+       "name": "Aquecimento",
+       "targetHr": null,
+       "speed": 2.798,
+       "pace": 357,
+       "hrMean": 138,
+       "min": 10,
+       "flagged": false
+      },
+      {
+       "name": "135 bpm",
+       "targetHr": 135,
+       "speed": 2.802,
+       "pace": 357,
+       "hrMean": 137,
+       "min": 6,
+       "flagged": false
+      },
+      {
+       "name": "145 bpm",
+       "targetHr": 145,
+       "speed": 2.887,
+       "pace": 346,
+       "hrMean": 139,
+       "min": 6,
+       "flagged": true
+      }
+     ]
+    }
+   },
+   {
+    "key": "@w25:2026-11-12",
+    "type": "facil",
+    "modal": "corrida",
+    "gap": {
+     "gapTimeSec": 3195.243908621773,
+     "gapSpeed": 2.8072974259636703,
+     "gapPace": 356.21448256652985,
+     "confidence": "alta"
+    },
+    "ef": 0.020196384359450866,
+    "decoupling": 7.785448473832147,
+    "pacing": {
+     "label": "positive split",
+     "deltaPct": 4.184794255166451,
+     "closer": false,
+     "lastGainSec": 12.858247422680392
+    },
+    "paceStability": {
+     "stdSec": 31.670710918634295,
+     "cvPct": 8.893507332433895
+    },
+    "trimp": 53.544096039419024,
+    "hrCostKm": 49.51381307674765,
+    "zoneSeconds": [
+     3121,
+     0,
+     0,
+     0,
+     0
+    ],
+    "hill": {
+     "climbKm": 0,
+     "gainM": 22,
+     "effVsModel": null,
+     "speedLossPctPerGrade": null,
+     "hrExtra": null
+    },
+    "kmH": 10.35,
+    "dayReadiness": {
+     "rd": {
+      "score": 79,
+      "band": "Moderate"
+     },
+     "tsb": 2.7879923620037914,
+     "sleepH": 7.2
+    },
+    "typeLabel": "Fácil",
+    "hydro": {
+     "has": false,
+     "total": null,
+     "rate": null,
+     "status": null,
+     "plan": {
+      "kg": 82,
+      "durMin": 52,
+      "temp": 27,
+      "tempKnown": true,
+      "antesTarget": 492,
+      "rate": null,
+      "durFloor": 400,
+      "estSweat": 1109,
+      "deficit": 1109,
+      "depoisTarget": 1386
+     },
+     "durStat": {
+      "label": "—",
+      "c": "var(--muted)"
+     },
+     "antesStat": {
+      "label": "—",
+      "c": "var(--muted)"
+     },
+     "depoisStat": {
+      "label": "—",
+      "c": "var(--muted)"
+     },
+     "nextDay": {
+      "date": "2026-11-13",
+      "restingDelta": -0.5,
+      "hrvDeltaPct": 4,
+      "restingHR": 62,
+      "hrv": 65
+     }
+    },
+    "climate": {
+     "tags": [
+      "acima da faixa-padrão"
+     ],
+     "inStandard": false
+    },
+    "stream": {
+     "n": 1040,
+     "paceGap": {
+      "paceSec": null,
+      "vGap": null,
+      "confidence": "Dados insuficientes",
+      "minInBand": 0,
+      "method": null,
+      "hrRange": [
+       135,
+       143
+      ]
+     },
+     "eff": {
+      "vgapMean": 2.883917320238095,
+      "hrMean": 139.3357142857143,
+      "spmMean": 176.5452380952381,
+      "mPerBeat": 1.241857050802276,
+      "stepsPerBeat": 1.2670494352454673,
+      "mPerStep": 0.9801172837125247,
+      "validMin": 42,
+      "n": 840
+     },
+     "mech": {
+      "pct": 1.3,
+      "confidence": "Moderada",
+      "half1": 0.9864032133869656,
+      "half2": 0.9738796194389977,
+      "validMin": 42
+     },
+     "imp": {
+      "vPadrao": null,
+      "minInBand": 0.1,
+      "confidence": "Dados insuficientes"
+     },
+     "cad": {
+      "spm": null,
+      "confidence": "Dados insuficientes",
+      "minInRange": 0,
+      "adherencePct": 61.6
+     },
+     "hrLag": {
+      "lagSec": 21,
+      "corr": 0.356
+     },
+     "motor": [
+      {
+       "name": "Aquecimento",
+       "targetHr": null,
+       "speed": 2.811,
+       "pace": 356,
+       "hrMean": 137,
+       "min": 10,
+       "flagged": false
+      },
+      {
+       "name": "135 bpm",
+       "targetHr": 135,
+       "speed": 2.819,
+       "pace": 355,
+       "hrMean": 138,
+       "min": 6,
+       "flagged": false
+      },
+      {
+       "name": "145 bpm",
+       "targetHr": 145,
+       "speed": 2.903,
+       "pace": 344,
+       "hrMean": 140,
+       "min": 6,
+       "flagged": true
+      }
+     ]
+    }
+   },
+   {
+    "key": "@w26:2026-11-15",
+    "type": "longão",
+    "modal": "corrida",
+    "gap": {
+     "gapTimeSec": 7164.978136574958,
+     "gapSpeed": 2.7550677229890645,
+     "gapPace": 362.9674841223383,
+     "confidence": "alta"
+    },
+    "ef": 0.02010998337948222,
+    "decoupling": 2.5273984959342752,
+    "pacing": {
+     "label": "negative split",
+     "deltaPct": -1.1373127710886657,
+     "closer": false,
+     "lastGainSec": 1.275960170696976
+    },
+    "paceStability": {
+     "stdSec": 3.126192997794015,
+     "cvPct": 0.8614496094207277
+    },
+    "trimp": 114.57524454781988,
+    "hrCostKm": 49.726545324760345,
+    "zoneSeconds": [
+     7201,
+     0,
+     0,
+     0,
+     0
+    ],
+    "hill": {
+     "climbKm": 0,
+     "gainM": 50,
+     "effVsModel": null,
+     "speedLossPctPerGrade": null,
+     "hrExtra": null
+    },
+    "kmH": 9.87,
+    "dayReadiness": {
+     "rd": {
+      "score": 54,
+      "band": "Recovery"
+     },
+     "tsb": 2.872884192414574,
+     "sleepH": 7.3
+    },
+    "typeLabel": "Longão",
+    "hydro": {
+     "has": false,
+     "total": null,
+     "rate": null,
+     "status": null,
+     "plan": {
+      "kg": 82,
+      "durMin": 120,
+      "temp": 27,
+      "tempKnown": true,
+      "antesTarget": 656,
+      "rate": null,
+      "durFloor": 400,
+      "estSweat": 2558,
+      "deficit": 2558,
+      "depoisTarget": 3198
+     },
+     "durStat": {
+      "label": "—",
+      "c": "var(--muted)"
+     },
+     "antesStat": {
+      "label": "—",
+      "c": "var(--muted)"
+     },
+     "depoisStat": {
+      "label": "—",
+      "c": "var(--muted)"
+     },
+     "nextDay": {
+      "date": "2026-11-16",
+      "restingDelta": 0.5,
+      "hrvDeltaPct": -3.875968992248062,
+      "restingHR": 63,
+      "hrv": 62
+     }
+    },
+    "stream": {
+     "n": 2401,
+     "paceGap": {
+      "paceSec": null,
+      "vGap": null,
+      "confidence": "Dados insuficientes",
+      "minInBand": 0,
+      "method": null,
+      "hrRange": [
+       132,
+       139
+      ]
+     },
+     "eff": {
+      "vgapMean": 2.7549792185370303,
+      "hrMean": 137.16810540663334,
+      "spmMean": 176.25715583825533,
+      "mPerBeat": 1.2050815502787289,
+      "stepsPerBeat": 1.2849718621959743,
+      "mPerStep": 0.9378271896314404,
+      "validMin": 110.1,
+      "n": 2201
+     },
+     "mech": {
+      "pct": 1.4,
+      "confidence": "Moderada",
+      "half1": 0.9443040127719126,
+      "half2": 0.9314269055267066,
+      "validMin": 110.1
+     },
+     "imp": {
+      "vPadrao": null,
+      "minInBand": 0,
+      "confidence": "Dados insuficientes"
+     },
+     "cad": {
+      "spm": null,
+      "confidence": "Dados insuficientes",
+      "minInRange": 0,
+      "adherencePct": 71
+     },
+     "hrLag": {
+      "lagSec": 6,
+      "corr": 0.272
+     },
+     "motor": [
+      {
+       "name": "Aquecimento",
+       "targetHr": null,
+       "speed": 2.689,
+       "pace": 372,
+       "hrMean": 134,
+       "min": 10,
+       "flagged": false
+      },
+      {
+       "name": "135 bpm",
+       "targetHr": 135,
+       "speed": 2.705,
+       "pace": 370,
+       "hrMean": 134,
+       "min": 6,
+       "flagged": false
+      },
+      {
+       "name": "145 bpm",
+       "targetHr": 145,
+       "speed": 2.748,
+       "pace": 364,
+       "hrMean": 137,
+       "min": 6,
+       "flagged": true
+      }
+     ]
+    }
+   }
+  ],
+  "panel": {
+   "coachContext": {
+    "runs": [
+     "@w0:2026-09-07",
+     "@w1:2026-09-09",
+     "@w3:2026-09-12",
+     "@w4:2026-09-14",
+     "@w5:2026-09-16",
+     "@w6:2026-09-19",
+     "@w7:2026-09-21",
+     "@w8:2026-09-23",
+     "@w9:2026-09-26",
+     "@w10:2026-09-28",
+     "@w11:2026-10-01",
+     "@w12:2026-10-03",
+     "@w13:2026-10-05",
+     "@w15:2026-10-10",
+     "@w16:2026-10-12",
+     "@w17:2026-10-17",
+     "@w18:2026-10-21",
+     "@w19:2026-10-24",
+     "@w20:2026-10-27",
+     "@w21:2026-11-01",
+     "@w22:2026-11-04",
+     "@w23:2026-11-06",
+     "@w24:2026-11-08",
+     "@w25:2026-11-12",
+     "@w26:2026-11-15"
+    ],
+    "bike": {
+     "sessions": 2,
+     "totalSec": 8700,
+     "totalKm": 41.3,
+     "totalKcal": 1100,
+     "totalTrimp": 161,
+     "totalGain": 520,
+     "avgHr": 134,
+     "indoor": 1,
+     "outdoor": 1
+    },
+    "fit": [
+     {
+      "date": "2026-09-07",
+      "load": 55.76985594120923,
+      "ctl": 1.3121706459440234,
+      "atl": 7.424200353523585,
+      "tsb": 0
+     },
+     {
+      "date": "2026-09-08",
+      "load": 0,
+      "ctl": 1.281297483820524,
+      "atl": 6.435875209787081,
+      "tsb": -6.112029707579562
+     },
+     {
+      "date": "2026-09-09",
+      "load": 49.55568705607892,
+      "ctl": 2.4171124483483,
+      "atl": 12.17607512514245,
+      "tsb": -5.154577725966558
+     },
+     {
+      "date": "2026-09-10",
+      "load": 49.323674733403585,
+      "ctl": 3.520744743857149,
+      "atl": 17.121241604233504,
+      "tsb": -9.75896267679415
+     },
+     {
+      "date": "2026-09-11",
+      "load": 0,
+      "ctl": 3.43790755830621,
+      "atl": 14.84202596299337,
+      "tsb": -13.600496860376355
+     },
+     {
+      "date": "2026-09-12",
+      "load": 71.5111317540698,
+      "ctl": 5.039555707776231,
+      "atl": 22.38593634518061,
+      "tsb": -11.40411840468716
+     },
+     {
+      "date": "2026-09-13",
+      "load": 0,
+      "ctl": 4.920983461950196,
+      "atl": 19.405873482851423,
+      "tsb": -17.34638063740438
+     },
+     {
+      "date": "2026-09-14",
+      "load": 48.9722809264192,
+      "ctl": 5.957436192069465,
+      "atl": 23.34181573858103,
+      "tsb": -14.484890020901226
+     },
+     {
+      "date": "2026-09-15",
+      "load": 0,
+      "ctl": 5.817267766593187,
+      "atl": 20.234504203816858,
+      "tsb": -17.384379546511564
+     },
+     {
+      "date": "2026-09-16",
+      "load": 60.393878261371185,
+      "ctl": 7.101363359772793,
+      "atl": 25.58060442307656,
+      "tsb": -14.417236437223671
+     },
+     {
+      "date": "2026-09-17",
+      "load": 0,
+      "ctl": 6.93428025744778,
+      "atl": 22.175260636616816,
+      "tsb": -18.479241063303768
+     },
+     {
+      "date": "2026-09-18",
+      "load": 0,
+      "ctl": 6.771128338709385,
+      "atl": 19.22324336708326,
+      "tsb": -15.240980379169036
+     },
+     {
+      "date": "2026-09-19",
+      "load": 85.45151874925035,
+      "ctl": 8.622345218612427,
+      "atl": 28.03969048188069,
+      "tsb": -12.452115028373875
+     },
+     {
+      "date": "2026-09-20",
+      "load": 0,
+      "ctl": 8.419475978516381,
+      "atl": 24.306987994577888,
+      "tsb": -19.417345263268263
+     },
+     {
+      "date": "2026-09-21",
+      "load": 34.649044523960825,
+      "ctl": 9.036613486230062,
+      "atl": 25.683744280671693,
+      "tsb": -15.887512016061507
+     },
+     {
+      "date": "2026-09-22",
+      "load": 0,
+      "ctl": 8.823997212523476,
+      "atl": 22.264670299749415,
+      "tsb": -16.64713079444163
+     },
+     {
+      "date": "2026-09-23",
+      "load": 51.885006934376236,
+      "ctl": 9.837150142330028,
+      "atl": 26.207791722657575,
+      "tsb": -13.440673087225939
+     },
+     {
+      "date": "2026-09-24",
+      "load": 0,
+      "ctl": 9.605698591332358,
+      "atl": 22.718955445627593,
+      "tsb": -16.370641580327547
+     },
+     {
+      "date": "2026-09-25",
+      "load": 0,
+      "ctl": 9.379692704951385,
+      "atl": 19.6945603812236,
+      "tsb": -13.113256854295235
+     },
+     {
+      "date": "2026-09-26",
+      "load": 87.37945959140316,
+      "ctl": 11.214895661307802,
+      "atl": 28.70491631927998,
+      "tsb": -10.314867676272215
+     },
+     {
+      "date": "2026-09-27",
+      "load": 0,
+      "ctl": 10.951028082026154,
+      "atl": 24.883657571362143,
+      "tsb": -17.49002065797218
+     },
+     {
+      "date": "2026-09-28",
+      "load": 48.261032718118656,
+      "ctl": 11.828869562110395,
+      "atl": 27.995702849226276,
+      "tsb": -13.932629489335989
+     },
+     {
+      "date": "2026-09-29",
+      "load": 0,
+      "ctl": 11.55055621250332,
+      "atl": 24.26885608796745,
+      "tsb": -16.16683328711588
+     },
+     {
+      "date": "2026-09-30",
+      "load": 0,
+      "ctl": 11.278791106594664,
+      "atl": 21.038134994876632,
+      "tsb": -12.71829987546413
+     },
+     {
+      "date": "2026-10-01",
+      "load": 66.28814424477937,
+      "ctl": 12.573068404287278,
+      "atl": 27.061911262547397,
+      "tsb": -9.759343888281968
+     },
+     {
+      "date": "2026-10-02",
+      "load": 0,
+      "ctl": 12.277245311128427,
+      "atl": 23.459372798502873,
+      "tsb": -14.488842858260119
+     },
+     {
+      "date": "2026-10-03",
+      "load": 96.39666955033816,
+      "ctl": 14.256433483261436,
+      "atl": 33.16893892865144,
+      "tsb": -11.182127487374446
+     },
+     {
+      "date": "2026-10-04",
+      "load": 0,
+      "ctl": 13.92100364904581,
+      "atl": 28.7534201154114,
+      "tsb": -18.912505445390007
+     },
+     {
+      "date": "2026-10-05",
+      "load": 61.52707011207775,
+      "ctl": 15.041094098042159,
+      "atl": 33.11631723582008,
+      "tsb": -14.832416466365592
+     },
+     {
+      "date": "2026-10-06",
+      "load": 0,
+      "ctl": 14.687202523010328,
+      "atl": 28.707803532848448,
+      "tsb": -18.07522313777792
+     },
+     {
+      "date": "2026-10-07",
+      "load": 0,
+      "ctl": 14.341637419846977,
+      "atl": 24.886160432996505,
+      "tsb": -14.02060100983812
+     },
+     {
+      "date": "2026-10-08",
+      "load": 111.63731231256546,
+      "ctl": 16.630840546104324,
+      "atl": 36.43465597029571,
+      "tsb": -10.544523013149528
+     },
+     {
+      "date": "2026-10-09",
+      "load": 0,
+      "ctl": 16.239544918499004,
+      "atl": 31.58439804565036,
+      "tsb": -19.803815424191384
+     },
+     {
+      "date": "2026-10-10",
+      "load": 98.42007558294995,
+      "ctl": 18.173114195057135,
+      "atl": 40.48170381103529,
+      "tsb": -15.344853127151357
+     },
+     {
+      "date": "2026-10-11",
+      "load": 0,
+      "ctl": 17.745531469771265,
+      "atl": 35.09269437801919,
+      "tsb": -22.308589615978153
+     },
+     {
+      "date": "2026-10-12",
+      "load": 59.89284197785387,
+      "ctl": 18.737186598170634,
+      "atl": 38.394142113014674,
+      "tsb": -17.347162908247924
+     },
+     {
+      "date": "2026-10-13",
+      "load": 0,
+      "ctl": 18.296332200633486,
+      "atl": 33.28303327764016,
+      "tsb": -19.65695551484404
+     },
+     {
+      "date": "2026-10-14",
+      "load": 0,
+      "ctl": 17.86585036350233,
+      "atl": 28.852325985036103,
+      "tsb": -14.986701077006671
+     },
+     {
+      "date": "2026-10-15",
+      "load": 0,
+      "ctl": 17.445497037925712,
+      "atl": 25.011443752815687,
+      "tsb": -10.986475621533774
+     },
+     {
+      "date": "2026-10-16",
+      "load": 0,
+      "ctl": 17.035033917110034,
+      "atl": 21.681867830160662,
+      "tsb": -7.565946714889975
+     },
+     {
+      "date": "2026-10-17",
+      "load": 113.88463855815857,
+      "ctl": 19.31374176271098,
+      "atl": 33.956094318324226,
+      "tsb": -4.646833913050628
+     },
+     {
+      "date": "2026-10-18",
+      "load": 0,
+      "ctl": 18.85932199460026,
+      "atl": 29.43578772638798,
+      "tsb": -14.642352555613247
+     },
+     {
+      "date": "2026-10-19",
+      "load": 0,
+      "ctl": 18.415593957185067,
+      "atl": 25.517233841743383,
+      "tsb": -10.576465731787717
+     },
+     {
+      "date": "2026-10-20",
+      "load": 0,
+      "ctl": 17.982306092075362,
+      "atl": 22.120326080164762,
+      "tsb": -7.101639884558317
+     },
+     {
+      "date": "2026-10-21",
+      "load": 57.66373518995334,
+      "ctl": 18.91594318997703,
+      "atl": 26.85193935089835,
+      "tsb": -4.1380199880894
+     },
+     {
+      "date": "2026-10-22",
+      "load": 0,
+      "ctl": 18.470882951334882,
+      "atl": 23.277352788726013,
+      "tsb": -7.93599616092132
+     },
+     {
+      "date": "2026-10-23",
+      "load": 0,
+      "ctl": 18.03629422944614,
+      "atl": 20.17862269723484,
+      "tsb": -4.8064698373911305
+     },
+     {
+      "date": "2026-10-24",
+      "load": 104.0000087873517,
+      "ctl": 20.05887544210166,
+      "atl": 31.33710165940211,
+      "tsb": -2.142328467788701
+     },
+     {
+      "date": "2026-10-25",
+      "load": 0,
+      "ctl": 19.58692393529627,
+      "atl": 27.16544087076043,
+      "tsb": -11.27822621730045
+     },
+     {
+      "date": "2026-10-26",
+      "load": 0,
+      "ctl": 19.126076651427944,
+      "atl": 23.549120327832547,
+      "tsb": -7.578516935464162
+     },
+     {
+      "date": "2026-10-27",
+      "load": 51.564920517593464,
+      "ctl": 19.889307934550043,
+      "atl": 27.27864248927278,
+      "tsb": -4.423043676404603
+     },
+     {
+      "date": "2026-10-28",
+      "load": 0,
+      "ctl": 19.421346065195927,
+      "atl": 23.647252309136853,
+      "tsb": -7.389334554722737
+     },
+     {
+      "date": "2026-10-29",
+      "load": 0,
+      "ctl": 18.964394549338774,
+      "atl": 20.49928041660719,
+      "tsb": -4.225906243940926
+     },
+     {
+      "date": "2026-10-30",
+      "load": 0,
+      "ctl": 18.51819433193144,
+      "atl": 17.77037315393847,
+      "tsb": -1.5348858672684145
+     },
+     {
+      "date": "2026-10-31",
+      "load": 0,
+      "ctl": 18.082492453055103,
+      "atl": 15.40474375746319,
+      "tsb": 0.7478211779929715
+     },
+     {
+      "date": "2026-11-01",
+      "load": 58.983169028964255,
+      "ctl": 19.044816387668348,
+      "atl": 21.205995255185176,
+      "tsb": 2.6777486955919123
+     },
+     {
+      "date": "2026-11-02",
+      "load": 0,
+      "ctl": 18.596723980048793,
+      "atl": 18.383008628927243,
+      "tsb": -2.1611788675168278
+     },
+     {
+      "date": "2026-11-03",
+      "load": 0,
+      "ctl": 18.159174431004462,
+      "atl": 15.935823911333914,
+      "tsb": 0.21371535112155016
+     },
+     {
+      "date": "2026-11-04",
+      "load": 112.09958996304083,
+      "ctl": 20.36943396366069,
+      "atl": 28.73734641606933,
+      "tsb": 2.2233505196705483
+     },
+     {
+      "date": "2026-11-05",
+      "load": 0,
+      "ctl": 19.89017553864724,
+      "atl": 24.911770505555587,
+      "tsb": -8.367912452408639
+     },
+     {
+      "date": "2026-11-06",
+      "load": 14.264202030420233,
+      "ctl": 19.7578058710595,
+      "atl": 23.494343827591813,
+      "tsb": -5.021594966908346
+     },
+     {
+      "date": "2026-11-07",
+      "load": 0,
+      "ctl": 19.292938023461065,
+      "atl": 20.366727433271432,
+      "tsb": -3.736537956532313
+     },
+     {
+      "date": "2026-11-08",
+      "load": 50.15608430647117,
+      "ctl": 20.01909580010538,
+      "atl": 24.332349185323146,
+      "tsb": -1.0737894098103666
+     },
+     {
+      "date": "2026-11-09",
+      "load": 0,
+      "ctl": 19.54808024118174,
+      "atl": 21.09317575776097,
+      "tsb": -4.313253385217767
+     },
+     {
+      "date": "2026-11-10",
+      "load": 0,
+      "ctl": 19.088146883920125,
+      "atl": 18.285207899949274,
+      "tsb": -1.5450955165792308
+     },
+     {
+      "date": "2026-11-11",
+      "load": 0,
+      "ctl": 18.639034982807246,
+      "atl": 15.851042620803454,
+      "tsb": 0.8029389839708507
+     },
+     {
+      "date": "2026-11-12",
+      "load": 53.544096039419024,
+      "ctl": 19.46029219676979,
+      "atl": 20.868821056718158,
+      "tsb": 2.7879923620037914
+     },
+     {
+      "date": "2026-11-13",
+      "load": 0,
+      "ctl": 19.002424344125284,
+      "atl": 18.0907197679102,
+      "tsb": -1.408528859948369
+     },
+     {
+      "date": "2026-11-14",
+      "load": 0,
+      "ctl": 18.555329349789663,
+      "atl": 15.682445157375088,
+      "tsb": 0.911704576215083
+     },
+     {
+      "date": "2026-11-15",
+      "load": 114.57524454781988,
+      "ctl": 20.814516002193947,
+      "atl": 28.84726231181506,
+      "tsb": 2.872884192414574
+     },
+     {
+      "date": "2026-11-16",
+      "load": 0,
+      "ctl": 20.32478554751243,
+      "atl": 25.007054166408807,
+      "tsb": -8.032746309621114
+     },
+     {
+      "date": "2026-11-17",
+      "load": 0,
+      "ctl": 19.8465776244246,
+      "atl": 21.678062594715495,
+      "tsb": -4.6822686188963765
+     },
+     {
+      "date": "2026-11-18",
+      "load": 0,
+      "ctl": 19.37962112719656,
+      "atl": 18.79223337275994,
+      "tsb": -1.8314849702908944
+     },
+     {
+      "date": "2026-11-19",
+      "load": 0,
+      "ctl": 18.923651328755074,
+      "atl": 16.290571797793408,
+      "tsb": 0.5873877544366195
+     }
+    ],
+    "ac": {
+     "ratio": 0.8195840029205338,
+     "zone": "sweet spot",
+     "acute": 114.57524454781988,
+     "chronicAvg7": 139.79682880527014
+    },
+    "pol": {
+     "easyPct": 95.3894469985054,
+     "totalSec": 105714,
+     "zones": [
+      82560,
+      18280,
+      3974,
+      700,
+      200
+     ]
+    },
+    "cons": {
+     "activeDays": 27,
+     "weeks": 10,
+     "metWeeks": 6,
+     "adherencePct": 86.66666666666666
+    },
+    "trend": {
+     "arrow": "→",
+     "deltaPct": 0.6714919684429538,
+     "enough": true
+    },
+    "latestEF": 0.02010998337948222,
+    "efDelta": 6.641030703859201,
+    "latestCad": 176,
+    "latestDec": 2.5273984959342752,
+    "tsb": 0.5873877544366195,
+    "ctl": 18.923651328755074,
+    "last": "@w26:2026-11-15",
+    "restTr": {
+     "latest": 64,
+     "date": "2026-11-17",
+     "baseline": 62.5,
+     "deltaAbs": 1.5,
+     "deltaPct": 2.4
+    },
+    "hrvTr": {
+     "latest": 67,
+     "date": "2026-11-17",
+     "baseline": 63.5,
+     "deltaAbs": 3.5,
+     "deltaPct": 5.511811023622047
+    },
+    "sleepLast": {
+     "value": 6.6,
+     "date": "2026-11-17"
+    },
+    "vo2Last": {
+     "value": 41,
+     "date": "2026-11-07"
+    },
+    "recov": {
+     "score": 90,
+     "label": "Good"
+    },
+    "vo2Eff": 41,
+    "td": {
+     "zones": [
+      82560,
+      18280,
+      3974,
+      700,
+      200
+     ],
+     "totalSec": 105714,
+     "bands": {
+      "facil": 100840,
+      "moderado": 3974,
+      "forte": 900
+     },
+     "pct": {
+      "facil": 95.3894469985054,
+      "moderado": 3.7591993491874303,
+      "forte": 0.8513536523071683
+     }
+    },
+    "hillAgg": {
+     "sessions": 4,
+     "effVsModel": 1.0700503467792255,
+     "speedLossPctPerGrade": 0.9091962714761571,
+     "totalClimbM": 1215
+    },
+    "score": {
+     "overall": 75,
+     "parts": {
+      "Eficiência": 53,
+      "Consistência": 87,
+      "Resist. fadiga": 80,
+      "Volume": 74,
+      "Recuperação": 90
+     }
+    },
+    "rd": {
+     "score": 48,
+     "band": "Recovery"
+    },
+    "avgWeeklyKm": 25.787499999999998
+   },
+   "progContext": {
+    "a": {
+     "name": "Lucas",
+     "city": "Guarapuava/PR",
+     "fcRep": 67,
+     "fcMax": 198,
+     "fcMaxProv": true,
+     "vo2": 39.4,
+     "weight": 82,
+     "age": 34,
+     "cadenceTarget": 173,
+     "efBaseline": 0.0139,
+     "efGainPct": 6.5,
+     "decouplingTarget": 7,
+     "weeklyTargetKm": 35,
+     "sessionsTarget": 3,
+     "showBaseline5k": false,
+     "bikeFcMax": 186,
+     "bikeZones": [
+      123,
+      138,
+      145,
+      167,
+      179
+     ],
+     "baseAltM": 1120,
+     "climTempLo": 8,
+     "climTempHi": 18,
+     "climDewMax": 14,
+     "windMax": 20,
+     "motorStages": [
+      {
+       "name": "Aquecimento",
+       "min": 10,
+       "targetHr": null
+      },
+      {
+       "name": "135 bpm",
+       "min": 6,
+       "targetHr": 135
+      },
+      {
+       "name": "145 bpm",
+       "min": 6,
+       "targetHr": 145
+      }
+     ],
+     "cycleName": "Base & Pace",
+     "cycleWeeks": 10,
+     "alert": "",
+     "fcRef": 145,
+     "bandFc": 3
+    },
+    "ws": [
+     "@w0:2026-09-07",
+     "@w1:2026-09-09",
+     "@w2:2026-09-10",
+     "@w3:2026-09-12",
+     "@w4:2026-09-14",
+     "@w5:2026-09-16",
+     "@w6:2026-09-19",
+     "@w7:2026-09-21",
+     "@w8:2026-09-23",
+     "@w9:2026-09-26",
+     "@w10:2026-09-28",
+     "@w11:2026-10-01",
+     "@w12:2026-10-03",
+     "@w13:2026-10-05",
+     "@w14:2026-10-08",
+     "@w15:2026-10-10",
+     "@w16:2026-10-12",
+     "@w17:2026-10-17",
+     "@w18:2026-10-21",
+     "@w19:2026-10-24",
+     "@w20:2026-10-27",
+     "@w21:2026-11-01",
+     "@w22:2026-11-04",
+     "@w23:2026-11-06",
+     "@w24:2026-11-08",
+     "@w25:2026-11-12",
+     "@w26:2026-11-15"
+    ],
+    "runs": [
+     "@w0:2026-09-07",
+     "@w1:2026-09-09",
+     "@w3:2026-09-12",
+     "@w4:2026-09-14",
+     "@w5:2026-09-16",
+     "@w6:2026-09-19",
+     "@w7:2026-09-21",
+     "@w8:2026-09-23",
+     "@w9:2026-09-26",
+     "@w10:2026-09-28",
+     "@w11:2026-10-01",
+     "@w12:2026-10-03",
+     "@w13:2026-10-05",
+     "@w15:2026-10-10",
+     "@w16:2026-10-12",
+     "@w17:2026-10-17",
+     "@w18:2026-10-21",
+     "@w19:2026-10-24",
+     "@w20:2026-10-27",
+     "@w21:2026-11-01",
+     "@w22:2026-11-04",
+     "@w23:2026-11-06",
+     "@w24:2026-11-08",
+     "@w25:2026-11-12",
+     "@w26:2026-11-15"
+    ],
+    "bikes": [
+     "@w2:2026-09-10",
+     "@w14:2026-10-08"
+    ],
+    "bike": {
+     "sessions": 2,
+     "totalSec": 8700,
+     "totalKm": 41.3,
+     "totalKcal": 1100,
+     "totalTrimp": 161,
+     "totalGain": 520,
+     "avgHr": 134,
+     "indoor": 1,
+     "outdoor": 1
+    },
+    "easy": [
+     "@w0:2026-09-07",
+     "@w1:2026-09-09",
+     "@w3:2026-09-12",
+     "@w4:2026-09-14",
+     "@w6:2026-09-19",
+     "@w7:2026-09-21",
+     "@w8:2026-09-23",
+     "@w9:2026-09-26",
+     "@w10:2026-09-28",
+     "@w12:2026-10-03",
+     "@w13:2026-10-05",
+     "@w15:2026-10-10",
+     "@w16:2026-10-12",
+     "@w18:2026-10-21",
+     "@w19:2026-10-24",
+     "@w20:2026-10-27",
+     "@w21:2026-11-01",
+     "@w22:2026-11-04",
+     "@w24:2026-11-08",
+     "@w25:2026-11-12",
+     "@w26:2026-11-15"
+    ],
+    "efPts": [
+     {
+      "label": "07/09",
+      "y": 0.018857641610129774,
+      "extra": "FC 144",
+      "w": "@w0:2026-09-07"
+     },
+     {
+      "label": "09/09",
+      "y": 0.02024503357299822,
+      "extra": "FC 137",
+      "w": "@w1:2026-09-09"
+     },
+     {
+      "label": "12/09",
+      "y": 0.019217107095868543,
+      "extra": "FC 137",
+      "w": "@w3:2026-09-12"
+     },
+     {
+      "label": "14/09",
+      "y": 0.019501140295514367,
+      "extra": "FC 137",
+      "w": "@w4:2026-09-14"
+     },
+     {
+      "label": "19/09",
+      "y": 0.019546680175117778,
+      "extra": "FC 138",
+      "w": "@w6:2026-09-19"
+     },
+     {
+      "label": "21/09",
+      "y": 0.019499003642153987,
+      "extra": "FC 134",
+      "w": "@w7:2026-09-21"
+     },
+     {
+      "label": "23/09",
+      "y": 0.020488932251990815,
+      "extra": "FC 137",
+      "w": "@w8:2026-09-23"
+     },
+     {
+      "label": "26/09",
+      "y": 0.019660417786145058,
+      "extra": "FC 136",
+      "w": "@w9:2026-09-26"
+     },
+     {
+      "label": "28/09",
+      "y": 0.020665915061304625,
+      "extra": "FC 137",
+      "w": "@w10:2026-09-28"
+     },
+     {
+      "label": "03/10",
+      "y": 0.019782671783899936,
+      "extra": "FC 137",
+      "w": "@w12:2026-10-03"
+     },
+     {
+      "label": "05/10",
+      "y": 0.019440622848010534,
+      "extra": "FC 145",
+      "w": "@w13:2026-10-05"
+     },
+     {
+      "label": "10/10",
+      "y": 0.02030727184420905,
+      "extra": "FC 136",
+      "w": "@w15:2026-10-10"
+     },
+     {
+      "label": "12/10",
+      "y": 0.01953650851417726,
+      "extra": "FC 145",
+      "w": "@w16:2026-10-12"
+     },
+     {
+      "label": "21/10",
+      "y": 0.019462816435412752,
+      "extra": "FC 146",
+      "w": "@w18:2026-10-21"
+     },
+     {
+      "label": "24/10",
+      "y": 0.019957000308977842,
+      "extra": "FC 137",
+      "w": "@w19:2026-10-24"
+     },
+     {
+      "label": "27/10",
+      "y": 0.021000921011550065,
+      "extra": "FC 138",
+      "w": "@w20:2026-10-27"
+     },
+     {
+      "label": "01/11",
+      "y": 0.019900863099833056,
+      "extra": "FC 144",
+      "w": "@w21:2026-11-01"
+     },
+     {
+      "label": "04/11",
+      "y": 0.019879246417157624,
+      "extra": "FC 138",
+      "w": "@w22:2026-11-04"
+     },
+     {
+      "label": "08/11",
+      "y": 0.020675339798354342,
+      "extra": "FC 139",
+      "w": "@w24:2026-11-08"
+     },
+     {
+      "label": "12/11",
+      "y": 0.020196384359450866,
+      "extra": "FC 139",
+      "w": "@w25:2026-11-12"
+     },
+     {
+      "label": "15/11",
+      "y": 0.02010998337948222,
+      "extra": "FC 137",
+      "w": "@w26:2026-11-15"
+     }
+    ],
+    "gapPts": [
+     {
+      "label": "07/09",
+      "y": 368.2562532482371,
+      "extra": "facil"
+     },
+     {
+      "label": "09/09",
+      "y": 360.5462073783908,
+      "extra": "facil"
+     },
+     {
+      "label": "12/09",
+      "y": 379.83188814938546,
+      "extra": "longão"
+     },
+     {
+      "label": "14/09",
+      "y": 374.29965439875696,
+      "extra": "facil"
+     },
+     {
+      "label": "16/09",
+      "y": 326.3255118191837,
+      "extra": "tempo"
+     },
+     {
+      "label": "19/09",
+      "y": 370.72161342357157,
+      "extra": "longão"
+     },
+     {
+      "label": "21/09",
+      "y": 382.72143049560464,
+      "extra": "regenerativo"
+     },
+     {
+      "label": "23/09",
+      "y": 356.2542929626538,
+      "extra": "facil"
+     },
+     {
+      "label": "26/09",
+      "y": 373.99719865832645,
+      "extra": "longão"
+     },
+     {
+      "label": "28/09",
+      "y": 353.203332702167,
+      "extra": "facil"
+     },
+     {
+      "label": "01/10",
+      "y": 333.82877348119354,
+      "extra": "intervalado"
+     },
+     {
+      "label": "03/10",
+      "y": 368.9729149190651,
+      "extra": "longão"
+     },
+     {
+      "label": "05/10",
+      "y": 354.74952515956517,
+      "extra": "facil"
+     },
+     {
+      "label": "10/10",
+      "y": 362.0841456636825,
+      "extra": "longão"
+     },
+     {
+      "label": "12/10",
+      "y": 353.0084057309031,
+      "extra": "facil"
+     },
+     {
+      "label": "17/10",
+      "y": 310.7435002366305,
+      "extra": "prova"
+     },
+     {
+      "label": "21/10",
+      "y": 351.91798120393133,
+      "extra": "facil"
+     },
+     {
+      "label": "24/10",
+      "y": 365.74986019863195,
+      "extra": "longão"
+     },
+     {
+      "label": "27/10",
+      "y": 345.0504293411155,
+      "extra": "facil"
+     },
+     {
+      "label": "01/11",
+      "y": 348.9519228190007,
+      "extra": "facil"
+     },
+     {
+      "label": "04/11",
+      "y": 364.5196935302291,
+      "extra": "longão"
+     },
+     {
+      "label": "06/11",
+      "y": 368.1384744437749,
+      "extra": "teste_motor"
+     },
+     {
+      "label": "08/11",
+      "y": 347.9625812432439,
+      "extra": "facil"
+     },
+     {
+      "label": "12/11",
+      "y": 356.21448256652985,
+      "extra": "facil"
+     },
+     {
+      "label": "15/11",
+      "y": 362.9674841223383,
+      "extra": "longão"
+     }
+    ],
+    "cadPts": [
+     {
+      "label": "07/09",
+      "y": 176,
+      "extra": "facil"
+     },
+     {
+      "label": "09/09",
+      "y": 176,
+      "extra": "facil"
+     },
+     {
+      "label": "12/09",
+      "y": 176,
+      "extra": "longão"
+     },
+     {
+      "label": "14/09",
+      "y": 176,
+      "extra": "facil"
+     },
+     {
+      "label": "16/09",
+      "y": 177,
+      "extra": "tempo"
+     },
+     {
+      "label": "19/09",
+      "y": 176,
+      "extra": "longão"
+     },
+     {
+      "label": "21/09",
+      "y": 176,
+      "extra": "regenerativo"
+     },
+     {
+      "label": "23/09",
+      "y": 176,
+      "extra": "facil"
+     },
+     {
+      "label": "26/09",
+      "y": 176,
+      "extra": "longão"
+     },
+     {
+      "label": "28/09",
+      "y": 176,
+      "extra": "facil"
+     },
+     {
+      "label": "01/10",
+      "y": 176,
+      "extra": "intervalado"
+     },
+     {
+      "label": "03/10",
+      "y": 176,
+      "extra": "longão"
+     },
+     {
+      "label": "05/10",
+      "y": 176,
+      "extra": "facil"
+     },
+     {
+      "label": "10/10",
+      "y": 176,
+      "extra": "longão"
+     },
+     {
+      "label": "12/10",
+      "y": 176,
+      "extra": "facil"
+     },
+     {
+      "label": "17/10",
+      "y": 178,
+      "extra": "prova"
+     },
+     {
+      "label": "21/10",
+      "y": 176,
+      "extra": "facil"
+     },
+     {
+      "label": "24/10",
+      "y": 176,
+      "extra": "longão"
+     },
+     {
+      "label": "27/10",
+      "y": 177,
+      "extra": "facil"
+     },
+     {
+      "label": "01/11",
+      "y": 177,
+      "extra": "facil"
+     },
+     {
+      "label": "04/11",
+      "y": 176,
+      "extra": "longão"
+     },
+     {
+      "label": "06/11",
+      "y": 176,
+      "extra": "teste_motor"
+     },
+     {
+      "label": "08/11",
+      "y": 177,
+      "extra": "facil"
+     },
+     {
+      "label": "12/11",
+      "y": 177,
+      "extra": "facil"
+     },
+     {
+      "label": "15/11",
+      "y": 176,
+      "extra": "longão"
+     }
+    ],
+    "fit": [
+     {
+      "date": "2026-09-07",
+      "load": 55.76985594120923,
+      "ctl": 1.3121706459440234,
+      "atl": 7.424200353523585,
+      "tsb": 0
+     },
+     {
+      "date": "2026-09-08",
+      "load": 0,
+      "ctl": 1.281297483820524,
+      "atl": 6.435875209787081,
+      "tsb": -6.112029707579562
+     },
+     {
+      "date": "2026-09-09",
+      "load": 49.55568705607892,
+      "ctl": 2.4171124483483,
+      "atl": 12.17607512514245,
+      "tsb": -5.154577725966558
+     },
+     {
+      "date": "2026-09-10",
+      "load": 49.323674733403585,
+      "ctl": 3.520744743857149,
+      "atl": 17.121241604233504,
+      "tsb": -9.75896267679415
+     },
+     {
+      "date": "2026-09-11",
+      "load": 0,
+      "ctl": 3.43790755830621,
+      "atl": 14.84202596299337,
+      "tsb": -13.600496860376355
+     },
+     {
+      "date": "2026-09-12",
+      "load": 71.5111317540698,
+      "ctl": 5.039555707776231,
+      "atl": 22.38593634518061,
+      "tsb": -11.40411840468716
+     },
+     {
+      "date": "2026-09-13",
+      "load": 0,
+      "ctl": 4.920983461950196,
+      "atl": 19.405873482851423,
+      "tsb": -17.34638063740438
+     },
+     {
+      "date": "2026-09-14",
+      "load": 48.9722809264192,
+      "ctl": 5.957436192069465,
+      "atl": 23.34181573858103,
+      "tsb": -14.484890020901226
+     },
+     {
+      "date": "2026-09-15",
+      "load": 0,
+      "ctl": 5.817267766593187,
+      "atl": 20.234504203816858,
+      "tsb": -17.384379546511564
+     },
+     {
+      "date": "2026-09-16",
+      "load": 60.393878261371185,
+      "ctl": 7.101363359772793,
+      "atl": 25.58060442307656,
+      "tsb": -14.417236437223671
+     },
+     {
+      "date": "2026-09-17",
+      "load": 0,
+      "ctl": 6.93428025744778,
+      "atl": 22.175260636616816,
+      "tsb": -18.479241063303768
+     },
+     {
+      "date": "2026-09-18",
+      "load": 0,
+      "ctl": 6.771128338709385,
+      "atl": 19.22324336708326,
+      "tsb": -15.240980379169036
+     },
+     {
+      "date": "2026-09-19",
+      "load": 85.45151874925035,
+      "ctl": 8.622345218612427,
+      "atl": 28.03969048188069,
+      "tsb": -12.452115028373875
+     },
+     {
+      "date": "2026-09-20",
+      "load": 0,
+      "ctl": 8.419475978516381,
+      "atl": 24.306987994577888,
+      "tsb": -19.417345263268263
+     },
+     {
+      "date": "2026-09-21",
+      "load": 34.649044523960825,
+      "ctl": 9.036613486230062,
+      "atl": 25.683744280671693,
+      "tsb": -15.887512016061507
+     },
+     {
+      "date": "2026-09-22",
+      "load": 0,
+      "ctl": 8.823997212523476,
+      "atl": 22.264670299749415,
+      "tsb": -16.64713079444163
+     },
+     {
+      "date": "2026-09-23",
+      "load": 51.885006934376236,
+      "ctl": 9.837150142330028,
+      "atl": 26.207791722657575,
+      "tsb": -13.440673087225939
+     },
+     {
+      "date": "2026-09-24",
+      "load": 0,
+      "ctl": 9.605698591332358,
+      "atl": 22.718955445627593,
+      "tsb": -16.370641580327547
+     },
+     {
+      "date": "2026-09-25",
+      "load": 0,
+      "ctl": 9.379692704951385,
+      "atl": 19.6945603812236,
+      "tsb": -13.113256854295235
+     },
+     {
+      "date": "2026-09-26",
+      "load": 87.37945959140316,
+      "ctl": 11.214895661307802,
+      "atl": 28.70491631927998,
+      "tsb": -10.314867676272215
+     },
+     {
+      "date": "2026-09-27",
+      "load": 0,
+      "ctl": 10.951028082026154,
+      "atl": 24.883657571362143,
+      "tsb": -17.49002065797218
+     },
+     {
+      "date": "2026-09-28",
+      "load": 48.261032718118656,
+      "ctl": 11.828869562110395,
+      "atl": 27.995702849226276,
+      "tsb": -13.932629489335989
+     },
+     {
+      "date": "2026-09-29",
+      "load": 0,
+      "ctl": 11.55055621250332,
+      "atl": 24.26885608796745,
+      "tsb": -16.16683328711588
+     },
+     {
+      "date": "2026-09-30",
+      "load": 0,
+      "ctl": 11.278791106594664,
+      "atl": 21.038134994876632,
+      "tsb": -12.71829987546413
+     },
+     {
+      "date": "2026-10-01",
+      "load": 66.28814424477937,
+      "ctl": 12.573068404287278,
+      "atl": 27.061911262547397,
+      "tsb": -9.759343888281968
+     },
+     {
+      "date": "2026-10-02",
+      "load": 0,
+      "ctl": 12.277245311128427,
+      "atl": 23.459372798502873,
+      "tsb": -14.488842858260119
+     },
+     {
+      "date": "2026-10-03",
+      "load": 96.39666955033816,
+      "ctl": 14.256433483261436,
+      "atl": 33.16893892865144,
+      "tsb": -11.182127487374446
+     },
+     {
+      "date": "2026-10-04",
+      "load": 0,
+      "ctl": 13.92100364904581,
+      "atl": 28.7534201154114,
+      "tsb": -18.912505445390007
+     },
+     {
+      "date": "2026-10-05",
+      "load": 61.52707011207775,
+      "ctl": 15.041094098042159,
+      "atl": 33.11631723582008,
+      "tsb": -14.832416466365592
+     },
+     {
+      "date": "2026-10-06",
+      "load": 0,
+      "ctl": 14.687202523010328,
+      "atl": 28.707803532848448,
+      "tsb": -18.07522313777792
+     },
+     {
+      "date": "2026-10-07",
+      "load": 0,
+      "ctl": 14.341637419846977,
+      "atl": 24.886160432996505,
+      "tsb": -14.02060100983812
+     },
+     {
+      "date": "2026-10-08",
+      "load": 111.63731231256546,
+      "ctl": 16.630840546104324,
+      "atl": 36.43465597029571,
+      "tsb": -10.544523013149528
+     },
+     {
+      "date": "2026-10-09",
+      "load": 0,
+      "ctl": 16.239544918499004,
+      "atl": 31.58439804565036,
+      "tsb": -19.803815424191384
+     },
+     {
+      "date": "2026-10-10",
+      "load": 98.42007558294995,
+      "ctl": 18.173114195057135,
+      "atl": 40.48170381103529,
+      "tsb": -15.344853127151357
+     },
+     {
+      "date": "2026-10-11",
+      "load": 0,
+      "ctl": 17.745531469771265,
+      "atl": 35.09269437801919,
+      "tsb": -22.308589615978153
+     },
+     {
+      "date": "2026-10-12",
+      "load": 59.89284197785387,
+      "ctl": 18.737186598170634,
+      "atl": 38.394142113014674,
+      "tsb": -17.347162908247924
+     },
+     {
+      "date": "2026-10-13",
+      "load": 0,
+      "ctl": 18.296332200633486,
+      "atl": 33.28303327764016,
+      "tsb": -19.65695551484404
+     },
+     {
+      "date": "2026-10-14",
+      "load": 0,
+      "ctl": 17.86585036350233,
+      "atl": 28.852325985036103,
+      "tsb": -14.986701077006671
+     },
+     {
+      "date": "2026-10-15",
+      "load": 0,
+      "ctl": 17.445497037925712,
+      "atl": 25.011443752815687,
+      "tsb": -10.986475621533774
+     },
+     {
+      "date": "2026-10-16",
+      "load": 0,
+      "ctl": 17.035033917110034,
+      "atl": 21.681867830160662,
+      "tsb": -7.565946714889975
+     },
+     {
+      "date": "2026-10-17",
+      "load": 113.88463855815857,
+      "ctl": 19.31374176271098,
+      "atl": 33.956094318324226,
+      "tsb": -4.646833913050628
+     },
+     {
+      "date": "2026-10-18",
+      "load": 0,
+      "ctl": 18.85932199460026,
+      "atl": 29.43578772638798,
+      "tsb": -14.642352555613247
+     },
+     {
+      "date": "2026-10-19",
+      "load": 0,
+      "ctl": 18.415593957185067,
+      "atl": 25.517233841743383,
+      "tsb": -10.576465731787717
+     },
+     {
+      "date": "2026-10-20",
+      "load": 0,
+      "ctl": 17.982306092075362,
+      "atl": 22.120326080164762,
+      "tsb": -7.101639884558317
+     },
+     {
+      "date": "2026-10-21",
+      "load": 57.66373518995334,
+      "ctl": 18.91594318997703,
+      "atl": 26.85193935089835,
+      "tsb": -4.1380199880894
+     },
+     {
+      "date": "2026-10-22",
+      "load": 0,
+      "ctl": 18.470882951334882,
+      "atl": 23.277352788726013,
+      "tsb": -7.93599616092132
+     },
+     {
+      "date": "2026-10-23",
+      "load": 0,
+      "ctl": 18.03629422944614,
+      "atl": 20.17862269723484,
+      "tsb": -4.8064698373911305
+     },
+     {
+      "date": "2026-10-24",
+      "load": 104.0000087873517,
+      "ctl": 20.05887544210166,
+      "atl": 31.33710165940211,
+      "tsb": -2.142328467788701
+     },
+     {
+      "date": "2026-10-25",
+      "load": 0,
+      "ctl": 19.58692393529627,
+      "atl": 27.16544087076043,
+      "tsb": -11.27822621730045
+     },
+     {
+      "date": "2026-10-26",
+      "load": 0,
+      "ctl": 19.126076651427944,
+      "atl": 23.549120327832547,
+      "tsb": -7.578516935464162
+     },
+     {
+      "date": "2026-10-27",
+      "load": 51.564920517593464,
+      "ctl": 19.889307934550043,
+      "atl": 27.27864248927278,
+      "tsb": -4.423043676404603
+     },
+     {
+      "date": "2026-10-28",
+      "load": 0,
+      "ctl": 19.421346065195927,
+      "atl": 23.647252309136853,
+      "tsb": -7.389334554722737
+     },
+     {
+      "date": "2026-10-29",
+      "load": 0,
+      "ctl": 18.964394549338774,
+      "atl": 20.49928041660719,
+      "tsb": -4.225906243940926
+     },
+     {
+      "date": "2026-10-30",
+      "load": 0,
+      "ctl": 18.51819433193144,
+      "atl": 17.77037315393847,
+      "tsb": -1.5348858672684145
+     },
+     {
+      "date": "2026-10-31",
+      "load": 0,
+      "ctl": 18.082492453055103,
+      "atl": 15.40474375746319,
+      "tsb": 0.7478211779929715
+     },
+     {
+      "date": "2026-11-01",
+      "load": 58.983169028964255,
+      "ctl": 19.044816387668348,
+      "atl": 21.205995255185176,
+      "tsb": 2.6777486955919123
+     },
+     {
+      "date": "2026-11-02",
+      "load": 0,
+      "ctl": 18.596723980048793,
+      "atl": 18.383008628927243,
+      "tsb": -2.1611788675168278
+     },
+     {
+      "date": "2026-11-03",
+      "load": 0,
+      "ctl": 18.159174431004462,
+      "atl": 15.935823911333914,
+      "tsb": 0.21371535112155016
+     },
+     {
+      "date": "2026-11-04",
+      "load": 112.09958996304083,
+      "ctl": 20.36943396366069,
+      "atl": 28.73734641606933,
+      "tsb": 2.2233505196705483
+     },
+     {
+      "date": "2026-11-05",
+      "load": 0,
+      "ctl": 19.89017553864724,
+      "atl": 24.911770505555587,
+      "tsb": -8.367912452408639
+     },
+     {
+      "date": "2026-11-06",
+      "load": 14.264202030420233,
+      "ctl": 19.7578058710595,
+      "atl": 23.494343827591813,
+      "tsb": -5.021594966908346
+     },
+     {
+      "date": "2026-11-07",
+      "load": 0,
+      "ctl": 19.292938023461065,
+      "atl": 20.366727433271432,
+      "tsb": -3.736537956532313
+     },
+     {
+      "date": "2026-11-08",
+      "load": 50.15608430647117,
+      "ctl": 20.01909580010538,
+      "atl": 24.332349185323146,
+      "tsb": -1.0737894098103666
+     },
+     {
+      "date": "2026-11-09",
+      "load": 0,
+      "ctl": 19.54808024118174,
+      "atl": 21.09317575776097,
+      "tsb": -4.313253385217767
+     },
+     {
+      "date": "2026-11-10",
+      "load": 0,
+      "ctl": 19.088146883920125,
+      "atl": 18.285207899949274,
+      "tsb": -1.5450955165792308
+     },
+     {
+      "date": "2026-11-11",
+      "load": 0,
+      "ctl": 18.639034982807246,
+      "atl": 15.851042620803454,
+      "tsb": 0.8029389839708507
+     },
+     {
+      "date": "2026-11-12",
+      "load": 53.544096039419024,
+      "ctl": 19.46029219676979,
+      "atl": 20.868821056718158,
+      "tsb": 2.7879923620037914
+     },
+     {
+      "date": "2026-11-13",
+      "load": 0,
+      "ctl": 19.002424344125284,
+      "atl": 18.0907197679102,
+      "tsb": -1.408528859948369
+     },
+     {
+      "date": "2026-11-14",
+      "load": 0,
+      "ctl": 18.555329349789663,
+      "atl": 15.682445157375088,
+      "tsb": 0.911704576215083
+     },
+     {
+      "date": "2026-11-15",
+      "load": 114.57524454781988,
+      "ctl": 20.814516002193947,
+      "atl": 28.84726231181506,
+      "tsb": 2.872884192414574
+     },
+     {
+      "date": "2026-11-16",
+      "load": 0,
+      "ctl": 20.32478554751243,
+      "atl": 25.007054166408807,
+      "tsb": -8.032746309621114
+     },
+     {
+      "date": "2026-11-17",
+      "load": 0,
+      "ctl": 19.8465776244246,
+      "atl": 21.678062594715495,
+      "tsb": -4.6822686188963765
+     },
+     {
+      "date": "2026-11-18",
+      "load": 0,
+      "ctl": 19.37962112719656,
+      "atl": 18.79223337275994,
+      "tsb": -1.8314849702908944
+     },
+     {
+      "date": "2026-11-19",
+      "load": 0,
+      "ctl": 18.923651328755074,
+      "atl": 16.290571797793408,
+      "tsb": 0.5873877544366195
+     }
+    ],
+    "ac": {
+     "ratio": 0.8195840029205338,
+     "zone": "sweet spot",
+     "acute": 114.57524454781988,
+     "chronicAvg7": 139.79682880527014
+    },
+    "pol": {
+     "easyPct": 95.3894469985054,
+     "totalSec": 105714,
+     "zones": [
+      82560,
+      18280,
+      3974,
+      700,
+      200
+     ]
+    },
+    "cons": {
+     "activeDays": 27,
+     "weeks": 10,
+     "metWeeks": 6,
+     "adherencePct": 86.66666666666666
+    },
+    "trend": {
+     "arrow": "→",
+     "deltaPct": 0.6714919684429538,
+     "enough": true
+    },
+    "decPts": [
+     {
+      "label": "07/09",
+      "y": 1.7051875896729733,
+      "extra": "facil",
+      "color": "var(--good)"
+     },
+     {
+      "label": "09/09",
+      "y": 2.8637329594293712,
+      "extra": "facil",
+      "color": "var(--good)"
+     },
+     {
+      "label": "12/09",
+      "y": 3.9748526385182585,
+      "extra": "longão",
+      "color": "var(--good)"
+     },
+     {
+      "label": "14/09",
+      "y": 8.543445586102132,
+      "extra": "facil",
+      "color": "var(--crit)"
+     },
+     {
+      "label": "16/09",
+      "y": 2.9605770148660286,
+      "extra": "tempo",
+      "color": "var(--good)"
+     },
+     {
+      "label": "19/09",
+      "y": 4.96350362463095,
+      "extra": "longão",
+      "color": "var(--good)"
+     },
+     {
+      "label": "21/09",
+      "y": 2.8356374263444626,
+      "extra": "regenerativo",
+      "color": "var(--good)"
+     },
+     {
+      "label": "23/09",
+      "y": 2.640637954035951,
+      "extra": "facil",
+      "color": "var(--good)"
+     },
+     {
+      "label": "26/09",
+      "y": 2.8928807931595313,
+      "extra": "longão",
+      "color": "var(--good)"
+     },
+     {
+      "label": "28/09",
+      "y": 1.8836840489510571,
+      "extra": "facil",
+      "color": "var(--good)"
+     },
+     {
+      "label": "01/10",
+      "y": 7.681939843665954,
+      "extra": "intervalado",
+      "color": "var(--warn)"
+     },
+     {
+      "label": "03/10",
+      "y": 4.043510751990167,
+      "extra": "longão",
+      "color": "var(--good)"
+     },
+     {
+      "label": "05/10",
+      "y": 1.7258064534145996,
+      "extra": "facil",
+      "color": "var(--good)"
+     },
+     {
+      "label": "10/10",
+      "y": 2.7953545455957793,
+      "extra": "longão",
+      "color": "var(--good)"
+     },
+     {
+      "label": "12/10",
+      "y": 2.0000027601124284,
+      "extra": "facil",
+      "color": "var(--good)"
+     },
+     {
+      "label": "17/10",
+      "y": 2.6855720230603053,
+      "extra": "prova",
+      "color": "var(--good)"
+     },
+     {
+      "label": "21/10",
+      "y": 1.748154832605041,
+      "extra": "facil",
+      "color": "var(--good)"
+     },
+     {
+      "label": "24/10",
+      "y": 2.7784710444805865,
+      "extra": "longão",
+      "color": "var(--good)"
+     },
+     {
+      "label": "27/10",
+      "y": 2.16841690950954,
+      "extra": "facil",
+      "color": "var(--good)"
+     },
+     {
+      "label": "01/11",
+      "y": 1.9197874129351384,
+      "extra": "facil",
+      "color": "var(--good)"
+     },
+     {
+      "label": "04/11",
+      "y": 3.580569067398455,
+      "extra": "longão",
+      "color": "var(--good)"
+     },
+     {
+      "label": "06/11",
+      "y": -5.5242418769727015,
+      "extra": "teste_motor",
+      "color": "var(--good)"
+     },
+     {
+      "label": "08/11",
+      "y": 3.1744085880193063,
+      "extra": "facil",
+      "color": "var(--good)"
+     },
+     {
+      "label": "12/11",
+      "y": 7.785448473832147,
+      "extra": "facil",
+      "color": "var(--warn)"
+     },
+     {
+      "label": "15/11",
+      "y": 2.5273984959342752,
+      "extra": "longão",
+      "color": "var(--good)"
+     }
+    ],
+    "loadBars": [
+     {
+      "label": "W37",
+      "y": 226
+     },
+     {
+      "label": "W38",
+      "y": 195
+     },
+     {
+      "label": "W39",
+      "y": 174
+     },
+     {
+      "label": "W40",
+      "y": 211
+     },
+     {
+      "label": "W41",
+      "y": 272
+     },
+     {
+      "label": "W42",
+      "y": 174
+     },
+     {
+      "label": "W43",
+      "y": 162
+     },
+     {
+      "label": "W44",
+      "y": 111
+     },
+     {
+      "label": "W45",
+      "y": 177
+     },
+     {
+      "label": "W46",
+      "y": 168
+     }
+    ],
+    "weeklyKm": 28.71,
+    "avgWeeklyKm": 25.787499999999998,
+    "latestEF": 0.02010998337948222,
+    "efDelta": 6.641030703859201,
+    "efTarget": 0.014803499999999999,
+    "latestCad": 176,
+    "latestDec": 2.5273984959342752,
+    "tsb": 0.5873877544366195,
+    "ctl": 18.923651328755074,
+    "last": "@w26:2026-11-15",
+    "dailyArr": [
+     {
+      "date": "2026-09-04",
+      "restingHR": 64,
+      "hrv": 57,
+      "updatedAt": "2026-09-04T08:00:00Z",
+      "sleepH": 7
+     },
+     {
+      "date": "2026-09-05",
+      "restingHR": 65,
+      "hrv": 57,
+      "updatedAt": "2026-09-05T08:00:00Z",
+      "sleepH": 6.6
+     },
+     {
+      "date": "2026-09-06",
+      "restingHR": 68,
+      "hrv": 55,
+      "updatedAt": "2026-09-06T08:00:00Z"
+     },
+     {
+      "date": "2026-09-07",
+      "restingHR": 67,
+      "hrv": 49,
+      "updatedAt": "2026-09-07T08:00:00Z",
+      "sleepH": 7.6
+     },
+     {
+      "date": "2026-09-08",
+      "restingHR": 65,
+      "hrv": 52,
+      "updatedAt": "2026-09-08T08:00:00Z",
+      "sleepH": 6.8,
+      "vo2": 39.5
+     },
+     {
+      "date": "2026-09-09",
+      "restingHR": 66,
+      "hrv": 54,
+      "updatedAt": "2026-09-09T08:00:00Z",
+      "sleepH": 7.2
+     },
+     {
+      "date": "2026-09-10",
+      "restingHR": 64,
+      "hrv": 55,
+      "updatedAt": "2026-09-10T08:00:00Z",
+      "sleepH": 7.6
+     },
+     {
+      "date": "2026-09-11",
+      "restingHR": 62,
+      "hrv": 51,
+      "updatedAt": "2026-09-11T08:00:00Z"
+     },
+     {
+      "date": "2026-09-12",
+      "restingHR": 64,
+      "hrv": 52,
+      "updatedAt": "2026-09-12T08:00:00Z",
+      "sleepH": 6.5
+     },
+     {
+      "date": "2026-09-13",
+      "restingHR": 65,
+      "hrv": 50,
+      "updatedAt": "2026-09-13T08:00:00Z",
+      "sleepH": 7.2
+     },
+     {
+      "date": "2026-09-14",
+      "restingHR": 66,
+      "hrv": 54,
+      "updatedAt": "2026-09-14T08:00:00Z",
+      "sleepH": 6.2
+     },
+     {
+      "date": "2026-09-15",
+      "restingHR": 64,
+      "hrv": 60,
+      "updatedAt": "2026-09-15T08:00:00Z",
+      "sleepH": 6.9
+     },
+     {
+      "date": "2026-09-16",
+      "restingHR": 65,
+      "hrv": 63,
+      "updatedAt": "2026-09-16T08:00:00Z"
+     },
+     {
+      "date": "2026-09-17",
+      "restingHR": 67,
+      "hrv": 53,
+      "updatedAt": "2026-09-17T08:00:00Z",
+      "sleepH": 7.1
+     },
+     {
+      "date": "2026-09-18",
+      "restingHR": 62,
+      "hrv": 51,
+      "updatedAt": "2026-09-18T08:00:00Z",
+      "sleepH": 6.3
+     },
+     {
+      "date": "2026-09-19",
+      "restingHR": 66,
+      "hrv": 60,
+      "updatedAt": "2026-09-19T08:00:00Z",
+      "sleepH": 6.7
+     },
+     {
+      "date": "2026-09-20",
+      "restingHR": 64,
+      "hrv": 56,
+      "updatedAt": "2026-09-20T08:00:00Z",
+      "sleepH": 6.3
+     },
+     {
+      "date": "2026-09-21",
+      "restingHR": 66,
+      "hrv": 57,
+      "updatedAt": "2026-09-21T08:00:00Z"
+     },
+     {
+      "date": "2026-09-22",
+      "restingHR": 64,
+      "hrv": 57,
+      "updatedAt": "2026-09-22T08:00:00Z",
+      "sleepH": 6.4
+     },
+     {
+      "date": "2026-09-23",
+      "restingHR": 64,
+      "hrv": 56,
+      "updatedAt": "2026-09-23T08:00:00Z",
+      "sleepH": 7.8
+     },
+     {
+      "date": "2026-09-24",
+      "restingHR": 63,
+      "hrv": 53,
+      "updatedAt": "2026-09-24T08:00:00Z",
+      "sleepH": 7.8
+     },
+     {
+      "date": "2026-09-25",
+      "restingHR": 66,
+      "hrv": 56,
+      "updatedAt": "2026-09-25T08:00:00Z",
+      "sleepH": 7.1
+     },
+     {
+      "date": "2026-09-26",
+      "restingHR": 66,
+      "hrv": 60,
+      "updatedAt": "2026-09-26T08:00:00Z"
+     },
+     {
+      "date": "2026-09-27",
+      "restingHR": 63,
+      "hrv": 60,
+      "updatedAt": "2026-09-27T08:00:00Z",
+      "sleepH": 6.5
+     },
+     {
+      "date": "2026-09-28",
+      "restingHR": 65,
+      "hrv": 55,
+      "updatedAt": "2026-09-28T08:00:00Z",
+      "sleepH": 7.3
+     },
+     {
+      "date": "2026-09-29",
+      "restingHR": 63,
+      "hrv": 59,
+      "updatedAt": "2026-09-29T08:00:00Z",
+      "sleepH": 7.2
+     },
+     {
+      "date": "2026-09-30",
+      "restingHR": 65,
+      "hrv": 61,
+      "updatedAt": "2026-09-30T08:00:00Z",
+      "sleepH": 6.7
+     },
+     {
+      "date": "2026-10-01",
+      "restingHR": 62,
+      "hrv": 59,
+      "updatedAt": "2026-10-01T08:00:00Z"
+     },
+     {
+      "date": "2026-10-02",
+      "restingHR": 65,
+      "hrv": 53,
+      "updatedAt": "2026-10-02T08:00:00Z",
+      "sleepH": 6.1
+     },
+     {
+      "date": "2026-10-03",
+      "restingHR": 65,
+      "hrv": 58,
+      "updatedAt": "2026-10-03T08:00:00Z",
+      "sleepH": 6.6
+     },
+     {
+      "date": "2026-10-04",
+      "restingHR": 65,
+      "hrv": 63,
+      "updatedAt": "2026-10-04T08:00:00Z",
+      "sleepH": 7.5
+     },
+     {
+      "date": "2026-10-05",
+      "restingHR": 63,
+      "hrv": 52,
+      "updatedAt": "2026-10-05T08:00:00Z",
+      "sleepH": 7.4
+     },
+     {
+      "date": "2026-10-06",
+      "restingHR": 64,
+      "hrv": 54,
+      "updatedAt": "2026-10-06T08:00:00Z"
+     },
+     {
+      "date": "2026-10-07",
+      "restingHR": 65,
+      "hrv": 57,
+      "updatedAt": "2026-10-07T08:00:00Z",
+      "sleepH": 8
+     },
+     {
+      "date": "2026-10-08",
+      "restingHR": 66,
+      "hrv": 65,
+      "updatedAt": "2026-10-08T08:00:00Z",
+      "sleepH": 7.2,
+      "vo2": 40.3
+     },
+     {
+      "date": "2026-10-09",
+      "restingHR": 62,
+      "hrv": 55,
+      "updatedAt": "2026-10-09T08:00:00Z",
+      "sleepH": 6.8
+     },
+     {
+      "date": "2026-10-10",
+      "restingHR": 62,
+      "hrv": 63,
+      "updatedAt": "2026-10-10T08:00:00Z",
+      "sleepH": 6.8
+     },
+     {
+      "date": "2026-10-11",
+      "restingHR": 65,
+      "hrv": 62,
+      "updatedAt": "2026-10-11T08:00:00Z"
+     },
+     {
+      "date": "2026-10-12",
+      "restingHR": 65,
+      "hrv": 57,
+      "updatedAt": "2026-10-12T08:00:00Z",
+      "sleepH": 8
+     },
+     {
+      "date": "2026-10-13",
+      "restingHR": 61,
+      "hrv": 52,
+      "updatedAt": "2026-10-13T08:00:00Z",
+      "sleepH": 6.1
+     },
+     {
+      "date": "2026-10-14",
+      "restingHR": 61,
+      "hrv": 60,
+      "updatedAt": "2026-10-14T08:00:00Z",
+      "sleepH": 7.8
+     },
+     {
+      "date": "2026-10-15",
+      "restingHR": 61,
+      "hrv": 63,
+      "updatedAt": "2026-10-15T08:00:00Z",
+      "sleepH": 7.4
+     },
+     {
+      "date": "2026-10-16",
+      "restingHR": 66,
+      "hrv": 58,
+      "updatedAt": "2026-10-16T08:00:00Z"
+     },
+     {
+      "date": "2026-10-17",
+      "restingHR": 62,
+      "hrv": 59,
+      "updatedAt": "2026-10-17T08:00:00Z",
+      "sleepH": 7.4
+     },
+     {
+      "date": "2026-10-18",
+      "restingHR": 62,
+      "hrv": 62,
+      "updatedAt": "2026-10-18T08:00:00Z",
+      "sleepH": 6.2
+     },
+     {
+      "date": "2026-10-19",
+      "restingHR": 65,
+      "hrv": 56,
+      "updatedAt": "2026-10-19T08:00:00Z",
+      "sleepH": 6.9
+     },
+     {
+      "date": "2026-10-20",
+      "restingHR": 65,
+      "hrv": 64,
+      "updatedAt": "2026-10-20T08:00:00Z",
+      "sleepH": 6.7
+     },
+     {
+      "date": "2026-10-21",
+      "restingHR": 63,
+      "hrv": 53,
+      "updatedAt": "2026-10-21T08:00:00Z"
+     },
+     {
+      "date": "2026-10-22",
+      "restingHR": 61,
+      "hrv": 59,
+      "updatedAt": "2026-10-22T08:00:00Z",
+      "sleepH": 6.8
+     },
+     {
+      "date": "2026-10-23",
+      "restingHR": 62,
+      "hrv": 66,
+      "updatedAt": "2026-10-23T08:00:00Z",
+      "sleepH": 6.2
+     },
+     {
+      "date": "2026-10-24",
+      "restingHR": 65,
+      "hrv": 66,
+      "updatedAt": "2026-10-24T08:00:00Z",
+      "sleepH": 7.3,
+      "soreness": 4,
+      "note": "panturrilha"
+     },
+     {
+      "date": "2026-10-25",
+      "restingHR": 61,
+      "hrv": 55,
+      "updatedAt": "2026-10-25T08:00:00Z",
+      "sleepH": 7.5
+     },
+     {
+      "date": "2026-10-26",
+      "restingHR": 62,
+      "hrv": 58,
+      "updatedAt": "2026-10-26T08:00:00Z"
+     },
+     {
+      "date": "2026-10-27",
+      "restingHR": 64,
+      "hrv": 55,
+      "updatedAt": "2026-10-27T08:00:00Z",
+      "sleepH": 6.9
+     },
+     {
+      "date": "2026-10-28",
+      "restingHR": 66,
+      "hrv": 58,
+      "updatedAt": "2026-10-28T08:00:00Z",
+      "sleepH": 7.7
+     },
+     {
+      "date": "2026-10-29",
+      "restingHR": 62,
+      "hrv": 67,
+      "updatedAt": "2026-10-29T08:00:00Z",
+      "sleepH": 6.8
+     },
+     {
+      "date": "2026-10-30",
+      "restingHR": 60,
+      "hrv": 58,
+      "updatedAt": "2026-10-30T08:00:00Z",
+      "sleepH": 7.3
+     },
+     {
+      "date": "2026-10-31",
+      "restingHR": 63,
+      "hrv": 55,
+      "updatedAt": "2026-10-31T08:00:00Z"
+     },
+     {
+      "date": "2026-11-01",
+      "restingHR": 65,
+      "hrv": 56,
+      "updatedAt": "2026-11-01T08:00:00Z",
+      "sleepH": 8
+     },
+     {
+      "date": "2026-11-02",
+      "restingHR": 64,
+      "hrv": 65,
+      "updatedAt": "2026-11-02T08:00:00Z",
+      "sleepH": 6.4
+     },
+     {
+      "date": "2026-11-03",
+      "restingHR": 63,
+      "hrv": 62,
+      "updatedAt": "2026-11-03T08:00:00Z",
+      "sleepH": 6.2
+     },
+     {
+      "date": "2026-11-04",
+      "restingHR": 63,
+      "hrv": 65,
+      "updatedAt": "2026-11-04T08:00:00Z",
+      "sleepH": 7.4
+     },
+     {
+      "date": "2026-11-05",
+      "restingHR": 61,
+      "hrv": 56,
+      "updatedAt": "2026-11-05T08:00:00Z"
+     },
+     {
+      "date": "2026-11-06",
+      "restingHR": 61,
+      "hrv": 63,
+      "updatedAt": "2026-11-06T08:00:00Z",
+      "sleepH": 6.9
+     },
+     {
+      "date": "2026-11-07",
+      "restingHR": 61,
+      "hrv": 68,
+      "updatedAt": "2026-11-07T08:00:00Z",
+      "sleepH": 7.9,
+      "vo2": 41
+     },
+     {
+      "date": "2026-11-08",
+      "restingHR": 63,
+      "hrv": 60,
+      "updatedAt": "2026-11-08T08:00:00Z",
+      "sleepH": 7
+     },
+     {
+      "date": "2026-11-09",
+      "restingHR": 62,
+      "hrv": 64,
+      "updatedAt": "2026-11-09T08:00:00Z",
+      "sleepH": 7.2
+     },
+     {
+      "date": "2026-11-10",
+      "restingHR": 62,
+      "hrv": 65,
+      "updatedAt": "2026-11-10T08:00:00Z"
+     },
+     {
+      "date": "2026-11-11",
+      "restingHR": 64,
+      "hrv": 58,
+      "updatedAt": "2026-11-11T08:00:00Z",
+      "sleepH": 7.5
+     },
+     {
+      "date": "2026-11-12",
+      "restingHR": 60,
+      "hrv": 67,
+      "updatedAt": "2026-11-12T08:00:00Z",
+      "sleepH": 7.6
+     },
+     {
+      "date": "2026-11-13",
+      "restingHR": 62,
+      "hrv": 65,
+      "updatedAt": "2026-11-13T08:00:00Z",
+      "sleepH": 6.7
+     },
+     {
+      "date": "2026-11-14",
+      "restingHR": 63,
+      "hrv": 67,
+      "updatedAt": "2026-11-14T08:00:00Z",
+      "sleepH": 6.5
+     },
+     {
+      "date": "2026-11-15",
+      "restingHR": 64,
+      "hrv": 62,
+      "updatedAt": "2026-11-15T08:00:00Z"
+     },
+     {
+      "date": "2026-11-16",
+      "restingHR": 63,
+      "hrv": 62,
+      "updatedAt": "2026-11-16T08:00:00Z",
+      "sleepH": 6.2
+     },
+     {
+      "date": "2026-11-17",
+      "restingHR": 64,
+      "hrv": 67,
+      "updatedAt": "2026-11-17T08:00:00Z",
+      "sleepH": 6.6
+     }
+    ],
+    "restTr": {
+     "latest": 64,
+     "date": "2026-11-17",
+     "baseline": 62.5,
+     "deltaAbs": 1.5,
+     "deltaPct": 2.4
+    },
+    "hrvTr": {
+     "latest": 67,
+     "date": "2026-11-17",
+     "baseline": 63.5,
+     "deltaAbs": 3.5,
+     "deltaPct": 5.511811023622047
+    },
+    "sleepLast": {
+     "value": 6.6,
+     "date": "2026-11-17"
+    },
+    "vo2Last": {
+     "value": 41,
+     "date": "2026-11-07"
+    },
+    "dctx": {
+     "tsb": 0.5873877544366195,
+     "restingDelta": 1.5,
+     "hrvDeltaPct": 5.511811023622047,
+     "sleepH": 6.6
+    },
+    "recov": {
+     "score": 90,
+     "label": "Good"
+    },
+    "vo2Eff": 41,
+    "fcRepEff": 64,
+    "td": {
+     "zones": [
+      82560,
+      18280,
+      3974,
+      700,
+      200
+     ],
+     "totalSec": 105714,
+     "bands": {
+      "facil": 100840,
+      "moderado": 3974,
+      "forte": 900
+     },
+     "pct": {
+      "facil": 95.3894469985054,
+      "moderado": 3.7591993491874303,
+      "forte": 0.8513536523071683
+     }
+    },
+    "hillAgg": {
+     "sessions": 4,
+     "effVsModel": 1.0700503467792255,
+     "speedLossPctPerGrade": 0.9091962714761571,
+     "totalClimbM": 1215
+    },
+    "score": {
+     "overall": 75,
+     "parts": {
+      "Eficiência": 53,
+      "Consistência": 87,
+      "Resist. fadiga": 80,
+      "Volume": 74,
+      "Recuperação": 90
+     }
+    },
+    "rd": {
+     "score": 48,
+     "band": "Recovery"
+    },
+    "confMap": {
+     "Alta": "alta",
+     "Moderada": "média",
+     "Baixa": "baixa",
+     "Dados insuficientes": "sem dados"
+    },
+    "byDateAsc": "[fn]",
+    "effHist": [
+     "@w0:2026-09-07",
+     "@w1:2026-09-09",
+     "@w3:2026-09-12",
+     "@w4:2026-09-14",
+     "@w5:2026-09-16",
+     "@w6:2026-09-19",
+     "@w7:2026-09-21",
+     "@w8:2026-09-23",
+     "@w9:2026-09-26",
+     "@w10:2026-09-28",
+     "@w12:2026-10-03",
+     "@w13:2026-10-05",
+     "@w15:2026-10-10",
+     "@w16:2026-10-12",
+     "@w17:2026-10-17",
+     "@w18:2026-10-21",
+     "@w19:2026-10-24",
+     "@w20:2026-10-27",
+     "@w21:2026-11-01",
+     "@w22:2026-11-04",
+     "@w23:2026-11-06",
+     "@w24:2026-11-08",
+     "@w25:2026-11-12",
+     "@w26:2026-11-15"
+    ],
+    "mechHist": [
+     "@w1:2026-09-09",
+     "@w3:2026-09-12",
+     "@w4:2026-09-14",
+     "@w6:2026-09-19",
+     "@w8:2026-09-23",
+     "@w9:2026-09-26",
+     "@w10:2026-09-28",
+     "@w12:2026-10-03",
+     "@w13:2026-10-05",
+     "@w15:2026-10-10",
+     "@w16:2026-10-12",
+     "@w17:2026-10-17",
+     "@w19:2026-10-24",
+     "@w20:2026-10-27",
+     "@w21:2026-11-01",
+     "@w22:2026-11-04",
+     "@w24:2026-11-08",
+     "@w25:2026-11-12",
+     "@w26:2026-11-15"
+    ],
+    "ml": {
+     "lagSec": 21,
+     "n": 18
+    },
+    "lagLow": false
+   },
+   "hojeVerdict": "Sinal de dor — priorize recuperar; no máximo bike/elíptico leve.",
+   "hojeAction": "descanso ou bike leve — proteger a tíbia.",
+   "hojeCoachLines": [
+    {
+     "c": "g",
+     "t": "<b>Motor subindo</b> — EF +7% no bloco."
+    },
+    {
+     "c": "w",
+     "t": "<b>Dor registrada</b> — recuar cedo protege a tíbia."
+    },
+    {
+     "c": "a",
+     "t": "<b>Hoje:</b> descanso ou bike leve — proteger a tíbia."
+    }
+   ],
+   "coachInsight": " Motor: EF fácil em <b>0.0201</b> (+6.6% no bloco) — meta +6.5%. Decoupling 2.5% (base sólida). Cadência em <b>176 spm</b> rumo a 173: a alavanca de maior retorno. Recuperação: <b>Readiness 48 (Recovery)</b> · Recovery Good — sono 6.6h, HRV +6% vs base, FC repouso ↑ 2. Distribuição saudável: <b>95% fácil</b> — polarização no rumo certo. Carga: A:C 0.82 (sweet spot) · forma +1 (equilibrado). Subida: você sobe a <b>107% do previsto</b> (1215 m no ciclo) — ponto forte no seu terreno. Cross-training: <b>2 sessão(ões) de bike</b> (2h25, TRIMP 161) sustentando a base aeróbica de baixo impacto — a carga da bike entra na forma (CTL·ATL·TSB) sem cobrar da tíbia. FC média em Z1–Z2: rodízio de base, exatamente o papel certo na pausa. <b>Foco agora:</b> recuperar — sono e descarga antes de voltar à intensidade.",
+   "focusLine": "<b>Foco agora:</b> recuperar — sono e descarga antes de voltar à intensidade.",
+   "nextWorkout": {
+    "type": "Descanso ou regenerativo",
+    "detail": "folga, ou bike/elíptico de baixo impacto",
+    "c": "var(--crit)",
+    "read": "Sinal de proteção da tíbia ativo — <b>sem impacto hoje</b>. Bike/elíptico mantêm a base; qualidade só quando a canela liberar."
+   },
+   "effTree": {
+    "cur": {
+     "vgapMean": 2.754707354041872,
+     "hrMean": 137.16709589456144,
+     "spmMean": 176.24117557945766,
+     "mPerBeat": 1.204971499648595,
+     "stepsPerBeat": 1.2848648171054955,
+     "mPerStep": 0.9378196706818684,
+     "validMin": 110,
+     "n": 6601
+    },
+    "prevAvg": {
+     "mPerBeat": 1.2757026715771822,
+     "stepsPerBeat": 1.3088840299053943,
+     "mPerStep": 0.9748269454700985,
+     "spmMean": 176.6102357638465,
+     "hrMean": 135.1843582039287,
+     "vgapMean": 2.8694062474887194
+    },
+    "dln": {
+     "mPerBeat": -0.05722365810156779,
+     "stepsPerBeat": -0.018521376466853322,
+     "mPerStep": -0.038702281634714474
+    },
+    "contribPct": {
+     "stepsPerBeat": -32.36664184239889,
+     "mPerStep": -67.63335815760112
+    },
+    "cadDeltaPct": -0.20896874000119192,
+    "efDeltaPct": -5.54448724647888,
+    "label": "Variação dentro do normal"
+   },
+   "decoupleMatrix": {
+    "cardiac": 2.5273984959342752,
+    "mechPct": 1.4,
+    "conf": "Moderada",
+    "matrix": "Sessão sob controle"
+   },
+   "racePredictions": {
+    "anchor": "@w17:2026-10-17",
+    "preds": [
+     {
+      "name": "5 km",
+      "d": 5,
+      "timeSec": 1482.4657801531628,
+      "paceSec": 296.4931560306326
+     },
+     {
+      "name": "10 km",
+      "d": 10,
+      "timeSec": 3090.839634856587,
+      "paceSec": 309.0839634856587
+     },
+     {
+      "name": "21,1 km",
+      "d": 21.0975,
+      "timeSec": 6819.638093436283,
+      "paceSec": 323.2438958851183
+     },
+     {
+      "name": "42,2 km",
+      "d": 42.195,
+      "timeSec": 14218.4784274703,
+      "paceSec": 336.9706938611281
+     }
+    ]
+   },
+   "gradeProfile": {
+    "ok": true,
+    "rows": [
+     {
+      "band": "<−5%",
+      "residual": null,
+      "spm": null,
+      "mPerStep": null,
+      "minutes": 0,
+      "show": false
+     },
+     {
+      "band": "−5 a −2%",
+      "residual": -3.7,
+      "spm": 177,
+      "mPerStep": 0.953,
+      "minutes": 14.1,
+      "show": true
+     },
+     {
+      "band": "±2%",
+      "residual": 0.4,
+      "spm": 176,
+      "mPerStep": 0.951,
+      "minutes": 348.5,
+      "show": true
+     },
+     {
+      "band": "2 a 5%",
+      "residual": 1.8,
+      "spm": 176,
+      "mPerStep": 1.047,
+      "minutes": 14.6,
+      "show": true
+     },
+     {
+      "band": ">5%",
+      "residual": null,
+      "spm": null,
+      "mPerStep": null,
+      "minutes": 0,
+      "show": false
+     }
+    ],
+    "fit": {
+     "a": 111.24708212576257,
+     "b": 9.736363617062153,
+     "r2": 0.13,
+     "n": 501
+    },
+    "nSessions": 6,
+    "upPosSessions": 1,
+    "upResidual": 1.8,
+    "label": "Subida: resíduo +1.8 bpm"
+   },
+   "hrGradeCost": {
+    "bands": [
+     {
+      "lab": ">5%",
+      "min": 0,
+      "resid": null
+     },
+     {
+      "lab": "2–5%",
+      "min": 50.6,
+      "resid": 1.5785635710013235
+     },
+     {
+      "lab": "±2% (plano)",
+      "min": 801.2499999999999,
+      "resid": -1.4645383190113018e-14
+     },
+     {
+      "lab": "−5 a −2%",
+      "min": 52.54999999999999,
+      "resid": -5.835353972864925
+     },
+     {
+      "lab": "<−5%",
+      "min": 0,
+      "resid": null
+     }
+    ],
+    "upCost": 1.5785635710013235,
+    "downDev": -5.835353972864925,
+    "nSplits": 152,
+    "nRuns": 12,
+    "flatN": 135
+   },
+   "fitnessSeries": [
+    {
+     "date": "2026-09-07",
+     "load": 55.76985594120923,
+     "ctl": 1.3121706459440234,
+     "atl": 7.424200353523585,
+     "tsb": 0
+    },
+    {
+     "date": "2026-09-08",
+     "load": 0,
+     "ctl": 1.281297483820524,
+     "atl": 6.435875209787081,
+     "tsb": -6.112029707579562
+    },
+    {
+     "date": "2026-09-09",
+     "load": 49.55568705607892,
+     "ctl": 2.4171124483483,
+     "atl": 12.17607512514245,
+     "tsb": -5.154577725966558
+    },
+    {
+     "date": "2026-09-10",
+     "load": 49.323674733403585,
+     "ctl": 3.520744743857149,
+     "atl": 17.121241604233504,
+     "tsb": -9.75896267679415
+    },
+    {
+     "date": "2026-09-11",
+     "load": 0,
+     "ctl": 3.43790755830621,
+     "atl": 14.84202596299337,
+     "tsb": -13.600496860376355
+    },
+    {
+     "date": "2026-09-12",
+     "load": 71.5111317540698,
+     "ctl": 5.039555707776231,
+     "atl": 22.38593634518061,
+     "tsb": -11.40411840468716
+    },
+    {
+     "date": "2026-09-13",
+     "load": 0,
+     "ctl": 4.920983461950196,
+     "atl": 19.405873482851423,
+     "tsb": -17.34638063740438
+    },
+    {
+     "date": "2026-09-14",
+     "load": 48.9722809264192,
+     "ctl": 5.957436192069465,
+     "atl": 23.34181573858103,
+     "tsb": -14.484890020901226
+    },
+    {
+     "date": "2026-09-15",
+     "load": 0,
+     "ctl": 5.817267766593187,
+     "atl": 20.234504203816858,
+     "tsb": -17.384379546511564
+    },
+    {
+     "date": "2026-09-16",
+     "load": 60.393878261371185,
+     "ctl": 7.101363359772793,
+     "atl": 25.58060442307656,
+     "tsb": -14.417236437223671
+    },
+    {
+     "date": "2026-09-17",
+     "load": 0,
+     "ctl": 6.93428025744778,
+     "atl": 22.175260636616816,
+     "tsb": -18.479241063303768
+    },
+    {
+     "date": "2026-09-18",
+     "load": 0,
+     "ctl": 6.771128338709385,
+     "atl": 19.22324336708326,
+     "tsb": -15.240980379169036
+    },
+    {
+     "date": "2026-09-19",
+     "load": 85.45151874925035,
+     "ctl": 8.622345218612427,
+     "atl": 28.03969048188069,
+     "tsb": -12.452115028373875
+    },
+    {
+     "date": "2026-09-20",
+     "load": 0,
+     "ctl": 8.419475978516381,
+     "atl": 24.306987994577888,
+     "tsb": -19.417345263268263
+    },
+    {
+     "date": "2026-09-21",
+     "load": 34.649044523960825,
+     "ctl": 9.036613486230062,
+     "atl": 25.683744280671693,
+     "tsb": -15.887512016061507
+    },
+    {
+     "date": "2026-09-22",
+     "load": 0,
+     "ctl": 8.823997212523476,
+     "atl": 22.264670299749415,
+     "tsb": -16.64713079444163
+    },
+    {
+     "date": "2026-09-23",
+     "load": 51.885006934376236,
+     "ctl": 9.837150142330028,
+     "atl": 26.207791722657575,
+     "tsb": -13.440673087225939
+    },
+    {
+     "date": "2026-09-24",
+     "load": 0,
+     "ctl": 9.605698591332358,
+     "atl": 22.718955445627593,
+     "tsb": -16.370641580327547
+    },
+    {
+     "date": "2026-09-25",
+     "load": 0,
+     "ctl": 9.379692704951385,
+     "atl": 19.6945603812236,
+     "tsb": -13.113256854295235
+    },
+    {
+     "date": "2026-09-26",
+     "load": 87.37945959140316,
+     "ctl": 11.214895661307802,
+     "atl": 28.70491631927998,
+     "tsb": -10.314867676272215
+    },
+    {
+     "date": "2026-09-27",
+     "load": 0,
+     "ctl": 10.951028082026154,
+     "atl": 24.883657571362143,
+     "tsb": -17.49002065797218
+    },
+    {
+     "date": "2026-09-28",
+     "load": 48.261032718118656,
+     "ctl": 11.828869562110395,
+     "atl": 27.995702849226276,
+     "tsb": -13.932629489335989
+    },
+    {
+     "date": "2026-09-29",
+     "load": 0,
+     "ctl": 11.55055621250332,
+     "atl": 24.26885608796745,
+     "tsb": -16.16683328711588
+    },
+    {
+     "date": "2026-09-30",
+     "load": 0,
+     "ctl": 11.278791106594664,
+     "atl": 21.038134994876632,
+     "tsb": -12.71829987546413
+    },
+    {
+     "date": "2026-10-01",
+     "load": 66.28814424477937,
+     "ctl": 12.573068404287278,
+     "atl": 27.061911262547397,
+     "tsb": -9.759343888281968
+    },
+    {
+     "date": "2026-10-02",
+     "load": 0,
+     "ctl": 12.277245311128427,
+     "atl": 23.459372798502873,
+     "tsb": -14.488842858260119
+    },
+    {
+     "date": "2026-10-03",
+     "load": 96.39666955033816,
+     "ctl": 14.256433483261436,
+     "atl": 33.16893892865144,
+     "tsb": -11.182127487374446
+    },
+    {
+     "date": "2026-10-04",
+     "load": 0,
+     "ctl": 13.92100364904581,
+     "atl": 28.7534201154114,
+     "tsb": -18.912505445390007
+    },
+    {
+     "date": "2026-10-05",
+     "load": 61.52707011207775,
+     "ctl": 15.041094098042159,
+     "atl": 33.11631723582008,
+     "tsb": -14.832416466365592
+    },
+    {
+     "date": "2026-10-06",
+     "load": 0,
+     "ctl": 14.687202523010328,
+     "atl": 28.707803532848448,
+     "tsb": -18.07522313777792
+    },
+    {
+     "date": "2026-10-07",
+     "load": 0,
+     "ctl": 14.341637419846977,
+     "atl": 24.886160432996505,
+     "tsb": -14.02060100983812
+    },
+    {
+     "date": "2026-10-08",
+     "load": 111.63731231256546,
+     "ctl": 16.630840546104324,
+     "atl": 36.43465597029571,
+     "tsb": -10.544523013149528
+    },
+    {
+     "date": "2026-10-09",
+     "load": 0,
+     "ctl": 16.239544918499004,
+     "atl": 31.58439804565036,
+     "tsb": -19.803815424191384
+    },
+    {
+     "date": "2026-10-10",
+     "load": 98.42007558294995,
+     "ctl": 18.173114195057135,
+     "atl": 40.48170381103529,
+     "tsb": -15.344853127151357
+    },
+    {
+     "date": "2026-10-11",
+     "load": 0,
+     "ctl": 17.745531469771265,
+     "atl": 35.09269437801919,
+     "tsb": -22.308589615978153
+    },
+    {
+     "date": "2026-10-12",
+     "load": 59.89284197785387,
+     "ctl": 18.737186598170634,
+     "atl": 38.394142113014674,
+     "tsb": -17.347162908247924
+    },
+    {
+     "date": "2026-10-13",
+     "load": 0,
+     "ctl": 18.296332200633486,
+     "atl": 33.28303327764016,
+     "tsb": -19.65695551484404
+    },
+    {
+     "date": "2026-10-14",
+     "load": 0,
+     "ctl": 17.86585036350233,
+     "atl": 28.852325985036103,
+     "tsb": -14.986701077006671
+    },
+    {
+     "date": "2026-10-15",
+     "load": 0,
+     "ctl": 17.445497037925712,
+     "atl": 25.011443752815687,
+     "tsb": -10.986475621533774
+    },
+    {
+     "date": "2026-10-16",
+     "load": 0,
+     "ctl": 17.035033917110034,
+     "atl": 21.681867830160662,
+     "tsb": -7.565946714889975
+    },
+    {
+     "date": "2026-10-17",
+     "load": 113.88463855815857,
+     "ctl": 19.31374176271098,
+     "atl": 33.956094318324226,
+     "tsb": -4.646833913050628
+    },
+    {
+     "date": "2026-10-18",
+     "load": 0,
+     "ctl": 18.85932199460026,
+     "atl": 29.43578772638798,
+     "tsb": -14.642352555613247
+    },
+    {
+     "date": "2026-10-19",
+     "load": 0,
+     "ctl": 18.415593957185067,
+     "atl": 25.517233841743383,
+     "tsb": -10.576465731787717
+    },
+    {
+     "date": "2026-10-20",
+     "load": 0,
+     "ctl": 17.982306092075362,
+     "atl": 22.120326080164762,
+     "tsb": -7.101639884558317
+    },
+    {
+     "date": "2026-10-21",
+     "load": 57.66373518995334,
+     "ctl": 18.91594318997703,
+     "atl": 26.85193935089835,
+     "tsb": -4.1380199880894
+    },
+    {
+     "date": "2026-10-22",
+     "load": 0,
+     "ctl": 18.470882951334882,
+     "atl": 23.277352788726013,
+     "tsb": -7.93599616092132
+    },
+    {
+     "date": "2026-10-23",
+     "load": 0,
+     "ctl": 18.03629422944614,
+     "atl": 20.17862269723484,
+     "tsb": -4.8064698373911305
+    },
+    {
+     "date": "2026-10-24",
+     "load": 104.0000087873517,
+     "ctl": 20.05887544210166,
+     "atl": 31.33710165940211,
+     "tsb": -2.142328467788701
+    },
+    {
+     "date": "2026-10-25",
+     "load": 0,
+     "ctl": 19.58692393529627,
+     "atl": 27.16544087076043,
+     "tsb": -11.27822621730045
+    },
+    {
+     "date": "2026-10-26",
+     "load": 0,
+     "ctl": 19.126076651427944,
+     "atl": 23.549120327832547,
+     "tsb": -7.578516935464162
+    },
+    {
+     "date": "2026-10-27",
+     "load": 51.564920517593464,
+     "ctl": 19.889307934550043,
+     "atl": 27.27864248927278,
+     "tsb": -4.423043676404603
+    },
+    {
+     "date": "2026-10-28",
+     "load": 0,
+     "ctl": 19.421346065195927,
+     "atl": 23.647252309136853,
+     "tsb": -7.389334554722737
+    },
+    {
+     "date": "2026-10-29",
+     "load": 0,
+     "ctl": 18.964394549338774,
+     "atl": 20.49928041660719,
+     "tsb": -4.225906243940926
+    },
+    {
+     "date": "2026-10-30",
+     "load": 0,
+     "ctl": 18.51819433193144,
+     "atl": 17.77037315393847,
+     "tsb": -1.5348858672684145
+    },
+    {
+     "date": "2026-10-31",
+     "load": 0,
+     "ctl": 18.082492453055103,
+     "atl": 15.40474375746319,
+     "tsb": 0.7478211779929715
+    },
+    {
+     "date": "2026-11-01",
+     "load": 58.983169028964255,
+     "ctl": 19.044816387668348,
+     "atl": 21.205995255185176,
+     "tsb": 2.6777486955919123
+    },
+    {
+     "date": "2026-11-02",
+     "load": 0,
+     "ctl": 18.596723980048793,
+     "atl": 18.383008628927243,
+     "tsb": -2.1611788675168278
+    },
+    {
+     "date": "2026-11-03",
+     "load": 0,
+     "ctl": 18.159174431004462,
+     "atl": 15.935823911333914,
+     "tsb": 0.21371535112155016
+    },
+    {
+     "date": "2026-11-04",
+     "load": 112.09958996304083,
+     "ctl": 20.36943396366069,
+     "atl": 28.73734641606933,
+     "tsb": 2.2233505196705483
+    },
+    {
+     "date": "2026-11-05",
+     "load": 0,
+     "ctl": 19.89017553864724,
+     "atl": 24.911770505555587,
+     "tsb": -8.367912452408639
+    },
+    {
+     "date": "2026-11-06",
+     "load": 14.264202030420233,
+     "ctl": 19.7578058710595,
+     "atl": 23.494343827591813,
+     "tsb": -5.021594966908346
+    },
+    {
+     "date": "2026-11-07",
+     "load": 0,
+     "ctl": 19.292938023461065,
+     "atl": 20.366727433271432,
+     "tsb": -3.736537956532313
+    },
+    {
+     "date": "2026-11-08",
+     "load": 50.15608430647117,
+     "ctl": 20.01909580010538,
+     "atl": 24.332349185323146,
+     "tsb": -1.0737894098103666
+    },
+    {
+     "date": "2026-11-09",
+     "load": 0,
+     "ctl": 19.54808024118174,
+     "atl": 21.09317575776097,
+     "tsb": -4.313253385217767
+    },
+    {
+     "date": "2026-11-10",
+     "load": 0,
+     "ctl": 19.088146883920125,
+     "atl": 18.285207899949274,
+     "tsb": -1.5450955165792308
+    },
+    {
+     "date": "2026-11-11",
+     "load": 0,
+     "ctl": 18.639034982807246,
+     "atl": 15.851042620803454,
+     "tsb": 0.8029389839708507
+    },
+    {
+     "date": "2026-11-12",
+     "load": 53.544096039419024,
+     "ctl": 19.46029219676979,
+     "atl": 20.868821056718158,
+     "tsb": 2.7879923620037914
+    },
+    {
+     "date": "2026-11-13",
+     "load": 0,
+     "ctl": 19.002424344125284,
+     "atl": 18.0907197679102,
+     "tsb": -1.408528859948369
+    },
+    {
+     "date": "2026-11-14",
+     "load": 0,
+     "ctl": 18.555329349789663,
+     "atl": 15.682445157375088,
+     "tsb": 0.911704576215083
+    },
+    {
+     "date": "2026-11-15",
+     "load": 114.57524454781988,
+     "ctl": 20.814516002193947,
+     "atl": 28.84726231181506,
+     "tsb": 2.872884192414574
+    },
+    {
+     "date": "2026-11-16",
+     "load": 0,
+     "ctl": 20.32478554751243,
+     "atl": 25.007054166408807,
+     "tsb": -8.032746309621114
+    },
+    {
+     "date": "2026-11-17",
+     "load": 0,
+     "ctl": 19.8465776244246,
+     "atl": 21.678062594715495,
+     "tsb": -4.6822686188963765
+    },
+    {
+     "date": "2026-11-18",
+     "load": 0,
+     "ctl": 19.37962112719656,
+     "atl": 18.79223337275994,
+     "tsb": -1.8314849702908944
+    },
+    {
+     "date": "2026-11-19",
+     "load": 0,
+     "ctl": 18.923651328755074,
+     "atl": 16.290571797793408,
+     "tsb": 0.5873877544366195
+    }
+   ],
+   "acuteChronic": {
+    "ratio": 0.8195840029205338,
+    "zone": "sweet spot",
+    "acute": 114.57524454781988,
+    "chronicAvg7": 139.79682880527014
+   },
+   "polarization": {
+    "easyPct": 95.3894469985054,
+    "totalSec": 105714,
+    "zones": [
+     82560,
+     18280,
+     3974,
+     700,
+     200
+    ]
+   },
+   "trainingDistribution": {
+    "zones": [
+     82560,
+     18280,
+     3974,
+     700,
+     200
+    ],
+    "totalSec": 105714,
+    "bands": {
+     "facil": 100840,
+     "moderado": 3974,
+     "forte": 900
+    },
+    "pct": {
+     "facil": 95.3894469985054,
+     "moderado": 3.7591993491874303,
+     "forte": 0.8513536523071683
+    }
+   },
+   "consistency": {
+    "activeDays": 27,
+    "weeks": 10,
+    "metWeeks": 6,
+    "adherencePct": 86.66666666666666
+   },
+   "hillAggregate": {
+    "sessions": 4,
+    "effVsModel": 1.0700503467792255,
+    "speedLossPctPerGrade": 0.9091962714761571,
+    "totalClimbM": 1215
+   },
+   "bikeSummary": {
+    "sessions": 2,
+    "totalSec": 8700,
+    "totalKm": 41.3,
+    "totalKcal": 1100,
+    "totalTrimp": 161,
+    "totalGain": 520,
+    "avgHr": 134,
+    "indoor": 1,
+    "outdoor": 1
+   },
+   "week7Km": 19.74,
+   "weeklyReadiness": {
+    "score": 72,
+    "band": "Moderate",
+    "n": 7,
+    "sleep": 6.8500000000000005,
+    "rhr": 63,
+    "hrv": 64,
+    "tsb": 0.5873877544366195,
+    "min": 61,
+    "max": 88,
+    "from": "2026-11-11",
+    "to": "2026-11-17"
+   },
+   "heatmap": {
+    "cols": [
+     {
+      "monIso": "2026-07-20",
+      "month": "JUL",
+      "cells": [
+       {
+        "date": "2026-07-20",
+        "v": 0,
+        "lvl": 0,
+        "future": false,
+        "mon": false
+       },
+       {
+        "date": "2026-07-21",
+        "v": 0,
+        "lvl": 0,
+        "future": false,
+        "mon": false
+       },
+       {
+        "date": "2026-07-22",
+        "v": 0,
+        "lvl": 0,
+        "future": false,
+        "mon": false
+       },
+       {
+        "date": "2026-07-23",
+        "v": 0,
+        "lvl": 0,
+        "future": false,
+        "mon": false
+       },
+       {
+        "date": "2026-07-24",
+        "v": 0,
+        "lvl": 0,
+        "future": false,
+        "mon": false
+       },
+       {
+        "date": "2026-07-25",
+        "v": 0,
+        "lvl": 0,
+        "future": false,
+        "mon": false
+       },
+       {
+        "date": "2026-07-26",
+        "v": 0,
+        "lvl": 0,
+        "future": false,
+        "mon": false
+       }
+      ]
+     },
+     {
+      "monIso": "2026-07-27",
+      "month": "JUL",
+      "cells": [
+       {
+        "date": "2026-07-27",
+        "v": 0,
+        "lvl": 0,
+        "future": false,
+        "mon": false
+       },
+       {
+        "date": "2026-07-28",
+        "v": 0,
+        "lvl": 0,
+        "future": false,
+        "mon": false
+       },
+       {
+        "date": "2026-07-29",
+        "v": 0,
+        "lvl": 0,
+        "future": false,
+        "mon": false
+       },
+       {
+        "date": "2026-07-30",
+        "v": 0,
+        "lvl": 0,
+        "future": false,
+        "mon": false
+       },
+       {
+        "date": "2026-07-31",
+        "v": 0,
+        "lvl": 0,
+        "future": false,
+        "mon": false
+       },
+       {
+        "date": "2026-08-01",
+        "v": 0,
+        "lvl": 0,
+        "future": false,
+        "mon": true
+       },
+       {
+        "date": "2026-08-02",
+        "v": 0,
+        "lvl": 0,
+        "future": false,
+        "mon": true
+       }
+      ]
+     },
+     {
+      "monIso": "2026-08-03",
+      "month": "AGO",
+      "cells": [
+       {
+        "date": "2026-08-03",
+        "v": 0,
+        "lvl": 0,
+        "future": false,
+        "mon": true
+       },
+       {
+        "date": "2026-08-04",
+        "v": 0,
+        "lvl": 0,
+        "future": false,
+        "mon": true
+       },
+       {
+        "date": "2026-08-05",
+        "v": 0,
+        "lvl": 0,
+        "future": false,
+        "mon": true
+       },
+       {
+        "date": "2026-08-06",
+        "v": 0,
+        "lvl": 0,
+        "future": false,
+        "mon": true
+       },
+       {
+        "date": "2026-08-07",
+        "v": 0,
+        "lvl": 0,
+        "future": false,
+        "mon": true
+       },
+       {
+        "date": "2026-08-08",
+        "v": 0,
+        "lvl": 0,
+        "future": false,
+        "mon": false
+       },
+       {
+        "date": "2026-08-09",
+        "v": 0,
+        "lvl": 0,
+        "future": false,
+        "mon": false
+       }
+      ]
+     },
+     {
+      "monIso": "2026-08-10",
+      "month": "AGO",
+      "cells": [
+       {
+        "date": "2026-08-10",
+        "v": 0,
+        "lvl": 0,
+        "future": false,
+        "mon": false
+       },
+       {
+        "date": "2026-08-11",
+        "v": 0,
+        "lvl": 0,
+        "future": false,
+        "mon": false
+       },
+       {
+        "date": "2026-08-12",
+        "v": 0,
+        "lvl": 0,
+        "future": false,
+        "mon": false
+       },
+       {
+        "date": "2026-08-13",
+        "v": 0,
+        "lvl": 0,
+        "future": false,
+        "mon": false
+       },
+       {
+        "date": "2026-08-14",
+        "v": 0,
+        "lvl": 0,
+        "future": false,
+        "mon": false
+       },
+       {
+        "date": "2026-08-15",
+        "v": 0,
+        "lvl": 0,
+        "future": false,
+        "mon": false
+       },
+       {
+        "date": "2026-08-16",
+        "v": 0,
+        "lvl": 0,
+        "future": false,
+        "mon": false
+       }
+      ]
+     },
+     {
+      "monIso": "2026-08-17",
+      "month": "AGO",
+      "cells": [
+       {
+        "date": "2026-08-17",
+        "v": 0,
+        "lvl": 0,
+        "future": false,
+        "mon": false
+       },
+       {
+        "date": "2026-08-18",
+        "v": 0,
+        "lvl": 0,
+        "future": false,
+        "mon": false
+       },
+       {
+        "date": "2026-08-19",
+        "v": 0,
+        "lvl": 0,
+        "future": false,
+        "mon": false
+       },
+       {
+        "date": "2026-08-20",
+        "v": 0,
+        "lvl": 0,
+        "future": false,
+        "mon": false
+       },
+       {
+        "date": "2026-08-21",
+        "v": 0,
+        "lvl": 0,
+        "future": false,
+        "mon": false
+       },
+       {
+        "date": "2026-08-22",
+        "v": 0,
+        "lvl": 0,
+        "future": false,
+        "mon": false
+       },
+       {
+        "date": "2026-08-23",
+        "v": 0,
+        "lvl": 0,
+        "future": false,
+        "mon": false
+       }
+      ]
+     },
+     {
+      "monIso": "2026-08-24",
+      "month": "AGO",
+      "cells": [
+       {
+        "date": "2026-08-24",
+        "v": 0,
+        "lvl": 0,
+        "future": false,
+        "mon": false
+       },
+       {
+        "date": "2026-08-25",
+        "v": 0,
+        "lvl": 0,
+        "future": false,
+        "mon": false
+       },
+       {
+        "date": "2026-08-26",
+        "v": 0,
+        "lvl": 0,
+        "future": false,
+        "mon": false
+       },
+       {
+        "date": "2026-08-27",
+        "v": 0,
+        "lvl": 0,
+        "future": false,
+        "mon": false
+       },
+       {
+        "date": "2026-08-28",
+        "v": 0,
+        "lvl": 0,
+        "future": false,
+        "mon": false
+       },
+       {
+        "date": "2026-08-29",
+        "v": 0,
+        "lvl": 0,
+        "future": false,
+        "mon": false
+       },
+       {
+        "date": "2026-08-30",
+        "v": 0,
+        "lvl": 0,
+        "future": false,
+        "mon": false
+       }
+      ]
+     },
+     {
+      "monIso": "2026-08-31",
+      "month": "AGO",
+      "cells": [
+       {
+        "date": "2026-08-31",
+        "v": 0,
+        "lvl": 0,
+        "future": false,
+        "mon": false
+       },
+       {
+        "date": "2026-09-01",
+        "v": 0,
+        "lvl": 0,
+        "future": false,
+        "mon": true
+       },
+       {
+        "date": "2026-09-02",
+        "v": 0,
+        "lvl": 0,
+        "future": false,
+        "mon": true
+       },
+       {
+        "date": "2026-09-03",
+        "v": 0,
+        "lvl": 0,
+        "future": false,
+        "mon": true
+       },
+       {
+        "date": "2026-09-04",
+        "v": 0,
+        "lvl": 0,
+        "future": false,
+        "mon": true
+       },
+       {
+        "date": "2026-09-05",
+        "v": 0,
+        "lvl": 0,
+        "future": false,
+        "mon": true
+       },
+       {
+        "date": "2026-09-06",
+        "v": 0,
+        "lvl": 0,
+        "future": false,
+        "mon": true
+       }
+      ]
+     },
+     {
+      "monIso": "2026-09-07",
+      "month": "SET",
+      "cells": [
+       {
+        "date": "2026-09-07",
+        "v": 55.76985594120923,
+        "lvl": 2,
+        "future": false,
+        "mon": true
+       },
+       {
+        "date": "2026-09-08",
+        "v": 0,
+        "lvl": 0,
+        "future": false,
+        "mon": false
+       },
+       {
+        "date": "2026-09-09",
+        "v": 49.55568705607892,
+        "lvl": 1,
+        "future": false,
+        "mon": false
+       },
+       {
+        "date": "2026-09-10",
+        "v": 49.323674733403585,
+        "lvl": 1,
+        "future": false,
+        "mon": false
+       },
+       {
+        "date": "2026-09-11",
+        "v": 0,
+        "lvl": 0,
+        "future": false,
+        "mon": false
+       },
+       {
+        "date": "2026-09-12",
+        "v": 71.5111317540698,
+        "lvl": 3,
+        "future": false,
+        "mon": false
+       },
+       {
+        "date": "2026-09-13",
+        "v": 0,
+        "lvl": 0,
+        "future": false,
+        "mon": false
+       }
+      ]
+     },
+     {
+      "monIso": "2026-09-14",
+      "month": "SET",
+      "cells": [
+       {
+        "date": "2026-09-14",
+        "v": 48.9722809264192,
+        "lvl": 1,
+        "future": false,
+        "mon": false
+       },
+       {
+        "date": "2026-09-15",
+        "v": 0,
+        "lvl": 0,
+        "future": false,
+        "mon": false
+       },
+       {
+        "date": "2026-09-16",
+        "v": 60.393878261371185,
+        "lvl": 3,
+        "future": false,
+        "mon": false
+       },
+       {
+        "date": "2026-09-17",
+        "v": 0,
+        "lvl": 0,
+        "future": false,
+        "mon": false
+       },
+       {
+        "date": "2026-09-18",
+        "v": 0,
+        "lvl": 0,
+        "future": false,
+        "mon": false
+       },
+       {
+        "date": "2026-09-19",
+        "v": 85.45151874925035,
+        "lvl": 3,
+        "future": false,
+        "mon": false
+       },
+       {
+        "date": "2026-09-20",
+        "v": 0,
+        "lvl": 0,
+        "future": false,
+        "mon": false
+       }
+      ]
+     },
+     {
+      "monIso": "2026-09-21",
+      "month": "SET",
+      "cells": [
+       {
+        "date": "2026-09-21",
+        "v": 34.649044523960825,
+        "lvl": 1,
+        "future": false,
+        "mon": false
+       },
+       {
+        "date": "2026-09-22",
+        "v": 0,
+        "lvl": 0,
+        "future": false,
+        "mon": false
+       },
+       {
+        "date": "2026-09-23",
+        "v": 51.885006934376236,
+        "lvl": 2,
+        "future": false,
+        "mon": false
+       },
+       {
+        "date": "2026-09-24",
+        "v": 0,
+        "lvl": 0,
+        "future": false,
+        "mon": false
+       },
+       {
+        "date": "2026-09-25",
+        "v": 0,
+        "lvl": 0,
+        "future": false,
+        "mon": false
+       },
+       {
+        "date": "2026-09-26",
+        "v": 87.37945959140316,
+        "lvl": 3,
+        "future": false,
+        "mon": false
+       },
+       {
+        "date": "2026-09-27",
+        "v": 0,
+        "lvl": 0,
+        "future": false,
+        "mon": false
+       }
+      ]
+     },
+     {
+      "monIso": "2026-09-28",
+      "month": "SET",
+      "cells": [
+       {
+        "date": "2026-09-28",
+        "v": 48.261032718118656,
+        "lvl": 1,
+        "future": false,
+        "mon": false
+       },
+       {
+        "date": "2026-09-29",
+        "v": 0,
+        "lvl": 0,
+        "future": false,
+        "mon": false
+       },
+       {
+        "date": "2026-09-30",
+        "v": 0,
+        "lvl": 0,
+        "future": false,
+        "mon": false
+       },
+       {
+        "date": "2026-10-01",
+        "v": 66.28814424477937,
+        "lvl": 3,
+        "future": false,
+        "mon": true
+       },
+       {
+        "date": "2026-10-02",
+        "v": 0,
+        "lvl": 0,
+        "future": false,
+        "mon": true
+       },
+       {
+        "date": "2026-10-03",
+        "v": 96.39666955033816,
+        "lvl": 3,
+        "future": false,
+        "mon": true
+       },
+       {
+        "date": "2026-10-04",
+        "v": 0,
+        "lvl": 0,
+        "future": false,
+        "mon": true
+       }
+      ]
+     },
+     {
+      "monIso": "2026-10-05",
+      "month": "OUT",
+      "cells": [
+       {
+        "date": "2026-10-05",
+        "v": 61.52707011207775,
+        "lvl": 3,
+        "future": false,
+        "mon": true
+       },
+       {
+        "date": "2026-10-06",
+        "v": 0,
+        "lvl": 0,
+        "future": false,
+        "mon": true
+       },
+       {
+        "date": "2026-10-07",
+        "v": 0,
+        "lvl": 0,
+        "future": false,
+        "mon": true
+       },
+       {
+        "date": "2026-10-08",
+        "v": 111.63731231256546,
+        "lvl": 4,
+        "future": false,
+        "mon": false
+       },
+       {
+        "date": "2026-10-09",
+        "v": 0,
+        "lvl": 0,
+        "future": false,
+        "mon": false
+       },
+       {
+        "date": "2026-10-10",
+        "v": 98.42007558294995,
+        "lvl": 4,
+        "future": false,
+        "mon": false
+       },
+       {
+        "date": "2026-10-11",
+        "v": 0,
+        "lvl": 0,
+        "future": false,
+        "mon": false
+       }
+      ]
+     },
+     {
+      "monIso": "2026-10-12",
+      "month": "OUT",
+      "cells": [
+       {
+        "date": "2026-10-12",
+        "v": 59.89284197785387,
+        "lvl": 2,
+        "future": false,
+        "mon": false
+       },
+       {
+        "date": "2026-10-13",
+        "v": 0,
+        "lvl": 0,
+        "future": false,
+        "mon": false
+       },
+       {
+        "date": "2026-10-14",
+        "v": 0,
+        "lvl": 0,
+        "future": false,
+        "mon": false
+       },
+       {
+        "date": "2026-10-15",
+        "v": 0,
+        "lvl": 0,
+        "future": false,
+        "mon": false
+       },
+       {
+        "date": "2026-10-16",
+        "v": 0,
+        "lvl": 0,
+        "future": false,
+        "mon": false
+       },
+       {
+        "date": "2026-10-17",
+        "v": 113.88463855815857,
+        "lvl": 4,
+        "future": false,
+        "mon": false
+       },
+       {
+        "date": "2026-10-18",
+        "v": 0,
+        "lvl": 0,
+        "future": false,
+        "mon": false
+       }
+      ]
+     },
+     {
+      "monIso": "2026-10-19",
+      "month": "OUT",
+      "cells": [
+       {
+        "date": "2026-10-19",
+        "v": 0,
+        "lvl": 0,
+        "future": false,
+        "mon": false
+       },
+       {
+        "date": "2026-10-20",
+        "v": 0,
+        "lvl": 0,
+        "future": false,
+        "mon": false
+       },
+       {
+        "date": "2026-10-21",
+        "v": 57.66373518995334,
+        "lvl": 2,
+        "future": false,
+        "mon": false
+       },
+       {
+        "date": "2026-10-22",
+        "v": 0,
+        "lvl": 0,
+        "future": false,
+        "mon": false
+       },
+       {
+        "date": "2026-10-23",
+        "v": 0,
+        "lvl": 0,
+        "future": false,
+        "mon": false
+       },
+       {
+        "date": "2026-10-24",
+        "v": 104.0000087873517,
+        "lvl": 4,
+        "future": false,
+        "mon": false
+       },
+       {
+        "date": "2026-10-25",
+        "v": 0,
+        "lvl": 0,
+        "future": false,
+        "mon": false
+       }
+      ]
+     },
+     {
+      "monIso": "2026-10-26",
+      "month": "OUT",
+      "cells": [
+       {
+        "date": "2026-10-26",
+        "v": 0,
+        "lvl": 0,
+        "future": false,
+        "mon": false
+       },
+       {
+        "date": "2026-10-27",
+        "v": 51.564920517593464,
+        "lvl": 2,
+        "future": false,
+        "mon": false
+       },
+       {
+        "date": "2026-10-28",
+        "v": 0,
+        "lvl": 0,
+        "future": false,
+        "mon": false
+       },
+       {
+        "date": "2026-10-29",
+        "v": 0,
+        "lvl": 0,
+        "future": false,
+        "mon": false
+       },
+       {
+        "date": "2026-10-30",
+        "v": 0,
+        "lvl": 0,
+        "future": false,
+        "mon": false
+       },
+       {
+        "date": "2026-10-31",
+        "v": 0,
+        "lvl": 0,
+        "future": false,
+        "mon": false
+       },
+       {
+        "date": "2026-11-01",
+        "v": 58.983169028964255,
+        "lvl": 2,
+        "future": false,
+        "mon": true
+       }
+      ]
+     },
+     {
+      "monIso": "2026-11-02",
+      "month": "NOV",
+      "cells": [
+       {
+        "date": "2026-11-02",
+        "v": 0,
+        "lvl": 0,
+        "future": false,
+        "mon": true
+       },
+       {
+        "date": "2026-11-03",
+        "v": 0,
+        "lvl": 0,
+        "future": false,
+        "mon": true
+       },
+       {
+        "date": "2026-11-04",
+        "v": 112.09958996304083,
+        "lvl": 4,
+        "future": false,
+        "mon": true
+       },
+       {
+        "date": "2026-11-05",
+        "v": 0,
+        "lvl": 0,
+        "future": false,
+        "mon": true
+       },
+       {
+        "date": "2026-11-06",
+        "v": 14.264202030420233,
+        "lvl": 1,
+        "future": false,
+        "mon": true
+       },
+       {
+        "date": "2026-11-07",
+        "v": 0,
+        "lvl": 0,
+        "future": false,
+        "mon": true
+       },
+       {
+        "date": "2026-11-08",
+        "v": 50.15608430647117,
+        "lvl": 1,
+        "future": false,
+        "mon": false
+       }
+      ]
+     },
+     {
+      "monIso": "2026-11-09",
+      "month": "NOV",
+      "cells": [
+       {
+        "date": "2026-11-09",
+        "v": 0,
+        "lvl": 0,
+        "future": false,
+        "mon": false
+       },
+       {
+        "date": "2026-11-10",
+        "v": 0,
+        "lvl": 0,
+        "future": false,
+        "mon": false
+       },
+       {
+        "date": "2026-11-11",
+        "v": 0,
+        "lvl": 0,
+        "future": false,
+        "mon": false
+       },
+       {
+        "date": "2026-11-12",
+        "v": 53.544096039419024,
+        "lvl": 2,
+        "future": false,
+        "mon": false
+       },
+       {
+        "date": "2026-11-13",
+        "v": 0,
+        "lvl": 0,
+        "future": false,
+        "mon": false
+       },
+       {
+        "date": "2026-11-14",
+        "v": 0,
+        "lvl": 0,
+        "future": false,
+        "mon": false
+       },
+       {
+        "date": "2026-11-15",
+        "v": 114.57524454781988,
+        "lvl": 4,
+        "future": false,
+        "mon": false
+       }
+      ]
+     },
+     {
+      "monIso": "2026-11-16",
+      "month": "NOV",
+      "cells": [
+       {
+        "date": "2026-11-16",
+        "v": 0,
+        "lvl": 0,
+        "future": false,
+        "mon": false
+       },
+       {
+        "date": "2026-11-17",
+        "v": 0,
+        "lvl": 0,
+        "future": false,
+        "mon": false
+       },
+       {
+        "date": "2026-11-18",
+        "v": 0,
+        "lvl": 0,
+        "future": false,
+        "mon": false
+       },
+       {
+        "date": "2026-11-19",
+        "v": 0,
+        "lvl": 0,
+        "future": false,
+        "mon": false
+       },
+       {
+        "date": "2026-11-20",
+        "v": 0,
+        "lvl": -1,
+        "future": true,
+        "mon": false
+       },
+       {
+        "date": "2026-11-21",
+        "v": 0,
+        "lvl": -1,
+        "future": true,
+        "mon": false
+       },
+       {
+        "date": "2026-11-22",
+        "v": 0,
+        "lvl": -1,
+        "future": true,
+        "mon": false
+       }
+      ]
+     }
+    ],
+    "active": 27,
+    "total": 123,
+    "q": [
+     50.15608430647117,
+     59.89284197785387,
+     96.39666955033816
+    ]
+   },
+   "paceRefSuggest": 350,
+   "medianLag": {
+    "lagSec": 21,
+    "n": 18
+   },
+   "sleepEntries": [
+    {
+     "date": "2026-09-04",
+     "sleepH": 7
+    },
+    {
+     "date": "2026-09-05",
+     "sleepH": 6.6
+    },
+    {
+     "date": "2026-09-07",
+     "sleepH": 7.6
+    },
+    {
+     "date": "2026-09-08",
+     "sleepH": 6.8
+    },
+    {
+     "date": "2026-09-09",
+     "sleepH": 7.2
+    },
+    {
+     "date": "2026-09-10",
+     "sleepH": 7.6
+    },
+    {
+     "date": "2026-09-12",
+     "sleepH": 6.5
+    },
+    {
+     "date": "2026-09-13",
+     "sleepH": 7.2
+    },
+    {
+     "date": "2026-09-14",
+     "sleepH": 6.2
+    },
+    {
+     "date": "2026-09-15",
+     "sleepH": 6.9
+    },
+    {
+     "date": "2026-09-16",
+     "sleepH": 6.7
+    },
+    {
+     "date": "2026-09-17",
+     "sleepH": 7.1
+    },
+    {
+     "date": "2026-09-18",
+     "sleepH": 6.3
+    },
+    {
+     "date": "2026-09-19",
+     "sleepH": 6.7
+    },
+    {
+     "date": "2026-09-20",
+     "sleepH": 6.3
+    },
+    {
+     "date": "2026-09-21",
+     "sleepH": 6.8
+    },
+    {
+     "date": "2026-09-22",
+     "sleepH": 6.4
+    },
+    {
+     "date": "2026-09-23",
+     "sleepH": 7.8
+    },
+    {
+     "date": "2026-09-24",
+     "sleepH": 7.8
+    },
+    {
+     "date": "2026-09-25",
+     "sleepH": 7.1
+    },
+    {
+     "date": "2026-09-26",
+     "sleepH": 6.9
+    },
+    {
+     "date": "2026-09-27",
+     "sleepH": 6.5
+    },
+    {
+     "date": "2026-09-28",
+     "sleepH": 7.3
+    },
+    {
+     "date": "2026-09-29",
+     "sleepH": 7.2
+    },
+    {
+     "date": "2026-09-30",
+     "sleepH": 6.7
+    },
+    {
+     "date": "2026-10-02",
+     "sleepH": 6.1
+    },
+    {
+     "date": "2026-10-03",
+     "sleepH": 6.6
+    },
+    {
+     "date": "2026-10-04",
+     "sleepH": 7.5
+    },
+    {
+     "date": "2026-10-05",
+     "sleepH": 7.4
+    },
+    {
+     "date": "2026-10-07",
+     "sleepH": 8
+    },
+    {
+     "date": "2026-10-08",
+     "sleepH": 7.2
+    },
+    {
+     "date": "2026-10-09",
+     "sleepH": 6.8
+    },
+    {
+     "date": "2026-10-10",
+     "sleepH": 6.8
+    },
+    {
+     "date": "2026-10-12",
+     "sleepH": 8
+    },
+    {
+     "date": "2026-10-13",
+     "sleepH": 6.1
+    },
+    {
+     "date": "2026-10-14",
+     "sleepH": 7.8
+    },
+    {
+     "date": "2026-10-15",
+     "sleepH": 7.4
+    },
+    {
+     "date": "2026-10-17",
+     "sleepH": 7.4
+    },
+    {
+     "date": "2026-10-18",
+     "sleepH": 6.2
+    },
+    {
+     "date": "2026-10-19",
+     "sleepH": 6.9
+    },
+    {
+     "date": "2026-10-20",
+     "sleepH": 6.7
+    },
+    {
+     "date": "2026-10-22",
+     "sleepH": 6.8
+    },
+    {
+     "date": "2026-10-23",
+     "sleepH": 6.2
+    },
+    {
+     "date": "2026-10-24",
+     "sleepH": 7.3
+    },
+    {
+     "date": "2026-10-25",
+     "sleepH": 7.5
+    },
+    {
+     "date": "2026-10-27",
+     "sleepH": 6.9
+    },
+    {
+     "date": "2026-10-28",
+     "sleepH": 7.7
+    },
+    {
+     "date": "2026-10-29",
+     "sleepH": 6.8
+    },
+    {
+     "date": "2026-10-30",
+     "sleepH": 7.3
+    },
+    {
+     "date": "2026-11-01",
+     "sleepH": 8
+    },
+    {
+     "date": "2026-11-02",
+     "sleepH": 6.4
+    },
+    {
+     "date": "2026-11-03",
+     "sleepH": 6.2
+    },
+    {
+     "date": "2026-11-04",
+     "sleepH": 7.4
+    },
+    {
+     "date": "2026-11-06",
+     "sleepH": 6.9
+    },
+    {
+     "date": "2026-11-07",
+     "sleepH": 7.9
+    },
+    {
+     "date": "2026-11-08",
+     "sleepH": 7
+    },
+    {
+     "date": "2026-11-09",
+     "sleepH": 7.2
+    },
+    {
+     "date": "2026-11-11",
+     "sleepH": 7.5
+    },
+    {
+     "date": "2026-11-12",
+     "sleepH": 7.6
+    },
+    {
+     "date": "2026-11-13",
+     "sleepH": 6.7
+    },
+    {
+     "date": "2026-11-14",
+     "sleepH": 6.5
+    },
+    {
+     "date": "2026-11-15",
+     "sleepH": 7.3
+    },
+    {
+     "date": "2026-11-16",
+     "sleepH": 6.2
+    },
+    {
+     "date": "2026-11-17",
+     "sleepH": 6.6
+    }
+   ],
+   "vo2Band": "bom",
+   "hydro": {
+    "n": 7,
+    "before": 471,
+    "during": 560,
+    "after": 450,
+    "total": 1161
+   }
+  },
+  "maratona": {
+   "zones": [
+    {
+     "z": "Z1",
+     "lo": 67,
+     "hi": 143,
+     "mid": 126
+    },
+    {
+     "z": "Z2",
+     "lo": 144,
+     "hi": 163,
+     "mid": 154
+    },
+    {
+     "z": "Z3",
+     "lo": 164,
+     "hi": 176,
+     "mid": 170
+    },
+    {
+     "z": "Z4",
+     "lo": 177,
+     "hi": 181,
+     "mid": 180
+    },
+    {
+     "z": "Z5",
+     "lo": 182,
+     "hi": 198,
+     "mid": 190
+    }
+   ],
+   "paceByZone": {
+    "zones": [
+     {
+      "z": "Z1",
+      "lo": 67,
+      "hi": 143,
+      "hr": 126,
+      "pace": 383.7100303299751,
+      "extrap": false
+     },
+     {
+      "z": "Z2",
+      "lo": 144,
+      "hi": 163,
+      "hr": 154,
+      "pace": 337.6874261754574,
+      "extrap": false
+     },
+     {
+      "z": "Z3",
+      "lo": 164,
+      "hi": 176,
+      "hr": 170,
+      "pace": 311.3887952300187,
+      "extrap": false
+     },
+     {
+      "z": "Z4",
+      "lo": 177,
+      "hi": 181,
+      "hr": 180,
+      "pace": 294.95215088911954,
+      "extrap": true
+     },
+     {
+      "z": "Z5",
+      "lo": 182,
+      "hi": 198,
+      "hr": 190,
+      "pace": 278.51550654822034,
+      "extrap": true
+     }
+    ],
+    "n": 24,
+    "minHr": 124,
+    "maxHr": 164
+   },
+   "week0": {
+    "key": "2026-W47",
+    "monIso": "2026-11-16",
+    "sunIso": "2026-11-22",
+    "range": "16–22 nov"
+   },
+   "days": 129,
+   "block": {
+    "days": 129,
+    "wkToGo": 19,
+    "N": 29,
+    "cur": 11
+   },
+   "phase": {
+    "k": "base",
+    "name": "Base aeróbica",
+    "emoji": "🔵",
+    "desc": "Construir volume fácil e consistência em Z1–Z2. Sem pressa, sem dor.",
+    "idx": 0,
+    "fracs": [
+     0.4,
+     0.3,
+     0.2,
+     0.1
+    ]
+   },
+   "cycleSummary": {
+    "totalKm": 268.11,
+    "maxLong": 19.74,
+    "nRuns": 25,
+    "efStart": 0.018759645061728395,
+    "efEnd": 0.020012165450121654,
+    "efDelta": 6.676674234890132,
+    "ctlEnd": 18.923651328755074,
+    "adesao": 25,
+    "weeks": 3,
+    "okN": 2,
+    "totN": 8
+   },
+   "cycleText": "🏁 Maratona de Curitiba · Maratona\n7 SET 2026 → 28 MAR 2027 · 42,2 km\n🎯 terminar inteiro\n\n📊 Volume total: 268,1 km em 25 corridas\n🏃 Maior longão: 19,7 km\n⚙️ EF (economia): 18,8 → 20,0 (+7%)\n📈 Forma final (CTL): 19\n✅ Adesão: 25% (2/8 sessões, 3 semanas)\n\n— Apex Run Performance",
+   "paceByZoneCycle": {
+    "zones": [
+     {
+      "z": "Z1",
+      "lo": 67,
+      "hi": 143,
+      "hr": 126,
+      "pace": 383.7100303299751,
+      "extrap": false
+     },
+     {
+      "z": "Z2",
+      "lo": 144,
+      "hi": 163,
+      "hr": 154,
+      "pace": 337.6874261754574,
+      "extrap": false
+     },
+     {
+      "z": "Z3",
+      "lo": 164,
+      "hi": 176,
+      "hr": 170,
+      "pace": 311.3887952300187,
+      "extrap": false
+     },
+     {
+      "z": "Z4",
+      "lo": 177,
+      "hi": 181,
+      "hr": 180,
+      "pace": 294.95215088911954,
+      "extrap": true
+     },
+     {
+      "z": "Z5",
+      "lo": 182,
+      "hi": 198,
+      "hr": 190,
+      "pace": 278.51550654822034,
+      "extrap": true
+     }
+    ],
+    "n": 24,
+    "minHr": 124,
+    "maxHr": 164
+   },
+   "archived": [
+    "🏁 Meia de Floripa · Meia maratona\n1 JUN 2026 → 29 AGO 2026 · 21,1 km\n🎯 sub 2:45\n\n📊 Volume total: 312,4 km em 38 corridas\n🏃 Maior longão: 17 km\n⚙️ EF (economia): 13,1 → 13,9 (+6%)\n📈 Forma final (CTL): 31\n✅ Adesão: 84% (32/38 sessões, 12 semanas)\n\n— Apex Run Performance"
+   ],
+   "plan": {
+    "2026-W46": {
+     "monIso": "2026-11-09",
+     "mix": {
+      "Z1": 4,
+      "Z2": 87,
+      "Z3": 0,
+      "Z4": 9,
+      "Z5": 0
+     },
+     "sessions": [
+      {
+       "min": 50,
+       "km": null,
+       "peak": "Z2",
+       "summary": "50 min · Z2",
+       "status": "missed",
+       "analyze": {
+        "cls": "miss",
+        "label": "✗ Não cumprido",
+        "txt": "sem treino vinculado"
+       }
+      },
+      {
+       "min": 47.5,
+       "km": null,
+       "peak": "Z2",
+       "summary": "15:00 Z2 · 5×(3:00 Z4 / 1:30 Z1) · 10:00 Z2",
+       "status": "done",
+       "analyze": {
+        "cls": "done",
+        "label": "✓ Cumprido",
+        "txt": "marcado como feito"
+       }
+      },
+      {
+       "min": 45,
+       "km": 8,
+       "peak": "Z2",
+       "summary": "45 min · 8 km · Z2",
+       "status": "adapted",
+       "analyze": {
+        "cls": "adapt",
+        "label": "↺ Adaptado",
+        "txt": "Bike indoor · canela"
+       }
+      },
+      {
+       "min": null,
+       "km": 22,
+       "peak": "Z2",
+       "summary": "22 km · Z2",
+       "status": "missed",
+       "analyze": {
+        "cls": "miss",
+        "label": "✗ Não cumprido",
+        "txt": "sem treino vinculado"
+       }
+      }
+     ]
+    },
+    "2026-W47": {
+     "monIso": "2026-11-16",
+     "mix": {
+      "Z1": 6,
+      "Z2": 82,
+      "Z3": 0,
+      "Z4": 12,
+      "Z5": 0
+     },
+     "sessions": [
+      {
+       "min": 50,
+       "km": null,
+       "peak": "Z2",
+       "summary": "50 min · Z2",
+       "status": "planned",
+       "analyze": null
+      },
+      {
+       "min": null,
+       "km": null,
+       "peak": null,
+       "summary": "",
+       "status": "planned",
+       "analyze": null
+      },
+      {
+       "min": 47.5,
+       "km": null,
+       "peak": "Z2",
+       "summary": "15:00 Z2 · 5×(3:00 Z4 / 1:30 Z1) · 10:00 Z2",
+       "status": "planned",
+       "analyze": null
+      },
+      {
+       "min": null,
+       "km": 24,
+       "peak": "Z2",
+       "summary": "24 km · Z2",
+       "status": "planned",
+       "analyze": null
+      }
+     ]
+    },
+    "2026-W48": {
+     "monIso": "2026-11-23",
+     "mix": {
+      "Z1": 100,
+      "Z2": 0,
+      "Z3": 0,
+      "Z4": 0,
+      "Z5": 0
+     },
+     "sessions": [
+      {
+       "min": 40,
+       "km": null,
+       "peak": "Z1",
+       "summary": "40 min · Z1",
+       "status": "planned",
+       "analyze": null
+      }
+     ]
+    }
+   }
+  }
+ }
+}
