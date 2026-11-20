@@ -1,13 +1,17 @@
 // Formulário de treino — "Completar" (depois do .FIT), registro à mão e edição.
 // Mesmos campos e regras do modal do app antigo (openModal/saveModal), no layout
 // aprovado (design/telas/Importar.dc.html).
-import { useMemo, useState } from 'react';
-import { IconCircleCheck, IconAlertTriangle, IconCloud, IconChevronLeft } from '@tabler/icons-react';
+import { useMemo, useRef, useState } from 'react';
+import { IconCircleCheck, IconAlertTriangle, IconCloud, IconChevronLeft, IconPhotoPlus, IconX } from '@tabler/icons-react';
 import * as E from '../../engine.mjs';
 import { useApex } from '../store';
 import { href, go } from '../route';
 import { Card, CardH, Sheet, StateBadge } from '../ui';
 import { dec, dur, dayMon, typeName } from '../fmt';
+import { putPhoto, type PhotoRec } from '../db';
+import { preparePhoto, OFF_ROUTE_SEC } from '../photos';
+import { privacyOf, privacyLabel, type Privacy } from '../privacy';
+import { PrivacySheet, PrivacyIcon } from './Privacidade';
 import { RUN_TYPES, BIKE_TYPES, formFrom, extrasOf, buildWorkout, findDuplicate, commitWorkout, type FormVals } from '../actions';
 
 // decided: escolha feita na Conferência quando o arquivo coincide com um treino já salvo
@@ -27,6 +31,22 @@ export function TreinoForm({ id = null, prefill = null, fromFit = false, onCance
   const [err, setErr] = useState<string | null>(null);
   const [dup, setDup] = useState<{ w: any; match: any; same: boolean } | null>(null);
   const set = (k: string, v: string | boolean) => setF((o) => ({ ...o, [k]: v }));
+  // privacidade (vem do padrão) e fotos do percurso (Etapa 3)
+  const [priv, setPriv] = useState<Privacy>(() => privacyOf(src, st.athlete));
+  const [privTouched, setPrivTouched] = useState(false);
+  const [privOpen, setPrivOpen] = useState(false);
+  const [pend, setPend] = useState<(PhotoRec & { url: string })[]>([]);
+  const [reading, setReading] = useState(false);
+  const photoInput = useRef<HTMLInputElement>(null);
+  const addPend = async (files: FileList | null) => {
+    const list = files ? Array.from(files) : []; if (!list.length) return;
+    setReading(true);
+    const out: (PhotoRec & { url: string })[] = [];
+    for (const file of list) { try { const p = await preparePhoto(file, track || null); out.push({ ...p, url: URL.createObjectURL(p.blob) }); } catch { /* imagem que não abre fica de fora */ } }
+    setPend((cur) => [...cur, ...out]); setReading(false);
+  };
+  const where = (p: PhotoRec) => (p.off || p.i == null ? 'fora do percurso' : track && track.dist[p.i] != null ? 'no km ' + (track.dist[p.i] / 1000).toFixed(1).replace('.', ',') : 'no trajeto');
+  const savePhotos = (wid: string) => { pend.forEach(({ url, ...p }) => { URL.revokeObjectURL(url); putPhoto({ ...p, wid }).catch(() => {}); }); };
   const isBk = f.modal === 'bike';
   const types = isBk ? BIKE_TYPES : RUN_TYPES;
   const back = onCancel ? undefined : w ? href('treino', w.id) : href('treinos');
@@ -34,10 +54,12 @@ export function TreinoForm({ id = null, prefill = null, fromFit = false, onCance
   if (id && !w) return <Card><p className="muted">Treino não encontrado.</p></Card>;
 
   const save = () => {
-    const r = buildWorkout(f, extras, w ? w.id : null);
+    // treino novo: guarda a privacidade escolhida (o padrão, se não mexeu); edição: só se mudou ou já tinha
+    const ex = !w || privTouched || (w && w.privacy) ? { ...extras, privacy: priv } : extras;
+    const r = buildWorkout(f, ex, w ? w.id : null);
     if ('error' in r) { setErr(r.error); return; }
     setErr(null);
-    const done = (wid: string) => (onSaved ? onSaved(wid) : go('treino', wid));
+    const done = (wid: string) => { savePhotos(wid); return onSaved ? onSaved(wid) : go('treino', wid); };
     if (w) { commitWorkout(r.w, 'edit'); done(r.w.id); return; }
     if (decided) { commitWorkout(r.w, decided.choice, decided.matchId, track); done(r.w.id); return; }
     const d = findDuplicate(r.w);
@@ -47,7 +69,7 @@ export function TreinoForm({ id = null, prefill = null, fromFit = false, onCance
   const pick = (choice: 'replace' | 'keep' | 'cancel') => {
     const d = dup!; setDup(null);
     if (choice === 'cancel') return; // mantém o formulário aberto para ajustes
-    commitWorkout(d.w, choice, d.match.id, track); if (onSaved) onSaved(d.w.id); else go('treino', d.w.id);
+    commitWorkout(d.w, choice, d.match.id, track); savePhotos(d.w.id); if (onSaved) onSaved(d.w.id); else go('treino', d.w.id);
   };
 
   const inp = (k: string, props: Record<string, any> = {}) => (
@@ -130,6 +152,23 @@ export function TreinoForm({ id = null, prefill = null, fromFit = false, onCance
         </div>
       </Card>
 
+      {!w ? (
+        <Card>
+          <div className="row between" style={{ alignItems: 'flex-start' }}>
+            <div className="stack" style={{ gap: 2 }}><h2 className="lead">Fotos do percurso</h2><p className="apoio muted">{track ? 'Encaixadas no mapa pelo horário' : 'Sem trajeto: ficam em Fora do percurso'}</p></div>
+            <button type="button" className="btn" style={{ minHeight: 40 }} onClick={() => photoInput.current?.click()} disabled={reading}><IconPhotoPlus size={18} stroke={1.75} aria-hidden="true" />{reading ? 'Lendo…' : 'Adicionar'}</button>
+          </div>
+          <input ref={photoInput} type="file" accept="image/*" multiple className="sr-only" tabIndex={-1} aria-hidden="true" onChange={(e) => { addPend(e.target.files); e.target.value = ''; }} />
+          {pend.length ? <div className="photos-row">{pend.map((p, k) => (
+            <figure key={p.id} className="photo-fig">
+              <button type="button" onClick={() => { URL.revokeObjectURL(p.url); setPend(pend.filter((x) => x.id !== p.id)); }} aria-label={'Tirar a foto ' + (k + 1) + ' (' + where(p) + ')'} style={{ position: 'relative' }}>
+                <img src={p.url} alt="" /><IconX size={16} stroke={2} aria-hidden="true" style={{ position: 'absolute', top: 4, right: 4, color: 'var(--texto)', background: 'var(--painel-mapa)', borderRadius: 999 }} />
+              </button>
+              <figcaption>{where(p)}</figcaption>
+            </figure>))}</div> : <p className="hint">Opcional. A hora da foto encontra o ponto do trajeto; fotos a mais de {OFF_ROUTE_SEC / 60} min do treino vão para Fora do percurso.</p>}
+        </Card>
+      ) : null}
+
       <Card>
         <Field id="f_notes" label="Notas">{<textarea id="f_notes" value={String(f.notes)} onChange={(e) => set('notes', e.target.value)} placeholder="ex.: corpo aguentava, fôlego cansou" />}</Field>
       </Card>
@@ -156,10 +195,17 @@ export function TreinoForm({ id = null, prefill = null, fromFit = false, onCance
         </div>
       </details>
 
+      <Card className="priv-row">
+        <PrivacyIcon p={priv} size={22} />
+        <div className="stack grow" style={{ gap: 0 }}><span>Privacidade</span><span className="apoio muted">{privacyLabel(priv)}</span></div>
+        <button type="button" className="btn quiet" style={{ minHeight: 40 }} onClick={() => setPrivOpen(true)}>Alterar</button>
+      </Card>
+
       {err ? <Card className="alert" role="alert"><IconAlertTriangle size={20} stroke={1.75} color="var(--alerta)" aria-hidden="true" /><span>{err}</span></Card> : null}
       <button type="submit" className="btn-primary">{isBk ? 'Salvar bike' : 'Salvar treino'}</button>
     </form>
 
+    {privOpen ? <PrivacySheet value={priv} onClose={() => setPrivOpen(false)} onSave={(p) => { setPriv(p); setPrivTouched(true); }} /> : null}
     {dup ? (
       <Sheet title="Treino duplicado?" onClose={() => pick('cancel')}>
         <p>Já existe um treino em <b>{dayMon(dup.w.date)}</b> — {dup.match.distKm ? dec(dup.match.distKm, 2) + ' km · ' : ''}{E.isBike(dup.match) ? (dup.match.indoor ? 'Bike indoor' : 'Bike') : typeName(dup.match.type)}. {dup.same ? <b>Parece ser o mesmo treino.</b> : 'Foi uma segunda sessão no dia?'} O que fazer?</p>

@@ -13,3 +13,4 @@ export { Recuperacao } from './Recuperacao';
 export { Forca } from './Forca';
 export { Livro } from './Livro';
 export { Config } from './Config';
+export { Compartilhar } from './Compartilhar';

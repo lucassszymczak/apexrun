@@ -4,7 +4,8 @@
 import * as E from '../engine.mjs';
 import { commit, getState, toast } from './store';
 import { buildTrack, totalDist, duration, type Track } from './track';
-import { putTrack, delTrack } from './db';
+import { putTrack, delTrack, delPhotosOf, getPhotos, putPhoto } from './db';
+import { refitPhotos } from './photos';
 
 // ---------------- .FIT ----------------
 // Mesma sequência do handleFitFile antigo. O leitor (@garmin/fitsdk 21) agora vem
@@ -49,6 +50,7 @@ export function extrasOf(s: any): Record<string, any> {
     eff: s && s.eff ? s.eff : null, mech: s && s.mech ? s.mech : null, cadAdherencePct: s && s.cadAdherencePct != null ? s.cadAdherencePct : null,
     imp: s && s.imp ? s.imp : null, weather: s && s.weather ? s.weather : null,
     splitsOrig: s && s.splits ? s.splits : null,
+    privacy: s && s.privacy ? s.privacy : null, // Etapa 3 (campo novo, opcional)
   };
 }
 
@@ -112,7 +114,9 @@ export function buildWorkout(f: FormVals, extras: Record<string, any>, editingId
     cadAdherencePct: isBk ? null : (extras.cadAdherencePct != null ? extras.cadAdherencePct : null),
     imp: isBk ? null : (extras.imp || null), weather: extras.weather || null, geo: extras.geo || null,
     updatedAt: new Date().toISOString(),
-  };
+  } as Record<string, any>;
+  // privacidade do treino (Etapa 3): campo novo e opcional — só existe se foi definido
+  if (extras.privacy) w.privacy = extras.privacy;
   return { w };
 }
 
@@ -141,9 +145,20 @@ export function commitWorkout(w: any, choice: 'new' | 'edit' | 'replace' | 'keep
   commit();
   toast(msg);
   // trajeto vai para o IndexedDB pelo id do treino (o treino substituído perde o dele)
-  if (choice === 'replace' && matchId && matchId !== w.id) delTrack(matchId);
+  if (choice === 'replace' && matchId && matchId !== w.id) { delTrack(matchId); movePhotos(matchId, w.id, track || null); }
   if (track) putTrack(w.id, track).catch((e) => toast('Não consegui guardar o trajeto neste aparelho: ' + (e && e.message ? e.message : e)));
   return w.id;
+}
+
+// treino substituído: as fotos dele passam para o novo (reencaixadas no novo trajeto)
+async function movePhotos(from: string, to: string, tr: Track | null) {
+  try {
+    const list = await getPhotos(from);
+    if (!list.length) return;
+    await delPhotosOf(from);
+    for (const p of list) await putPhoto({ ...p, wid: to });
+    if (tr) await refitPhotos(to, tr);
+  } catch { /* sem IndexedDB */ }
 }
 
 export function deleteWorkout(id: string) {
@@ -153,6 +168,7 @@ export function deleteWorkout(id: string) {
   st.deleted.push({ id, at: new Date().toISOString() });
   commit();
   delTrack(id);
+  delPhotosOf(id);
   toast('Treino excluído');
 }
 
@@ -175,6 +191,7 @@ export async function reimportFit(w: any, file: File): Promise<string> {
   if (!m.ok) throw new Error('Este .FIT não parece ser deste treino: ' + m.why + '.');
   if (!r.track) throw new Error('O arquivo não tem registros de trajeto.');
   await putTrack(w.id, r.track);
+  await refitPhotos(w.id, r.track).catch(() => {});
   return r.track.hasGps ? 'Trajeto adicionado. Nada nas análises mudou.' : 'Séries adicionadas (o arquivo não tem GPS). Nada nas análises mudou.';
 }
 // Usado pelo teste de fumaça / verificação: o trajeto não altera o treino.
@@ -201,4 +218,14 @@ export function recalcKpis(): string {
   let msg = after ? after + ' sessão(ões) recalculada(s) do stream.' : 'Nenhuma sessão com stream para recalcular agora.';
   if (need.length) msg += ' ' + need.length + ' sessão(ões) sem records brutos salvos — reimporte o .FIT para aplicar a correção de pausa/lacuna: ' + need.sort().join(', ') + '.';
   return msg;
+}
+
+// Privacidade do treino (Etapa 3): campo novo e opcional; vai junto na sincronização.
+export function setWorkoutPrivacy(id: string, p: { mapa: string; raio: number; quemVe: string }) {
+  const w = getState().workouts.find((x: any) => x.id === id);
+  if (!w) return;
+  w.privacy = { mapa: p.mapa, raio: p.raio, quemVe: p.quemVe };
+  w.updatedAt = new Date().toISOString();
+  commit();
+  toast('Privacidade do treino salva');
 }

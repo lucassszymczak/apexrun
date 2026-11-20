@@ -19,9 +19,20 @@ function markerEl(cls: string, text?: string, label?: string) {
   return el;
 }
 
-export function RuasMap({ tr, band, bandKey, cursor, onPick, onFail }: { tr: Track; band: (i: number) => number | null; bandKey: string; cursor: number | null; onPick: (i: number) => void; onFail: (why: string) => void }) {
+export type MapPhoto = { id: string; i: number; url: string; label: string };
+function photoEl(p: MapPhoto, onPhoto?: (id: string) => void) {
+  const b = document.createElement('button');
+  b.type = 'button'; b.className = 'map-photo'; b.setAttribute('aria-label', p.label);
+  const im = document.createElement('img'); im.src = p.url; im.alt = ''; b.appendChild(im);
+  b.addEventListener('click', (e) => { e.stopPropagation(); if (onPhoto) onPhoto(p.id); });
+  return b;
+}
+
+export function RuasMap({ tr, band, bandKey, cursor, onPick, onFail, photos, onPhoto }: { tr: Track; band: (i: number) => number | null; bandKey: string; cursor: number | null; onPick: (i: number) => void; onFail: (why: string) => void; photos?: MapPhoto[]; onPhoto?: (id: string) => void }) {
   const box = useRef<HTMLDivElement>(null);
-  const S = useRef<{ map: any; ml: any; cursor: any; marks: any[]; ready: boolean } | null>(null);
+  const S = useRef<{ map: any; ml: any; cursor: any; marks: any[]; photos: any[]; ready: boolean } | null>(null);
+  const photosRef = useRef<MapPhoto[]>(photos || []);
+  photosRef.current = photos || [];
 
   // cria o mapa uma vez
   useEffect(() => {
@@ -43,7 +54,7 @@ export function RuasMap({ tr, band, bandKey, cursor, onPick, onFail }: { tr: Tra
       });
       const MLx = ml.AttributionControl ? ml : ml.default;
       map.addControl(new MLx.AttributionControl({ compact: true }), 'top-right');
-      S.current = { map, ml: ml.Marker ? ml : ml.default, cursor: null, marks: [], ready: false };
+      S.current = { map, ml: ml.Marker ? ml : ml.default, cursor: null, marks: [], photos: [], ready: false };
       // a área do mapa muda com a gaveta (celular): o mapa acompanha
       ro = new ResizeObserver(() => { try { map.resize(); } catch { /* */ } });
       ro.observe(box.current);
@@ -67,7 +78,7 @@ export function RuasMap({ tr, band, bandKey, cursor, onPick, onFail }: { tr: Tra
         map.addSource('rota', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
         map.addLayer({ id: 'rota-borda', type: 'line', source: 'rota', layout: { 'line-join': 'round', 'line-cap': 'round' }, paint: { 'line-color': cssVar('--noite'), 'line-width': 8 } });
         map.addLayer({ id: 'rota', type: 'line', source: 'rota', layout: { 'line-join': 'round', 'line-cap': 'round' }, paint: { 'line-color': ['get', 'cor'], 'line-width': 4.5 } });
-        draw(); drawMarks();
+        draw(); drawMarks(); drawPhotos();
         map.on('zoomend', drawMarks);
         map.on('click', (e: any) => {
           // ponto com GPS mais perto do toque (até ~40 px)
@@ -98,6 +109,12 @@ export function RuasMap({ tr, band, bandKey, cursor, onPick, onFail }: { tr: Tra
     s.marks.push(new s.ml.Marker({ element: markerEl('fim', undefined, 'Chegada') }).setLngLat([tr.lon[b], tr.lat[b]]).addTo(s.map));
     s.marks.push(new s.ml.Marker({ element: markerEl('ini', undefined, 'Largada') }).setLngLat([tr.lon[a], tr.lat[a]]).addTo(s.map));
   }
+  function drawPhotos() {
+    const s = S.current; if (!s || !s.ready) return;
+    s.photos.forEach((m) => m.remove()); s.photos = [];
+    for (const p of photosRef.current) { const i = nearestGps(tr, p.i); s.photos.push(new s.ml.Marker({ element: photoEl(p, onPhoto) }).setLngLat([tr.lon[i], tr.lat[i]]).addTo(s.map)); }
+  }
+  useEffect(() => { drawPhotos(); }, [(photos || []).map((p) => p.id + ':' + p.i).join(',')]);
   // recolore quando muda o modo de cor
   useEffect(() => { draw(); }, [bandKey]);
   // ponto do replay

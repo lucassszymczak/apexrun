@@ -4,18 +4,29 @@
 // alturas (celular) ou painel fixo (computador). Os números vêm dos mesmos blocos de
 // antes (treinoBlocks) — nada nas análises muda.
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
-import { IconChevronLeft, IconDotsVertical, IconPencil, IconTrash, IconPlayerPlayFilled, IconPlayerPauseFilled, IconFileUpload, IconMapOff, IconRoute, IconChevronUp, IconChevronDown } from '@tabler/icons-react';
+import { IconChevronLeft, IconDotsVertical, IconPencil, IconTrash, IconPlayerPlayFilled, IconPlayerPauseFilled, IconFileUpload, IconMapOff, IconRoute, IconChevronUp, IconChevronDown, IconShare, IconPhotoPlus, IconMapPin } from '@tabler/icons-react';
 import * as E from '../../engine.mjs';
 import { useApex, toast } from '../store';
 import { href, go } from '../route';
 import { Card, Kpi, Sheet, Seg, Empty, IC } from '../ui';
 import { dec, signed, pace, dayMon, workoutTitle, noEmoji, dur as hShort } from '../fmt';
-import { deleteWorkout, reimportFit } from '../actions';
+import { deleteWorkout, reimportFit, setWorkoutPrivacy } from '../actions';
 import { getTrack, onTrackChange } from '../db';
 import { type Track, type ColorMode, colorer, duration, idxAtTime, PALETTE } from '../track';
 import { TrackSvg } from '../map/TrackSvg';
 import { TrackChart } from '../map/TrackChart';
 import { treinoBlocks } from './Treino';
+import { delPhoto } from '../db';
+import { usePhotos, addPhotos, photoSummary, placeManually, moveToOffRoute, type PhotoView } from '../photos';
+import { privacyOf, privacyLabel } from '../privacy';
+import { PrivacySheet, PrivacyIcon } from './Privacidade';
+
+// "no km 8,2" / "fora do percurso"
+export function photoWhere(tr: Track | null, p: PhotoView): string {
+  if (p.off || p.i == null) return 'fora do percurso';
+  const d = tr && tr.dist[p.i] != null ? (tr.dist[p.i] as number) / 1000 : null;
+  return d != null ? 'no km ' + d.toFixed(1).replace('.', ',') : 'no ' + E.hms(p.t || 0);
+}
 
 const RuasMap = lazy(() => import('../map/RuasMap').then((m) => ({ default: m.RuasMap })));
 let ruasFailed = false; // se o mapa de ruas falhou nesta sessão, não tenta de novo a cada treino
@@ -52,6 +63,13 @@ export function Treino({ id }: { id: string }) {
   const drag = useRef<{ y: number; h: number } | null>(null);
   const drawer = useRef<HTMLDivElement>(null);
   const rm = useMemo(reducedMotion, []);
+  const photos = usePhotos(id);
+  const [privOpen, setPrivOpen] = useState(false);
+  const [photoOpen, setPhotoOpen] = useState<string | null>(null);
+  const [placing, setPlacing] = useState<{ p: PhotoView; i: number } | null>(null);
+  const [pop, setPop] = useState<string | null>(null);
+  const photoRef = useRef<HTMLInputElement>(null);
+  const prevT = useRef(0);
 
   const total = tr ? duration(tr) : 0;
   const cursor = tr ? idxAtTime(tr, t) : null;
@@ -69,6 +87,14 @@ export function Treino({ id }: { id: string }) {
     raf = requestAnimationFrame(step);
     return () => cancelAnimationFrame(raf);
   }, [playing, speed, tr, total]);
+  // fotos "saltam" quando o ponto do replay passa por elas
+  useEffect(() => {
+    const a0 = prevT.current; prevT.current = t;
+    if (!playing || t <= a0) return;
+    const hit = photos.find((p) => !p.off && p.t != null && p.t > a0 && p.t <= t);
+    if (hit) setPop(hit.id);
+  }, [t, playing, photos]);
+  useEffect(() => { if (!pop) return; const h = setTimeout(() => setPop(null), 1800); return () => clearTimeout(h); }, [pop]);
   // espaço = play/pausa (fora de campos e botões)
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -97,6 +123,18 @@ export function Treino({ id }: { id: string }) {
     catch (e: any) { alert(e && e.message ? e.message : String(e)); }
     finally { setBusy(null); }
   };
+
+  const priv = privacyOf(w, a);
+  const onRoute = photos.filter((p) => !p.off && p.i != null);
+  const offRoute = photos.filter((p) => p.off || p.i == null);
+  const mapPhotos = tr && tr.hasGps ? onRoute.map((p, k) => ({ id: p.id, i: p.i as number, url: p.url, label: 'Foto ' + (k + 1) + ', ' + photoWhere(tr, p) })) : [];
+  const addFiles = async (files: FileList | null) => {
+    const list = files ? Array.from(files) : []; if (!list.length) return;
+    setBusy('Encaixando ' + list.length + (list.length > 1 ? ' fotos' : ' foto') + '…');
+    try { toast(photoSummary(await addPhotos(w.id, list, tr))); } finally { setBusy(null); }
+  };
+  const openPhoto = photoOpen ? photos.find((p) => p.id === photoOpen) || null : null;
+  const popPhoto = pop ? photos.find((p) => p.id === pop) || null : null;
 
   // ---------------- números do topo da gaveta ----------------
   const kmNow = cursor != null && tr && tr.dist[cursor] != null ? (tr.dist[cursor]! / 1000) : null;
@@ -138,8 +176,8 @@ export function Treino({ id }: { id: string }) {
   if (loading) mapArea = <div className="trackmap" aria-busy="true" />;
   else if (tr && tr.hasGps && col) {
     mapArea = mode === 'ruas'
-      ? <Suspense fallback={<div className="trackmap" aria-busy="true" />}><RuasMap tr={tr} band={col.band} bandKey={color} cursor={cursor} onPick={pickIdx} onFail={(why) => { ruasFailed = true; setMode('trajeto'); toast('Sem o mapa de ruas agora (' + why + '): mostrando só o trajeto.'); }} /></Suspense>
-      : <TrackSvg tr={tr} band={col.band} cursor={cursor} onPick={pickIdx} />;
+      ? <Suspense fallback={<div className="trackmap" aria-busy="true" />}><RuasMap tr={tr} band={col.band} bandKey={color} cursor={cursor} onPick={pickIdx} photos={mapPhotos} onPhoto={setPhotoOpen} onFail={(why) => { ruasFailed = true; setMode('trajeto'); toast('Sem o mapa de ruas agora (' + why + '): mostrando só o trajeto.'); }} /></Suspense>
+      : <TrackSvg tr={tr} band={col.band} cursor={cursor} onPick={pickIdx} photos={mapPhotos} onPhoto={setPhotoOpen} />;
   } else if (noGps) {
     mapArea = (
       <div className="trackmap tv-empty">
@@ -176,18 +214,40 @@ export function Treino({ id }: { id: string }) {
     <div className="tv-top">
       <a className="iconbtn" href={href('treinos')} aria-label="Voltar aos treinos"><IconChevronLeft size={24} stroke={1.75} /></a>
       <div className="stack grow" style={{ gap: 0, minWidth: 0 }}><h1 className="tv-title">{workoutTitle(w)}</h1><span className="apoio muted" style={{ fontSize: 11, lineHeight: '14px' }}>{sub}</span></div>
+      <button type="button" className="iconbtn priv" aria-label={'Privacidade deste treino: ' + privacyLabel(priv)} aria-haspopup="dialog" onClick={() => setPrivOpen(true)}><PrivacyIcon p={priv} size={22} /></button>
       <button type="button" className="iconbtn" aria-label="Mais opções do treino" aria-haspopup="dialog" onClick={() => setMenu(true)}><IconDotsVertical size={22} stroke={1.75} /></button>
     </div>
+  );
+  const share = <a className="btn-primary tv-share" href={href('compartilhar', w.id)}><IconShare size={20} stroke={1.75} aria-hidden="true" />Compartilhar</a>;
+  const fotos = (
+    <Card className="tv-fotos">
+      <div className="row between" style={{ alignItems: 'flex-start' }}>
+        <div className="stack" style={{ gap: 2 }}><h2 className="lead">Fotos do percurso</h2><p className="apoio muted">{tr ? 'Encaixadas no mapa pelo horário' : 'Sem trajeto salvo: as fotos ficam em Fora do percurso'}</p></div>
+        <button type="button" className="btn" style={{ minHeight: 40 }} onClick={() => photoRef.current?.click()} disabled={!!busy}><IconPhotoPlus size={18} stroke={1.75} aria-hidden="true" />Adicionar</button>
+      </div>
+      {onRoute.length ? <div className="photos-row">{onRoute.map((p, k) => (
+        <figure key={p.id} className="photo-fig"><button type="button" onClick={() => setPhotoOpen(p.id)} aria-label={'Abrir a foto ' + (k + 1) + ', ' + photoWhere(tr, p)}><img src={p.url} alt="" /></button><figcaption>{photoWhere(tr, p)}</figcaption></figure>))}</div> : null}
+      {offRoute.length ? (<>
+        <h3 className="cap" style={{ marginTop: 4 }}>Fora do percurso</h3>
+        <div className="photos-row">{offRoute.map((p, k) => (
+          <figure key={p.id} className="photo-fig"><button type="button" onClick={() => setPhotoOpen(p.id)} aria-label={'Abrir a foto ' + (k + 1) + ' fora do percurso'}><img src={p.url} alt="" /></button><figcaption>{p.taken ? p.taken.slice(11, 16) : 'sem horário'}</figcaption></figure>))}</div>
+        <p className="hint">Tiradas a mais de 10 min do treino ou sem horário. Abra a foto para posicioná-la no trajeto.</p>
+      </>) : null}
+      {!photos.length ? <p className="apoio muted">Nenhuma foto. O app encaixa cada uma no ponto do trajeto pelo horário em que foi tirada.</p> : null}
+    </Card>
   );
 
   // conteúdo da gaveta / painel
   const panel = (<>
+    <div className="tv-actions only-desk">{share}<button type="button" className="iconbtn bordered" aria-label={'Privacidade deste treino: ' + privacyLabel(priv)} onClick={() => setPrivOpen(true)}><PrivacyIcon p={priv} /></button></div>
     {legend}
     {replay}
     {nums}
     {deriva}
     {tr && tr.hasGps ? chart : null}
+    <div className="only-mob tv-share-mob">{share}</div>
     {B.splits}
+    {fotos}
     <div className="tv-blocks">{B.hero}{B.motor}{B.resist}{B.mec}{B.carga}{B.hidr}{B.percep}{B.cond}{B.quality}</div>
   </>);
 
@@ -206,10 +266,12 @@ export function Treino({ id }: { id: string }) {
   return (
     <div className={'tv snap-' + snap}>
       <input ref={fileRef} type="file" accept=".fit,.FIT,application/octet-stream" className="sr-only" id="reimportFile" onChange={(e) => { reimport(e.target.files && e.target.files[0]); e.target.value = ''; }} />
+      <input ref={photoRef} type="file" accept="image/*" multiple className="sr-only" id="photoFiles" tabIndex={-1} aria-hidden="true" onChange={(e) => { addFiles(e.target.files); e.target.value = ''; }} />
       <div className="tv-map">
         {mapArea}
         {top}
         {controls}
+        {popPhoto ? <div className="photo-pop" aria-hidden="true"><img src={popPhoto.url} alt="" /><span>{photoWhere(tr, popPhoto)}</span></div> : null}
         <div className="tv-replaybar only-desk">{legend}{replay}</div>
       </div>
       <aside className="tv-panel" ref={drawer} aria-label="Detalhes do treino">
@@ -226,6 +288,25 @@ export function Treino({ id }: { id: string }) {
           <button type="button" className="btn quiet" onClick={() => fileRef.current?.click()} disabled={!!busy}><IconFileUpload {...IC} aria-hidden="true" />{busy || 'Reimportar .FIT'}</button>
           <p className="hint">Reimportar acrescenta o trajeto (mapa e replay) de um treino antigo. RPE, notas, análises e números não mudam.</p>
           <button type="button" className="btn danger" onClick={() => { if (confirm('Excluir este treino?')) { deleteWorkout(w.id); setMenu(false); go('treinos'); } }}><IconTrash {...IC} aria-hidden="true" />Excluir</button>
+        </Sheet>
+      ) : null}
+      {privOpen ? <PrivacySheet value={priv} onClose={() => setPrivOpen(false)} onSave={(p) => setWorkoutPrivacy(w.id, p)} /> : null}
+      {openPhoto && !placing ? (
+        <Sheet title={'Foto ' + photoWhere(tr, openPhoto)} onClose={() => setPhotoOpen(null)}>
+          <img className="photo-big" src={openPhoto.url} alt={'Foto do treino, ' + photoWhere(tr, openPhoto)} />
+          {openPhoto.taken ? <p className="apoio muted">Tirada às {openPhoto.taken.slice(11, 16)} de {openPhoto.taken.slice(8, 10)}/{openPhoto.taken.slice(5, 7)}{openPhoto.manual ? ' · posicionada à mão' : ''}</p> : <p className="apoio muted">Sem horário na foto{openPhoto.manual ? ' · posicionada à mão' : ''}</p>}
+          {tr ? <button type="button" className="btn" onClick={() => setPlacing({ p: openPhoto, i: openPhoto.i != null ? openPhoto.i : 0 })}><IconMapPin {...IC} aria-hidden="true" />{openPhoto.off ? 'Posicionar no trajeto' : 'Mudar de lugar'}</button> : null}
+          {!openPhoto.off ? <button type="button" className="btn quiet" onClick={() => { moveToOffRoute(openPhoto); setPhotoOpen(null); }}>Mover para Fora do percurso</button> : null}
+          <button type="button" className="btn danger" onClick={() => { if (confirm('Remover esta foto do treino?')) { delPhoto(openPhoto); setPhotoOpen(null); } }}><IconTrash {...IC} aria-hidden="true" />Remover foto</button>
+        </Sheet>
+      ) : null}
+      {placing && tr ? (
+        <Sheet title="Posicionar a foto" onClose={() => setPlacing(null)}>
+          <img className="photo-big" style={{ maxHeight: 180 }} src={placing.p.url} alt="" />
+          <label htmlFor="ph-pos" className="lab">Onde foi tirada: <b className="tn">{tr.dist[placing.i] != null ? 'km ' + ((tr.dist[placing.i] as number) / 1000).toFixed(2).replace('.', ',') : ''} · {E.hms(tr.t[placing.i])}</b></label>
+          <input id="ph-pos" type="range" min={0} max={tr.t.length - 1} step={1} value={placing.i} onChange={(e) => { const i = +e.target.value; setPlacing({ ...placing, i }); setT(tr.t[i]); }} aria-valuetext={(tr.dist[placing.i] != null ? 'km ' + ((tr.dist[placing.i] as number) / 1000).toFixed(1).replace('.', ',') + ', ' : '') + E.hms(tr.t[placing.i])} />
+          <p className="hint">O ponto ciano no mapa acompanha. Arraste até o lugar da foto.</p>
+          <button type="button" className="btn" onClick={() => { placeManually(placing.p, tr, placing.i); setPlacing(null); setPhotoOpen(null); toast('Foto posicionada'); }}>Salvar posição</button>
         </Sheet>
       ) : null}
       {oldNoTrack ? <span className="sr-only">Reimporte o .FIT para ver o mapa; nada nas análises muda.</span> : null}

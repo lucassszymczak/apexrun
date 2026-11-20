@@ -14,13 +14,14 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
 import { GOLDEN_NOW, GOLDEN_TZ } from '../analise/golden/env.mjs';
+import { withExif } from '../tests/helpers/exif.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const require = createRequire(resolve(root, 'package.json'));
 const { chromium } = require('playwright');
 const payload = readFileSync(resolve(root, 'analise/golden/sintetico.state.json'), 'utf8');
 const P = JSON.parse(payload);
-const ROUTES = ['hoje', 'coach', 'treinos', 'treino/' + P.workouts[3].id, 'treino/synBike1', 'editar/' + P.workouts[3].id, 'importar', 'progresso',
+const ROUTES = ['hoje', 'coach', 'treinos', 'treino/' + P.workouts[3].id, 'treino/synBike1', 'compartilhar/' + P.workouts[3].id, 'editar/' + P.workouts[3].id, 'importar', 'progresso',
   'progresso/motor', 'progresso/resist', 'progresso/mec', 'progresso/carga', 'progresso/hidr', 'progresso/recup',
   'mais', 'mais/maratona', 'mais/relatorio', 'mais/recuperacao', 'mais/forca', 'mais/livro', 'mais/config'];
 
@@ -116,6 +117,8 @@ try {
     enc2.onMesg(Profile.MesgNum.RECORD, { timestamp: new Date(st2.getTime() + i * 1000), distance: 2.86 * i, enhancedSpeed: 2.6 + 0.6 * Math.sin(a * 3), heartRate: Math.round(135 + 30 * Math.sin(a * 2) ** 2), enhancedAltitude: 1100 + 25 * Math.sin(a), cadence: 86, positionLat: Math.round(lat * SEMI), positionLong: Math.round(lon * SEMI) });
   }
   enc2.onMesg(Profile.MesgNum.SESSION, { timestamp: new Date(st2.getTime() + N2 * 1000), startTime: st2, sport: 'running', totalDistance: 2.86 * N2, totalTimerTime: N2, totalElapsedTime: N2, avgHeartRate: 150, maxHeartRate: 166 });
+  // fuso do treino: relógio em −3 h (local_timestamp − timestamp), como num .FIT de verdade
+  enc2.onMesg(Profile.MesgNum.ACTIVITY, { timestamp: new Date(st2.getTime() + N2 * 1000), localTimestamp: (st2.getTime() / 1000 + N2) - 631065600 - 10800, numSessions: 1, type: 'manual', event: 'activity', eventType: 'stop', totalTimerTime: N2 });
   const gpsFit = Buffer.from(enc2.close());
   await page.goto(`http://localhost:${PORT}/analise/#/importar`);
   await page.setInputFiles('#fitFile', { name: 'circuito.fit', mimeType: 'application/octet-stream', buffer: gpsFit });
@@ -182,6 +185,94 @@ try {
   const wAfter = await page.evaluate((id) => JSON.stringify(JSON.parse(localStorage.getItem('apex.analise.v1')).workouts.find((w) => w.id === id)), gpsId);
   ok('reimportar o .FIT certo traz o mapa de volta', true);
   ok('reimportar não muda nada no treino (byte a byte)', wBefore === wAfter);
+
+  console.log('\n== fotos encaixadas pelo horário (critério 8) ==');
+  // 3 fotos geradas aqui (1200×900, sem dado pessoal) com EXIF: 06:10:00 e 06:25:30 (dentro
+  // do treino, que começou 06:00 no horário do relógio) e 08:00 (fora: 1h25 depois do fim)
+  const jpg = Buffer.from(await page.evaluate(() => { const c = document.createElement('canvas'); c.width = 1200; c.height = 900; const g = c.getContext('2d'); g.fillStyle = '#1f5f87'; g.fillRect(0, 0, 1200, 900); g.fillStyle = '#f2a65a'; g.fillRect(0, 0, 1200, 400); return c.toDataURL('image/jpeg', 0.8).split(',')[1]; }), 'base64');
+  const shots = [['foto-a.jpg', '2026:11:17 06:10:00', 600], ['foto-b.jpg', '2026:11:17 06:25:30', 1530], ['foto-fora.jpg', '2026:11:17 08:00:00', null]];
+  await page.setInputFiles('#photoFiles', shots.map(([name, dt]) => ({ name, mimeType: 'image/jpeg', buffer: withExif(jpg, dt) })));
+  const readPhotos = () => page.evaluate((id) => new Promise((res) => { const rq = indexedDB.open('apex-performance'); rq.onsuccess = () => { const g = rq.result.transaction('photos').objectStore('photos').index('wid').getAll(id); g.onsuccess = () => res(g.result.map((p) => ({ name: p.name, i: p.i, t: p.t, off: p.off, w: p.w, h: p.h, type: p.blob.type, size: p.blob.size }))); }; }), gpsId);
+  let ph = [];
+  for (let k = 0; k < 60 && ph.length < 3; k++) { await page.waitForTimeout(250); ph = await readPhotos(); }
+  for (const [name, , t] of shots) {
+    const p = ph.find((x) => x.name === name);
+    if (t == null) ok('foto fora do horário vai para "Fora do percurso"', p && p.off === true, p ? 'off=' + p.off : 'ausente');
+    else ok('critério 8 · ' + name + ' cai no ponto certo (erro ≤ 1 amostra)', p && !p.off && Math.abs(p.i - t) <= 1, p ? 'ponto ' + p.i + ' (esperado ' + t + ')' : 'ausente');
+  }
+  ok('só a miniatura é guardada (≤ 600 px, WebP)', ph.every((p) => Math.max(p.w, p.h) <= 600 && p.type === 'image/webp'), ph.map((p) => p.w + '×' + p.h + ' ' + p.type + ' ' + Math.round(p.size / 1024) + ' KB').join(' · '));
+  await page.waitForSelector('.trackmap > svg g[role="img"] image');
+  await page.waitForSelector('.tv-fotos h3');
+  ok('as 2 fotos aparecem no mapa, no ponto delas', await page.locator('.trackmap > svg g[role="img"] image').count() === 2);
+  ok('"Fora do percurso" lista a foto fora do horário', await page.locator('.tv-fotos h3', { hasText: 'Fora do percurso' }).count() === 1);
+  // replay: a foto "salta" quando o ponto passa por ela
+  await page.locator('.tv-panel input[type="range"]').fill('0');
+  await page.getByRole('button', { name: 'Reproduzir o trajeto' }).first().click();
+  const popped = await page.waitForSelector('.photo-pop', { timeout: 12000 }).then(() => true).catch(() => false);
+  ok('no replay, a foto salta quando o ponto passa por ela', popped);
+  await page.waitForFunction(() => !document.querySelector('.photo-pop') || true);
+  // posicionar à mão a foto de fora
+  await page.locator('.tv-fotos button[aria-label*="fora do percurso"]').click();
+  await page.getByRole('button', { name: 'Posicionar no trajeto' }).click();
+  await page.locator('#ph-pos').fill('1000');
+  await page.getByRole('button', { name: 'Salvar posição' }).click();
+  await page.waitForFunction(() => document.querySelectorAll('.trackmap > svg g[role="img"] image').length === 3, null, { timeout: 5000 }).catch(() => {});
+  const fora = (await readPhotos()).find((x) => x.name === 'foto-fora.jpg');
+  ok('"Fora do percurso": dá para posicionar à mão', fora && !fora.off && fora.i === 1000, fora ? 'ponto ' + fora.i : '');
+
+  console.log('\n== privacidade e compartilhar (critérios 9 e 10) ==');
+  const shield = page.locator('.tv-top button.priv');
+  ok('escudo de privacidade no topo do Treino (vem do padrão)', /Oculta início e fim \(500 m\)/.test(await shield.getAttribute('aria-label')), await shield.getAttribute('aria-label'));
+  await page.locator('a.tv-share:visible').click();
+  await page.waitForSelector('canvas[data-ready]', { timeout: 15000 });
+  ok('Compartilhar tem uma única ação magenta', await page.locator('.btn-primary:visible').count() === 1);
+  const cardCheck = () => page.evaluate(async (id) => {
+    const T = await import('/analise/app/track.ts'); const D = await import('/analise/app/db.ts');
+    const tr = await D.getTrack(id); const c = window.__apexCard;
+    const g = tr.lat.map((x, i) => (x != null ? i : -1)).filter((i) => i >= 0), s = g[0], e = g[g.length - 1];
+    const dmin = Math.min(...c.idx.map((i) => Math.min(T.haversine(tr.lat[i], tr.lon[i], tr.lat[s], tr.lon[s]), T.haversine(tr.lat[i], tr.lon[i], tr.lat[e], tr.lon[e]))));
+    return { W: c.W, H: c.H, n: c.idx.length, dmin: Math.round(dmin) };
+  }, gpsId);
+  const pick = async (name) => { await page.getByRole('button', { name, exact: true }).click(); await page.waitForTimeout(500); };
+  await pick('Mapa');
+  let cc = await cardCheck();
+  ok('critério 9 · Stories/Mapa: nenhum ponto desenhado a menos de 500 m da largada/chegada', cc.n > 50 && cc.dmin >= 500, cc.n + ' pontos · mais perto: ' + cc.dmin + ' m');
+  ok('critério 10 · card de Stories em 1080×1920', cc.W === 1080 && cc.H === 1920, cc.W + '×' + cc.H);
+  await pick('Foto');
+  cc = await cardCheck();
+  ok('critério 9 · modelo Foto também respeita os 500 m', cc.n > 50 && cc.dmin >= 500, cc.dmin + ' m');
+  await pick('Feed 4:5');
+  cc = await cardCheck();
+  ok('critério 10 · card de Feed em 1080×1350', cc.W === 1080 && cc.H === 1350, cc.W + '×' + cc.H);
+  // menu nativo: simula um aparelho com navigator.share de arquivos (como o iPhone)
+  await page.evaluate(() => { window.__shared = null; navigator.canShare = (d) => !!(d && d.files); navigator.share = async (d) => { const f = d.files[0]; const bm = await createImageBitmap(f); window.__shared = { name: f.name, type: f.type, w: bm.width, h: bm.height }; }; });
+  await page.getByRole('button', { name: 'Compartilhar imagem' }).click();
+  await page.waitForFunction(() => window.__shared, null, { timeout: 10000 });
+  const sh = await page.evaluate(() => window.__shared);
+  ok('critério 10 · com suporte, abre o menu nativo com o PNG', sh.type === 'image/png' && sh.w === 1080 && sh.h === 1350, sh.name + ' · ' + sh.w + '×' + sh.h);
+  // sem suporte: baixa o arquivo
+  await page.evaluate(() => { navigator.canShare = undefined; navigator.share = undefined; });
+  const [dl] = await Promise.all([page.waitForEvent('download', { timeout: 10000 }), page.getByRole('button', { name: 'Compartilhar imagem' }).click()]);
+  ok('critério 10 · sem suporte, o arquivo é baixado', /\.png$/.test(dl.suggestedFilename()), dl.suggestedFilename());
+  const [dl2] = await Promise.all([page.waitForEvent('download', { timeout: 10000 }), page.getByRole('button', { name: 'Salvar' }).click()]);
+  ok('"Salvar" baixa o PNG', /\.png$/.test(dl2.suggestedFilename()));
+  // desligar "Ocultar início e fim" mostra o trajeto inteiro (escolha do dono para este card)
+  await pick('Mapa');
+  await page.getByRole('switch').uncheck(); await page.waitForTimeout(300);
+  cc = await cardCheck();
+  ok('sem ocultar, o card mostra o trajeto inteiro', cc.dmin < 50, 'mais perto: ' + cc.dmin + ' m');
+  // privacidade "Sem mapa" no treino → Mapa indisponível e o card sai sem trajeto
+  await page.goto(`http://localhost:${PORT}/analise/#/treino/${gpsId}`);
+  await page.locator('.tv-top button.priv').click();
+  await page.getByRole('button', { name: 'Sem mapa', exact: true }).click();
+  await page.getByRole('button', { name: 'Salvar privacidade' }).click();
+  const pv = await page.evaluate((id) => JSON.parse(localStorage.getItem('apex.analise.v1')).workouts.find((w) => w.id === id).privacy, gpsId);
+  ok('privacidade salva no treino (campo novo, opcional)', pv && pv.mapa === 'nenhum' && pv.raio === 500, JSON.stringify(pv));
+  await page.goto(`http://localhost:${PORT}/analise/#/compartilhar/${gpsId}`);
+  await page.waitForSelector('canvas[data-ready]');
+  ok('"Sem mapa": o modelo Mapa fica indisponível', await page.getByRole('button', { name: 'Mapa', exact: true }).isDisabled());
+  cc = await cardCheck();
+  ok('"Sem mapa": nenhum ponto do trajeto no card', cc.n === 0);
 
   console.log('\n== desempenho do mapa ==');
   // trajetos do cenário sintético → IndexedDB; mede o longão de 2h (~20 km, ~7200 pontos)

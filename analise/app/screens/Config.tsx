@@ -11,6 +11,8 @@ import { Card, CardH, Seg, IC } from '../ui';
 import { themePref, setThemePref, type ThemePref } from '../theme';
 import { listBackups, backupFileName, type BackupRow } from '../backup';
 import { dayMonYear } from '../fmt';
+import { defaultPrivacy, privacyLabel, type Privacy } from '../privacy';
+import { PrivacyFields, PrivacyIcon } from './Privacidade';
 
 function download(name: string, text: string) {
   const blob = new Blob([text], { type: 'application/json' });
@@ -156,6 +158,19 @@ function Mapa() {
   );
 }
 
+// ---------------- privacidade padrão (Etapa 3; campo opcional e aditivo no atleta) ----------------
+function PrivacidadePadrao() {
+  const [p, setP] = useState<Privacy>(() => defaultPrivacy(getState().athlete));
+  const save = (v: Privacy) => { setP(v); const A = getState().athlete; A.privacidadePadrao = v; A.updatedAt = new Date().toISOString(); commit(); toast('Privacidade padrão salva'); };
+  return (
+    <Card>
+      <CardH icon={<PrivacyIcon p={p} />} title="Privacidade padrão" />
+      <p className="apoio muted">Vale para os treinos novos e para os antigos que você não ajustou. Cada treino pode mudar no escudo. Agora: {privacyLabel(p)}.</p>
+      <PrivacyFields value={p} onChange={save} />
+    </Card>
+  );
+}
+
 // ---------------- aparência ----------------
 function Aparencia() {
   const [p, setP] = useState<ThemePref>(themePref());
@@ -287,7 +302,7 @@ export function Config() {
     <PageHead title="Configurações" back={href('mais')} right={null} />
     <div className="cols">
       <div className="col"><Atleta /><ZonasBike /></div>
-      <div className="col"><NovoCiclo /><Mapa /><Aparencia /><Sync /><Dados /></div>
+      <div className="col"><NovoCiclo /><Mapa /><PrivacidadePadrao /><Aparencia /><Sync /><Dados /></div>
     </div>
   </>);
 }

@@ -304,3 +304,49 @@ pre.formula { margin: 0; white-space: pre-wrap; font: 400 13px/18px var(--font-b
 .trackmap.ruas .maplibregl-ctrl-attrib a { color: var(--texto-2); }
 .trackmap.ruas .maplibregl-ctrl-attrib-button { filter: invert(var(--attrib-invert, 1)); }
 [data-theme="light"] .trackmap.ruas { --attrib-invert: 0; }
+
+/* ======================= COMPARTILHAR, FOTOS e PRIVACIDADE (Etapa 3) ======================= */
+.app.focus .bottomnav { display: none; }
+@media (max-width: 1023px) { .app.focus .main { padding-bottom: 24px; } }
+.share { display: flex; flex-direction: column; gap: 16px; }
+.share-prev { display: flex; justify-content: center; align-items: center; min-height: 400px; }
+.share-prev canvas { border-radius: var(--radius-lg); border: 1px solid var(--linha); background: var(--noite); display: block; }
+.share-opts { display: flex; flex-direction: column; gap: 14px; }
+.share-opts .seg { align-self: flex-start; }
+.share-models { display: flex; gap: 8px; }
+.share-models button { flex: 1; min-height: 44px; border: 1px solid var(--linha); border-radius: var(--radius-sm); background: var(--superficie); color: var(--texto); font-size: 13px; cursor: pointer; }
+.share-models button[aria-pressed="true"] { border-color: var(--ciano); color: var(--ciano); }
+.share-models button:disabled, .chip:disabled { opacity: 0.45; cursor: not-allowed; }
+.share-thumb { width: 56px; height: 56px; padding: 0; border-radius: var(--radius-sm); border: 2px solid transparent; background: var(--superficie-2); color: var(--texto-2); overflow: hidden; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; }
+.share-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.share-thumb[aria-pressed="true"] { border-color: var(--ciano); }
+.share-priv { padding: 10px 14px; }
+.share-actions { display: grid; grid-template-columns: minmax(0, 1fr) 120px; gap: 8px; }
+.share-actions .btn { min-height: 48px; border-radius: var(--radius-md); font-size: 15px; }
+@media (min-width: 1024px) {
+  .share { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 32px; align-items: start; }
+  .share-prev { min-height: 0; position: sticky; top: 24px; }
+  .share-actions { max-width: 520px; margin-left: auto; width: 100%; }
+}
+/* fotos */
+.photos-row { display: flex; gap: 10px; flex-wrap: wrap; }
+.photo-fig { margin: 0; display: flex; flex-direction: column; gap: 4px; width: 72px; }
+.photo-fig button { width: 72px; height: 72px; padding: 0; border: 0; border-radius: var(--radius-sm); overflow: hidden; background: var(--superficie-2); cursor: pointer; }
+.photo-fig img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.photo-fig figcaption { font-size: 11px; line-height: 14px; color: var(--texto-2); font-variant-numeric: tabular-nums; }
+.photo-big { width: 100%; max-height: 60vh; object-fit: contain; border-radius: var(--radius-md); background: var(--superficie-2); }
+.photo-pop { position: absolute; z-index: 6; left: 50%; top: 84px; transform: translateX(-50%); width: 168px; padding: 4px; border-radius: var(--radius-md); background: var(--painel-mapa); border: 1px solid var(--linha); pointer-events: none; }
+.photo-pop img { width: 100%; border-radius: var(--radius-sm); display: block; max-height: 168px; object-fit: cover; }
+.photo-pop span { display: block; padding: 4px 4px 0; font-size: 11px; line-height: 14px; color: var(--texto-2); }
+@media (prefers-reduced-motion: no-preference) { .photo-pop { animation: photo-pop 220ms ease-out; } }
+@keyframes photo-pop { from { transform: translateX(-50%) scale(0.6); opacity: 0; } to { transform: translateX(-50%) scale(1); opacity: 1; } }
+.map-photo { width: 40px; height: 40px; padding: 0; border-radius: 9px; border: 2px solid var(--texto); overflow: hidden; background: var(--superficie-2); cursor: pointer; display: block; }
+.map-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.priv-row { display: flex; align-items: center; gap: 12px; }
+.priv-row > svg { color: var(--ciano); flex-shrink: 0; }
+.iconbtn.priv { color: var(--ciano); }
+.iconbtn.bordered { border: 1px solid var(--linha); border-radius: var(--radius-md); color: var(--ciano); flex-shrink: 0; }
+.tv-share { width: 100%; }
+@media (min-width: 1024px) { .tv-actions.only-desk { display: flex !important; gap: 8px; } .tv-actions .tv-share { flex: 1; } }
+.tv-fotos .btn { flex-shrink: 0; }
+.card.priv-row { flex-direction: row; align-items: center; }

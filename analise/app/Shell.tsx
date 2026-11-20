@@ -14,7 +14,7 @@ export const MAIS = [
 ] as const;
 
 function section(name: string): string {
-  if (name === 'treino' || name === 'treinos' || name === 'editar') return 'treinos';
+  if (name === 'treino' || name === 'treinos' || name === 'editar' || name === 'compartilhar') return 'treinos';
   if (name === 'progresso') return 'progresso';
   if (name === 'mais' || name === 'coach') return 'mais';
   if (name === 'importar' || name === 'novo') return 'importar';
@@ -28,7 +28,7 @@ export function Shell({ children }: { children: ReactNode }) {
   const curMais = (k: string) => (r.name === 'mais' && r.arg === k ? 'page' : undefined);
   const toasts = useToasts();
   return (
-    <div className={'app' + (r.name === 'treino' ? ' immersive' : '')}>
+    <div className={'app' + (r.name === 'treino' ? ' immersive' : r.name === 'compartilhar' ? ' focus' : '')}>
       <a href="#conteudo" className="sr-only">Pular para o conteúdo</a>
       <nav className="rail" aria-label="Navegação principal">
         <a className="logo" href={href('hoje')}><Simbolo size={30} /><span>Apex <em>Performance</em></span></a>

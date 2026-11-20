@@ -9,7 +9,7 @@ import { describeRoute } from './describe';
 
 const R = 6371000;
 
-export function TrackSvg({ tr, band, cursor, onPick, photos }: { tr: Track; band: (i: number) => number | null; cursor: number | null; onPick: (i: number) => void; photos?: { i: number; id: string }[] }) {
+export function TrackSvg({ tr, band, cursor, onPick, photos, onPhoto }: { tr: Track; band: (i: number) => number | null; cursor: number | null; onPick: (i: number) => void; photos?: { i: number; id: string; url: string; label: string }[]; onPhoto?: (id: string) => void }) {
   const box = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState({ w: 390, h: 400 });
   const [zoom, setZoom] = useState(1);
@@ -62,6 +62,8 @@ export function TrackSvg({ tr, band, cursor, onPick, photos }: { tr: Track; band
     return [vb[0] + ((e.clientX - r.left) / r.width) * vb[2], vb[1] + ((e.clientY - r.top) / r.height) * vb[3]];
   };
   const pick = (wx: number, wy: number) => {
+    // tocar numa foto abre a foto
+    for (const p of photos || []) { const [x, y] = proj.P(nearestGps(tr, p.i)); if (Math.abs(x - wx) * pxPerM <= 22 && Math.abs(y - wy) * pxPerM <= 22) { if (onPhoto) onPhoto(p.id); return; } }
     let best = -1, bd = Infinity;
     for (let i = 0; i < tr.lat.length; i++) { if (tr.lat[i] == null) continue; const [x, y] = proj.P(i); const d = (x - wx) ** 2 + (y - wy) ** 2; if (d < bd) { bd = d; best = i; } }
     if (best >= 0 && Math.sqrt(bd) * pxPerM < 40) onPick(best);
@@ -83,7 +85,12 @@ export function TrackSvg({ tr, band, cursor, onPick, photos }: { tr: Track; band
             <circle cx={x} cy={y} r={10 * unit} fill="var(--noite)" stroke="var(--texto)" strokeWidth={1.5 * unit} />
             <text x={x} y={y + 3.6 * unit} textAnchor="middle" style={{ font: `500 ${10 * unit}px var(--font-brand)`, fill: 'var(--texto)' }}>{m.km}</text>
           </g>); })}
-        {(photos || []).map((p) => { const [x, y] = proj.P(nearestGps(tr, p.i)); return <rect key={p.id} x={x - 9 * unit} y={y - 9 * unit} width={18 * unit} height={18 * unit} rx={4 * unit} fill="var(--texto)" stroke="var(--noite)" strokeWidth={2 * unit} />; })}
+        {(photos || []).map((p) => { const [x, y] = proj.P(nearestGps(tr, p.i)); const s = 40 * unit; return (
+          <g key={p.id} aria-label={p.label} role="img">
+            <clipPath id={'ph-' + p.id}><rect x={x - s / 2} y={y - s / 2} width={s} height={s} rx={7 * unit} /></clipPath>
+            <rect x={x - s / 2 - 2 * unit} y={y - s / 2 - 2 * unit} width={s + 4 * unit} height={s + 4 * unit} rx={9 * unit} fill="var(--texto)" />
+            <image href={p.url} x={x - s / 2} y={y - s / 2} width={s} height={s} preserveAspectRatio="xMidYMid slice" clipPath={'url(#ph-' + p.id + ')'} />
+          </g>); })}
         {(() => { const [x, y] = proj.P(last); return <g aria-hidden="true"><circle cx={x} cy={y} r={8 * unit} fill="var(--noite)" stroke="var(--texto)" strokeWidth={3 * unit} /><circle cx={x} cy={y} r={3 * unit} fill="var(--texto)" /></g>; })()}
         {(() => { const [x, y] = proj.P(first); return <circle cx={x} cy={y} r={7 * unit} fill="var(--texto)" stroke="var(--noite)" strokeWidth={2.5 * unit} aria-hidden="true" />; })()}
         {cur ? <circle cx={cur[0]} cy={cur[1]} r={8 * unit} fill="var(--ciano)" stroke="var(--noite)" strokeWidth={3 * unit} aria-hidden="true" /> : null}

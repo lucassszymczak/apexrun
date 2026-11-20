@@ -16,6 +16,7 @@ function Screen() {
     case 'coach': return S.Coach ? <S.Coach /> : <Stub title="Leitura do Coach" />;
     case 'treinos': return S.Treinos ? <S.Treinos /> : <Stub title="Treinos" />;
     case 'treino': return S.Treino ? <S.Treino id={r.arg || ''} /> : <Stub title="Treino" />;
+    case 'compartilhar': return <S.Compartilhar id={r.arg || ''} />;
     case 'importar': return S.Importar ? <S.Importar /> : <Stub title="Importar treino" />;
     case 'editar': return S.TreinoForm ? <S.TreinoForm id={r.arg} /> : <Stub title="Editar treino" />;
     case 'progresso': return S.Progresso ? <S.Progresso sys={r.arg} /> : <Stub title="Progresso" />;

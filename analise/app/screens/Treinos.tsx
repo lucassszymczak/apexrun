@@ -7,6 +7,8 @@ import { useApex } from '../store';
 import { href } from '../route';
 import { PageHead } from '../Shell';
 import { Card, Empty, IC } from '../ui';
+import { privacyOf, privacyLabel } from '../privacy';
+import { PrivacyIcon } from './Privacidade';
 import { dec, signed, km, dur, pace, dayMon, monthYear, workoutTitle, noEmoji, typeName } from '../fmt';
 import { MiniRoute } from './parts';
 
@@ -112,13 +114,14 @@ export function Treinos() {
                 const nums = threeNumbers(w, a);
                 const dc = E.isBike(w) ? null : E.computeDecoupling(w);
                 const ef = E.isBike(w) ? null : E.computeEF(w), tr = E.computeTrimp(w, a);
+                const pv = privacyOf(w, a);
                 return (
-                  <a key={w.id} className="item-row" href={href('treino', w.id)} aria-label={`${workoutTitle(w)}, ${dayMon(w.date)}`}>
+                  <a key={w.id} className="item-row" href={href('treino', w.id)} aria-label={`${workoutTitle(w)}, ${dayMon(w.date)}. Privacidade: ${privacyLabel(pv)}`}>
                     <MiniRoute w={w} size={56} />
                     <div className="grow stack" style={{ gap: 4 }}>
                       <div className="row between" style={{ gap: 8 }}>
                         <span className="t">{workoutTitle(w)}</span>
-                        <span className="badge neutro">{typeBadge(w)}</span>
+                        <span className="row" style={{ gap: 6, flexShrink: 0 }}><span className="faint" title={privacyLabel(pv)} style={{ display: 'inline-flex' }}><PrivacyIcon p={pv} size={18} /></span><span className="badge neutro">{typeBadge(w)}</span></span>
                       </div>
                       <span className="s">{dayMon(w.date)}{w.terrain ? ' · ' + noEmoji(w.terrain) : ''}{w.temp != null ? ' · ' + Math.round(w.temp) + ' °C' : ''}</span>
                       <span className="s tn">{dur(w.durationSec)}{ef != null ? ' · EF ' + dec(ef * 1000, 1) : ''}{dc != null ? ' · deriva ' + signed(dc, 1) + '%' : ''}{E.isBike(w) && tr != null ? ' · TRIMP ' + Math.round(tr) : ''}</span>
