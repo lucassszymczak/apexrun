@@ -48,7 +48,9 @@ O tema escuro é o padrão. Use sempre a variável CSS (`var(--magenta)`), nunca
 | `--texto-3` | #80879A | #6B7182 | Legendas e unidades (nunca sobre `--superficie-2`) |
 | `--magenta` | #E8459A | #C42A7C | Ação principal (uma por tela), aba ativa, número em destaque |
 | `--on-magenta` | #0D0F1A | #FFFFFF | Texto e ícone sobre magenta |
-| `--ciano` | #22D3EE | #0891B2 | Seleção, controles (play, segmentados), links, foco |
+| `--ciano` | #22D3EE | #0891B2 | Seleção, controles grandes e ícones (play, ponto do replay), traços, foco |
+| `--ciano-forte` | #22D3EE | #0E7490 | Controle ativo com texto pequeno: segmentado, chip, link, botão secundário |
+| `--on-ciano` | #0D0F1A | #FFFFFF | Texto e ícone sobre `--ciano-forte` |
 | `--violeta` | #5B3FD0 | #5B3FD0 | Só no pico do símbolo |
 | `--zona-1` | #A5F3FC | #0891B2 | FC Z1 |
 | `--zona-2` | #22D3EE | #4C67D6 | FC Z2 |
@@ -58,6 +60,8 @@ O tema escuro é o padrão. Use sempre a variável CSS (`var(--magenta)`), nunca
 | `--ok` | #34D399 | #047857 | Estado bom |
 | `--atencao` | #FBBF24 | #B45309 | Cautela |
 | `--alerta` | #F87171 | #B91C1C | Risco |
+
+Contrastes do tema claro: `#0E7490` sobre branco 5,4:1 e sobre `#EEF0F5` 4,7:1; branco sobre `#0E7490` 5,4:1. No escuro, `#0D0F1A` sobre `#22D3EE` 10,6:1. O `--ciano` claro (`#0891B2`) não passa de 4,5:1 com texto pequeno: por isso existe o `--ciano-forte`.
 
 `design/tokens.css` já traz tudo isso pronto, nos dois temas (`[data-theme="dark"]` e `[data-theme="light"]`).
 
@@ -96,15 +100,28 @@ O tema escuro é o padrão. Use sempre a variável CSS (`var(--magenta)`), nunca
 ## Componentes (estilo)
 
 - **Botão principal:** fundo `--magenta`, texto `--on-magenta`, altura 48 (44 no computador), raio 12, Outfit 500 16 px. **Só um por tela.**
-- **Botão secundário:** borda 1 px `--ciano` ou `--linha`, fundo transparente.
-- **Seletor segmentado** (Ruas / Só trajeto, Stories / Feed, Corrida / Bike): trilho `--superficie` com borda `--linha` e raio 999. A opção ativa fica em `--ciano` com texto `--noite`.
-- **Chip de filtro** (cor do trajeto, tipo de treino): raio 999 ou 8. Ativo = fundo `--texto` e texto `--noite`, ou borda e texto `--ciano`.
+- **Botão secundário:** borda 1 px `--ciano-forte` (texto `--ciano-forte`) ou `--linha`, fundo transparente.
+- **Seletor segmentado** (Ruas / Só trajeto, Stories / Feed, Corrida / Bike): trilho `--superficie` com borda `--linha` e raio 999. A opção ativa fica em `--ciano-forte` com texto `--on-ciano`. Quando é escolha única, é `role="radiogroup"` com `aria-checked`.
+- **Chip de filtro** (cor do trajeto, tipo de treino): raio 999 ou 8. Ativo = fundo `--texto` e texto `--noite`, ou borda e texto `--ciano-forte` sobre `--superficie-2` (inativo: borda `--linha` sobre `--superficie`). Alvo de toque de 44 px mesmo quando o desenho é menor.
 - **Card:** `--superficie`, raio 12 a 16, padding 16 a 20, sem sombra.
 - **Gaveta do Treino (celular):** 3 alturas (recolhida, média e expandida), arrastável, com puxador de 36×4 em `--linha`. No computador, vira um painel fixo de 380 a 440 px à direita.
 - **Folha do KPI:** abre ao tocar em qualquer número. Mostra nome, o que significa (1 linha), seu valor e faixa, confiança e "Ver no Livro de fórmulas".
 - **Legenda de zonas:** sempre os 5 tons + os rótulos Z1 e Z5 (ou "lento/rápido", "descida/subida"). A cor nunca aparece sozinha.
 - **Estados:** sempre ícone + palavra (`--ok`, `--atencao`, `--alerta`).
 - **Navegação:** no celular, barra inferior com Hoje, Treinos, botão central "+" (círculo magenta de 52 px), Progresso e Mais. No computador, trilho lateral de 220 a 240 px com o logo, os mesmos destinos, os itens de "Mais" listados e o botão "Importar treino".
+
+## Área segura do iPhone
+
+- `<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">`. Use `--safe-top`, `--safe-bottom`, `--safe-left` e `--safe-right` (`design/tokens.css`; valem `env(safe-area-inset-*)`). Nunca use o `env()` direto no componente.
+- **Topo das telas:** `padding-top: calc(var(--safe-top) + 12px)`. Uma faixa fixa da altura de `--safe-top` (`.app::before`) cobre o conteúdo rolado, para nada aparecer atrás do relógio.
+- **Barra inferior:** 64 px úteis + `padding-bottom: var(--safe-bottom)`.
+- **Treino:** o mapa vai até a borda. A barra do topo fica em `top: calc(var(--safe-top) + 12px)`, e a gaveta soma `--safe-bottom`.
+- **Folhas e modais:** `--safe-bottom` embaixo, e a altura máxima desconta `--safe-top`.
+- **Paisagem:** `padding-left/right` com `--safe-left` e `--safe-right`.
+- **Barra de status:**
+  - `apple-mobile-web-app-status-bar-style` = `black-translucent`: o app instalado desenha por baixo da barra, com texto branco. Por isso, no app instalado, a faixa sob a barra usa `--barra-status` (`#0D0F1A`) nos dois temas.
+  - O mapa escuro do Treino fica sem a faixa.
+  - `theme-color` tem duas metas com `media`: escuro `#0D0F1A` e claro `#F6F7FB`. O JS (`app/theme.ts`) troca as duas quando o tema é escolhido à mão.
 
 ## Acessibilidade
 

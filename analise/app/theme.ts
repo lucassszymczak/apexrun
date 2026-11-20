@@ -15,8 +15,13 @@ function resolved(p: ThemePref): 'dark' | 'light' {
 export function applyTheme(p: ThemePref = themePref()) {
   const t = resolved(p);
   document.documentElement.setAttribute('data-theme', t);
-  const meta = document.querySelector('meta[name="theme-color"]');
-  if (meta) meta.setAttribute('content', t === 'light' ? '#F6F7FB' : '#0D0F1A');
+  // barra de status/navegador: as metas com media (escuro/claro) recebem a cor do tema
+  // escolhido; no automático, cada uma volta à sua cor e o sistema decide
+  document.querySelectorAll('meta[name="theme-color"]').forEach((m) => {
+    const media = m.getAttribute('media') || '';
+    const own = /light/.test(media) ? '#F6F7FB' : '#0D0F1A';
+    m.setAttribute('content', p === 'auto' ? own : t === 'light' ? '#F6F7FB' : '#0D0F1A');
+  });
 }
 export function setThemePref(p: ThemePref) {
   try { localStorage.setItem(KEY, p); } catch { /* sem storage */ }
