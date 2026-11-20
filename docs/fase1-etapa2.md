@@ -112,3 +112,27 @@ Os 14 testes novos do trajeto (Vitest) cobrem:
 1. **Backup real** (`fixtures/privado/backup.json`) para o golden master com os seus dados.
 2. **Confirmações da Etapa 1:** escala da dor muscular (0–10) e a regra do IMP.
 3. **Testar no iPhone** com 2 ou 3 .FIT reais (corrida com GPS, pedal, esteira). Eles também servem para medir o tempo de abertura do mapa no aparelho.
+
+## Atualização (20/11) — respostas do Lucas e teste com .FIT reais
+
+**Decisões do Lucas**
+- **Dor muscular:** escala 0–10 (o app novo mostra "3 de 10"; o limiar do Coach, ≥ 3, não mudou).
+- **IMP no Foco atual:** a regra do Livro de fórmulas está certa (só sessões em clima padrão, confiança Moderada ou Alta).
+
+**3 .FIT reais**
+
+Os arquivos ficam em `fixtures/privado/`, fora do git. São 3 corridas com GPS: 14/11 (11 km), 17/11 (5,28 km) e 19/11 (6,09 km).
+- Os 3 foram importados de uma vez pelo fluxo completo, sem erro.
+- **Mapa de ruas:** traçado correto sobre as ruas de Guarapuava.
+- **Trajeto:** de 2.400 a 4.800 pontos, simplificados para 92 a 191 pontos de desenho, montados em 4 a 23 ms.
+- **Fuso:** lido do relógio (UTC−3).
+
+**Dois comportamentos do motor, que já existem no app atual. Não corrigi; preciso da sua decisão.**
+
+1. **Salvar o treino altera os splits por km.**
+   - O formulário transforma os splits em texto e lê de volta, e na volta o último split é "esticado" para fechar a distância total: 1,00 km vira 1,09 km.
+   - No treino de 19/11, isso muda o **decoupling de 8,4% (o que o .FIT mostra) para 5,6% (o que fica salvo e aparece no app)**. O GAP não muda.
+   - O app antigo faz exatamente o mesmo, por isso o golden master não acusa nada.
+2. **Pace-GAP@145 implausível com pouco tempo na faixa de 145 bpm.**
+   - Com 3,7 minutos em 145±3, o motor usa a regressão (R² 0,46) e devolve **18:24/km**, com confiança "Baixa".
+   - No treino de 14/11, devolve 10:04/km. O valor aparece no Foco atual com a confiança indicada.
