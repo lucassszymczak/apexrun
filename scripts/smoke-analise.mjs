@@ -298,6 +298,37 @@ try {
   await sheet.getByRole('link', { name: 'Ver no Livro de fórmulas' }).click();
   await page.waitForSelector('details[open]');
   ok('"Ver no Livro de fórmulas" abre o item certo', /livro/.test(await page.evaluate(() => location.hash)), await page.locator('details[open] summary').first().innerText());
+
+  console.log('\n== computador: teclado e movimento reduzido ==');
+  const dctx = await browser.newContext({ viewport: { width: 1440, height: 900 }, timezoneId: GOLDEN_TZ, locale: 'pt-BR', reducedMotion: 'reduce' });
+  await dctx.addInitScript((p) => { if (!sessionStorage.getItem('__k')) { localStorage.clear(); localStorage.setItem('apex.analise.v1', p); sessionStorage.setItem('__k', '1'); } }, payload);
+  const dp = await dctx.newPage();
+  await dp.route(/^(?!http:\/\/localhost)/, (r) => r.abort());
+  await dp.goto(`http://localhost:${PORT}/analise/#/hoje`); await dp.waitForSelector('.main > *');
+  await dp.evaluate(async () => { const E = await import('/analise/engine.mjs'); const S = await import('/analise/golden/synthetic.mjs'); const T = await import('/analise/app/track.ts'); const D = await import('/analise/app/db.ts'); const jobs = []; S.buildSynthetic(E, { onMessages: (id, m) => jobs.push([id, m]) }); for (const [id, m] of jobs) await D.putTrack(id, T.buildTrack(m)); });
+  await dp.reload(); await dp.goto(`http://localhost:${PORT}/analise/#/treino/syn22`);
+  await dp.waitForSelector('.trackmap > svg polyline', { timeout: 15000 });
+  ok('movimento reduzido: sem play automático (replay manual pela barra)', await dp.getByRole('button', { name: 'Reproduzir o trajeto' }).count() === 0);
+  const seen = new Set();
+  for (let k = 0; k < 60; k++) {
+    await dp.keyboard.press('Tab');
+    const d = await dp.evaluate(() => { const a = document.activeElement; const cs = getComputedStyle(a); return { l: a.getAttribute('aria-label') || a.textContent.trim().slice(0, 30), role: a.getAttribute('role'), tag: a.tagName, ring: cs.outlineStyle !== 'none' && parseFloat(cs.outlineWidth) >= 2 }; });
+    if (d.tag !== 'BODY') seen.add((d.role || d.tag) + ':' + d.l + (d.ring ? '' : ' (sem anel)'));
+  }
+  const S2 = [...seen];
+  ok('teclado alcança: voltar, privacidade, Compartilhar, barra do replay e o gráfico', ['Voltar aos treinos', 'Privacidade deste treino', 'Compartilhar', 'Posição do replay', 'slider:'].every((x) => S2.some((y) => y.includes(x))), S2.length + ' paradas');
+  ok('anel de foco visível em todas as paradas', !S2.some((x) => x.includes('(sem anel)')), S2.filter((x) => x.includes('(sem anel)')).slice(0, 3).join(' | ') || undefined);
+  const ch = dp.locator('.tv-panel svg[role="slider"]'); await ch.focus();
+  const v0 = +(await ch.getAttribute('aria-valuenow')); await dp.keyboard.press('ArrowRight'); await dp.keyboard.press('ArrowRight');
+  ok('setas movem o cursor do gráfico (e o ponto no mapa)', +(await ch.getAttribute('aria-valuenow')) > v0);
+  const multi = [];
+  for (const r of ROUTES) {
+    await dp.goto(`http://localhost:${PORT}/analise/#/${r}`); await dp.waitForSelector('.main > *', { state: 'attached' }); await dp.waitForTimeout(150);
+    const n = await dp.evaluate(() => { const mg = getComputedStyle(document.documentElement).getPropertyValue('--magenta').trim(); const toRgb = (h) => { const x = parseInt(h.slice(1), 16); return `rgb(${x >> 16}, ${(x >> 8) & 255}, ${x & 255})`; }; return [...document.querySelectorAll('a, button')].filter((el) => { const r = el.getBoundingClientRect(); return r.width > 0 && r.height > 0 && getComputedStyle(el).backgroundColor === toRgb(mg); }).length; });
+    if (n > 1) multi.push(r + ': ' + n);
+  }
+  ok('computador: no máximo uma ação magenta por tela (' + ROUTES.length + ' rotas)', !multi.length, multi.join(' | ') || undefined);
+  await dctx.close();
 } finally { await browser.close(); vite.kill(); }
 console.log(`\n=== RESULTADO: ${pass} passaram, ${fail} falharam ===`);
 process.exit(fail ? 1 : 0);

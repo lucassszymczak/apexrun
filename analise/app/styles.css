@@ -350,3 +350,8 @@ pre.formula { margin: 0; white-space: pre-wrap; font: 400 13px/18px var(--font-b
 @media (min-width: 1024px) { .tv-actions.only-desk { display: flex !important; gap: 8px; } .tv-actions .tv-share { flex: 1; } }
 .tv-fotos .btn { flex-shrink: 0; }
 .card.priv-row { flex-direction: row; align-items: center; }
+.hint a, .apoio a, p a { text-decoration: underline; text-underline-offset: 2px; }
+.iconbtn.bordered.plain { color: var(--texto); }
+/* uma só ação magenta por tela: se a tela tem a dela, o "Importar treino" do trilho vira secundário (ciano) */
+.app:has(.main .btn-primary) .rail .btn-primary { background: transparent; color: var(--ciano); border: 1px solid var(--ciano); }
+@media (min-width: 1024px) { .share-prev canvas { width: auto !important; height: 640px !important; } }

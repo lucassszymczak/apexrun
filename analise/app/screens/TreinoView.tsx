@@ -214,8 +214,8 @@ export function Treino({ id }: { id: string }) {
     <div className="tv-top">
       <a className="iconbtn" href={href('treinos')} aria-label="Voltar aos treinos"><IconChevronLeft size={24} stroke={1.75} /></a>
       <div className="stack grow" style={{ gap: 0, minWidth: 0 }}><h1 className="tv-title">{workoutTitle(w)}</h1><span className="apoio muted" style={{ fontSize: 11, lineHeight: '14px' }}>{sub}</span></div>
-      <button type="button" className="iconbtn priv" aria-label={'Privacidade deste treino: ' + privacyLabel(priv)} aria-haspopup="dialog" onClick={() => setPrivOpen(true)}><PrivacyIcon p={priv} size={22} /></button>
-      <button type="button" className="iconbtn" aria-label="Mais opções do treino" aria-haspopup="dialog" onClick={() => setMenu(true)}><IconDotsVertical size={22} stroke={1.75} /></button>
+      <button type="button" className="iconbtn priv only-mob" aria-label={'Privacidade deste treino: ' + privacyLabel(priv)} aria-haspopup="dialog" onClick={() => setPrivOpen(true)}><PrivacyIcon p={priv} size={22} /></button>
+      <button type="button" className="iconbtn only-mob" aria-label="Mais opções do treino" aria-haspopup="dialog" onClick={() => setMenu(true)}><IconDotsVertical size={22} stroke={1.75} /></button>
     </div>
   );
   const share = <a className="btn-primary tv-share" href={href('compartilhar', w.id)}><IconShare size={20} stroke={1.75} aria-hidden="true" />Compartilhar</a>;
@@ -239,7 +239,7 @@ export function Treino({ id }: { id: string }) {
 
   // conteúdo da gaveta / painel
   const panel = (<>
-    <div className="tv-actions only-desk">{share}<button type="button" className="iconbtn bordered" aria-label={'Privacidade deste treino: ' + privacyLabel(priv)} onClick={() => setPrivOpen(true)}><PrivacyIcon p={priv} /></button></div>
+    <div className="tv-actions only-desk">{share}<button type="button" className="iconbtn bordered" aria-label={'Privacidade deste treino: ' + privacyLabel(priv)} onClick={() => setPrivOpen(true)}><PrivacyIcon p={priv} /></button><button type="button" className="iconbtn bordered plain" aria-label="Mais opções do treino" aria-haspopup="dialog" onClick={() => setMenu(true)}><IconDotsVertical size={20} stroke={1.75} /></button></div>
     {legend}
     {replay}
     {nums}
@@ -265,7 +265,7 @@ export function Treino({ id }: { id: string }) {
 
   return (
     <div className={'tv snap-' + snap}>
-      <input ref={fileRef} type="file" accept=".fit,.FIT,application/octet-stream" className="sr-only" id="reimportFile" onChange={(e) => { reimport(e.target.files && e.target.files[0]); e.target.value = ''; }} />
+      <input ref={fileRef} type="file" accept=".fit,.FIT,application/octet-stream" className="sr-only" id="reimportFile" aria-label="Escolher o .FIT para reimportar" onChange={(e) => { reimport(e.target.files && e.target.files[0]); e.target.value = ''; }} />
       <input ref={photoRef} type="file" accept="image/*" multiple className="sr-only" id="photoFiles" tabIndex={-1} aria-hidden="true" onChange={(e) => { addFiles(e.target.files); e.target.value = ''; }} />
       <div className="tv-map">
         {mapArea}

@@ -135,7 +135,7 @@ export function Recuperacao() {
     <Card>
       <CardH icon={<IconUpload {...IC} />} title="Trazer do Apple Saúde" />
       <p className="apoio muted">No iPhone: app <b>Saúde</b> → foto de perfil → <b>Exportar todos os dados de saúde</b> → gera um export.zip. Descompacte e escolha o <b>export.xml</b> aqui. Extraio só FC de repouso, sono, HRV (SDNN) e VO₂máx; o resto é ignorado. Nada sai do seu aparelho.</p>
-      <input ref={fileRef} type="file" accept=".xml,text/xml,application/xml" className="sr-only" id="healthFile" onChange={(e) => { importHealth(e.target.files && e.target.files[0]); e.target.value = ''; }} />
+      <input ref={fileRef} type="file" accept=".xml,text/xml,application/xml" className="sr-only" id="healthFile" aria-label="Escolher a exportação do Apple Saúde" onChange={(e) => { importHealth(e.target.files && e.target.files[0]); e.target.value = ''; }} />
       <div className="row wrap">
         <button type="button" className="btn" onClick={() => fileRef.current?.click()} disabled={busy}><IconUpload size={18} stroke={1.75} aria-hidden="true" />{busy ? 'Lendo…' : 'Importar export.xml'}</button>
         <button type="button" className="btn danger" onClick={clearHealth}><IconTrash size={18} stroke={1.75} aria-hidden="true" />Excluir dados do Apple Saúde</button>

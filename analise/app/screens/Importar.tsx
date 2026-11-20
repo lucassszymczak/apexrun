@@ -138,7 +138,7 @@ export function Importar() {
       <IconFileUpload size={36} stroke={1.5} color="var(--ciano)" aria-hidden="true" />
       <h2 className="lead">Escolha um ou vários .FIT do relógio</h2>
       <p className="apoio muted">Distância, FC, cadência, elevação, splits, trajeto e a análise por amostra entram sozinhos.<span className="only-desk"> Você também pode arrastar os arquivos para cá.</span></p>
-      <input ref={input} type="file" multiple accept=".fit,.FIT,application/octet-stream" className="sr-only" id="fitFile" onChange={(e) => { readAll(e.target.files); e.target.value = ''; }} />
+      <input ref={input} type="file" multiple accept=".fit,.FIT,application/octet-stream" className="sr-only" id="fitFile" aria-label="Escolher arquivos .FIT" onChange={(e) => { readAll(e.target.files); e.target.value = ''; }} />
       <button type="button" className="btn-primary" onClick={() => input.current?.click()} disabled={!!busy}>
         {busy ? <IconLoader2 {...IC} aria-hidden="true" /> : <IconFileUpload {...IC} aria-hidden="true" />}{busy ? 'Lendo…' : 'Escolher .FIT'}
       </button>

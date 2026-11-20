@@ -22,7 +22,8 @@
     "db:diff": "npx --yes supabase db diff",
     "db:login": "npx --yes supabase login",
     "db:link": "npx --yes supabase link",
-    "db:push": "npx --yes supabase db push"
+    "db:push": "npx --yes supabase db push",
+    "test:offline": "node scripts/offline-analise.mjs"
   },
   "dependencies": {
     "@fontsource/outfit": "^5.3.0",

@@ -17,3 +17,8 @@ boot()
   .finally(() => {
     root.render(<StrictMode><App /></StrictMode>);
   });
+
+// Offline (Etapa 4): o service worker só existe no build publicado
+if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+  window.addEventListener('load', () => { navigator.serviceWorker.register('./sw.js', { scope: './' }).catch((e) => console.warn('[apex] offline indisponível', e)); });
+}

@@ -265,7 +265,7 @@ function Dados() {
       <div className="row wrap">
         <button type="button" className="btn" onClick={exportData}><IconDownload size={18} stroke={1.75} aria-hidden="true" />Exportar JSON</button>
         <button type="button" className="btn quiet" onClick={() => fileRef.current?.click()}><IconUpload size={18} stroke={1.75} aria-hidden="true" />Importar JSON</button>
-        <input ref={fileRef} type="file" accept=".json,application/json" className="sr-only" id="importFile" onChange={(e) => { importData(e.target.files && e.target.files[0]); e.target.value = ''; }} />
+        <input ref={fileRef} type="file" accept=".json,application/json" className="sr-only" id="importFile" aria-label="Escolher o arquivo JSON para importar" onChange={(e) => { importData(e.target.files && e.target.files[0]); e.target.value = ''; }} />
       </div>
       <hr className="divider" />
       <h3 className="lead" style={{ fontSize: 15 }}>Backup automático</h3>

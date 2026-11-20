@@ -334,7 +334,7 @@ export function Maratona() {
                   {an ? <span className="s"><span className={'dot ' + (an.cls === 'done' ? 'ok' : an.cls === 'adapt' ? 'ciano' : an.cls === 'miss' ? 'alerta' : an.cls === 'partial' ? 'atencao' : '')} style={{ display: 'inline-block', margin: '0 6px 1px 0' }} />{noEmoji(an.label)}{an.txt ? ' — ' + an.txt : ''}</span> : null}
                   <span className="sr-only">Estado: {stt}</span>
                 </div>
-                <span className="badge" style={{ color: zColor(pzz), borderColor: zColor(pzz) }}>{E.M_ZONES.indexOf(pzz) >= 0 ? pzz : (t.structured ? 'estruturado' : '—')}</span>
+                <span className="badge" style={{ color: 'var(--texto)', borderColor: zColor(pzz) }}>{E.M_ZONES.indexOf(pzz) >= 0 ? pzz : (t.structured ? 'estruturado' : '—')}</span>
                 <div className="row" style={{ gap: 0 }}>
                   {!t.noRun ? <button type="button" className="iconbtn" aria-pressed={done} aria-label={done ? 'Desmarcar como feito' : 'Marcar como feito'} style={{ color: done ? 'var(--ok)' : undefined }} onClick={() => { const w2 = getState().planWeeks[info.key]; const s0 = w2 && w2.sessions.filter((x: any) => x.id === s.id)[0]; if (s0) { s0.done = !s0.done; touchWk(w2); } }}><IconCheck size={20} stroke={1.75} /></button> : null}
                   <button type="button" className="iconbtn" aria-label="Editar ou adaptar" onClick={() => setForm({ mode: 'edit', id: s.id, draft: Object.assign({ steps: [] }, E.mCloneSession(s)) })}><IconPencil size={20} stroke={1.75} /></button>
@@ -358,7 +358,7 @@ export function Maratona() {
           <div className="list">
             {pz.zones.filter((z: any) => z.z !== 'Z1' && z.z !== 'Z5').map((z: any) => (
               <div key={z.z} className="item-row" style={{ minHeight: 44 }}>
-                <span className="badge" style={{ color: zColor(z.z), borderColor: zColor(z.z) }}>{z.z}</span>
+                <span className="badge" style={{ color: 'var(--texto)', borderColor: zColor(z.z) }}>{z.z}</span>
                 <span className="grow tn apoio">{z.lo}–{z.hi} bpm</span>
                 <b className="tn">{z.pace ? E.paceStr(z.pace) + '/km' : '—'}{z.extrap ? <small className="muted"> ~est</small> : null}</b>
                 <span className="apoio muted" style={{ width: 52, textAlign: 'right' }}>{z.z === 'Z2' || z.z === 'Z3' ? 'prova' : z.z === 'Z4' ? 'limiar' : ''}</span>
