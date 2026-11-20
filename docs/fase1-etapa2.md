@@ -151,3 +151,18 @@ Os arquivos ficam em `fixtures/privado/`, fora do git. São 3 corridas com GPS: 
    - O Foco atual fica com IMP e cadência no ritmo de referência.
 
 **Correção de um erro meu:** a Folha do KPI do pace ajustado (GAP) abria o texto do Pace-GAP@145, porque a busca pelo trecho "gap" casava primeiro com ele. Agora abre "GAP · Ritmo ajustado à inclinação".
+
+## Atualização (20/11, noite) — correção dos treinos anteriores
+
+A pedido do Lucas, os treinos já salvos com o último km "esticado" são corrigidos na abertura do app (`analise/app/fix-splits.ts`).
+- **Como funciona:**
+  - Roda depois do backup automático e só em treinos vindos de .FIT.
+  - Um último split entre 1,00 e 1,15 km igual a "distância − (n−1)" volta a 1 km; o leitor de .FIT só deixa um último split "picado" quando sobram mais de 150 m.
+  - Rodar de novo não muda nada. A data de atualização dos treinos corrigidos muda, para a sincronização levar a correção ao outro aparelho.
+- **No backup real**, 2 treinos foram corrigidos:
+  - **31/10:** decoupling 8,1 → **10,4%**;
+  - **19/11:** 5,6 → **8,4%**, idêntico ao calculado direto do .FIT.
+  
+  O GAP não muda.
+- **Comparação de telas do backup** (`compare:views backup`): agora as diferenças são exatamente esses valores antigos (e o que deriva deles: média do Relatório, Score, pacing); o resto é idêntico. O golden do motor (página antiga × engine.mjs) continua idêntico, porque compara o motor sobre os mesmos dados.
+- **Testes:** `tests/splits.test.ts` (42/42 no Vitest).

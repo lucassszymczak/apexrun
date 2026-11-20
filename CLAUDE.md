@@ -15,6 +15,7 @@ Fale com o Lucas em português do Brasil, de forma curta. Ele não é desenvolve
 - Se um bug no motor aparecer, não corrija calado: descreva e pergunte.
 - Decisões do Lucas (20/11/2026), que valem daqui para frente sem mudar treinos já salvos:
   - **Splits ao salvar:** se o texto dos splits não foi editado, guardam-se os splits exatos do .FIT (antes o último km era esticado até a distância total e o decoupling mudava). Splits digitados à mão seguem a regra antiga. Ver `tests/splits.test.ts`.
+  - **Treinos antigos com o último km esticado são corrigidos na abertura do app** (`analise/app/fix-splits.ts`), depois do backup automático: só treinos com marca de .FIT, último split > 1 km e ≤ 1,15 km igual a "distância − (n−1)" → volta a 1 km. Idempotente. No backup do Lucas: 31/10 (decoupling 8,1 → 10,4%) e 19/11 (5,6 → 8,4%). Por isso a comparação de telas do backup mostra diferença nesses 2 treinos e no que deriva deles — é a correção pedida, não uma regressão.
   - **Pace-GAP @ FC_REF (145) fora da interface:** o motor continua calculando (dado salvo e sincronizado), mas o app não exibe esse KPI. Ficam o pace e o pace ajustado à inclinação (GAP).
   - **Dor muscular:** escala 0–10.
   - **IMP:** só sessões em clima padrão com confiança Moderada ou Alta (regra do Livro de fórmulas).

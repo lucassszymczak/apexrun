@@ -4,6 +4,7 @@
 import { useSyncExternalStore } from 'react';
 import * as E from '../engine.mjs';
 import { backupBeforeWrites, type BackupStatus } from './backup';
+import { fixStretchedSplits } from './fix-splits';
 
 export type Workout = Record<string, any> & { id: string; date: string };
 export type ApexState = {
@@ -38,6 +39,7 @@ export function useToasts(): Toast[] {
 }
 
 export let backupStatus: BackupStatus = { ok: false };
+export let splitFix: string[] = []; // datas dos treinos corrigidos nesta abertura
 
 export async function boot(): Promise<void> {
   backupStatus = await backupBeforeWrites();
@@ -45,6 +47,16 @@ export async function boot(): Promise<void> {
   const st: ApexState = E.setState(E.load());
   if (st.seeded) { E.save(); delete st.seeded; }
   try { if (E.linkSleepToWorkouts() > 0) E.save(); } catch { /* como no app antigo */ }
+  // Correção dos splits esticados pela regra antiga (decisão do Lucas, 20/11). Roda depois do
+  // backup automático (a cópia original fica guardada) e só uma vez por treino (idempotente).
+  try {
+    const fixed = fixStretchedSplits(st.workouts);
+    if (fixed.length) {
+      E.touch(); E.save();
+      splitFix = fixed.map((w: any) => w.date);
+      setTimeout(() => toast('Corrigi o último km de ' + fixed.length + ' treino(s) antigo(s) (' + splitFix.join(', ') + '): decoupling e pacing agora batem com o .FIT.'), 600);
+    }
+  } catch (e) { console.warn('[apex] correção de splits', e); }
   emit();
   // sincroniza ao abrir (puxa o que veio de outro aparelho e reenvia a união)
   if (E.syncEnabled()) setTimeout(() => { syncNow(true); }, 300);

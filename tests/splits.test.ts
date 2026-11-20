@@ -49,3 +49,28 @@ describe('salvar o treino preserva os splits do relógio', () => {
     expect(E.computeDecoupling(r.w)).toBeCloseTo(8.39, 1);
   });
 });
+
+import { isStretched, fixStretchedSplits } from '../analise/app/fix-splits';
+describe('correção dos treinos antigos com o último km esticado', () => {
+  const stretched = () => ({ ...fitLike, id: 'a', hrHist: { 150: 60 }, splits: [...fitLike.splits.slice(0, 5).map((s) => ({ ...s })), { ...fitLike.splits[5], distKm: 6.09 - 5 }] });
+  it('detecta e corrige: o treino volta a ter os splits e o decoupling do .FIT', () => {
+    const w = stretched();
+    expect(isStretched(w)).toBe(true);
+    expect(fixStretchedSplits([w]).length).toBe(1);
+    expect(w.splits).toEqual(fitLike.splits);
+    expect(E.computeDecoupling(w)).toBe(E.computeDecoupling(fitLike));
+  });
+  it('é idempotente (rodar de novo não muda nada)', () => {
+    const w = stretched(); fixStretchedSplits([w]);
+    expect(fixStretchedSplits([w]).length).toBe(0);
+  });
+  it('não mexe em treinos sem marca de .FIT (digitados à mão / exemplo)', () => {
+    const w: any = stretched(); delete w.hrHist;
+    expect(isStretched(w)).toBe(false);
+    expect(E.seedWorkouts().filter(isStretched).length).toBe(0); // o 5K de exemplo tem um último km real de 1,02
+  });
+  it('não mexe quando o último split é o resto real (> 150 m) do .FIT', () => {
+    const w: any = { ...stretched(), distKm: 5.28, splits: [...fitLike.splits.slice(0, 5), { distKm: 0.28, timeSec: 120, hrAvg: 150, elevDeltaM: 1 }] };
+    expect(isStretched(w)).toBe(false);
+  });
+});
