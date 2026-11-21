@@ -176,7 +176,7 @@ export function buildWorkout(f: FormVals, extras: Record<string, any>, editingId
   if (extras.leitura) w.leitura = extras.leitura;
   // Fase 5: equipamento e regiões de dor (campos novos e opcionais; só existem se definidos)
   if (extras.gearId) w.gearId = extras.gearId;
-  if (extras.dorRegioes && extras.dorRegioes.length) w.dorRegioes = extras.dorRegioes;
+  if (Array.isArray(extras.dorRegioes)) w.dorRegioes = extras.dorRegioes; // lista vazia = registrado, sem dor
   return { w };
 }
 

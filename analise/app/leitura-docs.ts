@@ -159,4 +159,20 @@ LEITURA_DOCS.push(
     fonte: 'Regra do app, aprovada em 21/11/2026 (docs/fase5-formulas.md, item 2, opção a).',
   },
 );
+LEITURA_DOCS.push(
+  {
+    key: 'o-que-mudou', name: 'O que mudou', cat: 'Rotina', conf: 'A de cada número citado',
+    desc: 'Recorde ou melhor do ciclo, lugar no top 3 de um segmento, semana que ficou consistente, forma que entrou ou saiu dos extremos e o tênis. Só aparece o que mudou com este treino.',
+    formula: 'ordem: 1) recorde pessoal ou melhor do ciclo (uma linha: a maior distância e as outras contadas)\n2) top 3 num segmento, nas passagens até a data do treino, com 3 ou mais (até 2 linhas)\n3) semana que passou de 80% da meta com este treino, com pelo menos 1 descanso\n4) forma (TSB): só ao entrar ou sair de "muito carregado" ou de "fresco"\n5) equipamento: km do tênis (atenção a partir de 90%) ou das peças da bike\ntítulo: o primeiro que existir entre recorde, seu melhor no segmento, melhor do ciclo, semana, forma; senão, a frase do check da história',
+    fields: 'O treino salvo, os selos de esforço, as passagens dos segmentos, a consistência, a forma do motor e o equipamento.',
+    fonte: 'Regra do app, aprovada em 21/11/2026 (docs/fase5-formulas.md, itens 3 e 4).',
+  },
+  {
+    key: 'corpo', name: 'Corpo (frequência de dor)', cat: 'Rotina', conf: 'A dos seus registros',
+    desc: 'Quantas vezes cada região foi marcada com dor nos treinos do período. Só os dias de treino. O app mostra o padrão; não faz diagnóstico.',
+    formula: 'treinos registrados = treinos do período salvos com o mapa do corpo (mesmo sem dor marcada)\nvezes da região = treinos em que ela teve dor acima de 0\nfaixas: 1–2 vezes, 3–5, 6 ou mais\nlinha do tempo: a intensidade (0 a 10) em cada treino marcado',
+    fields: 'As regiões marcadas no Completar (dorRegioes). Treinos de antes do mapa não entram.',
+    fonte: 'Contagem simples dos seus registros; sem fórmula nova.',
+  },
+);
 export const leituraDoc = (k: string): Doc | null => LEITURA_DOCS.find((d) => d.key === k || d.name === k) || null;

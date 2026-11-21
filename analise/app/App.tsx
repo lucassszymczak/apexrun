@@ -15,12 +15,12 @@ function Screen() {
     case 'hoje': return <Hoje />;
     case 'coach': return S.Coach ? <S.Coach /> : <Stub title="Leitura do Coach" />;
     case 'treinos': return S.Treinos ? <S.Treinos /> : <Stub title="Treinos" />;
-    case 'treino': return S.Treino ? <S.Treino id={r.arg || ''} /> : <Stub title="Treino" />;
+    case 'treino': if (r.parts[2] === 'resumo') return <S.Resumo id={r.arg || ''} />; return S.Treino ? <S.Treino id={r.arg || ''} /> : <Stub title="Treino" />;
     case 'completar': return <S.Completar id={r.arg || ''} />;
     case 'compartilhar': return <S.Compartilhar id={r.arg || ''} />;
     case 'importar': return S.Importar ? <S.Importar /> : <Stub title="Importar treino" />;
     case 'editar': return S.TreinoForm ? <S.TreinoForm id={r.arg} /> : <Stub title="Editar treino" />;
-    case 'progresso': if (r.arg === 'consistencia') return <S.Consistencia />; if (r.arg === 'calor') return <S.MapaCalor />; if (r.arg === 'segmentos') return <S.Segmentos id={r.parts[2] || null} />; return S.Progresso ? <S.Progresso sys={r.arg} /> : <Stub title="Progresso" />;
+    case 'progresso': if (r.arg === 'consistencia') return <S.Consistencia />; if (r.arg === 'calor') return <S.MapaCalor />; if (r.arg === 'corpo') return <S.ProgressoCorpo />; if (r.arg === 'segmentos') return <S.Segmentos id={r.parts[2] || null} />; return S.Progresso ? <S.Progresso sys={r.arg} /> : <Stub title="Progresso" />;
     case 'mais': {
       const m: Record<string, any> = { maratona: S.Maratona, relatorio: S.Relatorio, recuperacao: S.Recuperacao, forca: S.Forca, livro: S.Livro, config: S.Config, garmin: S.Garmin, ciclo: S.EditarCiclo, percurso: S.Percurso, plano: S.PlanoProva, simulador: S.Simulador, treino: S.ConfigTreino, equipamentos: S.Equipamentos };
       if (!r.arg) return S.Mais ? <S.Mais /> : <Stub title="Mais" />;

@@ -4,6 +4,13 @@
 // também dá para usar só pela lista e pelo teclado. Sem diagnóstico e sem alerta.
 import { useState } from 'react';
 import { IconMicrophone, IconMinus, IconPlus, IconAlertTriangle } from '@tabler/icons-react';
+import { useApex } from '../store';
+import { href } from '../route';
+import { PageHead } from '../Shell';
+import { Card } from '../ui';
+import { dayMon } from '../fmt';
+import { contagem, faixaCorpo } from '../../corpo.mjs';
+import * as E from '../../engine.mjs';
 import { lerFrase, textoEntendi, textoPendente, nomeRegiao, chave, type Leitura, type Pendente } from '../../fala.mjs';
 
 // as 19 regiões: [chave, nome, x, y, largura, altura] no desenho de 340 × 410 (frente à esquerda,
@@ -116,3 +123,51 @@ export function Pendencias({ pend, onLado, onSel }: { pend: Pendente[]; onLado: 
   );
 }
 export { nomeRegiao };
+
+// ---------------- Progresso › Corpo (Etapa 4; design/telas-fase5/Corpo) ----------------
+
+const corFreq = (n: number) => { const f = faixaCorpo(n); return f < 0 ? 'transparent' : f === 0 ? 'color-mix(in srgb, var(--atencao) 50%, transparent)' : f === 1 ? 'var(--atencao)' : 'var(--alerta)'; };
+type PerC = '30d' | '90d' | 'ciclo';
+export function ProgressoCorpo() {
+  const { st } = useApex();
+  const temCiclo = !!(st.race && st.race.startDate);
+  const [per, setPer] = useState<PerC>('90d');
+  const [sel, setSel] = useState<string | null>(null);
+  const hoje = E.mIsoLocal(new Date());
+  const menos = (d: number) => { const x = new Date(hoje + 'T12:00:00'); x.setDate(x.getDate() - d); return E.mIsoLocal(x); };
+  const de = per === '30d' ? menos(30) : per === '90d' ? menos(90) : String((st.race && st.race.startDate) || '').slice(0, 10);
+  const C = contagem(st.workouts, { de, ate: hoje });
+  const nome = (k: string) => NOME_R[k] || k;
+  const titulo = !C.treinos ? 'Ainda não há registros do mapa do corpo neste período.' : C.top ? nome(C.top.k).replace(/^./, (c) => c.toUpperCase()) + ' foi a que mais doeu: ' + C.top.n + ' de ' + C.treinos + ' treinos.' : 'Nenhuma dor marcada em ' + C.treinos + ' treinos.';
+  const subPer = per === '30d' ? 'Últimos 30 dias' : per === '90d' ? 'Últimos 90 dias' : 'Ciclo atual';
+  const L = sel ? (C.linhas[sel] || []) : [];
+  return (<>
+    <PageHead title="Corpo" back={href('progresso')} />
+    <div className="seg full" role="radiogroup" aria-label="Período">
+      {([['30d', '30 dias'], ['90d', '90 dias'], ...(temCiclo ? [['ciclo', 'Ciclo']] : [])] as [PerC, string][]).map(([k, l]) => <button key={k} type="button" role="radio" aria-checked={per === k} onClick={() => setPer(k)}>{l}</button>)}
+    </div>
+    <div className="stack" style={{ gap: 4 }}>
+      <span className="apoio muted tn">{subPer} · {C.treinos} {C.treinos === 1 ? 'treino registrado' : 'treinos registrados'}</span>
+      <h2 className="titulo-2">{titulo}</h2>
+    </div>
+    <Card className="corpo">
+      <MapaCorpo sel={sel} setSel={setSel} valorDe={(k) => C.vezes[k] || 0} corDe={(k) => corFreq(C.vezes[k] || 0)}
+        rotuloDe={(k) => nome(k) + ': ' + (C.vezes[k] ? C.vezes[k] + (C.vezes[k] === 1 ? ' vez' : ' vezes') : 'nenhuma vez')} />
+      <div className="legenda-corpo" aria-label="Legenda: 1 a 2 vezes, 3 a 5, 6 ou mais">
+        {['1–2 vezes', '3–5', '6 ou mais'].map((t, i) => <span key={t}><i style={{ background: corFreq([1, 3, 6][i]) }} aria-hidden="true" />{t}</span>)}
+      </div>
+    </Card>
+    {sel ? (
+      <Card aria-live="polite">
+        <div className="row between" style={{ alignItems: 'baseline' }}><h2 className="lead">{nome(sel)}</h2><span className="apoio muted tn">{L.length} {L.length === 1 ? 'vez' : 'vezes'}</span></div>
+        {L.length ? (<>
+          <svg className="corpo-linha" viewBox="0 0 320 90" role="img" aria-label={'Intensidade ao longo do tempo: ' + L.map((x) => dayMon(x.date) + ' dor ' + x.int).join(', ')}>
+            {[0, 5, 10].map((v) => <g key={v}><line x1="28" x2="316" y1={80 - v * 7} y2={80 - v * 7} stroke="var(--linha)" strokeDasharray="3 3" /><text x="22" y={84 - v * 7} textAnchor="end" className="seg-evo-t">{v}</text></g>)}
+            {L.map((x, i) => { const cx = 28 + (L.length === 1 ? 144 : (i / (L.length - 1)) * 288); const h = Math.max(2, x.int * 7); return <rect key={i} x={cx - 4} y={80 - h} width="8" height={h} rx="2" fill={corDor(x.int)} />; })}
+          </svg>
+          <ul className="corpo-ult">{L.slice().reverse().slice(0, 5).map((x) => <li key={x.wid + x.date}><a href={href('treino', x.wid)}><span>{dayMon(x.date)}</span><span className="tn">dor {x.int}</span></a></li>)}</ul>
+        </>) : <p className="apoio">Sem dor marcada nesta região no período.</p>}
+      </Card>) : <p className="hint">Toque numa região para ver a linha do tempo.</p>}
+    <p className="corpo-rodape">Registros só dos dias de treino. O app mostra o padrão; não faz diagnóstico.</p>
+  </>);
+}
