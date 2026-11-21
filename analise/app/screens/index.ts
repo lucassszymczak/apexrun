@@ -18,3 +18,4 @@ export { Garmin } from './Garmin';
 export { Completar } from './ParaCompletar';
 export { EditarCiclo, Percurso } from './Ciclo';
 export { PlanoProva } from './PlanoProva';
+export { Simulador } from './Simulador';

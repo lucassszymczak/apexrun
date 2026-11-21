@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { IconSettings, IconChevronLeft, IconChevronRight, IconPlus, IconCheck, IconPencil, IconTrash, IconCamera, IconClipboardText, IconArchive, IconCopy, IconDownload, IconFlag, IconRoute } from '@tabler/icons-react';
 import { FONTE_ROTULO, resumo } from '../course';
 import { metaTxt } from './Ciclo';
+import { useFaixaHoje } from './Simulador';
 import * as E from '../../engine.mjs';
 import { useApex, commit, getState, toast } from '../store';
 import { href } from '../route';
@@ -172,6 +173,7 @@ export function Maratona() {
   const { st } = useApex();
   const race = st.race, a = st.athlete, ws = E.sortedWorkouts(), runs = E.runsOnly(ws);
   const [offset, setOffset] = useState(0);
+  const faixa = useFaixaHoje(st);
   const [form, setForm] = useState<{ mode: 'add' | 'edit'; id?: string; draft: any } | null>(null);
   const blk = race ? E.mBlock(race) : null;
   // limita a navegação ao bloco
@@ -229,6 +231,7 @@ export function Maratona() {
   const bars = Object.keys(kmByWk).sort().slice(-16).map((k) => ({ label: k.replace(/^\d+-/, ''), y: Math.round(kmByWk[k] * 10) / 10 }));
   // estimativa
   const estAnchorCycle = E.bestAnchor(cRuns), estAnchor = estAnchorCycle || E.bestAnchor(runs);
+  // (a faixa vem de useFaixaHoje, chamado no topo do componente)
   const cycleLab = E.raceTypeOf(race) === 'custom' && race.name ? race.name : ((E.RACE_TYPES[E.raceTypeOf(race)] || {}).label || 'Ciclo atual');
   const cand = [{ d: 21.0975, lab: 'Meia maratona' }, { d: race.distKm, lab: cycleLab }, { d: 42.195, lab: 'Maratona' }];
   const seen: Record<number, number> = {}, list: { d: number; lab: string }[] = [];
@@ -369,7 +372,13 @@ export function Maratona() {
           <p className="hint">Volume semanal de corrida (km) <b>real deste ciclo</b>, por semana ISO. A linha tracejada é a meta de pico.</p></> : <p className="hint">Registre corridas neste ciclo para ver a evolução do volume.</p>}
       </Card>
       <Card>
-        <CardH title="Estimativa de prova" right={<span className="badge neutro">Riegel</span>} />
+        <CardH title="Tempo realista" right={<span className="badge neutro">Riegel</span>} />
+        {faixa ? (
+          <a className="item-row opcao-link" href={href('mais', 'simulador')}>
+            <span className="grow stack" style={{ gap: 0 }}><span className="s">Hoje, seu tempo realista é de</span><b className="tn" style={{ fontWeight: 500, fontSize: 20 }}>{metaTxt(faixa.rapidoS)} a {metaTxt(faixa.lentoS)}</b></span>
+            <span className="link">Simular meta</span>
+          </a>
+        ) : null}
         {estAnchor ? (<>
           <div className="tbl-wrap"><table><thead><tr><th scope="col">Trecho</th><th scope="col" className="n">Tempo</th><th scope="col" className="n">Pace</th></tr></thead>
             <tbody>{list.map((c) => { const t = E.riegel(estAnchor.distKm, estAnchor.durationSec, c.d); const isRace = Math.abs(c.d - race.distKm) < 0.3;
