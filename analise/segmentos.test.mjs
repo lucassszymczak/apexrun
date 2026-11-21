@@ -104,5 +104,15 @@ ok('limites: 500 m e 40 por modalidade', MIN_M === 500 && MAX_SEG === 40 && comp
 const ren = calculaSegmentos(T3, 'corrida', [{ id: r3.lista[0].id, nome: 'Meu trecho', renomeado: true }]);
 ok('nome renomeado continua ao recalcular', ren.lista[0].nome === 'Meu trecho' && ren.lista[0].renomeado);
 
+console.log('\n== renomear sincroniza (o atleta mais novo vence, com o catálogo) ==');
+{
+  const { syncMergeStates } = await import('./engine.mjs');
+  const base = { athlete: { updatedAt: '2026-11-21T10:00:00Z', segmentos: [{ id: 'c1', nome: 'Plano de 1,2 km' }] }, workouts: [], daily: [], deleted: [], race: {}, planWeeks: {} };
+  const ren = { ...base, athlete: { updatedAt: '2026-11-21T11:00:00Z', segmentos: [{ id: 'c1', nome: 'Volta do lago', renomeado: true }] } };
+  let m = null; try { m = syncMergeStates(base, ren); } catch (e) { m = null; }
+  const a = m && (m.athlete || (m.state && m.state.athlete));
+  ok('o nome renomeado no outro aparelho chega a este', !!a && a.segmentos && a.segmentos[0].nome === 'Volta do lago', a && JSON.stringify(a.segmentos));
+}
+
 console.log(`\n=== RESULTADO: ${pass} passaram, ${fail} falharam ===`);
 process.exit(fail ? 1 : 0);

@@ -16,3 +16,5 @@ export declare function rua(ag: Agregado, k: string): { cells: string[]; ids: st
 export declare function maisPerto(ag: Agregado, lat: number, lon: number, maxM?: number): string | null;
 export declare function ehPedal(w: any): boolean;
 export declare function ehEsteira(w: any): boolean;
+export declare function regiaoMaisFrequente(ag: Agregado): { faixa: number; min: number; onde: string } | null;
+export declare function ruasOrdenadas(ag: Agregado, n?: number): { cells: string[]; ids: string[]; km: number }[];

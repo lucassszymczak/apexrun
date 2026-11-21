@@ -1,6 +1,6 @@
 // Testes do mapa de calor (Fase 3 · Etapa 3). Roda com: node analise/calor.test.mjs
 // Trajetos sintéticos num lugar qualquer (nenhuma coordenada real do Lucas).
-import { celula, centro, vizinhas, sequencia, doTreino, agrega, resumo, linhas, rua, maisPerto, faixaDe, FAIXAS, CELULA_M, ehPedal, ehEsteira } from './calor.mjs';
+import { regiaoMaisFrequente, ruasOrdenadas, celula, centro, vizinhas, sequencia, doTreino, agrega, resumo, linhas, rua, maisPerto, faixaDe, FAIXAS, CELULA_M, ehPedal, ehEsteira } from './calor.mjs';
 
 let pass = 0, fail = 0;
 const ok = (n, c, got) => { if (c) pass++; else fail++; console.log(`  ${c ? '✓' : '✗'} ${n}` + (got !== undefined ? `  (${got})` : '')); };
@@ -62,6 +62,12 @@ console.log('\n== desempenho ==');
 const muitos = Array.from({ length: 140 }, (_, i) => { const t = leste(10000, { dy: (i % 7) * 30 }); return { id: 'w' + i, ...doTreino(t.lat, t.lon) }; });
 const t0 = performance.now(); const agM = agrega(muitos); linhas(agM); const dt = performance.now() - t0;
 ok('juntar 140 treinos de 10 km e montar as linhas em menos de 300 ms', dt < 300, dt.toFixed(0) + ' ms');
+
+console.log('\n== acessibilidade: região e ruas pelo teclado ==');
+const rg = regiaoMaisFrequente(ag);
+ok('região mais frequente em palavras, sem endereço (rua A, ao sul da B)', rg && rg.onde === 'ao sul' && rg.min === 3, JSON.stringify(rg));
+const rs2 = ruasOrdenadas(ag);
+ok('ruas em ordem de frequência: a de 4 treinos primeiro, depois a de 1', rs2.length === 2 && rs2[0].ids.length === 4 && rs2[1].ids.length === 1);
 
 console.log(`\n=== RESULTADO: ${pass} passaram, ${fail} falharam ===`);
 process.exit(fail ? 1 : 0);
