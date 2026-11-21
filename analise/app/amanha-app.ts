@@ -9,10 +9,10 @@ const K_PONTO = 'apex.previsao.ponto', K_CACHE = 'apex.previsao.amanha', TRES_H 
 const ler = (k: string) => { try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch { return null; } };
 const gravar = (k: string, v: any) => { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, JSON.stringify(v)); } catch { /* sem storage */ } };
 
-export type PrefTreino = { janela: { de: string; ate: string }; mostrar: boolean; local: 'auto' | 'mapa' };
+export type PrefTreino = { janela: { de: string; ate: string }; mostrar: boolean; local: 'auto' | 'mapa'; metaSemanalH: number | null };
 export function prefsTreino(athlete: any): PrefTreino {
   const t = (athlete && athlete.treino) || {};
-  return { janela: t.janela && t.janela.de && t.janela.ate ? t.janela : JANELA_PADRAO, mostrar: t.mostrarAmanha !== false, local: t.local === 'mapa' ? 'mapa' : 'auto' };
+  return { janela: t.janela && t.janela.de && t.janela.ate ? t.janela : JANELA_PADRAO, mostrar: t.mostrarAmanha !== false, local: t.local === 'mapa' ? 'mapa' : 'auto', metaSemanalH: t.metaSemanalH > 0 ? +t.metaSemanalH : null };
 }
 export const pontoManual = (): { lat: number; lon: number } | null => ler(K_PONTO);
 export const salvarPontoManual = (p: { lat: number; lon: number } | null) => gravar(K_PONTO, p ? { lat: Math.round(p.lat * 1e4) / 1e4, lon: Math.round(p.lon * 1e4) / 1e4 } : null);

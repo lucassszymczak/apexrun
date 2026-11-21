@@ -84,4 +84,13 @@ LEITURA_DOCS.push(
     fonte: 'Riegel, P. S., American Scientist 69, 1981; Vickers, A. J. e Vertosick, E. A., BMC Sports Sci Med Rehabil 8:26, 2016 (Riegel erra para menos na maratona de amadores: metade termina 10 min ou mais acima, um quarto 20 min ou mais).',
   },
 );
+LEITURA_DOCS.push(
+  {
+    key: 'semana-consistente', name: 'Semana consistente', cat: 'Evolução', conf: 'Alta (conta das horas registradas)',
+    desc: 'De segunda a domingo, pelo menos 80% das horas da sua meta e pelo menos 1 dia de descanso. O descanso conta a favor. A semana atual não quebra a sequência.',
+    formula: 'semana = segunda a domingo, horário de Brasília\nhoras = soma da duração de corrida, pedal e força da semana\nmeta = a sua (Configurações › Treino) ou, em branco, a média das 4 semanas anteriores com treino, arredondada a 0,5 h, mínimo de 1 h\nconsistente = horas ≥ 80% da meta E pelo menos 1 dia sem treino\nparcial = treinou, mas não fechou a regra · sem treino = 0 h\nsequência = semanas consistentes seguidas até a última semana encerrada; a semana em andamento não quebra',
+    fields: 'Data e duração dos treinos. A semana atual aparece como "em andamento" até domingo.',
+    fonte: 'Regra do app, aprovada em 21/11/2026 (docs/fase3-formulas.md, item 6).',
+  },
+);
 export const leituraDoc = (k: string): Doc | null => LEITURA_DOCS.find((d) => d.key === k || d.name === k) || null;

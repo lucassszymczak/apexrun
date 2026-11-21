@@ -20,7 +20,7 @@ function Screen() {
     case 'compartilhar': return <S.Compartilhar id={r.arg || ''} />;
     case 'importar': return S.Importar ? <S.Importar /> : <Stub title="Importar treino" />;
     case 'editar': return S.TreinoForm ? <S.TreinoForm id={r.arg} /> : <Stub title="Editar treino" />;
-    case 'progresso': return S.Progresso ? <S.Progresso sys={r.arg} /> : <Stub title="Progresso" />;
+    case 'progresso': if (r.arg === 'consistencia') return <S.Consistencia />; return S.Progresso ? <S.Progresso sys={r.arg} /> : <Stub title="Progresso" />;
     case 'mais': {
       const m: Record<string, any> = { maratona: S.Maratona, relatorio: S.Relatorio, recuperacao: S.Recuperacao, forca: S.Forca, livro: S.Livro, config: S.Config, garmin: S.Garmin, ciclo: S.EditarCiclo, percurso: S.Percurso, plano: S.PlanoProva, simulador: S.Simulador, treino: S.ConfigTreino };
       if (!r.arg) return S.Mais ? <S.Mais /> : <Stub title="Mais" />;

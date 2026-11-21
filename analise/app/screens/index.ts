@@ -20,3 +20,4 @@ export { EditarCiclo, Percurso } from './Ciclo';
 export { PlanoProva } from './PlanoProva';
 export { Simulador } from './Simulador';
 export { ConfigTreino, AmanhaCard } from './Amanha';
+export { Consistencia } from './Consistencia';
