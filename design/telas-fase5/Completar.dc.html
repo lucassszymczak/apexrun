@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Completar treino</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500&amp;display=swap">
+<style>
+body{margin:0;background:#0d0f1a}
+a{color:#22d3ee;text-decoration:none}a:hover{color:#a5f3fc}
+</style>
+</helmet>
+<div style="width: 390px; height: 1560px; overflow: hidden; box-sizing: border-box; background: #0d0f1a; color: #f2f2f7; font-family: Outfit, system-ui, sans-serif; font-variant-numeric: tabular-nums; padding: 56px 16px 34px; display: flex; flex-direction: column; gap: 16px">
+
+  <header style="display: flex; align-items: center; gap: 4px">
+    <a href="HojeAvisos.dc.html" aria-label="Voltar" style="width: 44px; height: 44px; margin-left: -10px; display: flex; align-items: center; justify-content: center; color: #f2f2f7">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l14 0"/><path d="M5 12l6 6"/><path d="M5 12l6 -6"/></svg>
+    </a>
+    <div style="display: flex; flex-direction: column">
+      <h1 style="margin: 0; font-size: 20px; line-height: 26px; font-weight: 500">Completar treino</h1>
+      <span style="font-size: 13px; line-height: 18px; color: #a3a9b8">Rodagem · 19 nov · 6,09 km · do Garmin</span>
+    </div>
+  </header>
+
+  <section aria-labelledby="h-voz" style="background: #161a26; border-radius: 16px; padding: 14px; display: flex; flex-direction: column; gap: 10px">
+    <label id="h-voz" for="frase" style="font-size: 16px; line-height: 22px; font-weight: 500">Diga como foi</label>
+    <div style="position: relative">
+      <textarea id="frase" rows="2" onChange="{{digitar}}" style="width: 100%; box-sizing: border-box; min-height: 64px; padding: 10px 44px 10px 12px; background: #1f2433; border: 1px solid #2a3042; border-radius: 10px; color: #f2f2f7; font-family: Outfit, system-ui, sans-serif; font-size: 15px; line-height: 22px; resize: none">{{frase}}</textarea>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#a3a9b8" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="position: absolute; right: 12px; top: 12px"><rect x="9" y="2" width="6" height="11" rx="3"/><path d="M5 10a7 7 0 0 0 14 0"/><path d="M8 21l8 0"/><path d="M12 17l0 4"/></svg>
+    </div>
+    <span style="font-size: 12px; line-height: 16px; color: #a3a9b8">Toque no microfone do teclado e fale. Ex.: "RPE 7, dormi 7 e meia, canela esquerda 3".</span>
+    <button onClick="{{preencher}}" style="min-height: 44px; border: 1px solid #22d3ee; border-radius: 10px; background: transparent; color: #22d3ee; font-family: Outfit, system-ui, sans-serif; font-size: 15px">Preencher pela frase</button>
+    <sc-if value="{{preenchido}}" hint-placeholder-val="{{ false }}">
+      <div aria-live="polite" style="display: flex; gap: 8px; align-items: flex-start; font-size: 13px; line-height: 18px">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink: 0; margin-top: 1px"><path d="M5 12l5 5l10 -10"/></svg>
+        <span>{{resumoFala}} Confira os campos marcados antes de salvar.</span>
+      </div>
+    </sc-if>
+  </section>
+
+  <section aria-labelledby="h-perc" style="background: #161a26; border-radius: 16px; padding: 14px; display: flex; flex-direction: column; gap: 12px">
+    <h2 id="h-perc" style="margin: 0; font-size: 16px; line-height: 22px; font-weight: 500">Percepção e recuperação</h2>
+    <div style="display: flex; flex-direction: column; gap: 6px">
+      <span id="rpe-l" style="font-size: 13px; line-height: 18px; color: #a3a9b8">Esforço (RPE) <span style="color: #22d3ee">{{tagRpe}}</span></span>
+      <div role="group" aria-labelledby="rpe-l" style="display: grid; grid-template-columns: repeat(11, minmax(0, 1fr)); gap: 3px">
+        <sc-for list="{{rpes}}" as="r" hint-placeholder-count="11">
+          <button onClick="{{r.pick}}" aria-pressed="{{r.on}}" style="min-height: 44px; padding: 0; border: 1px solid {{r.borda}}; border-radius: 8px; background: {{r.bg}}; color: {{r.fg}}; font-family: Outfit, system-ui, sans-serif; font-size: 14px">{{r.n}}</button>
+        </sc-for>
+      </div>
+    </div>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px">
+      <div style="display: flex; flex-direction: column; gap: 6px">
+        <label for="sono" style="font-size: 13px; line-height: 18px; color: #a3a9b8">Sono na véspera (h) <span style="color: #22d3ee">{{tagSono}}</span></label>
+        <input id="sono" type="text" inputmode="decimal" value="{{sono}}" placeholder="ex.: 7,5" style="height: 44px; box-sizing: border-box; padding: 0 12px; background: #1f2433; border: 1px solid {{bordaSono}}; border-radius: 8px; color: #f2f2f7; font-family: Outfit, system-ui, sans-serif; font-size: 16px">
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 6px">
+        <label for="dor" style="font-size: 13px; line-height: 18px; color: #a3a9b8">Dor muscular (0–10)</label>
+        <input id="dor" type="text" inputmode="numeric" value="{{dorGeral}}" placeholder="ex.: 2" style="height: 44px; box-sizing: border-box; padding: 0 12px; background: #1f2433; border: 1px solid {{bordaDor}}; border-radius: 8px; color: #f2f2f7; font-family: Outfit, system-ui, sans-serif; font-size: 16px">
+      </div>
+    </div>
+    <span style="font-size: 12px; line-height: 16px; color: #a3a9b8">{{notaDor}}</span>
+    <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; padding-top: 4px; border-top: 1px solid #2a3042">
+      <label for="articular" style="display: flex; flex-direction: column; padding-top: 8px">
+        <span style="font-size: 15px; line-height: 20px">Dor articular ou suspeita de lesão</span>
+        <span style="font-size: 12px; line-height: 16px; color: #a3a9b8">Liga o alerta de recuo no Hoje. Você marca à mão.</span>
+      </label>
+      <input id="articular" type="checkbox" role="switch" style="width: 44px; height: 26px; accent-color: #22d3ee">
+    </div>
+  </section>
+
+  <section aria-labelledby="h-corpo" style="background: #161a26; border-radius: 16px; padding: 14px; display: flex; flex-direction: column; gap: 10px">
+    <div style="display: flex; justify-content: space-between; align-items: baseline">
+      <h2 id="h-corpo" style="margin: 0; font-size: 16px; line-height: 22px; font-weight: 500">Onde doeu?</h2>
+      <span style="font-size: 12px; color: #a3a9b8">toque na região</span>
+    </div>
+    <div style="position: relative; width: 340px; height: 410px; margin: 0 auto">
+      <svg width="340" height="410" viewBox="0 0 340 410" aria-hidden="true" style="position: absolute; inset: 0">
+        <g fill="#1f2433" stroke="#2a3042" stroke-width="1">
+          <circle cx="85" cy="26" r="17"/><rect x="79" y="42" width="12" height="12"/><rect x="55" y="52" width="60" height="108" rx="14"/><rect x="57" y="152" width="56" height="40" rx="10"/>
+          <rect x="37" y="56" width="15" height="100" rx="7"/><rect x="35" y="152" width="13" height="58" rx="6"/><rect x="118" y="56" width="15" height="100" rx="7"/><rect x="122" y="152" width="13" height="58" rx="6"/>
+          <rect x="58" y="188" width="25" height="92" rx="10"/><rect x="87" y="188" width="25" height="92" rx="10"/><rect x="59" y="278" width="23" height="26" rx="8"/><rect x="88" y="278" width="23" height="26" rx="8"/>
+          <rect x="60" y="302" width="21" height="64" rx="8"/><rect x="89" y="302" width="21" height="64" rx="8"/><rect x="57" y="364" width="26" height="18" rx="6"/><rect x="87" y="364" width="26" height="18" rx="6"/>
+          <circle cx="255" cy="26" r="17"/><rect x="249" y="42" width="12" height="12"/><rect x="225" y="52" width="60" height="108" rx="14"/><rect x="227" y="152" width="56" height="40" rx="10"/>
+          <rect x="207" y="56" width="15" height="100" rx="7"/><rect x="205" y="152" width="13" height="58" rx="6"/><rect x="288" y="56" width="15" height="100" rx="7"/><rect x="292" y="152" width="13" height="58" rx="6"/>
+          <rect x="228" y="188" width="25" height="92" rx="10"/><rect x="257" y="188" width="25" height="92" rx="10"/><rect x="229" y="278" width="23" height="26" rx="8"/><rect x="258" y="278" width="23" height="26" rx="8"/>
+          <rect x="230" y="302" width="21" height="64" rx="8"/><rect x="259" y="302" width="21" height="64" rx="8"/><rect x="227" y="364" width="26" height="18" rx="6"/><rect x="257" y="364" width="26" height="18" rx="6"/>
+        </g>
+        <g font-family="Outfit, system-ui, sans-serif" font-size="11" fill="#a3a9b8" text-anchor="middle">
+          <text x="85" y="404">Frente</text><text x="255" y="404">Costas</text>
+          <text x="18" y="240">D</text><text x="152" y="240">E</text><text x="188" y="240">E</text><text x="322" y="240">D</text>
+        </g>
+      </svg>
+      <sc-for list="{{regioes}}" as="g" hint-placeholder-count="19">
+        <button onClick="{{g.pick}}" aria-pressed="{{g.sel}}" aria-label="{{g.aria}}" style="position: absolute; left: {{g.x}}px; top: {{g.y}}px; width: {{g.w}}px; height: {{g.h}}px; padding: 0; border-radius: 7px; border: {{g.borda}}; background: {{g.bg}}; color: #0d0f1a; font-family: Outfit, system-ui, sans-serif; font-size: 11px; font-weight: 500; display: flex; align-items: center; justify-content: center">{{g.num}}</button>
+      </sc-for>
+    </div>
+    <sc-if value="{{temSel}}" hint-placeholder-val="{{ true }}">
+      <div style="display: flex; align-items: center; gap: 10px; background: #1f2433; border-radius: 12px; padding: 8px 10px">
+        <span style="flex-grow: 1; font-size: 14px; line-height: 18px">{{selNome}}</span>
+        <button onClick="{{menos}}" aria-label="Diminuir a dor" style="width: 44px; height: 44px; border: 1px solid #2a3042; border-radius: 10px; background: #161a26; color: #f2f2f7; display: flex; align-items: center; justify-content: center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 12l14 0"/></svg></button>
+        <span aria-live="polite" style="min-width: 44px; text-align: center; font-size: 20px; font-weight: 500">{{selValor}}</span>
+        <button onClick="{{mais}}" aria-label="Aumentar a dor" style="width: 44px; height: 44px; border: 1px solid #2a3042; border-radius: 10px; background: #161a26; color: #f2f2f7; display: flex; align-items: center; justify-content: center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5l0 14"/><path d="M5 12l14 0"/></svg></button>
+      </div>
+    </sc-if>
+    <span style="font-size: 12px; line-height: 16px; color: #a3a9b8">{{listaRegioes}}</span>
+  </section>
+
+  <section aria-labelledby="h-eq" style="background: #161a26; border-radius: 16px; padding: 14px; display: flex; flex-direction: column; gap: 8px">
+    <label id="h-eq" for="tenis" style="font-size: 16px; line-height: 22px; font-weight: 500">Tênis</label>
+    <select id="tenis" style="height: 44px; padding: 0 10px; background: #1f2433; border: 1px solid #2a3042; border-radius: 8px; color: #f2f2f7; font-family: Outfit, system-ui, sans-serif; font-size: 15px">
+      <option selected>Tênis de treino · 512 de 600 km</option>
+      <option>Sem tênis registrado</option>
+    </select>
+    <div style="height: 6px; border-radius: 3px; background: #2a3042"><div style="width: 85%; height: 6px; border-radius: 3px; background: #22d3ee"></div></div>
+    <span style="font-size: 12px; line-height: 16px; color: #a3a9b8">Com este treino: 518 km. O aviso começa nos 540 km.</span>
+  </section>
+
+  <div style="display: flex; justify-content: space-between; align-items: center; min-height: 44px; padding: 0 2px; font-size: 14px; color: #a3a9b8">
+    <span>Hidratação, fotos e notas</span>
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22d3ee" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6l6 -6"/></svg>
+  </div>
+
+  <a href="Resumo.dc.html" style="margin-top: auto; height: 48px; border-radius: 12px; background: #e8459a; color: #0d0f1a; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 500">Salvar treino</a>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1560}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { frase: 'RPE 7, dormi 7 e meia, canela esquerda 3', preenchido: false, rpe: null, sono: '', regioes: {}, sel: null, resumoFala: '' };
+    this.R = [
+      ['quadril_d', 'Quadril direito', 57, 158, 28, 32], ['quadril_e', 'Quadril esquerdo', 85, 158, 28, 32],
+      ['coxa_d', 'Coxa direita (frente)', 58, 192, 25, 86], ['coxa_e', 'Coxa esquerda (frente)', 87, 192, 25, 86],
+      ['joelho_d', 'Joelho direito', 59, 280, 23, 22], ['joelho_e', 'Joelho esquerdo', 88, 280, 23, 22],
+      ['canela_d', 'Canela direita', 60, 304, 21, 60], ['canela_e', 'Canela esquerda', 89, 304, 21, 60],
+      ['pe_d', 'Tornozelo e pé direito', 58, 366, 24, 16], ['pe_e', 'Tornozelo e pé esquerdo', 88, 366, 24, 16],
+      ['lombar', 'Lombar', 233, 128, 44, 28],
+      ['gluteo_e', 'Glúteo esquerdo', 227, 158, 28, 32], ['gluteo_d', 'Glúteo direito', 255, 158, 28, 32],
+      ['posterior_e', 'Posterior da coxa esquerda', 228, 192, 25, 86], ['posterior_d', 'Posterior da coxa direita', 257, 192, 25, 86],
+      ['panturrilha_e', 'Panturrilha esquerda', 230, 304, 21, 60], ['panturrilha_d', 'Panturrilha direita', 259, 304, 21, 60],
+      ['aquiles_e', 'Tendão de Aquiles esquerdo', 231, 366, 19, 16], ['aquiles_d', 'Tendão de Aquiles direito', 260, 366, 19, 16]
+    ];
+  }
+  num(w) {
+    const n = { zero: 0, um: 1, uma: 1, dois: 2, duas: 2, 'três': 3, tres: 3, quatro: 4, cinco: 5, seis: 6, sete: 7, oito: 8, nove: 9, dez: 10 };
+    if (w === undefined) return null;
+    const v = Number(String(w).replace(',', '.'));
+    return isNaN(v) ? (n[w] !== undefined ? n[w] : null) : v;
+  }
+  parse() {
+    const t = this.state.frase.toLowerCase();
+    const out = { rpe: null, sono: '', regioes: {}, achou: [] };
+    const mr = t.match(/rpe\s+([a-zà-ú0-9]+)/);
+    if (mr && this.num(mr[1]) !== null) { out.rpe = this.num(mr[1]); out.achou.push('RPE ' + out.rpe); }
+    const ms = t.match(/dormi\s+([a-zà-ú0-9,.]+)(\s+(horas\s+)?e\s+meia)?/);
+    if (ms && this.num(ms[1]) !== null) { const h = this.num(ms[1]) + (ms[2] ? 0.5 : 0); out.sono = String(h).replace('.', ','); out.achou.push('sono ' + out.sono + ' h'); }
+    const nomes = [['canela', 'canela'], ['joelho', 'joelho'], ['panturrilha', 'panturrilha'], ['coxa', 'coxa'], ['posterior', 'posterior'], ['quadril', 'quadril'], ['glúteo', 'gluteo'], ['gluteo', 'gluteo'], ['tornozelo', 'pe'], ['pé', 'pe'], ['aquiles', 'aquiles']];
+    nomes.forEach(([palavra, id]) => {
+      const m = t.match(new RegExp(palavra + '\\s+(esquerd[oa]|direit[oa])\\s+([a-zà-ú0-9]+)'));
+      if (m && this.num(m[2]) !== null) {
+        const key = id + (m[1].indexOf('esquerd') === 0 ? '_e' : '_d');
+        out.regioes[key] = Math.min(10, this.num(m[2]));
+        out.achou.push(palavra + ' ' + m[1] + ' ' + out.regioes[key]);
+      }
+    });
+    const ml = t.match(/lombar\s+([a-zà-ú0-9]+)/);
+    if (ml && this.num(ml[1]) !== null) { out.regioes.lombar = this.num(ml[1]); out.achou.push('lombar ' + out.regioes.lombar); }
+    return out;
+  }
+  cor(v) {
+    if (!v) return 'transparent';
+    if (v <= 3) return 'rgba(251, 191, 36, 0.5)';
+    if (v <= 6) return '#fbbf24';
+    return '#f87171';
+  }
+  renderVals() {
+    const s = this.state;
+    const nomeDe = {};
+    this.R.forEach((r) => { nomeDe[r[0]] = r[1]; });
+    const vals = Object.keys(s.regioes).map((k) => s.regioes[k]).filter((v) => v > 0);
+    const maxDor = vals.length ? Math.max.apply(null, vals) : null;
+    const marcadas = Object.keys(s.regioes).filter((k) => s.regioes[k] > 0).map((k) => nomeDe[k] + ' ' + s.regioes[k]);
+    const regioes = this.R.map(([id, nome, x, y, w, h]) => {
+      const v = s.regioes[id] || 0;
+      const sel = s.sel === id;
+      return {
+        x, y, w, h, sel: sel ? 'true' : 'false',
+        aria: nome + (v ? ', dor ' + v : ', sem dor'),
+        bg: this.cor(v), num: v && h >= 22 ? String(v) : '',
+        borda: sel ? '2px solid #22d3ee' : (v ? '1px solid #0d0f1a' : '1px dashed rgba(163, 169, 184, 0.35)'),
+        pick: () => this.setState({ sel: id })
+      };
+    });
+    const rpes = Array.from({ length: 11 }, (_, i) => ({
+      n: String(i), on: s.rpe === i ? 'true' : 'false',
+      bg: s.rpe === i ? '#22d3ee' : '#1f2433', fg: s.rpe === i ? '#0d0f1a' : '#f2f2f7',
+      borda: s.rpe === i ? '#22d3ee' : '#2a3042',
+      pick: () => this.setState({ rpe: s.rpe === i ? null : i })
+    }));
+    const muda = (d) => {
+      if (!this.state.sel) return;
+      const r = Object.assign({}, this.state.regioes);
+      r[this.state.sel] = Math.max(0, Math.min(10, (r[this.state.sel] || 0) + d));
+      this.setState({ regioes: r });
+    };
+    return {
+      frase: s.frase,
+      digitar: (e) => this.setState({ frase: e.target.value }),
+      preencher: () => {
+        const p = this.parse();
+        const regs = Object.assign({}, this.state.regioes, p.regioes);
+        const primeira = Object.keys(p.regioes)[0] || this.state.sel;
+        this.setState({
+          preenchido: true, rpe: p.rpe !== null ? p.rpe : this.state.rpe, sono: p.sono || this.state.sono, regioes: regs, sel: primeira,
+          resumoFala: p.achou.length ? 'Entendi: ' + p.achou.join(', ') + '.' : 'Não entendi nenhum campo; preencha abaixo.'
+        });
+      },
+      preenchido: s.preenchido, resumoFala: s.resumoFala,
+      rpes, tagRpe: s.preenchido && s.rpe !== null ? '· pela fala' : '',
+      sono: s.sono, tagSono: s.preenchido && s.sono ? '· pela fala' : '', bordaSono: s.preenchido && s.sono ? '#22d3ee' : '#2a3042',
+      dorGeral: maxDor !== null ? String(maxDor) : '', bordaDor: maxDor !== null ? '#22d3ee' : '#2a3042',
+      notaDor: maxDor !== null ? 'Preenchida com a maior dor do mapa do corpo. Você pode mudar.' : 'Se marcar regiões no corpo, a maior dor vem preenchida aqui.',
+      regioes, temSel: !!s.sel, selNome: s.sel ? nomeDe[s.sel] : '', selValor: s.sel ? String(s.regioes[s.sel] || 0) : '0',
+      menos: () => muda(-1), mais: () => muda(1),
+      listaRegioes: marcadas.length ? 'Marcadas: ' + marcadas.join(' · ') : 'Nenhuma região marcada.'
+    };
+  }
+}
+</script>
+</body>
+</html>

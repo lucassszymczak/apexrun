@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Completar · computador</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500&amp;display=swap">
+<style>
+body{margin:0;background:#0d0f1a}
+a{color:#22d3ee;text-decoration:none}a:hover{color:#a5f3fc}
+</style>
+</helmet>
+<div style="width: 100%; min-height: 900px; box-sizing: border-box; background: #0d0f1a; color: #f2f2f7; font-family: Outfit, system-ui, sans-serif; font-variant-numeric: tabular-nums; display: flex; flex-wrap: wrap">
+
+  <nav aria-label="Navegação principal" style="flex: 1 1 220px; max-width: 240px; box-sizing: border-box; border-right: 1px solid #2a3042; padding: 20px 14px; display: flex; flex-direction: column; gap: 4px">
+    <div style="display: flex; align-items: center; gap: 10px; padding: 0 8px 20px">
+      <svg width="30" height="27" viewBox="0 0 100 90" aria-hidden="true"><polygon points="6,86 50,4 59,20.77 24,86" fill="#e8459a"/><polygon points="94,86 50,4 41,20.77 76,86" fill="#22d3ee"/><polygon points="50,4 59,20.77 50,37.55 41,20.77" fill="#5b3fd0"/></svg>
+      <span style="font-size: 17px; line-height: 20px; font-weight: 500">Apex <span style="color: #e8459a">Performance</span></span>
+    </div>
+    <a href="HojeAvisos.dc.html" aria-current="page" style="padding: 10px 12px; border-radius: 8px; background: #1f2433; color: #f2f2f7; font-size: 15px; font-weight: 500">Hoje</a>
+    <a href="#" style="padding: 10px 12px; border-radius: 8px; color: #a3a9b8; font-size: 15px">Treinos</a>
+    <a href="#" style="padding: 10px 12px; border-radius: 8px; color: #a3a9b8; font-size: 15px">Progresso</a>
+    <span style="font-size: 11px; line-height: 14px; letter-spacing: 0.4px; color: #80879a; padding: 16px 12px 6px">Mais</span>
+    <a href="#" style="padding: 8px 12px; border-radius: 8px; color: #a3a9b8; font-size: 14px">Ciclo de prova</a>
+    <a href="Equipamentos.dc.html" style="padding: 8px 12px; border-radius: 8px; color: #a3a9b8; font-size: 14px">Equipamentos</a>
+    <a href="#" style="padding: 8px 12px; border-radius: 8px; color: #a3a9b8; font-size: 14px">Configurações</a>
+  </nav>
+
+  <main style="flex: 999 1 560px; min-width: 0; box-sizing: border-box; padding: 24px 32px; display: flex; flex-direction: column; gap: 20px">
+    <header style="display: flex; flex-direction: column; gap: 2px">
+      <span style="font-size: 13px; line-height: 18px; color: #a3a9b8">Rodagem · 19 nov · 6,09 km · do Garmin</span>
+      <h1 style="margin: 0; font-size: 32px; line-height: 38px; font-weight: 500">Completar treino</h1>
+    </header>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 20px; align-items: start">
+      <div style="display: flex; flex-direction: column; gap: 16px">
+        <section aria-labelledby="d-voz" style="background: #161a26; border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 10px">
+          <label id="d-voz" for="d-frase" style="font-size: 16px; line-height: 22px; font-weight: 500">Diga como foi</label>
+          <textarea id="d-frase" rows="2" style="width: 100%; box-sizing: border-box; min-height: 60px; padding: 10px 12px; background: #1f2433; border: 1px solid #2a3042; border-radius: 10px; color: #f2f2f7; font-family: Outfit, system-ui, sans-serif; font-size: 15px; line-height: 22px; resize: none">RPE 7, dormi 7 e meia, canela esquerda 3</textarea>
+          <div style="display: flex; gap: 8px; align-items: flex-start; font-size: 13px; line-height: 18px">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink: 0; margin-top: 1px"><path d="M5 12l5 5l10 -10"/></svg>
+            <span>Entendi: RPE 7, sono 7,5 h, canela esquerda 3. Confira os campos marcados antes de salvar.</span>
+          </div>
+          <span style="font-size: 12px; line-height: 16px; color: #a3a9b8">No computador, use o ditado do sistema ou digite.</span>
+        </section>
+
+        <section aria-labelledby="d-perc" style="background: #161a26; border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 12px">
+          <h2 id="d-perc" style="margin: 0; font-size: 16px; line-height: 22px; font-weight: 500">Percepção e recuperação</h2>
+          <span style="font-size: 13px; line-height: 18px; color: #a3a9b8">Esforço (RPE) <span style="color: #22d3ee">· pela fala</span></span>
+          <div role="group" aria-label="Esforço (RPE)" style="display: grid; grid-template-columns: repeat(11, minmax(0, 1fr)); gap: 4px">
+            <button aria-pressed="false" style="min-height: 44px; border: 1px solid #2a3042; border-radius: 8px; background: #1f2433; color: #f2f2f7; font-family: Outfit, system-ui, sans-serif">0</button>
+            <button aria-pressed="false" style="min-height: 44px; border: 1px solid #2a3042; border-radius: 8px; background: #1f2433; color: #f2f2f7; font-family: Outfit, system-ui, sans-serif">1</button>
+            <button aria-pressed="false" style="min-height: 44px; border: 1px solid #2a3042; border-radius: 8px; background: #1f2433; color: #f2f2f7; font-family: Outfit, system-ui, sans-serif">2</button>
+            <button aria-pressed="false" style="min-height: 44px; border: 1px solid #2a3042; border-radius: 8px; background: #1f2433; color: #f2f2f7; font-family: Outfit, system-ui, sans-serif">3</button>
+            <button aria-pressed="false" style="min-height: 44px; border: 1px solid #2a3042; border-radius: 8px; background: #1f2433; color: #f2f2f7; font-family: Outfit, system-ui, sans-serif">4</button>
+            <button aria-pressed="false" style="min-height: 44px; border: 1px solid #2a3042; border-radius: 8px; background: #1f2433; color: #f2f2f7; font-family: Outfit, system-ui, sans-serif">5</button>
+            <button aria-pressed="false" style="min-height: 44px; border: 1px solid #2a3042; border-radius: 8px; background: #1f2433; color: #f2f2f7; font-family: Outfit, system-ui, sans-serif">6</button>
+            <button aria-pressed="true" style="min-height: 44px; border: 1px solid #22d3ee; border-radius: 8px; background: #22d3ee; color: #0d0f1a; font-family: Outfit, system-ui, sans-serif">7</button>
+            <button aria-pressed="false" style="min-height: 44px; border: 1px solid #2a3042; border-radius: 8px; background: #1f2433; color: #f2f2f7; font-family: Outfit, system-ui, sans-serif">8</button>
+            <button aria-pressed="false" style="min-height: 44px; border: 1px solid #2a3042; border-radius: 8px; background: #1f2433; color: #f2f2f7; font-family: Outfit, system-ui, sans-serif">9</button>
+            <button aria-pressed="false" style="min-height: 44px; border: 1px solid #2a3042; border-radius: 8px; background: #1f2433; color: #f2f2f7; font-family: Outfit, system-ui, sans-serif">10</button>
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px">
+            <div style="display: flex; flex-direction: column; gap: 6px"><label for="d-sono" style="font-size: 13px; color: #a3a9b8">Sono na véspera (h) <span style="color: #22d3ee">· pela fala</span></label><input id="d-sono" type="text" value="7,5" style="height: 44px; box-sizing: border-box; padding: 0 12px; background: #1f2433; border: 1px solid #22d3ee; border-radius: 8px; color: #f2f2f7; font-family: Outfit, system-ui, sans-serif; font-size: 16px"></div>
+            <div style="display: flex; flex-direction: column; gap: 6px"><label for="d-dor" style="font-size: 13px; color: #a3a9b8">Dor muscular (0–10)</label><input id="d-dor" type="text" value="3" style="height: 44px; box-sizing: border-box; padding: 0 12px; background: #1f2433; border: 1px solid #22d3ee; border-radius: 8px; color: #f2f2f7; font-family: Outfit, system-ui, sans-serif; font-size: 16px"></div>
+          </div>
+          <span style="font-size: 12px; color: #a3a9b8">Dor muscular preenchida com a maior dor do mapa do corpo. Você pode mudar.</span>
+        </section>
+
+        <section aria-labelledby="d-eq" style="background: #161a26; border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 8px">
+          <label id="d-eq" for="d-tenis" style="font-size: 16px; line-height: 22px; font-weight: 500">Tênis</label>
+          <select id="d-tenis" style="height: 44px; padding: 0 10px; background: #1f2433; border: 1px solid #2a3042; border-radius: 8px; color: #f2f2f7; font-family: Outfit, system-ui, sans-serif; font-size: 15px"><option selected>Tênis de treino · 512 de 600 km</option></select>
+          <span style="font-size: 12px; color: #a3a9b8">Com este treino: 518 km. O aviso começa nos 540 km.</span>
+        </section>
+      </div>
+
+      <section aria-labelledby="d-corpo" style="background: #161a26; border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 12px">
+        <div style="display: flex; justify-content: space-between; align-items: baseline">
+          <h2 id="d-corpo" style="margin: 0; font-size: 16px; line-height: 22px; font-weight: 500">Onde doeu?</h2>
+          <span style="font-size: 12px; color: #a3a9b8">clique na região</span>
+        </div>
+        <div style="position: relative; width: 340px; height: 410px; margin: 0 auto">
+          <svg width="340" height="410" viewBox="0 0 340 410" role="img" aria-label="Mapa do corpo com a canela esquerda marcada com dor 3" style="position: absolute; inset: 0">
+            <g fill="#1f2433" stroke="#2a3042" stroke-width="1">
+              <circle cx="85" cy="26" r="17"/><rect x="79" y="42" width="12" height="12"/><rect x="55" y="52" width="60" height="108" rx="14"/><rect x="57" y="152" width="56" height="40" rx="10"/>
+              <rect x="37" y="56" width="15" height="100" rx="7"/><rect x="35" y="152" width="13" height="58" rx="6"/><rect x="118" y="56" width="15" height="100" rx="7"/><rect x="122" y="152" width="13" height="58" rx="6"/>
+              <rect x="58" y="188" width="25" height="92" rx="10"/><rect x="87" y="188" width="25" height="92" rx="10"/><rect x="59" y="278" width="23" height="26" rx="8"/><rect x="88" y="278" width="23" height="26" rx="8"/>
+              <rect x="60" y="302" width="21" height="64" rx="8"/><rect x="89" y="302" width="21" height="64" rx="8"/><rect x="57" y="364" width="26" height="18" rx="6"/><rect x="87" y="364" width="26" height="18" rx="6"/>
+              <circle cx="255" cy="26" r="17"/><rect x="249" y="42" width="12" height="12"/><rect x="225" y="52" width="60" height="108" rx="14"/><rect x="227" y="152" width="56" height="40" rx="10"/>
+              <rect x="207" y="56" width="15" height="100" rx="7"/><rect x="205" y="152" width="13" height="58" rx="6"/><rect x="288" y="56" width="15" height="100" rx="7"/><rect x="292" y="152" width="13" height="58" rx="6"/>
+              <rect x="228" y="188" width="25" height="92" rx="10"/><rect x="257" y="188" width="25" height="92" rx="10"/><rect x="229" y="278" width="23" height="26" rx="8"/><rect x="258" y="278" width="23" height="26" rx="8"/>
+              <rect x="230" y="302" width="21" height="64" rx="8"/><rect x="259" y="302" width="21" height="64" rx="8"/><rect x="227" y="364" width="26" height="18" rx="6"/><rect x="257" y="364" width="26" height="18" rx="6"/>
+            </g>
+            <rect x="89" y="304" width="21" height="60" rx="7" fill="rgba(251, 191, 36, 0.5)" stroke="#22d3ee" stroke-width="2"/>
+            <text x="99.5" y="338" text-anchor="middle" font-family="Outfit, system-ui, sans-serif" font-size="11" font-weight="500" fill="#0d0f1a">3</text>
+            <g font-family="Outfit, system-ui, sans-serif" font-size="11" fill="#a3a9b8" text-anchor="middle">
+              <text x="85" y="404">Frente</text><text x="255" y="404">Costas</text>
+              <text x="18" y="240">D</text><text x="152" y="240">E</text><text x="188" y="240">E</text><text x="322" y="240">D</text>
+            </g>
+          </svg>
+        </div>
+        <div style="display: flex; align-items: center; gap: 10px; background: #1f2433; border-radius: 12px; padding: 8px 10px">
+          <span style="flex-grow: 1; font-size: 14px">Canela esquerda</span>
+          <button aria-label="Diminuir a dor" style="width: 44px; height: 44px; border: 1px solid #2a3042; border-radius: 10px; background: #161a26; color: #f2f2f7">−</button>
+          <span style="min-width: 44px; text-align: center; font-size: 20px; font-weight: 500">3</span>
+          <button aria-label="Aumentar a dor" style="width: 44px; height: 44px; border: 1px solid #2a3042; border-radius: 10px; background: #161a26; color: #f2f2f7">+</button>
+        </div>
+        <span style="font-size: 12px; color: #a3a9b8">Marcadas: Canela esquerda 3</span>
+      </section>
+    </div>
+
+    <div style="display: flex; justify-content: flex-end; gap: 12px; align-items: center">
+      <span style="font-size: 13px; color: #a3a9b8">Hidratação, fotos e notas continuam abaixo, como hoje.</span>
+      <a href="Resumo.dc.html" style="min-width: 220px; height: 44px; border-radius: 12px; background: #e8459a; color: #0d0f1a; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 500">Salvar treino</a>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

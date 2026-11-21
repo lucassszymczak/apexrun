@@ -4,7 +4,8 @@ App pessoal de análise de treinos (corrida e bike agora; natação depois), usa
 - **Fase 1 (publicada):** reconstruiu a página única antiga como app em `analise/app/`, com a nova identidade, mapa do trajeto, replay, fotos, privacidade e cards de compartilhamento.
 - **Fase 2 (publicada):** treinos do Garmin entrando sozinhos, trajeto nos dois aparelhos e a leitura do treino (história, vento, deriva, tiros, melhores esforços e custo da subida). Roteiro em `docs/roteiro-fase2.md`; telas em `design/telas-fase2/`.
 - **Fase 4 · Planejamento (publicada):** percurso da prova, plano de prova km a km, simulador de meta e melhor horário para correr amanhã. Roteiro em `docs/roteiro-fase4.md`; telas em `design/telas-fase4/`.
-- **Fase 3 · Evolução:** mapa de calor, segmentos encontrados pelo app, replay com fantasma e consistência por semanas. Roteiro em `docs/roteiro-fase3.md`; telas em `design/telas-fase3/`.
+- **Fase 3 · Evolução (publicada):** mapa de calor, segmentos encontrados pelo app, replay com fantasma e consistência por semanas. Roteiro em `docs/roteiro-fase3.md`; telas em `design/telas-fase3/`.
+- **Fase 5 · Rotina:** "Diga como foi" (voz pelo teclado), mapa do corpo, equipamentos (tênis, pneus e corrente), resumo pós-treino e retrospectiva do ciclo com Stories. Roteiro em `docs/roteiro-fase5.md`; telas em `design/telas-fase5/`.
 
 Fale com o Lucas em português do Brasil, de forma curta. Ele não é desenvolvedor: explique decisões técnicas em uma linha, sem jargão.
 
@@ -26,7 +27,7 @@ Fale com o Lucas em português do Brasil, de forma curta. Ele não é desenvolve
 
 ## Cálculos novos (a partir da Fase 2)
 
-- Só entram depois que o Lucas aprova a fórmula por escrito (`docs/fase2-formulas.md`, `docs/fase4-formulas.md`, `docs/fase3-formulas.md`), com fonte publicada, limiares, confiança e os casos em que o item não aparece.
+- Só entram depois que o Lucas aprova a fórmula por escrito (`docs/fase2-formulas.md`, `docs/fase4-formulas.md`, `docs/fase3-formulas.md`, `docs/fase5-formulas.md`), com fonte publicada, limiares, confiança e os casos em que o item não aparece.
 - Fórmulas já aprovadas são reaproveitadas por importação, nunca copiadas (por exemplo, `correcaoHadley` de `leitura.mjs` e `gradeCostMult` e `riegel` do `engine.mjs`).
 - Previsões ("tempo realista", "melhor horário") sempre mostram faixa ou confiança e a frase "estimativa, não garantia". Nada de prever ganho de treino.
 - Ficam em módulos novos e puros em `analise/` (por exemplo `laps.mjs`, `efforts.mjs`, `leitura.mjs`, `wind.mjs`), com testes `node`. Eles importam do `engine.mjs` o que precisam; não copiam nem alteram fórmulas existentes.
@@ -53,6 +54,11 @@ Fale com o Lucas em português do Brasil, de forma curta. Ele não é desenvolve
   - passagens de cada treino em `leitura.segmentos`: tempo, tempo ajustado (só corrida), FC e precisão;
   - meta semanal em horas em `athlete`;
   - o mapa de calor é calculado no aparelho a partir dos trajetos e não tem dado próprio sincronizado.
+- Fase 5 (campos opcionais e aditivos):
+  - catálogo de equipamentos: tênis (nome, início, limite em km, aposentado) e peças da bike (pneus e corrente, com o histórico de trocas e o limite opcional);
+  - em cada treino: o equipamento usado e as regiões de dor (`dorRegioes`: região, lado e intensidade de 0 a 10);
+  - os campos de hoje (RPE, sono em horas, `soreness`, `pain`, hidratação, notas) não mudam de formato nem de significado;
+  - a retrospectiva e os Stories são calculados na hora e não têm dado próprio.
 - Servidores que recebem dado pessoal, e só estes:
   - o Supabase (sync opcional, trajeto leve e a chave do Garmin criptografada);
   - o Open-Meteo (clima, vento e previsão, por coordenada e horário);
@@ -226,6 +232,26 @@ Contrastes do tema claro: `#0E7490` sobre branco 5,4:1 e sobre `#EEF0F5` 4,7:1; 
   - a diferença em texto: "Fantasma 12 s à frente" em `--atencao`, "Você 8 s à frente" em `--ok`;
   - o padrão é "Sem fantasma".
 
+### Componentes da Fase 5
+
+- **"Diga como foi":**
+  - campo de texto no topo do Completar, com a dica do microfone do teclado e o botão "Preencher pela frase";
+  - cada campo preenchido pela frase ganha contorno `--ciano-forte` e a marca "· pela fala";
+  - a linha "Entendi: …" lista em palavras o que foi entendido.
+- **Mapa do corpo:**
+  - frente e costas lado a lado, com "D" e "E" escritos;
+  - cada região é um `<button>` com `aria-label` (nome, lado e dor);
+  - intensidade de 1 a 3 em `--atencao` a 50%, de 4 a 6 em `--atencao` e de 7 a 10 em `--alerta`, sempre com o número dentro da região;
+  - a região selecionada ganha contorno `--ciano`;
+  - o seletor de intensidade tem − e + de 44 px;
+  - a lista "Marcadas: …" aparece em palavras.
+- **Barra de equipamento:** `--ciano` até 90% do limite, `--atencao` a partir de 90%, com "N de M km" escrito. Sem limite: só os km, e o link "Definir limite".
+- **"O que mudou" (Resumo):**
+  - linhas com ícone num círculo de 32 px: losango violeta (seu melhor), check `--ok` (semana consistente), seta `--ciano` (equipamento);
+  - só entram as mudanças reais.
+- **Retrospectiva:** blocos com rótulo em caixa alta pequena e título-conclusão. Os gráficos seguem as regras de sempre (barras do zero, destaque em `--ciano`).
+- **Stories da retrospectiva:** cards 9:16 em `--noite`, com um número grande por card e a marca no pé. Nenhum mapa.
+
 ## Área segura do iPhone
 
 - `<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">`. Use `--safe-top`, `--safe-bottom`, `--safe-left` e `--safe-right` (`design/tokens.css`; valem `env(safe-area-inset-*)`). Nunca use o `env()` direto no componente.
@@ -272,4 +298,8 @@ Contrastes do tema claro: `#0E7490` sobre branco 5,4:1 e sobre `#EEF0F5` 4,7:1; 
 - Não mostrar o mapa de calor nem os segmentos em card, compartilhamento ou sincronização com outras pessoas: eles revelam onde o Lucas mora.
 - Não calcular "tempo ajustado" de pedal: as fórmulas de inclinação e clima do app são de corrida.
 - Não contar sequência de dias seguidos: a consistência é por semana, e o descanso conta a favor.
+- Não salvar nada do que veio da frase falada sem o Lucas conferir, e não ligar sozinho o "Dor articular ou suspeita de lesão".
+- Não dar diagnóstico nem alerta de saúde a partir do mapa do corpo.
+- Não mandar aviso no celular (push): os avisos ficam dentro do app.
+- Não usar serviço de reconhecimento de voz: a voz vem do microfone do teclado do aparelho.
 - Não fazer commit ou push sem o Lucas pedir. Trabalhe em branch.
