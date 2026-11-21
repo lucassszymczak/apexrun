@@ -143,4 +143,20 @@ LEITURA_DOCS.push(
     fonte: 'Regra do app, aprovada em 21/11/2026 (docs/fase5-formulas.md, item 5).',
   },
 );
+LEITURA_DOCS.push(
+  {
+    key: 'diga-como-foi', name: 'Diga como foi', cat: 'Rotina', conf: 'A do ditado do aparelho',
+    desc: 'O app lê a frase que você ditou e preenche RPE, sono, regiões de dor e o tênis. Nada é salvo sem você conferir. O que ele não entende fica em branco.',
+    formula: 'lê só ao tocar em "Preencher pela frase"; ignora maiúsculas, acentos e pontuação\nnúmeros em algarismo ou por extenso (zero a dez), "e meia", 7h30, 7:30, "7 horas e 20"\nRPE: rpe, rp, erre pê é, esforço (0 a 10) · sono: dormi, sono (0 a 14 h)\nregiões: as 19 do mapa, com sinônimos; lado: esquerda, direita, nas duas\nregião sem lado ou sem intensidade fica pendente (o app não chuta)\n"dor articular" ou "lesão" nunca ligam o interruptor: só aparece um aviso',
+    fields: 'O texto do campo. A voz vem do microfone do teclado do aparelho; nenhum serviço externo.',
+    fonte: 'Regra do app, aprovada em 21/11/2026 (docs/fase5-formulas.md, item 1).',
+  },
+  {
+    key: 'dor-mapa', name: 'Dor muscular e mapa do corpo', cat: 'Rotina', conf: 'A do seu registro',
+    desc: 'Ao marcar regiões, a dor muscular vem preenchida com a maior intensidade marcada, só se o campo estava vazio. Você pode mudar. Ela entra na prontidão como sempre (2,5 pontos por ponto de dor).',
+    formula: 'dor muscular = a maior intensidade marcada no mapa (0 a 10)\nsó preenche se o campo estava vazio; se você digitar, o mapa não muda mais o valor\nprontidão: a fórmula do motor não muda (−2,5 por ponto de dor muscular)\no mapa registra só o dia de treino; sem diagnóstico e sem alerta',
+    fields: 'As regiões marcadas no Completar (dorRegioes: região, lado e intensidade).',
+    fonte: 'Regra do app, aprovada em 21/11/2026 (docs/fase5-formulas.md, item 2, opção a).',
+  },
+);
 export const leituraDoc = (k: string): Doc | null => LEITURA_DOCS.find((d) => d.key === k || d.name === k) || null;

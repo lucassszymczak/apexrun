@@ -1,7 +1,7 @@
 // Formulário de treino — "Completar" (depois do .FIT), registro à mão e edição.
 // Mesmos campos e regras do modal do app antigo (openModal/saveModal), no layout
 // aprovado (design/telas/Importar.dc.html).
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { IconCircleCheck, IconAlertTriangle, IconCloud, IconChevronLeft, IconPhotoPlus, IconX } from '@tabler/icons-react';
 import * as E from '../../engine.mjs';
 import { useApex } from '../store';
@@ -13,6 +13,8 @@ import { preparePhoto, OFF_ROUTE_SEC } from '../photos';
 import { privacyOf, privacyLabel, type Privacy } from '../privacy';
 import { PrivacySheet, PrivacyIcon } from './Privacidade';
 import { CampoEquip } from './Equipamentos';
+import { DigaComoFoi, MapaCorpo, Pendencias, listaMarcadas, regsDe, listaDe, type Regs } from './Corpo';
+import { chave, type Leitura, type Pendente } from '../../fala.mjs';
 import { padraoPara } from '../../equipamentos.mjs';
 import { RUN_TYPES, BIKE_TYPES, formFrom, extrasOf, buildWorkout, findDuplicate, commitWorkout, type FormVals } from '../actions';
 
@@ -34,6 +36,29 @@ export function TreinoForm({ id = null, prefill = null, fromFit = false, onCance
   const [dup, setDup] = useState<{ w: any; match: any; same: boolean } | null>(null);
   const set = (k: string, v: string | boolean) => setF((o) => ({ ...o, [k]: v }));
   // Fase 5: equipamento (treino salvo: o que já tinha; novo: o padrão da modalidade)
+  // Fase 5: mapa do corpo e "Diga como foi"
+  const [regs, setRegs] = useState<Regs>(() => regsDe(src && src.dorRegioes));
+  const [selR, setSelR] = useState<string | null>(null);
+  const [pendF, setPendR] = useState<Pendente[]>([]);
+  const [pelaFala, setPelaFala] = useState<Record<string, boolean>>({});
+  // dor muscular vem com a maior dor do mapa (regra aprovada, opção a) só se o campo estava vazio;
+  // se você digitar no campo, o mapa para de mudar o valor
+  const [soreFonte, setSoreFonte] = useState<'vazio' | 'mapa' | 'manual'>(() => (src && src.soreness != null ? 'manual' : 'vazio'));
+  useEffect(() => {
+    if (soreFonte === 'manual') return;
+    const vs = Object.values(regs).filter((v) => v > 0);
+    if (vs.length) { set('sore', String(Math.max(...vs))); setSoreFonte('mapa'); }
+    else if (soreFonte === 'mapa') { set('sore', ''); setSoreFonte('vazio'); }
+  }, [regs]);
+  const doMapa = soreFonte === 'mapa';
+  const onFala = (r: Leitura) => {
+    const pf: Record<string, boolean> = {};
+    if (r.rpe != null) { set('rpe', String(r.rpe)); pf.rpe = true; }
+    if (r.sono != null) { set('sleep', String(r.sono)); pf.sleep = true; }
+    if (r.gearId) { const e = ((st.athlete && st.athlete.equipamentos) || []).find((x: any) => x.id === r.gearId); if (e && (e.tipo === 'bike') === (f.modal === 'bike')) { setGear(r.gearId); pf.gear = true; } }
+    if (r.regioes.length) { const nr = { ...regs }; for (const g of r.regioes) nr[chave(g.id, g.lado)] = g.int; setRegs(nr); setSelR(chave(r.regioes[0].id, r.regioes[0].lado)); pf.regs = true; }
+    setPendR(r.pendentes); setPelaFala(pf);
+  };
   const [gear, setGear] = useState<string>(() => (w ? w.gearId || '' : (src && src.gearId) || padraoPara(String(formFrom(src).modal), st.athlete && st.athlete.equipamentos, st.workouts) || ''));
   // privacidade (vem do padrão) e fotos do percurso (Etapa 3)
   const [priv, setPriv] = useState<Privacy>(() => privacyOf(src, st.athlete));
@@ -61,7 +86,7 @@ export function TreinoForm({ id = null, prefill = null, fromFit = false, onCance
     // treino novo: guarda a privacidade escolhida (o padrão, se não mexeu); edição: só se mudou ou já tinha
     const ex0 = !w || privTouched || (w && w.privacy) ? { ...extras, privacy: priv } : extras;
     const gOk = gear && ((st.athlete && st.athlete.equipamentos) || []).some((e: any) => e.id === gear && (e.tipo === 'bike') === (f.modal === 'bike'));
-    const ex = { ...ex0, gearId: gOk ? gear : null };
+    const ex = { ...ex0, gearId: gOk ? gear : null, dorRegioes: listaDe(regs) };
     const r = buildWorkout(f, ex, w ? w.id : null);
     if ('error' in r) { setErr(r.error); return; }
     setErr(null);
@@ -119,6 +144,40 @@ export function TreinoForm({ id = null, prefill = null, fromFit = false, onCance
     {top}
     <form className="col" onSubmit={(e) => { e.preventDefault(); save(); }} noValidate>
       {resumo}
+      <div className="form-2col">
+      <div className="col">
+      <DigaComoFoi equipamentos={(st.athlete && st.athlete.equipamentos) || []} onFill={onFala} />
+      <Card>
+        <div className="stack" style={{ gap: 2 }}><h2 className="lead">Percepção e recuperação</h2><p className="apoio muted">Só você sabe; o relógio não grava.</p></div>
+        <div className="field">
+          <span className="lab" id="rpe-l">Esforço (RPE){pelaFala.rpe ? <span className="pela-fala-tag"> · pela fala</span> : null}</span>
+          <div className={'row' + (pelaFala.rpe ? ' pela-fala' : '')} style={{ gap: 4, flexWrap: 'wrap' }} role="group" aria-labelledby="rpe-l">
+            {Array.from({ length: 11 }, (_, i) => String(i)).map((n) => (
+              <button key={n} type="button" className="chip" style={{ minWidth: 44, justifyContent: 'center', padding: '6px 0' }} aria-pressed={f.rpe === n} onClick={() => set('rpe', f.rpe === n ? '' : n)}>{n}</button>
+            ))}
+          </div>
+          <div className="row between help"><span>muito leve</span><span>máximo</span></div>
+        </div>
+        <div className="form-grid">
+          <Field id="f_sleep" label={'Sono na véspera (h)' + (pelaFala.sleep ? ' · pela fala' : '')}>{inp('sleep', { type: 'number', step: '0.5', inputMode: 'decimal', placeholder: 'ex.: 7,5', className: pelaFala.sleep ? 'pela-fala' : undefined })}</Field>
+          <Field id="f_sore" label={'Dor muscular (0–10)' + (doMapa ? ' · do mapa do corpo' : '')}>{inp('sore', { type: 'number', min: 0, max: 10, inputMode: 'numeric', placeholder: 'ex.: 2', className: doMapa ? 'pela-fala' : undefined, onChange: (e: any) => { set('sore', e.target.value); setSoreFonte(e.target.value === '' ? 'vazio' : 'manual'); } })}</Field>
+        </div>
+        <span className="hint">{doMapa ? 'Preenchida com a maior dor do mapa do corpo. Você pode mudar.' : 'Se marcar regiões no corpo, a maior dor vem preenchida aqui.'}</span>
+        <label className="switch"><span className="stack" style={{ gap: 0 }}><span>Dor articular ou suspeita de lesão</span><span className="help">Liga o alerta de recuo no Hoje</span></span>
+          <input type="checkbox" role="switch" checked={!!f.pain} onChange={(e) => set('pain', e.target.checked)} /></label>
+      </Card>
+      </div>
+      <div className="col">
+      <section className="card corpo" aria-labelledby="h-corpo">
+        <div className="row between" style={{ alignItems: 'baseline' }}><h2 id="h-corpo" className="lead">Onde doeu?{pelaFala.regs ? <span className="pela-fala-tag"> · pela fala</span> : null}</h2><span className="apoio muted">toque na região</span></div>
+        <Pendencias pend={pendF} onLado={(p, l) => { const k = chave(p.id, l); setRegs({ ...regs, [k]: p.int != null ? p.int : (regs[k] || 0) }); setSelR(k); setPendR(pendF.filter((x) => x !== p)); }} onSel={(k) => { setSelR(k); setPendR(pendF.filter((x) => chave(x.id, x.lado) !== k)); }} />
+        <MapaCorpo regs={regs} setRegs={setRegs} sel={selR} setSel={setSelR} />
+        <p className="apoio" aria-live="polite">{listaMarcadas(regs)}</p>
+        <span className="hint">Registro só do dia de treino. O app mostra o padrão; não faz diagnóstico.</span>
+      </section>
+      </div>
+      </div>
+
       <Card>
         <CardH title="Tipo de treino" />
         <div className="seg" role="group" aria-label="Modalidade" style={{ alignSelf: 'flex-start' }}>
@@ -135,24 +194,6 @@ export function TreinoForm({ id = null, prefill = null, fromFit = false, onCance
         <CampoEquip modal={f.modal as string} gear={gear} setGear={setGear} distKm={+String(f.dist || '').replace(',', '.') || 0} wid={w ? w.id : null} />
       </Card>
 
-      <Card>
-        <div className="stack" style={{ gap: 2 }}><h2 className="lead">Percepção e recuperação</h2><p className="apoio muted">Só você sabe; o relógio não grava.</p></div>
-        <div className="field">
-          <span className="lab" id="rpe-l">Esforço (RPE)</span>
-          <div className="row" style={{ gap: 4, flexWrap: 'wrap' }} role="group" aria-labelledby="rpe-l">
-            {Array.from({ length: 11 }, (_, i) => String(i)).map((n) => (
-              <button key={n} type="button" className="chip" style={{ minWidth: 44, justifyContent: 'center', padding: '6px 0' }} aria-pressed={f.rpe === n} onClick={() => set('rpe', f.rpe === n ? '' : n)}>{n}</button>
-            ))}
-          </div>
-          <div className="row between help"><span>muito leve</span><span>máximo</span></div>
-        </div>
-        <div className="form-grid">
-          <Field id="f_sleep" label="Sono na véspera (h)">{inp('sleep', { type: 'number', step: '0.5', inputMode: 'decimal', placeholder: 'ex.: 7,5' })}</Field>
-          <Field id="f_sore" label="Dor muscular (0–10)">{inp('sore', { type: 'number', min: 0, max: 10, inputMode: 'numeric', placeholder: 'ex.: 2' })}</Field>
-        </div>
-        <label className="switch"><span className="stack" style={{ gap: 0 }}><span>Dor articular ou suspeita de lesão</span><span className="help">Liga o alerta de recuo no Hoje</span></span>
-          <input type="checkbox" role="switch" checked={!!f.pain} onChange={(e) => set('pain', e.target.checked)} /></label>
-      </Card>
 
       <Card>
         <CardH title="Hidratação (ml)" />

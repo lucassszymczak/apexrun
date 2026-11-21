@@ -642,3 +642,32 @@ a.link-kpi { display: inline-flex; align-items: center; min-height: 44px; color:
 .eq-peca:last-child { border-bottom: 0; }
 .eq-aviso { gap: 10px; border: 1px solid var(--atencao); }
 .eq-campo { gap: 8px; }
+
+/* ---- "Diga como foi" e mapa do corpo (Fase 5 · Etapa 3) ---- */
+.diga { gap: 10px; }
+.diga textarea { min-height: 64px; }
+.diga-res .apoio { margin: 0; }
+.diga-pend { color: var(--texto-2); }
+.diga-aviso { display: inline-flex; gap: 6px; align-items: flex-start; color: var(--atencao); }
+.diga-pends { display: flex; flex-direction: column; gap: 6px; }
+.pela-fala { outline: 1px solid var(--ciano-forte); outline-offset: 2px; border-radius: var(--radius-sm); }
+input.pela-fala { outline: none; border-color: var(--ciano-forte) !important; }
+.pela-fala-tag { color: var(--ciano-forte); font-weight: 400; }
+.corpo { gap: 10px; }
+.corpo-box { position: relative; width: 340px; height: 410px; margin: 0 auto; max-width: 100%; }
+.corpo-svg { position: absolute; inset: 0; }
+.corpo-rot { font-size: 11px; fill: var(--texto-2); }
+.corpo-r { position: absolute; padding: 0; border-radius: 7px; border: 1px dashed color-mix(in srgb, var(--texto-2) 35%, transparent); color: var(--noite); font: 500 11px var(--font-brand, Outfit), system-ui, sans-serif; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+.corpo-r.tem { border: 1px solid var(--noite); }
+.corpo-r.on { border: 2px solid var(--ciano); }
+.corpo-r:focus-visible { outline: 2px solid var(--ciano); outline-offset: 2px; z-index: 2; }
+.corpo-int { display: flex; align-items: center; gap: 10px; background: var(--superficie-2); border-radius: var(--radius-md); padding: 8px 10px; }
+.corpo-pm { width: 44px; height: 44px; border: 1px solid var(--linha); border-radius: 10px; background: var(--superficie); color: var(--texto); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
+.corpo-pm:focus-visible { outline: 2px solid var(--ciano); outline-offset: 2px; }
+.corpo-v { min-width: 44px; text-align: center; font-size: 20px; font-weight: 500; }
+.corpo-lista-sel select { min-height: 44px; }
+.form-2col { display: flex; flex-direction: column; gap: 16px; }
+@media (min-width: 1024px) { .form-2col { display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 24px; align-items: start; } }
+/* número dentro da região: escuro no tema escuro; no claro, escuro sobre o âmbar claro e branco sobre âmbar/vermelho fortes */
+[data-theme="light"] .corpo-r.i1 { color: var(--texto); }
+[data-theme="light"] .corpo-r.i2 { color: var(--on-violeta); }
