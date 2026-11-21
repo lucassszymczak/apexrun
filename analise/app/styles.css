@@ -617,3 +617,9 @@ ol.passos li.total { border-bottom: 0; justify-content: space-between; color: va
 .fant-lista button[aria-checked="true"] b { color: var(--ciano-forte); }
 .fant-lista button:focus-visible { outline: 2px solid var(--ciano); outline-offset: 2px; }
 @media (min-width: 1024px) { .tv-ctl-colors { bottom: 176px; } }
+.mc-teclado { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.mc-teclado .apoio { text-align: center; flex: 1; }
+/* Etapa 6 · alvos de 44 px no Treino (herdados): velocidade do replay e puxador da gaveta */
+.tv-replay .seg button::after { top: -6px; bottom: -6px; }
+.tv-handle { height: 44px; }
+a.link-kpi { display: inline-flex; align-items: center; min-height: 44px; color: var(--ciano-forte); font-size: 13px; line-height: 18px; text-decoration: none; align-self: flex-start; }

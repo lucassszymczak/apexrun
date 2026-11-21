@@ -140,3 +140,33 @@ export function maisPerto(ag, lat, lon, maxM = 60) {
 // o que entra: modalidade separada; esteira e treino sem trajeto ficam de fora
 export const ehPedal = (w) => isBike(w);
 export const ehEsteira = (w) => !!w.indoor;
+
+// ---------------- acessibilidade (Etapa 6) ----------------
+// onde ficam as ruas mais frequentes, em relação ao desenho (sem endereço): "ao norte", "no centro"…
+export function regiaoMaisFrequente(ag) {
+  if (!ag.cont.size) return null;
+  let mx = 0; for (const v of ag.cont.values()) mx = Math.max(mx, v);
+  const fTop = faixaDe(mx);
+  let la0 = Infinity, la1 = -Infinity, lo0 = Infinity, lo1 = -Infinity, sla = 0, slo = 0, n = 0;
+  for (const [k, v] of ag.cont) {
+    const c = centro(k); la0 = Math.min(la0, c.lat); la1 = Math.max(la1, c.lat); lo0 = Math.min(lo0, c.lon); lo1 = Math.max(lo1, c.lon);
+    if (faixaDe(v) === fTop) { sla += c.lat; slo += c.lon; n++; }
+  }
+  const y = (sla / n - la0) / ((la1 - la0) || 1), x = (slo / n - lo0) / ((lo1 - lo0) || 1);
+  const ns = y > 0.62 ? 'norte' : y < 0.38 ? 'sul' : '', lo = x > 0.62 ? 'leste' : x < 0.38 ? 'oeste' : '';
+  const onde = !ns && !lo ? 'no centro' : ns && lo ? 'a ' + (ns === 'norte' ? 'nor' : 'su') + (lo === 'leste' ? 'deste' : 'doeste') : ns ? 'ao ' + ns : 'a ' + lo;
+  return { faixa: fTop, min: FAIXAS[fTop][0], onde };
+}
+// as ruas em ordem de frequência (para escolher pelo teclado), até n
+export function ruasOrdenadas(ag, n = 30) {
+  const ks = [...ag.cont.entries()].sort((a, b) => b[1] - a[1] || (a[0] < b[0] ? -1 : 1));
+  const usadas = new Set(), out = [];
+  for (const [k] of ks) {
+    if (usadas.has(k)) continue;
+    const r = rua(ag, k); if (!r) continue;
+    r.cells.forEach((c) => usadas.add(c));
+    if (r.cells.length >= 4) out.push(r); // trechos de 100 m ou mais
+    if (out.length >= n) break;
+  }
+  return out;
+}

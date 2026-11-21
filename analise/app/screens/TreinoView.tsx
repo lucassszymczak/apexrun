@@ -290,7 +290,7 @@ export function Treino({ id }: { id: string }) {
     <Card className="tv-fotos">
       <div className="row between" style={{ alignItems: 'flex-start' }}>
         <div className="stack" style={{ gap: 2 }}><h2 className="lead">Fotos do percurso</h2><p className="apoio muted">{tr ? 'Encaixadas no mapa pelo horário' : 'Sem trajeto salvo: as fotos ficam em Fora do percurso'}</p></div>
-        <button type="button" className="btn" style={{ minHeight: 40 }} onClick={() => photoRef.current?.click()} disabled={!!busy}><IconPhotoPlus size={18} stroke={1.75} aria-hidden="true" />Adicionar</button>
+        <button type="button" className="btn" style={{ minHeight: 44 }} onClick={() => photoRef.current?.click()} disabled={!!busy}><IconPhotoPlus size={18} stroke={1.75} aria-hidden="true" />Adicionar</button>
       </div>
       {onRoute.length ? <div className="photos-row">{onRoute.map((p, k) => (
         <figure key={p.id} className="photo-fig"><button type="button" onClick={() => setPhotoOpen(p.id)} aria-label={'Abrir a foto ' + (k + 1) + ', ' + photoWhere(tr, p)}><img src={p.url} alt="" /></button><figcaption>{photoWhere(tr, p)}</figcaption></figure>))}</div> : null}

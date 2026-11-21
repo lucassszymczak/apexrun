@@ -7,7 +7,7 @@ import { useApex } from '../store';
 import { href } from '../route';
 import { Kpi } from '../ui';
 import { dec, dayMon, workoutTitle } from '../fmt';
-import { maisPerto, rua, FAIXAS } from '../../calor.mjs';
+import { maisPerto, rua, FAIXAS, regiaoMaisFrequente, ruasOrdenadas } from '../../calor.mjs';
 import { useCalor, treinosDoRecorte, type Modal, type PerCalor } from '../calor-app';
 import { CalorSvg } from '../map/CalorSvg';
 import { COR_FAIXA, OPAC_FAIXA, LARG_FAIXA } from '../map/calor-estilo';
@@ -77,8 +77,14 @@ export function MapaCalor() {
   }, [C]);
 
   const n = C ? C.resumo.treinos : 0;
-  const desc = C ? `Mapa de calor de ${n} ${nome(modal, n)}: cerca de ${kmTxt(C.resumo.km)} km de ruas diferentes. ${C.resumo.faixas[4]} trechos de 25 m com 20 passagens ou mais.` : '';
-  const pick = (lat: number, lon: number, maxM: number) => { if (!C) return; const k = maisPerto(C.ag, lat, lon, maxM); setSel(k ? rua(C.ag, k) : null); setTodos(false); if (k) setAberta(true); };
+  const reg = useMemo(() => (C && n ? regiaoMaisFrequente(C.ag) : null), [C]);
+  const desc = C ? `Mapa de calor de ${n} ${nome(modal, n)}: cerca de ${kmTxt(C.resumo.km)} km de ruas diferentes.` + (reg ? ` As ruas mais frequentes, com ${reg.min} ${reg.min === 1 ? 'passagem' : 'passagens'} ou mais, ficam ${reg.onde} do mapa.` : '') : '';
+  // teclado: percorrer as ruas da mais frequente para a menos (sem precisar tocar no mapa)
+  const ruas = useMemo(() => (C && n ? ruasOrdenadas(C.ag, 30) : []), [C]);
+  const [ri, setRi] = useState(-1);
+  useEffect(() => { setRi(-1); }, [chave]);
+  const vaiRua = (d: number) => { if (!ruas.length) return; const i = ri < 0 ? (d > 0 ? 0 : ruas.length - 1) : (ri + d + ruas.length) % ruas.length; setRi(i); setSel(ruas[i]); setTodos(false); };
+  const pick = (lat: number, lon: number, maxM: number) => { if (!C) return; const k = maisPerto(C.ag, lat, lon, maxM); setSel(k ? rua(C.ag, k) : null); setRi(-1); setTodos(false); if (k) setAberta(true); };
   const doSel = useMemo(() => (sel ? st.workouts.filter((w: any) => sel.ids.includes(w.id)).sort((a: any, b: any) => String(b.date).localeCompare(String(a.date))) : []), [sel, st.workouts]);
   const semGarmin = C ? C.semTrajeto.filter((w: any) => w.garminActivityId) : [];
   const buscar = async () => { await buscarTrajetos(semGarmin.map((w: any) => w.id)); };
@@ -104,6 +110,12 @@ export function MapaCalor() {
         {doSel.length > 2 ? <button type="button" className="link mc-ver" aria-expanded={todos} onClick={() => setTodos(!todos)}>{todos ? 'Mostrar menos' : 'Ver os ' + doSel.length + ' treinos'}</button> : null}
       </div>
     ) : n ? <p className="mc-dica apoio">Toque numa rua para ver {modal === 'pedal' ? 'os pedais' : 'as corridas'} que passaram por ela.</p> : null}
+    {ruas.length ? (
+      <div className="mc-teclado" role="group" aria-label="Percorrer as ruas mais frequentes">
+        <button type="button" className="btn quiet sm" onClick={() => vaiRua(-1)} aria-label="Rua anterior">Anterior</button>
+        <span className="apoio muted tn" aria-live="polite">{ri >= 0 ? 'Rua ' + (ri + 1) + ' de ' + ruas.length + ', da mais frequente' : 'Ou percorra as ' + ruas.length + ' ruas mais frequentes'}</span>
+        <button type="button" className="btn quiet sm" onClick={() => vaiRua(1)} aria-label="Próxima rua">Próxima</button>
+      </div>) : null}
     {baixando ? <p className="hint" role="status">{baixando}</p> : null}
     {C && C.semTrajeto.length ? (
       <div className="mc-sem">
