@@ -63,3 +63,9 @@ As metas são 80, 95 e 90. Os 4 pontos de boas práticas são o `favicon.ico` qu
 - **Percurso real:** você ainda não tem o percurso da prova. Quando tiver uma gravação ou a altimetria, ele entra por Editar ciclo › Percurso.
 - **Âncora do tempo realista:** provas oficiais e os treinos que você marcar como "Prova" viram a âncora. Hoje, sem nenhum marcado, a âncora é o treino mais recente e a confiança fica Baixa.
 - **Herdado das fases anteriores:** o avatar do cabeçalho (36 px) e o seletor de período do Hoje (40 px) continuam abaixo de 44 px. Posso aumentar se você quiser.
+
+## Depois da pausa final (21/11)
+
+- **Critério 11, conferido pelo Lucas no iPhone:** a folha de compartilhar mostra "Salvar imagem", e o relógio da tela de bloqueio não cobre o plano. **Os 18 critérios estão atendidos.**
+- **Pedido do Lucas:** o avatar do cabeçalho (antes 36 px) e o seletor de período do Hoje (antes 40 px) passaram a ter 44 px também no desenho.
+- **Teste `fase4-telas`:** passou a conferir o cabeçalho.
