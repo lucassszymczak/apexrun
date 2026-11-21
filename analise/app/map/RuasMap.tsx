@@ -7,8 +7,23 @@ import { nearestGps, trechoIdx } from './TrackSvg';
 import { describeRoute } from './describe';
 
 export const STYLE = { dark: 'https://tiles.openfreemap.org/styles/dark', light: 'https://tiles.openfreemap.org/styles/positron' };
-const cssVar = (n: string) => getComputedStyle(document.documentElement).getPropertyValue(n).trim() || '#888';
-const resolve = (c: string) => (c.startsWith('var(') ? cssVar(c.slice(4, -1)) : c);
+export const cssVar = (n: string) => getComputedStyle(document.documentElement).getPropertyValue(n).trim() || '#888';
+export const resolve = (c: string) => (c.startsWith('var(') ? cssVar(c.slice(4, -1)) : c);
+
+// recolore água, terra e ruas do estilo com os tokens (também usado pelo mapa de calor)
+export function recolore(map: any) {
+  const water = cssVar('--noite'), land = cssVar('--superficie'), road = cssVar('--superficie-2');
+  for (const l of map.getStyle().layers || []) {
+    const id = String(l.id).toLowerCase();
+    try {
+      if (l.type === 'background') map.setPaintProperty(l.id, 'background-color', land);
+      else if (l.type === 'fill' && /water|ocean|river|lake/.test(id)) map.setPaintProperty(l.id, 'fill-color', water);
+      else if (l.type === 'fill' && /land|park|wood|grass|earth|residential|building/.test(id)) map.setPaintProperty(l.id, 'fill-color', land);
+      else if (l.type === 'line' && /water|river|stream/.test(id)) map.setPaintProperty(l.id, 'line-color', water);
+      else if (l.type === 'line' && /road|street|highway|path|track|transport|bridge|tunnel/.test(id)) map.setPaintProperty(l.id, 'line-color', road);
+    } catch { /* camada sem a propriedade */ }
+  }
+}
 
 function markerEl(cls: string, text?: string, label?: string) {
   const el = document.createElement('div');
@@ -69,18 +84,7 @@ export function RuasMap({ tr, band, bandKey, cursor, onPick, onFail, photos, onP
       map.on('load', () => {
         if (!S.current) return;
         S.current.ready = true; clearTimeout(timer);
-        // recolore água, terra e ruas com os tokens
-        const water = cssVar('--noite'), land = cssVar('--superficie'), road = cssVar('--superficie-2');
-        for (const l of map.getStyle().layers || []) {
-          const id = String(l.id).toLowerCase();
-          try {
-            if (l.type === 'background') map.setPaintProperty(l.id, 'background-color', land);
-            else if (l.type === 'fill' && /water|ocean|river|lake/.test(id)) map.setPaintProperty(l.id, 'fill-color', water);
-            else if (l.type === 'fill' && /land|park|wood|grass|earth|residential|building/.test(id)) map.setPaintProperty(l.id, 'fill-color', land);
-            else if (l.type === 'line' && /water|river|stream/.test(id)) map.setPaintProperty(l.id, 'line-color', water);
-            else if (l.type === 'line' && /road|street|highway|path|track|transport|bridge|tunnel/.test(id)) map.setPaintProperty(l.id, 'line-color', road);
-          } catch { /* camada sem a propriedade */ }
-        }
+        recolore(map);
         map.addSource('rota', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
         map.addSource('base', { type: 'geojson', data: { type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: tr.draw.filter((i) => tr.lat[i] != null).map((i) => [tr.lon[i], tr.lat[i]]) } } });
         map.addLayer({ id: 'base-borda', type: 'line', source: 'base', layout: { 'line-join': 'round', 'line-cap': 'round' }, paint: { 'line-color': cssVar('--noite'), 'line-width': 8 } });

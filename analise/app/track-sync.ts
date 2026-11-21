@@ -63,3 +63,21 @@ export async function syncTracks(): Promise<{ subiu: number; baixou: number } | 
     return { subiu, baixou };
   } catch { return null; } finally { rodando = false; }
 }
+
+// Mapa de calor (Fase 3 · Etapa 3): baixa a versão leve dos treinos que estão no servidor e
+// faltam neste aparelho (de 20 em 20). É o mesmo dado que o outro aparelho já sincronizou.
+export async function baixarLeves(ids: string[], onProg?: (feito: number, total: number) => void): Promise<number> {
+  if (!on() || !ids.length) return 0;
+  try {
+    const idx: { workout_id: string }[] = (await E.sbRpc('analise_tracks_index', { p_sync_id: await sid() })) || [];
+    const remoto = new Set(idx.map((r) => r.workout_id));
+    const alvo = ids.filter((id) => remoto.has(id));
+    let n = 0;
+    for (let i = 0; i < alvo.length; i += 20) {
+      for (const row of await getRemote(alvo.slice(i, i + 20))) { if (row && row.payload) { await putTrack(row.workout_id, fromLight(row.payload)); n++; } }
+      if (onProg) onProg(Math.min(alvo.length, i + 20), alvo.length);
+    }
+    return n;
+  } catch { return 0; }
+}
+export const syncLigado = on;

@@ -93,4 +93,13 @@ LEITURA_DOCS.push(
     fonte: 'Regra do app, aprovada em 21/11/2026 (docs/fase3-formulas.md, item 6).',
   },
 );
+LEITURA_DOCS.push(
+  {
+    key: 'mapa-calor', name: 'Mapa de calor', cat: 'Evolução', conf: 'Alta (contagem dos trajetos)',
+    desc: 'As ruas por onde você treinou, coloridas pelo número de treinos que passaram por elas. Cada treino conta uma vez por trecho de 25 m, mesmo que vá e volte. Só você vê.',
+    formula: 'o mapa é dividido em quadrículas de 25 m\ncada treino marca as quadrículas por onde passou (o trajeto é preenchido a cada 5 m), uma vez cada\npassagens da quadrícula = número de treinos que passaram por ela\nfaixas: 1–2 · 3–5 · 6–10 · 11–19 · 20 ou mais\nkm de ruas diferentes ≈ quadrículas × 25 m\nrua tocada = a quadrícula mais perto e as vizinhas com exatamente os mesmos treinos\ncorrida e pedal nunca se misturam',
+    fields: 'Trajeto com GPS salvo neste aparelho (completo ou a versão leve). Esteira, bike indoor e treinos sem trajeto ficam de fora, com aviso.',
+    fonte: 'Regra do app, aprovada em 21/11/2026 (docs/fase3-formulas.md, item 1).',
+  },
+);
 export const leituraDoc = (k: string): Doc | null => LEITURA_DOCS.find((d) => d.key === k || d.name === k) || null;

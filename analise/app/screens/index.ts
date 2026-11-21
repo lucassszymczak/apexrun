@@ -21,3 +21,4 @@ export { PlanoProva } from './PlanoProva';
 export { Simulador } from './Simulador';
 export { ConfigTreino, AmanhaCard } from './Amanha';
 export { Consistencia } from './Consistencia';
+export { MapaCalor } from './MapaCalor';

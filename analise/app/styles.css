@@ -539,3 +539,37 @@ ol.passos li.total { border-bottom: 0; justify-content: space-between; color: va
 .dias li.futuro .tt { color: var(--texto-3); }
 .cons-linha { display: inline-flex; align-items: center; min-height: 44px; font-size: 13px; line-height: 18px; font-weight: 500; text-decoration: none; }
 .cons-linha.ok { color: var(--ok); } .cons-linha.atencao { color: var(--atencao); } .cons-linha.ciano { color: var(--ciano-forte); }
+
+/* ---- Mapa de calor (Fase 3 · Etapa 3) ---- */
+.mc { --drawer-h: calc(200px + var(--safe-bottom)); }
+.mc.snap-mid { --drawer-h: 58vh; }
+.mc .tv-handle { height: 44px; }
+.mc-priv { display: inline-flex; align-items: center; gap: 6px; margin-right: 6px; padding: 4px 10px; border: 1px solid var(--linha); border-radius: var(--radius-pill); font-size: 12px; line-height: 16px; color: var(--texto-2); white-space: nowrap; }
+.mc-ctl { position: absolute; top: calc(var(--safe-top) + 76px); left: calc(12px + var(--safe-left)); right: calc(12px + var(--safe-right)); z-index: 6; display: flex; align-items: center; gap: 8px; }
+.mc-ctl .tf-per-btn.on-map { background: var(--painel-mapa); border-radius: var(--radius-pill); }
+.mc-ctl .tf-menu { left: 0; right: auto; }
+.mc-fundo { margin-left: auto; width: 44px; height: 44px; border-radius: var(--radius-pill); background: var(--painel-mapa); border: 1px solid var(--linha); color: var(--texto-2); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
+.mc-fundo.on { border-color: var(--ciano-forte); color: var(--ciano); }
+.mc-fundo:focus-visible { outline: 2px solid var(--ciano); outline-offset: 2px; }
+.mc-legenda { position: absolute; left: calc(12px + var(--safe-left)); bottom: 32px; z-index: 5; display: flex; align-items: center; gap: 6px; background: var(--painel-mapa); border: 1px solid var(--linha); border-radius: 10px; padding: 6px 10px; font-size: 11px; line-height: 14px; color: var(--texto-2); }
+.mc-legenda i { display: inline-block; width: 16px; border-radius: 2px; }
+.mc .trackmap.calor > svg { cursor: pointer; }
+.mc .mapzoom { top: auto; bottom: 84px; }
+.mc-rua { background: var(--superficie-2); border-radius: var(--radius-md); padding: 10px 12px; display: flex; flex-direction: column; gap: 4px; font-size: 13px; line-height: 18px; }
+.mc-lista { list-style: none; margin: 0; padding: 0; }
+.mc-lista a { display: flex; align-items: center; gap: 8px; min-height: 44px; color: var(--texto-2); text-decoration: none; border-top: 1px solid var(--linha); }
+.mc-lista a span:first-child { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mc-lista a:hover { color: var(--texto); }
+.mc-ver { align-self: flex-start; min-height: 44px; padding: 0; border: 0; background: transparent; color: var(--ciano-forte); font: inherit; font-size: 13px; cursor: pointer; text-align: left; }
+.mc-ver:disabled { opacity: 0.6; cursor: default; }
+.mc-dica { background: var(--superficie-2); border-radius: var(--radius-md); padding: 12px; color: var(--texto-2); margin: 0; }
+.mc-sem { display: flex; flex-direction: column; gap: 0; }
+.mc-sem .apoio { display: inline-flex; gap: 8px; align-items: flex-start; }
+.mc-sem .apoio svg { flex-shrink: 0; margin-top: 1px; }
+@media (max-width: 1023px) { .mc .trackmap.ruas .maplibregl-ctrl-top-right { top: 136px; } }
+@media (min-width: 1024px) {
+  .mc-ctl { right: auto; }
+  .mc-legenda { bottom: 16px; }
+  .mc .mapzoom { bottom: auto; top: 76px; }
+  .mc .tv-top { width: min(560px, calc(100% - 24px)); }
+}

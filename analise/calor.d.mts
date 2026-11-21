@@ -1,0 +1,18 @@
+/* eslint-disable */
+export declare const CALOR_V: number, CELULA_M: number, PASSO_M: number;
+export declare const FAIXAS: number[][];
+export type PorTreino = { id: string; cells: string[]; links: string[] };
+export type Agregado = { cont: Map<string, number>; quem: Map<string, string[]>; links: Set<string>; n: number };
+export declare function faixaDe(n: number): number;
+export declare function celula(lat: number, lon: number): string;
+export declare function centro(k: string): { lat: number; lon: number };
+export declare function vizinhas(k: string): string[];
+export declare function sequencia(lat: (number | null)[], lon: (number | null)[]): string[];
+export declare function doTreino(lat: (number | null)[], lon: (number | null)[]): { cells: string[]; links: string[] };
+export declare function agrega(porTreino: PorTreino[]): Agregado;
+export declare function resumo(ag: Agregado): { treinos: number; celulas: number; km: number; faixas: number[] };
+export declare function linhas(ag: Agregado): { faixa: number; cells: string[] }[];
+export declare function rua(ag: Agregado, k: string): { cells: string[]; ids: string[]; km: number } | null;
+export declare function maisPerto(ag: Agregado, lat: number, lon: number, maxM?: number): string | null;
+export declare function ehPedal(w: any): boolean;
+export declare function ehEsteira(w: any): boolean;
