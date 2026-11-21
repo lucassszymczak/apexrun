@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Percurso · sem arquivo</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500&amp;display=swap">
+<style>
+body{margin:0;background:#0d0f1a}
+a{color:#22d3ee;text-decoration:none}a:hover{color:#a5f3fc}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; overflow: hidden; box-sizing: border-box; background: #0d0f1a; color: #f2f2f7; font-family: Outfit, system-ui, sans-serif; padding: 56px 16px 34px; display: flex; flex-direction: column; gap: 20px">
+
+  <header style="display: flex; align-items: center; gap: 4px">
+    <a href="EditarCiclo.dc.html" aria-label="Voltar" style="width: 44px; height: 44px; margin-left: -10px; display: flex; align-items: center; justify-content: center; color: #f2f2f7">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l14 0"/><path d="M5 12l6 6"/><path d="M5 12l6 -6"/></svg>
+    </a>
+    <h1 style="margin: 0; font-size: 20px; line-height: 26px; font-weight: 500">Percurso da prova</h1>
+  </header>
+
+  <div style="display: flex; flex-direction: column; gap: 6px">
+    <h2 style="margin: 0; font-size: 22px; line-height: 28px; font-weight: 500">Com o percurso, o plano ajusta o pace a cada subida.</h2>
+    <p style="margin: 0; font-size: 14px; line-height: 20px; color: #a3a9b8">Escolha de onde ele vem. Quanto mais confiável a fonte, melhor o plano.</p>
+  </div>
+
+  <fieldset style="margin: 0; padding: 0; border: none; display: flex; flex-direction: column; gap: 10px">
+    <legend style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Fonte do percurso</legend>
+
+    <label style="display: flex; gap: 12px; align-items: flex-start; padding: 14px; border: 1px solid #22d3ee; border-radius: 12px; background: #161a26">
+      <input type="radio" name="fonte" checked style="margin: 2px 0 0; width: 18px; height: 18px; accent-color: #22d3ee">
+      <span style="display: flex; flex-direction: column; gap: 4px; flex-grow: 1">
+        <span style="display: flex; justify-content: space-between; gap: 8px; align-items: baseline">
+          <span style="font-size: 15px; line-height: 20px; font-weight: 500">Arquivo da prova</span>
+          <span style="display: inline-flex; align-items: center; gap: 4px; font-size: 12px; color: #34d399"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5l10 -10"/></svg>Confiança alta</span>
+        </span>
+        <span style="font-size: 13px; line-height: 18px; color: #a3a9b8">O GPX que o site da prova oferece, ou o percurso salvo no Garmin Connect.</span>
+      </span>
+    </label>
+
+    <label style="display: flex; gap: 12px; align-items: flex-start; padding: 14px; border: 1px solid #2a3042; border-radius: 12px; background: #161a26">
+      <input type="radio" name="fonte" style="margin: 2px 0 0; width: 18px; height: 18px; accent-color: #22d3ee">
+      <span style="display: flex; flex-direction: column; gap: 4px; flex-grow: 1">
+        <span style="display: flex; justify-content: space-between; gap: 8px; align-items: baseline">
+          <span style="font-size: 15px; line-height: 20px; font-weight: 500">Reconhecimento gravado</span>
+          <span style="display: inline-flex; align-items: center; gap: 4px; font-size: 12px; color: #34d399"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5l10 -10"/></svg>Alta ou moderada</span>
+        </span>
+        <span style="font-size: 13px; line-height: 18px; color: #a3a9b8">Grave o percurso de bike ou caminhando, em até 4 partes. O app junta na ordem.</span>
+      </span>
+    </label>
+
+    <label style="display: flex; gap: 12px; align-items: flex-start; padding: 14px; border: 1px solid #2a3042; border-radius: 12px; background: #161a26">
+      <input type="radio" name="fonte" style="margin: 2px 0 0; width: 18px; height: 18px; accent-color: #22d3ee">
+      <span style="display: flex; flex-direction: column; gap: 4px; flex-grow: 1">
+        <span style="display: flex; justify-content: space-between; gap: 8px; align-items: baseline">
+          <span style="font-size: 15px; line-height: 20px; font-weight: 500">Digitar a altimetria</span>
+          <span style="display: inline-flex; align-items: center; gap: 4px; font-size: 12px; color: #fbbf24"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 9v4"/><path d="M12 16h.01"/><circle cx="12" cy="12" r="9"/></svg>Confiança baixa</span>
+        </span>
+        <span style="font-size: 13px; line-height: 18px; color: #a3a9b8">Subida e descida de cada km, copiadas do site oficial. Você informa a fonte.</span>
+      </span>
+    </label>
+  </fieldset>
+
+  <div style="margin-top: auto; display: flex; flex-direction: column; gap: 4px">
+    <a href="Percurso.dc.html" style="height: 48px; border-radius: 12px; background: #e8459a; color: #0d0f1a; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 16px; font-weight: 500">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2"/><path d="M7 9l5 -5l5 5"/><path d="M12 4l0 12"/></svg>
+      Importar percurso
+    </a>
+    <a href="PlanoProva.dc.html" style="min-height: 44px; display: flex; align-items: center; justify-content: center; font-size: 14px">Seguir sem percurso</a>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

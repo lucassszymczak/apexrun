@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Ciclo de prova · editar</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500&amp;display=swap">
+<style>
+body{margin:0;background:#0d0f1a}
+a{color:#22d3ee;text-decoration:none}a:hover{color:#a5f3fc}
+</style>
+</helmet>
+<div style="width: 390px; height: 1060px; overflow: hidden; box-sizing: border-box; background: #0d0f1a; color: #f2f2f7; font-family: Outfit, system-ui, sans-serif; font-variant-numeric: tabular-nums; padding: 56px 16px 34px; display: flex; flex-direction: column; gap: 24px">
+
+  <header style="display: flex; align-items: center; gap: 4px">
+    <a href="PlanoProva.dc.html" aria-label="Voltar" style="width: 44px; height: 44px; margin-left: -10px; display: flex; align-items: center; justify-content: center; color: #f2f2f7">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l14 0"/><path d="M5 12l6 6"/><path d="M5 12l6 -6"/></svg>
+    </a>
+    <h1 style="margin: 0; font-size: 20px; line-height: 26px; font-weight: 500">Editar ciclo</h1>
+  </header>
+
+  <section aria-label="Prova" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px">
+    <div style="grid-column: 1 / -1; display: flex; flex-direction: column; gap: 6px">
+      <label for="nome" style="font-size: 13px; line-height: 18px; color: #a3a9b8">Nome da prova</label>
+      <input id="nome" type="text" value="Maratona" style="height: 44px; box-sizing: border-box; padding: 0 12px; background: #1f2433; border: 1px solid #2a3042; border-radius: 8px; color: #f2f2f7; font-family: Outfit, system-ui, sans-serif; font-size: 15px">
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 6px">
+      <label for="data" style="font-size: 13px; line-height: 18px; color: #a3a9b8">Data da prova</label>
+      <input id="data" type="text" value="28/03/2027" style="height: 44px; box-sizing: border-box; padding: 0 12px; background: #1f2433; border: 1px solid #2a3042; border-radius: 8px; color: #f2f2f7; font-family: Outfit, system-ui, sans-serif; font-size: 15px">
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 6px">
+      <label for="inicio" style="font-size: 13px; line-height: 18px; color: #a3a9b8">Início do ciclo</label>
+      <input id="inicio" type="text" value="06/10/2026" style="height: 44px; box-sizing: border-box; padding: 0 12px; background: #1f2433; border: 1px solid #2a3042; border-radius: 8px; color: #f2f2f7; font-family: Outfit, system-ui, sans-serif; font-size: 15px">
+    </div>
+  </section>
+
+  <fieldset style="margin: 0; padding: 0; border: none; display: flex; flex-direction: column; gap: 10px">
+    <legend style="padding: 0 0 10px; font-size: 16px; line-height: 22px; font-weight: 500">Objetivo</legend>
+    <div role="radiogroup" aria-label="Objetivo" style="display: flex; background: #161a26; border: 1px solid #2a3042; border-radius: 999px; padding: 3px">
+      <button role="radio" aria-checked="false" style="flex: 1; min-height: 40px; border: none; border-radius: 999px; background: transparent; color: #f2f2f7; font-family: Outfit, system-ui, sans-serif; font-size: 14px">Terminar bem</button>
+      <button role="radio" aria-checked="true" style="flex: 1; min-height: 40px; border: none; border-radius: 999px; background: #22d3ee; color: #0d0f1a; font-family: Outfit, system-ui, sans-serif; font-size: 14px; font-weight: 500">Tempo-alvo</button>
+    </div>
+    <div style="display: flex; align-items: flex-end; gap: 12px">
+      <div style="display: flex; flex-direction: column; gap: 6px; width: 120px">
+        <label for="alvo" style="font-size: 13px; line-height: 18px; color: #a3a9b8">Tempo-alvo (h:mm)</label>
+        <input id="alvo" type="text" inputmode="numeric" value="5:30" style="height: 44px; box-sizing: border-box; padding: 0 12px; background: #1f2433; border: 1px solid #22d3ee; border-radius: 8px; color: #f2f2f7; font-family: Outfit, system-ui, sans-serif; font-size: 18px; font-variant-numeric: tabular-nums">
+      </div>
+      <div style="display: flex; flex-direction: column; padding-bottom: 2px; font-size: 13px; line-height: 18px">
+        <span>pace médio 7:49/km</span>
+        <span style="color: #fbbf24">realista hoje: 5h40 a 5h55</span>
+      </div>
+    </div>
+    <a href="Simulador.dc.html" style="font-size: 13px; line-height: 18px; min-height: 44px; display: flex; align-items: center">Testar metas no simulador</a>
+    <span style="font-size: 12px; line-height: 16px; color: #a3a9b8">Em "Terminar bem", o plano usa a ponta mais lenta do seu tempo realista.</span>
+  </fieldset>
+
+  <fieldset style="margin: 0; padding: 0; border: none; display: flex; flex-direction: column; gap: 10px">
+    <legend style="padding: 0 0 10px; font-size: 16px; line-height: 22px; font-weight: 500">Estratégia</legend>
+    <label style="display: flex; gap: 12px; align-items: flex-start; padding: 14px; border: 1px solid #22d3ee; border-radius: 12px; background: #161a26">
+      <input type="radio" name="estrategia" checked style="margin: 2px 0 0; width: 18px; height: 18px; accent-color: #22d3ee">
+      <span style="display: flex; flex-direction: column; gap: 2px">
+        <span style="font-size: 15px; line-height: 20px; font-weight: 500">Esforço constante</span>
+        <span style="font-size: 13px; line-height: 18px; color: #a3a9b8">O mesmo esforço do início ao fim: mais lento nas subidas, mais rápido nas descidas.</span>
+      </span>
+    </label>
+    <label style="display: flex; gap: 12px; align-items: flex-start; padding: 14px; border: 1px solid #2a3042; border-radius: 12px; background: #161a26">
+      <input type="radio" name="estrategia" style="margin: 2px 0 0; width: 18px; height: 18px; accent-color: #22d3ee">
+      <span style="display: flex; flex-direction: column; gap: 2px">
+        <span style="font-size: 15px; line-height: 20px; font-weight: 500">Segunda metade mais rápida</span>
+        <span style="font-size: 13px; line-height: 18px; color: #a3a9b8">Começa mais contido e acelera depois da meia, no mesmo tempo final.</span>
+      </span>
+    </label>
+  </fieldset>
+
+  <section aria-labelledby="h-percurso" style="display: flex; flex-direction: column; gap: 10px">
+    <h2 id="h-percurso" style="margin: 0; font-size: 16px; line-height: 22px; font-weight: 500">Percurso</h2>
+    <div style="display: flex; align-items: center; gap: 12px; padding: 14px; border: 1px dashed #2a3042; border-radius: 12px">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#a3a9b8" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink: 0"><path d="M3 17l6 -6l4 4l8 -8"/><path d="M14 7l7 0l0 7"/></svg>
+      <span style="flex-grow: 1; font-size: 13px; line-height: 18px; color: #a3a9b8">Sem percurso, o plano sai só por ritmo, sem as subidas.</span>
+      <a href="PercursoVazio.dc.html" style="flex-shrink: 0; min-height: 44px; padding: 0 12px; display: flex; align-items: center; border: 1px solid #22d3ee; border-radius: 8px; font-size: 14px">Adicionar</a>
+    </div>
+  </section>
+
+  <details style="border-top: 1px solid #2a3042; padding-top: 4px">
+    <summary style="min-height: 44px; display: flex; align-items: center; font-size: 15px; cursor: pointer">Mais metas do ciclo (longão e volume)</summary>
+  </details>
+
+  <button style="margin-top: auto; height: 48px; border: none; border-radius: 12px; background: #e8459a; color: #0d0f1a; font-family: Outfit, system-ui, sans-serif; font-size: 16px; font-weight: 500">Salvar ciclo</button>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1060}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>
