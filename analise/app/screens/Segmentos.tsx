@@ -2,7 +2,7 @@
 // TreinoSegmentos). Lista por modalidade, detalhe (trecho, evolução, ranking, renomear) e a seção
 // "Segmentos deste treino". Só você vê: nada daqui vai para card, compartilhamento ou comunidade.
 import { useMemo, useState } from 'react';
-import { IconArrowUpRight, IconArrowDownRight, IconMinus, IconPencil, IconChevronRight, IconRoute, IconLock } from '@tabler/icons-react';
+import { IconArrowUpRight, IconArrowDownRight, IconMinus, IconPencil, IconGhost2, IconChevronRight, IconRoute, IconLock } from '@tabler/icons-react';
 import { useApex, getState, commit } from '../store';
 import { href } from '../route';
 import { PageHead } from '../Shell';
@@ -128,6 +128,10 @@ function SegDetalhe({ s, st, desk }: { s: Segmento; st: any; desk: boolean }) {
   const [ren, setRen] = useState<string | null>(null);
   const tr = useMemo(() => pseudoTrack(s), [s.id]);
   const linhas = todas ? R.rk : R.rk.slice(0, 5);
+  // "Comparar no replay": a passagem mais recente contra o seu melhor (ou o 2º, se a recente for o melhor)
+  const recente = R.ps.slice().sort((a, b) => b.date.localeCompare(a.date))[0];
+  const rival = recente ? R.rk.find((p) => p.wid !== recente.wid) : null;
+  const comparar = recente && rival ? href('treino', recente.wid) + '?fantasma=' + rival.wid + '&v0=' + recente.ini + '&f0=' + rival.ini + '&v1=' + (recente.ini + recente.t) + '&f1=' + (rival.ini + rival.t) : null;
   const salvarNome = () => {
     const nome = (ren || '').trim(); if (!nome) return;
     const S = getState(); const a: any = S.athlete; const x = (a.segmentos || []).find((o: any) => o.id === s.id); if (!x) return;
@@ -141,6 +145,7 @@ function SegDetalhe({ s, st, desk }: { s: Segmento; st: any; desk: boolean }) {
     </div>
     <div className="row wrap" style={{ gap: 8 }}>
       <button type="button" className="btn quiet sm" onClick={() => setRen(s.nome)}><IconPencil size={18} stroke={1.75} aria-hidden="true" />Renomear</button>
+      {comparar ? <a className="btn quiet sm" href={comparar}><IconGhost2 size={18} stroke={1.75} aria-hidden="true" />Comparar no replay</a> : null}
     </div>
     <div className="seg-mapa" aria-label="Desenho do trecho"><TrackSvg tr={tr} band={() => 0} palette={['var(--ciano)']} cursor={null} onPick={() => {}} /></div>
     <Evolucao ps={R.ps} corrida={R.corrida} />

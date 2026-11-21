@@ -43,9 +43,9 @@ function photoEl(p: MapPhoto, onPhoto?: (id: string) => void) {
   return b;
 }
 
-export function RuasMap({ tr, band, bandKey, cursor, onPick, onFail, photos, onPhoto, palette = PALETTE, marca, destaque, ate = null }: { tr: Track; band: (i: number) => number | null; bandKey: string; cursor: number | null; onPick: (i: number) => void; onFail: (why: string) => void; photos?: MapPhoto[]; onPhoto?: (id: string) => void; palette?: string[]; marca?: { i: number; label: string } | null; destaque?: { a: number; b: number } | null; ate?: number | null }) {
+export function RuasMap({ tr, band, bandKey, cursor, onPick, onFail, photos, onPhoto, palette = PALETTE, marca, destaque, ate = null, fantasma = null }: { fantasma?: { lat: number; lon: number; label: string } | null; tr: Track; band: (i: number) => number | null; bandKey: string; cursor: number | null; onPick: (i: number) => void; onFail: (why: string) => void; photos?: MapPhoto[]; onPhoto?: (id: string) => void; palette?: string[]; marca?: { i: number; label: string } | null; destaque?: { a: number; b: number } | null; ate?: number | null }) {
   const box = useRef<HTMLDivElement>(null);
-  const S = useRef<{ map: any; ml: any; cursor: any; marks: any[]; photos: any[]; ready: boolean } | null>(null);
+  const S = useRef<{ map: any; ml: any; cursor: any; marks: any[]; photos: any[]; ready: boolean; fant?: any } | null>(null);
   const photosRef = useRef<MapPhoto[]>(photos || []);
   photosRef.current = photos || [];
   const ateRef = useRef<number | null>(ate);
@@ -140,6 +140,13 @@ export function RuasMap({ tr, band, bandKey, cursor, onPick, onFail, photos, onP
   useEffect(() => { draw(); }, [bandKey, ate]);
   useEffect(() => { drawMarks(); }, [marca ? marca.i : -1]);
   useEffect(() => { drawDest(); }, [destaque ? destaque.a + ':' + destaque.b : '']);
+  // fantasma (Fase 3): círculo tracejado que anda no relógio do treino dele
+  useEffect(() => {
+    const s = S.current; if (!s || !s.ready) return;
+    if (!fantasma) { if (s.fant) { s.fant.remove(); s.fant = null; } return; }
+    if (!s.fant) s.fant = new s.ml.Marker({ element: markerEl('fant', undefined, fantasma.label) }).setLngLat([fantasma.lon, fantasma.lat]).addTo(s.map);
+    else s.fant.setLngLat([fantasma.lon, fantasma.lat]);
+  }, [fantasma ? fantasma.lat.toFixed(6) + ',' + fantasma.lon.toFixed(6) : '']);
   // ponto do replay
   useEffect(() => {
     const s = S.current; if (!s || !s.ready) return;
