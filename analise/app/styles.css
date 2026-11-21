@@ -514,3 +514,28 @@ ol.passos li.total { border-bottom: 0; justify-content: space-between; color: va
 /* alvo de toque de 44 px nos seletores segmentados, sem mudar o desenho (38 px) */
 .seg button { position: relative; }
 .seg button::after { content: ''; position: absolute; left: 0; right: 0; top: -3px; bottom: -3px; }
+
+/* ---- Consistência (Fase 3 · Etapa 2) ---- */
+.semanas { display: grid; grid-template-columns: repeat(auto-fill, 44px); gap: 6px; }
+.csw { width: 44px; height: 44px; border-radius: var(--radius-sm); display: inline-flex; align-items: center; justify-content: center; padding: 0; background: var(--superficie); border: 1px solid var(--linha); color: var(--texto-3); cursor: pointer; font: inherit; }
+.csw.consistente { background: color-mix(in srgb, var(--ok) 16%, transparent); border-color: var(--ok); color: var(--ok); }
+.csw.parcial { border-color: var(--atencao); color: var(--atencao); }
+.csw.andamento { border: 1px dashed var(--ciano); color: var(--ciano); }
+.csw.on { outline: 2px solid var(--texto); outline-offset: 2px; }
+.csw:focus-visible { outline: 2px solid var(--ciano); outline-offset: 2px; }
+.csw.mini { width: 20px; height: 20px; border-radius: 6px; cursor: default; }
+.legenda-sem { display: flex; flex-wrap: wrap; gap: 8px 16px; font-size: 13px; line-height: 18px; color: var(--texto-2); }
+.legenda-sem .item { display: inline-flex; align-items: center; gap: 6px; }
+.est { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; line-height: 18px; font-weight: 500; }
+.est.consistente { color: var(--ok); } .est.parcial { color: var(--atencao); } .est.sem { color: var(--texto-2); } .est.andamento { color: var(--ciano-forte); }
+.dias { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.dias li { display: flex; justify-content: space-between; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--linha); font-size: 15px; line-height: 22px; }
+.dias li:last-child { border-bottom: 0; }
+.dias .dd { color: var(--texto-2); font-variant-numeric: tabular-nums; }
+.dias .tt { display: inline-flex; gap: 12px; align-items: center; }
+.dias .tt span, .dias .tt { white-space: nowrap; }
+.dias .tt span { display: inline-flex; align-items: center; gap: 4px; }
+.dias .tt svg { margin-right: 4px; }
+.dias li.futuro .tt { color: var(--texto-3); }
+.cons-linha { display: inline-flex; align-items: center; min-height: 44px; font-size: 13px; line-height: 18px; font-weight: 500; text-decoration: none; }
+.cons-linha.ok { color: var(--ok); } .cons-linha.atencao { color: var(--atencao); } .cons-linha.ciano { color: var(--ciano-forte); }

@@ -4,6 +4,8 @@ import { IconCalendarStats } from '@tabler/icons-react';
 import * as E from '../../engine.mjs';
 import { PeriodoSel } from './PeriodoSel';
 import { usePeriodo, filtra } from '../periodo';
+import { useConsistencia, linhaRelatorio } from './Consistencia';
+import { segundaDe } from '../../consistencia.mjs';
 import { useApex } from '../store';
 import { href } from '../route';
 import { PageHead } from '../Shell';
@@ -17,6 +19,7 @@ function RCard({ l, v, d }: { l: string; v: string; d: string }) {
 export function Relatorio() {
   const { st } = useApex();
   const per = usePeriodo();
+  const cons = useConsistencia(st, 26).todas;
   const a = st.athlete, ws = filtra(E.sortedWorkouts(), per, st);
   if (!ws.length) return (<><PageHead title="Relatório semanal" back={href('mais')} right={<PeriodoSel />} /><Card><Empty>Nenhum treino neste período.</Empty></Card></>);
   const hm = E.consistencyHeatmap(ws, a, 18);
@@ -55,6 +58,7 @@ export function Relatorio() {
         <Card key={k}>
           <div className="row between wrap">
             <div className="stack" style={{ gap: 0 }}><h2 className="lead">Semana {k.split('-W')[1]} · {a.cycleName}</h2><span className="apoio muted">{dayMon(dates[0])} – {dayMon(dates[dates.length - 1])}</span></div>
+            {(() => { const lr = linhaRelatorio(cons, segundaDe(dates[0])); return lr ? <a className={'cons-linha ' + lr.tom} href={href('progresso', 'consistencia')}>{lr.texto}</a> : null; })()}
             <span className="badge neutro">{runs} corrida(s){wkBikes.length ? ' · ' + wkBikes.length + ' bike(s)' : ''} · {dec(totKm, 1)} km</span>
           </div>
           <div className="grid-2 grid-3" style={{ gap: 8 }}>

@@ -9,7 +9,7 @@ import { PageHead } from '../Shell';
 import { Conf, Rich } from '../ui';
 import { noEmoji } from '../fmt';
 
-const CATS = ['Motor', 'Mecânica', 'Carga', 'Forma', 'Proprietário', 'Leitura do treino', 'Plano de prova'];
+const CATS = ['Motor', 'Mecânica', 'Carga', 'Forma', 'Proprietário', 'Leitura do treino', 'Plano de prova', 'Evolução'];
 const norm = (s: string) => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
 
 export function Livro() {

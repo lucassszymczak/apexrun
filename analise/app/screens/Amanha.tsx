@@ -60,12 +60,17 @@ export function ConfigTreino() {
   const [local, setLocal] = useState<'auto' | 'mapa'>(p0.local);
   const [mostrar, setMostrar] = useState(p0.mostrar);
   const [ponto, setPonto] = useState(() => pontoManual());
+  const [meta, setMeta] = useState(p0.metaSemanalH != null ? String(p0.metaSemanalH).replace('.', ',') : '');
   const auto = pontoAutomatico(st.workouts);
   const salvar = () => {
     if (!(de < ate)) { alert('O fim da janela precisa ser depois do início.'); return; }
     if (local === 'mapa' && !ponto) { alert('Escolha o ponto no mapa, ou use "Automático".'); return; }
+    const mt = meta.trim() ? Number(meta.trim().replace(',', '.')) : null;
+    if (mt != null && !(mt > 0 && mt <= 40)) { alert('A meta semanal precisa ficar entre 0,5 e 40 horas, ou em branco.'); return; }
     const S = getState(); const a: any = S.athlete;
-    a.treino = { ...(a.treino || {}), janela: { de, ate }, mostrarAmanha: mostrar, local }; // sem coordenadas: elas ficam só no aparelho
+    const t = { ...(a.treino || {}), janela: { de, ate }, mostrarAmanha: mostrar, local };
+    if (mt != null) t.metaSemanalH = Math.round(mt * 2) / 2; else delete t.metaSemanalH;
+    a.treino = t; // sem coordenadas: elas ficam só no aparelho
     a.updatedAt = new Date().toISOString();
     salvarPontoManual(local === 'mapa' ? ponto : null);
     commit(); toast('Preferências de treino salvas'); go('mais', 'config');
@@ -76,6 +81,11 @@ export function ConfigTreino() {
   };
   return (<>
     <PageHead title="Treino" sub="Configurações" back={href('mais', 'config')} />
+    <fieldset className="grupo">
+      <legend>Meta semanal</legend>
+      <div className="field"><label htmlFor="t_meta">Meta semanal (horas)</label><input id="t_meta" inputMode="decimal" placeholder="Em branco: automática" value={meta} onChange={(e) => setMeta(e.target.value)} /></div>
+      <span className="hint">Usada na Consistência. Em branco, a meta é a média das 4 semanas anteriores com treino (mínimo de 1 h). Corrida, pedal e força contam.</span>
+    </fieldset>
     <fieldset className="grupo">
       <legend>Janela de horário</legend>
       <div className="form-grid">
