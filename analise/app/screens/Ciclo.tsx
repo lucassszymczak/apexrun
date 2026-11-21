@@ -12,6 +12,7 @@ import { dec, noEmoji } from '../fmt';
 import { juntaPartes, ordemPadrao, reamostra, comparaOficial, montaCourse, perfilDigitado, MAX_PARTES, SALTO_AVISO_M } from '../../percurso.mjs';
 import { lerArquivo, salvarCourse, removerCourse, trackDoCourse, resumo, FONTE_ROTULO, type ParteLida } from '../course';
 import { TrackSvg } from '../map/TrackSvg';
+import { useFaixaHoje } from './Simulador';
 
 const RuasMap = lazy(() => import('../map/RuasMap').then((m) => ({ default: m.RuasMap })));
 
@@ -37,6 +38,7 @@ export function EditarCiclo() {
     long: String(race?.longRunTargetKm || ''), peak: String(race?.peakKmTarget || ''),
   }));
   const [mais, setMais] = useState(false);
+  const faixa = useFaixaHoje(st);
   if (!race) return (<><PageHead title="Editar ciclo" back={href('mais', 'maratona')} /><Card><Empty>Nenhum ciclo ativo. Comece um em Configurações › Novo ciclo de prova.</Empty></Card></>);
   const set = (k: string, v: any) => setF({ ...f, [k]: v });
   const dist = parseFloat(String(f.dist).replace(',', '.'));
@@ -77,10 +79,14 @@ export function EditarCiclo() {
       {f.goal === 'time' ? (
         <div className="row" style={{ alignItems: 'flex-end', gap: 12 }}>
           <div className="field" style={{ width: 120 }}><label htmlFor="c_alvo">Tempo-alvo (h:mm)</label><input id="c_alvo" inputMode="numeric" placeholder="h:mm" value={f.alvo} onChange={(e) => set('alvo', e.target.value)} style={{ fontSize: 18 }} className="tn" /></div>
-          <span className="apoio tn" aria-live="polite" style={{ paddingBottom: 10 }}>{paceMedio ? 'pace médio ' + paceMedio + '/km' : f.alvo ? 'use h:mm' : ''}</span>
+          <span className="stack apoio tn" aria-live="polite" style={{ paddingBottom: 2, gap: 0 }}>
+            <span>{paceMedio ? 'pace médio ' + paceMedio + '/km' : f.alvo ? 'use h:mm' : ''}</span>
+            {faixa ? <span style={{ color: alvoSec && (alvoSec < faixa.rapidoS) ? 'var(--atencao)' : 'var(--texto-2)' }}>realista hoje: {metaTxt(faixa.rapidoS)} a {metaTxt(faixa.lentoS)}</span> : null}
+          </span>
         </div>
       ) : null}
-      <span className="hint">Em "Terminar bem", o plano vai usar a ponta mais lenta do seu tempo realista. O simulador de meta chega numa próxima etapa.</span>
+      {faixa ? <a className="link" href={href('mais', 'simulador')}>Testar metas no simulador</a> : null}
+      <span className="hint">Em "Terminar bem", o plano usa a ponta mais lenta do seu tempo realista.</span>
     </fieldset>
 
     <fieldset className="grupo">
