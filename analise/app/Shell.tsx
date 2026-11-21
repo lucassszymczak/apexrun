@@ -32,7 +32,7 @@ export function Shell({ children }: { children: ReactNode }) {
   useGarminSync();
   const gl = garminLocal();
   return (
-    <div className={'app' + (r.name === 'treino' ? ' immersive' : r.name === 'compartilhar' || r.name === 'completar' ? ' focus' : '') + (fila.length ? ' tem-fila' : '')}>
+    <div className={'app' + (r.name === 'treino' || (r.name === 'progresso' && r.arg === 'calor') ? ' immersive' : r.name === 'compartilhar' || r.name === 'completar' ? ' focus' : '') + (fila.length ? ' tem-fila' : '')}>
       <a href="#conteudo" className="sr-only">Pular para o conteúdo</a>
       <nav className="rail" aria-label="Navegação principal">
         <a className="logo" href={href('hoje')}><Simbolo size={30} /><span>Apex <em>Performance</em></span></a>
