@@ -6,7 +6,7 @@ import { type Track, coloredRuns, cortaRuns, kmMarks, PALETTE } from '../track';
 import { nearestGps, trechoIdx } from './TrackSvg';
 import { describeRoute } from './describe';
 
-const STYLE = { dark: 'https://tiles.openfreemap.org/styles/dark', light: 'https://tiles.openfreemap.org/styles/positron' };
+export const STYLE = { dark: 'https://tiles.openfreemap.org/styles/dark', light: 'https://tiles.openfreemap.org/styles/positron' };
 const cssVar = (n: string) => getComputedStyle(document.documentElement).getPropertyValue(n).trim() || '#888';
 const resolve = (c: string) => (c.startsWith('var(') ? cssVar(c.slice(4, -1)) : c);
 
