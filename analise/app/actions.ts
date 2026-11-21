@@ -69,6 +69,7 @@ export function leituraPara(w: any, track: Track | null, novo?: { laps?: any[]; 
         const t = E.isBike(w) ? null : tirosPorOrigem(prev.origem, laps, track);
         if (t) L.tiros = t; else delete L.tiros;
       }
+      if (prev.segmentos) L.segmentos = prev.segmentos; // passagens dos segmentos (Fase 3) ficam
       return L;
     }
     // sem trajeto (edição do treino): só o que depende do treino salvo é refeito

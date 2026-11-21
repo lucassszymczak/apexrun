@@ -3,7 +3,7 @@
 // linha do tempo). Novo, pedido no roteiro: "Foco atual" (IMP e cadência no ritmo de
 // referência), montado só com funções do motor. O Pace-GAP@145 saiu da interface a pedido
 // do Lucas (20/11): o motor ainda o calcula (dado salvo e sincronizado), mas não é exibido.
-import { IconUser, IconTarget, IconEngine, IconHeartbeat, IconShoe, IconChartBar, IconDroplet, IconMoon, IconTrophy, IconTimeline, IconChevronRight, IconAlertTriangle, IconCalendarCheck, IconFlame, IconLock } from '@tabler/icons-react';
+import { IconUser, IconTarget, IconEngine, IconHeartbeat, IconShoe, IconChartBar, IconDroplet, IconMoon, IconTrophy, IconTimeline, IconChevronRight, IconAlertTriangle, IconCalendarCheck, IconFlame, IconLock, IconRoute } from '@tabler/icons-react';
 import * as E from '../../engine.mjs';
 
 import { PeriodoSel } from './PeriodoSel';
@@ -91,6 +91,7 @@ export function Progresso({ sys }: { sys: string | null }) {
   const { st } = useApex();
   const per = usePeriodo();
   const cst = useConsistencia(st, 26);
+  const nSeg = ((st.athlete && st.athlete.segmentos) || []).length;
   const all = E.sortedWorkouts();
   const ws = filtra(all, per, st);
   if (!all.length) return (<><PageHead title="Progresso" /><Card><Empty>Nenhum treino ainda. Importe um .FIT pelo +.</Empty></Card></>);
@@ -168,6 +169,14 @@ export function Progresso({ sys }: { sys: string | null }) {
       </div>
       <span className="lead">{cst.atual > 0 ? cst.atual + (cst.atual === 1 ? ' semana consistente' : ' semanas consistentes seguidas') : 'Nenhuma semana consistente seguida agora'}</span>
       <span className="apoio muted">{cst.consistentes} das últimas {cst.de} semanas · maior sequência {cst.maior}</span>
+    </a>
+
+    <a className="card" href={href('progresso', 'segmentos')} style={{ color: 'var(--texto)', textDecoration: 'none', gap: 6 }}>
+      <div className="row between">
+        <span className="row" style={{ gap: 8 }}><IconRoute size={20} stroke={1.75} color="var(--ciano)" aria-hidden="true" /><b className="lead" style={{ fontSize: 15 }}>Segmentos</b></span>
+        <IconChevronRight size={18} stroke={1.75} className="faint" aria-hidden="true" />
+      </div>
+      <span className="apoio muted">{nSeg ? nSeg + (nSeg === 1 ? ' trecho que você repete' : ' trechos que você repete') + ', com o seu melhor e a tendência' : 'Trechos que você repete, encontrados pelo app'}</span>
     </a>
 
     <a className="card" href={href('progresso', 'calor')} style={{ color: 'var(--texto)', textDecoration: 'none', gap: 6 }}>

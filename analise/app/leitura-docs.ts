@@ -102,4 +102,27 @@ LEITURA_DOCS.push(
     fonte: 'Regra do app, aprovada em 21/11/2026 (docs/fase3-formulas.md, item 1).',
   },
 );
+LEITURA_DOCS.push(
+  {
+    key: 'segmento', name: 'Segmento', cat: 'Evolução', conf: 'Alta (trajeto completo, 1 s) · Moderada (versão leve, ±5 s)',
+    desc: 'Um trecho de 500 m ou mais que você percorreu no mesmo sentido em pelo menos 3 treinos. O app encontra sozinho; você pode renomear. Só você vê.',
+    formula: 'corredor de 25 m: a quadrícula do mapa de calor ou a vizinha\nida e volta são segmentos separados\nsobreposição: fica o de mais passagens; no empate, o mais longo; o outro é cortado e sai se ficar com menos de 500 m\naté 40 por modalidade; corrida e pedal separados\npassagem: do ponto do trajeto mais perto do início ao mais perto do fim (tempo decorrido); uma por treino, a mais rápida\nnome automático: Subida (> +2%), Descida (< −2%) ou Plano, e a distância',
+    fields: 'Trajetos com GPS neste aparelho. Com a versão leve do trajeto, o tempo tem cerca de ±5 s.',
+    fonte: 'Regra do app, aprovada em 21/11/2026 (docs/fase3-formulas.md, item 2).',
+  },
+  {
+    key: 'tempo-ajustado', name: 'Tempo ajustado', cat: 'Evolução', conf: 'A do GAP do treino',
+    desc: 'O tempo do trecho como se fosse plano e em clima padrão. Usa o GAP do app e a regra temperatura + orvalho. Só corrida.',
+    formula: '1) tempo no plano = tempo × (distância ÷ distância GAP), com o vGap do motor segundo a segundo\n2) ajustado = tempo no plano × (1 − correção do clima)\ncorreção do clima = regra temperatura + orvalho (a mesma do pace em clima padrão); em clima padrão, 0\nsem clima salvo: só a inclinação ("sem clima")',
+    fields: 'Velocidade e inclinação do trajeto; clima do treino (Open-Meteo). Pedal: só o tempo real.',
+    fonte: 'Regra do app, aprovada em 21/11/2026 (docs/fase3-formulas.md, item 3). GAP: Minetti, A. E. et al., J Appl Physiol 93, 2002. Clima: regra de Mark Hadley.',
+  },
+  {
+    key: 'tendencia', name: 'Tendência no segmento', cat: 'Evolução', conf: 'Moderada',
+    desc: 'A média das suas 3 passagens mais recentes comparada com a das 3 anteriores. Diferença de 2% ou mais vira mais rápido ou mais lento; menos que isso, estável.',
+    formula: 'tempo = ajustado na corrida, real no pedal\ndiferença = (média das 3 anteriores − média das 3 recentes) ÷ média das 3 anteriores\n≥ +2%: mais rápido · ≤ −2%: mais lento · entre: estável\nmenos de 6 passagens: "poucas passagens"',
+    fields: 'Pelo menos 6 passagens no segmento.',
+    fonte: 'Regra do app, aprovada em 21/11/2026 (docs/fase3-formulas.md, item 4).',
+  },
+);
 export const leituraDoc = (k: string): Doc | null => LEITURA_DOCS.find((d) => d.key === k || d.name === k) || null;

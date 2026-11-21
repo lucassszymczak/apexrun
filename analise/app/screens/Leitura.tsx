@@ -285,10 +285,10 @@ export { kmTxt };
 
 function useSemLeitura(runs: any[]) {
   const [n, setN] = useState<{ comTrajeto: number; semTrajeto: number }>({ comTrajeto: 0, semTrajeto: 0 });
-  const chave = runs.map((w) => w.id + (w.leitura ? '1' : '0')).join(',');
+  const chave = runs.map((w) => w.id + (w.leitura && w.leitura.v ? '1' : '0')).join(',');
   useEffect(() => {
     let vivo = true;
-    trackIds().then((ids) => { if (!vivo) return; setN({ comTrajeto: runs.filter((w) => !w.leitura && ids.has(w.id)).length, semTrajeto: runs.filter((w) => !ids.has(w.id) && w.garminActivityId && !(w.leitura && w.leitura.esforcos)).length }); }).catch(() => {});
+    trackIds().then((ids) => { if (!vivo) return; setN({ comTrajeto: runs.filter((w) => !(w.leitura && w.leitura.v) && ids.has(w.id)).length, semTrajeto: runs.filter((w) => !ids.has(w.id) && w.garminActivityId && !(w.leitura && w.leitura.esforcos)).length }); }).catch(() => {});
     return () => { vivo = false; };
   }, [chave]);
   return n;

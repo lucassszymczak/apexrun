@@ -573,3 +573,28 @@ ol.passos li.total { border-bottom: 0; justify-content: space-between; color: va
   .mc .mapzoom { bottom: auto; top: 76px; }
   .mc .tv-top { width: min(560px, calc(100% - 24px)); }
 }
+
+/* ---- Segmentos (Fase 3 · Etapa 4) ---- */
+.seg-lista { display: flex; flex-direction: column; gap: 8px; }
+.seg-item { display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: var(--radius-md); background: var(--superficie); border: 1px solid transparent; color: var(--texto); text-decoration: none; min-height: 44px; }
+.seg-item:hover { border-color: var(--linha); }
+.seg-item.on { border-color: var(--ciano-forte); }
+.seg-item:focus-visible { outline: 2px solid var(--ciano); outline-offset: 2px; }
+.seg-forma { flex-shrink: 0; background: var(--superficie-2); border-radius: var(--radius-sm); }
+.seg-nome { font-size: 15px; line-height: 20px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.seg-td { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; line-height: 18px; color: var(--texto-2); }
+.seg-td.ok { color: var(--ok); } .seg-td.atencao { color: var(--atencao); }
+.seg-mapa { position: relative; height: 240px; border-radius: var(--radius-md); overflow: hidden; border: 1px solid var(--linha); }
+.seg-mapa .mapzoom { top: 8px; right: 8px; }
+.seg-evo { width: 100%; height: auto; display: block; }
+.seg-evo-t { font-size: 11px; fill: var(--texto-2); font-variant-numeric: tabular-nums; }
+.seg-tbl td, .seg-tbl th { white-space: nowrap; }
+.seg-tbl td a { color: var(--ciano-forte); display: inline-flex; min-height: 32px; align-items: center; }
+.seg-treino { list-style: none; margin: 0; padding: 0; }
+.seg-treino button { width: 100%; display: flex; align-items: center; gap: 12px; min-height: 56px; padding: 8px 0; border: 0; border-top: 1px solid var(--linha); background: transparent; color: var(--texto); font: inherit; text-align: left; cursor: pointer; }
+.seg-treino li:first-child button { border-top: 0; }
+.seg-treino .n { width: 24px; height: 24px; border-radius: 50%; background: var(--superficie); color: var(--texto-2); display: inline-flex; align-items: center; justify-content: center; font-size: 12px; flex-shrink: 0; }
+.seg-treino button:focus-visible { outline: 2px solid var(--ciano); outline-offset: 2px; }
+.seg-cols { display: grid; grid-template-columns: 380px minmax(0, 1fr); gap: 24px; align-items: start; }
+.seg-det { min-width: 0; }
+.btn.sm { min-height: 44px; padding: 0 14px; font-size: 13px; }
