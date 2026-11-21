@@ -457,3 +457,28 @@ table.digitar input { width: 88px; min-height: 40px; border-radius: var(--radius
 .perfil .legend { margin-top: 4px; }
 ol.partes { padding: 0; margin: 0; list-style: none; }
 @media (min-width: 1024px) { .ciclo-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } .ciclo-grid .full { grid-column: 1 / -1; } .course-map { height: 420px; } }
+
+/* ---------------- plano de prova (Fase 4 · Etapa 3) ---------------- */
+.plano-grid { display: flex; flex-direction: column; gap: 16px; }
+.plano-col { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+@media (min-width: 1024px) { .main:has(.plano-grid) { max-width: 1120px; } .plano-grid { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(360px, 1fr); gap: 24px; align-items: start; } }
+.pace-chart { position: relative; }
+.pace-refs span { position: absolute; left: 0; transform: translateY(-50%); font-size: 11px; line-height: 14px; color: var(--texto-2); background: var(--superficie); padding: 0 4px; font-variant-numeric: tabular-nums; }
+.passagens { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.passagens:has(.pass:nth-child(2):last-child) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.pass { background: var(--superficie); border-radius: var(--radius-md); padding: 12px; display: flex; flex-direction: column; gap: 4px; }
+.pass b { font-size: 20px; line-height: 24px; font-weight: 500; }
+.pass.fim b { color: var(--magenta); }
+.blocos { display: flex; flex-direction: column; }
+.bl-head, .bl-row { display: grid; grid-template-columns: 1.3fr 1fr 0.8fr 1fr; gap: 8px; align-items: center; }
+.bl-head { font-size: 11px; line-height: 14px; color: var(--texto-2); padding-bottom: 6px; border-bottom: 1px solid var(--linha); }
+.bl-row { width: 100%; min-height: 48px; background: none; border: 0; border-bottom: 1px solid var(--linha); color: var(--texto); font: inherit; font-size: 14px; text-align: left; padding: 6px 0; cursor: pointer; }
+.bl-head .n, .bl-row .n { text-align: right; }
+.km-tab { width: 100%; margin: 4px 0 8px; font-size: 13px; }
+.km-tab th { font-size: 11px; color: var(--texto-2); font-weight: 500; text-align: left; padding: 4px 0; }
+.km-tab td { padding: 6px 0; border-bottom: 1px solid var(--linha); }
+.km-tab .n { text-align: right; }
+.plano-img { width: 100%; max-width: 270px; border-radius: var(--radius-md); border: 1px solid var(--linha); display: block; margin-top: 8px; }
+a.chip { text-decoration: none; }
+.kpi.chip { text-decoration: none; display: inline-flex; }
+.map-cap { position: absolute; left: 12px; bottom: 12px; z-index: 5; background: var(--painel-mapa); border: 1px solid var(--linha); border-radius: var(--radius-sm); padding: 6px 10px; font-size: 13px; color: var(--atencao); }

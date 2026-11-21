@@ -1,0 +1,23 @@
+/* eslint-disable */
+export declare const PLANO_V: number, NEGATIVA_PCT: number, DIAS_PREVISAO: number, MARATONA_MIN_KM: number, MARATONA_EXTRA_S: number, FAIXA_CURTA_PCT: number, LIMIAR_SUBIDA: number;
+export type KmP = { km: number; distKm: number; inclinacao: number; sobe: number; desce: number };
+export type Linha = KmP & { paceSkm: number; climaPct: number; acumS: number; subida: boolean };
+export type Bloco = { de: number; ate: number; rotulo: string; terreno: string; paceSkm: number; acumS: number; kms: Linha[] };
+export type Plano = { v: number; P: number; linhas: Linha[]; totalS: number; alvoS: number; climaExtraS: number; passagens: { rotulo: string; km: number; tS: number }[]; blocos: Bloco[] };
+export type Realista = { v: number; riegelS: number; percursoPct: number; climaPct: number; maratona: boolean; correcaoS: number | null; rapidoS: number; lentoS: number; confianca: string; ancora: any };
+export declare function kmsDaProva(distKm: number, kmsPercurso?: any[] | null): KmP[];
+export declare function fatorEstrategia(kms: KmP[], strategy: string): number[];
+export declare function paceAlvo(kms: KmP[], alvoSec: number, strategy?: string): { P: number; paces: number[] };
+export declare function correcaoDaHora(h: any, athlete?: any): number | null;
+export declare function diasAte(dataProva: string, hoje: Date): number;
+export declare function aberturaPrevisao(dataProva: string): string;
+export declare function modoClima(dataProva: string, hoje: Date, horas: any[] | null): { modo: 'padrao' | 'previsao'; motivo?: string; abre?: string };
+export declare function montaPlano(o: { distKm: number; kmsPercurso?: any[] | null; alvoSec: number; strategy?: string; startTime?: string; horas?: any[] | null; athlete?: any; clima?: { modo: string } }): Plano;
+export declare function tempoEm(linhas: Linha[], dKm: number): number;
+export declare function passagens(linhas: Linha[], distKm: number): { rotulo: string; km: number; tS: number }[];
+export declare function terreno(ls: Linha[]): string;
+export declare function blocos(linhas: Linha[]): Bloco[];
+export declare function tituloPlano(plano: Plano, duro: { de: number; ate: number } | null): string;
+export declare function percursoExtraPct(kms: KmP[]): number;
+export declare function tempoRealista(o: { anchor: any; distKm: number; kmsPercurso?: any[] | null; climaPct?: number }): Realista | null;
+export declare function metaDoPlano(race: any, realista: Realista | null): { alvoS: number; origem: 'alvo' | 'terminar-bem' } | null;

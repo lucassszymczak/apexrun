@@ -36,6 +36,11 @@ try {
     const okR = await page.waitForSelector('.main > *', { timeout: 10000, state: 'attached' }).then(() => true).catch(() => false);
     ok('sem internet, #/' + r + ' abre', okR);
   }
+  // Fase 4 · critério 12: o plano de prova abre em modo avião, com os dados do aparelho
+  await page.goto(base + '#/mais/plano', { waitUntil: 'domcontentloaded' }).catch(() => {});
+  await page.reload({ waitUntil: 'domcontentloaded' }).catch(() => {});
+  const plano = await page.waitForSelector('h2:has-text("Mire")', { timeout: 10000 }).then(() => true).catch(() => false);
+  ok('sem internet, o plano de prova abre com o plano montado', plano && (await page.locator('.passagens .pass').count()) >= 2);
   const font = await page.evaluate(async () => { await document.fonts.ready; return [...document.fonts].filter((f) => f.family.includes('Outfit') && f.status === 'loaded').length; });
   ok('a fonte Outfit carrega sem internet', font > 0, font + ' faces');
   // o app da raiz e a versão antiga NÃO ficam sob o service worker

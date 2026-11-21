@@ -74,7 +74,7 @@ function nearestKept(tr: Track, sh: Shared, i: number): number | null {
 
 // ---------------- cores (tokens do tema escuro, lidos do CSS) ----------------
 type Tok = Record<string, string>;
-function tokens(): Tok {
+export function tokens(): Tok {
   const el = document.createElement('div');
   el.setAttribute('data-theme', 'dark'); el.style.display = 'none';
   document.body.appendChild(el);
@@ -87,7 +87,7 @@ function tokens(): Tok {
 const zoneTok = (b: number) => PALETTE[b].replace(/^var\(--|\)$/g, '');
 
 // símbolo (design/marca): lâmina da ida magenta, da volta ciano, pico violeta; logo mono branco
-const SYM = { ida: 'M6 86 L50 4 L59 20.77 L24 86 Z', volta: 'M94 86 L50 4 L41 20.77 L76 86 Z', pico: 'M50 4 L59 20.77 L50 37.55 L41 20.77 Z', mono: 'M6 86 L50 4 L94 86 L76 86 L50 37.55 L24 86 Z' };
+export const SYM = { ida: 'M6 86 L50 4 L59 20.77 L24 86 Z', volta: 'M94 86 L50 4 L41 20.77 L76 86 Z', pico: 'M50 4 L59 20.77 L50 37.55 L41 20.77 Z', mono: 'M6 86 L50 4 L94 86 L76 86 L50 37.55 L24 86 Z' };
 
 export type CardInput = {
   format: Format; model: Model; w: any; tr: Track | null; shared: Shared;

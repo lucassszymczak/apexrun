@@ -351,7 +351,7 @@ function PercursoImportado({ race, onTrocar }: { race: any; onTrocar: () => void
         <li key={k} className="item-row"><span className="grow">Parte {k + 1}{p.data ? ' · ' + p.data.split('-').reverse().slice(0, 2).join('/') : ''} · {p.esporte}</span><b className="tn">{kmTxt(p.km)} km</b></li>))}</ul> : null}
     </Card>
     <div className="stack" style={{ gap: 4 }}>
-      <a className="btn-primary" href={href('mais', 'ciclo')}>Voltar ao ciclo</a>
+      <a className="btn-primary" href={href('mais', 'plano')}>Ver plano de prova</a>
       <button type="button" className="btn quiet" onClick={onTrocar}><IconRoute size={18} stroke={1.75} aria-hidden="true" />Trocar percurso</button>
       <button type="button" className="btn quiet danger-text" onClick={() => { if (confirm('Remover o percurso deste ciclo?')) removerCourse(); }}><IconTrash size={18} stroke={1.75} aria-hidden="true" />Remover percurso</button>
     </div>

@@ -186,3 +186,17 @@ E uma pergunta fora da lista:
 - **A Meia continua como "Fácil"** (item 8: não). A âncora do tempo realista segue a regra do motor, sem mudança: o treino mais recente marcado como "Prova" ou "Teste", e, sem nenhum, o treino mais recente. Hoje é o treino de 19/11.
   - Por isso, enquanto não houver prova ou teste marcado, o simulador mostra a confiança **Baixa** (âncora de treino comum) e diz qual treino é a âncora, com a data.
 - **Pendência antes de programar os itens 2 e 4:** conferir nos resumos publicados as fontes citadas de memória: Díaz et al., 2018; March et al., 2011; e Vickers e Vertosick, 2016, com o expoente da maratona. Se algo não bater, volto ao Lucas antes de programar.
+
+## Conferência das fontes e decisão do Lucas (21/11, antes da Etapa 3)
+
+Li os resumos no PubMed e o texto completo de Vickers e Vertosick no PMC.
+- **Item 2:**
+  - Díaz et al. 2018 (Eur J Sport Sci 18(6):781-786, PMID 29557279) mostra que, na média, os recordes mundiais da maratona tiveram a 1ª metade um pouco mais rápida. Os autores sugerem que o futuro é um ritmo quase sem variação. Isso corrige o que eu tinha escrito de memória.
+  - O estudo dos recordes de 1998 a 2018 (Díaz et al. 2019, Eur J Sport Sci 19(10):1297-1302, PMID 30922191) mostra que os homens correram com a 2ª metade mais rápida, com variação média de 1,5% entre trechos de 5 km.
+  - March et al. 2011 (J Strength Cond Res 25(2):386-391, PMID 20224445) confirma que os corredores mais lentos e os mais jovens perdem mais ritmo no fim.
+  - Nenhum estudo dá o valor de 1%.
+  - **Decisão: manter ±1%**, como aprovado.
+- **Item 4:**
+  - Vickers e Vertosick 2016 (BMC Sports Sci Med Rehabil 8:26, PMID 27570626, PMC5000509; 2.303 corredores amadores) mostra que o Riegel acerta até a meia, mas erra para menos na maratona. Na tabela 4 do estudo, metade dos corredores terminou 10 min ou mais acima do Riegel, e um quarto, 20 min ou mais.
+  - O estudo não traz o expoente 1,15 que eu tinha citado.
+  - **Decisão: na maratona (30 km ou mais), a faixa vai do Riegel ao Riegel + 20 min.** Três em cada quatro corredores do estudo terminaram dentro dela. Abaixo de 30 km, a faixa continua ±2,5%, e o estudo confirma que o Riegel acerta bem até a meia.
