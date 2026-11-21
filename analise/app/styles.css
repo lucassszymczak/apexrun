@@ -28,7 +28,7 @@ b, strong { font-weight: 500; }
 .topbar h1 { font-size: 20px; line-height: 24px; font-weight: 500; }
 .topbar .sub { font-size: 13px; line-height: 16px; color: var(--texto-2); }
 .back { width: 44px; height: 44px; margin-left: -10px; border: 0; background: none; color: var(--texto); display: inline-flex; align-items: center; justify-content: center; border-radius: var(--radius-sm); cursor: pointer; }
-.avatar { width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--linha); background: var(--superficie); color: var(--texto); font-size: 14px; font-weight: 500; display: inline-flex; align-items: center; justify-content: center; position: relative; }
+.avatar { width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--linha); background: var(--superficie); color: var(--texto); font-size: 14px; font-weight: 500; display: inline-flex; align-items: center; justify-content: center; position: relative; }
 .avatar::after { content: ""; position: absolute; inset: -4px; } /* alvo de 44 px */
 
 .bottomnav { position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); align-items: center; height: calc(64px + var(--safe-bottom)); padding: 0 var(--safe-right) var(--safe-bottom) var(--safe-left); border-top: 1px solid var(--linha); background: var(--noite); }
@@ -373,7 +373,7 @@ pre.formula { margin: 0; white-space: pre-wrap; font: 400 13px/18px var(--font-b
 .tf-busca svg { position: absolute; left: 12px; top: 11px; color: var(--texto-3); pointer-events: none; }
 .tf-busca input { width: 100%; height: 40px; padding: 0 12px 0 38px; border-radius: var(--radius-sm); border: 1px solid var(--linha); background: var(--superficie); }
 .tf-per { position: relative; flex-shrink: 0; }
-.tf-per-btn { position: relative; height: 40px; display: inline-flex; align-items: center; gap: 6px; padding: 0 10px; border-radius: var(--radius-sm); border: 1px solid var(--linha); background: var(--superficie); color: var(--texto); font-size: 13px; cursor: pointer; white-space: nowrap; }
+.tf-per-btn { position: relative; height: 44px; display: inline-flex; align-items: center; gap: 6px; padding: 0 10px; border-radius: var(--radius-sm); border: 1px solid var(--linha); background: var(--superficie); color: var(--texto); font-size: 13px; cursor: pointer; white-space: nowrap; }
 .tf-per-btn svg:first-child { color: var(--ciano-forte); }
 .tf-per-btn::after, .tf-seg button::after, .tf-chip::after { content: ""; position: absolute; inset: -6px 0; } /* alvo de toque ≥ 44 px */
 .tf-menu { position: absolute; right: 0; top: calc(100% + 6px); z-index: 40; min-width: 168px; display: flex; flex-direction: column; padding: 4px; border-radius: var(--radius-md); border: 1px solid var(--linha); background: var(--superficie); }
