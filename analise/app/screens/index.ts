@@ -16,3 +16,4 @@ export { Config } from './Config';
 export { Compartilhar } from './Compartilhar';
 export { Garmin } from './Garmin';
 export { Completar } from './ParaCompletar';
+export { EditarCiclo, Percurso } from './Ciclo';

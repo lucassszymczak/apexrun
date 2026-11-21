@@ -1,7 +1,9 @@
 // MARATONA / CICLO (Mais). Porta de renderMaratona + mBuildForm/mHarvest + OCR + ciclos
 // anteriores (app antigo). Mesmos cálculos; ação principal: lançar os treinos da semana.
 import { useEffect, useState } from 'react';
-import { IconSettings, IconChevronLeft, IconChevronRight, IconPlus, IconCheck, IconPencil, IconTrash, IconCamera, IconClipboardText, IconArchive, IconCopy, IconDownload, IconFlag } from '@tabler/icons-react';
+import { IconSettings, IconChevronLeft, IconChevronRight, IconPlus, IconCheck, IconPencil, IconTrash, IconCamera, IconClipboardText, IconArchive, IconCopy, IconDownload, IconFlag, IconRoute } from '@tabler/icons-react';
+import { FONTE_ROTULO, resumo } from '../course';
+import { metaTxt } from './Ciclo';
 import * as E from '../../engine.mjs';
 import { useApex, commit, getState, toast } from '../store';
 import { href } from '../route';
@@ -170,9 +172,7 @@ export function Maratona() {
   const { st } = useApex();
   const race = st.race, a = st.athlete, ws = E.sortedWorkouts(), runs = E.runsOnly(ws);
   const [offset, setOffset] = useState(0);
-  const [editRace, setEditRace] = useState(false);
   const [form, setForm] = useState<{ mode: 'add' | 'edit'; id?: string; draft: any } | null>(null);
-  const [rf, setRf] = useState(() => ({ name: race?.name || '', start: race?.startDate || '', date: race?.date || '', dist: String(race?.distKm || ''), long: String(race?.longRunTargetKm || ''), peak: String(race?.peakKmTarget || '') }));
   const blk = race ? E.mBlock(race) : null;
   // limita a navegação ao bloco
   let off = offset;
@@ -246,43 +246,23 @@ export function Maratona() {
   };
   const newDraft = () => ({ dow: off === 0 ? E.mDowToday() : 2, type: 'rodagem', title: '', zone: 'Z2', durMin: null, distKm: null, steps: [], adapt: null });
 
-  const saveRace = () => {
-    const S = getState(); const r = S.race || E.defaultRace();
-    r.name = (rf.name || 'Prova').trim(); r.date = rf.date || r.date;
-    if (rf.start) { if (r.date && rf.start > r.date) { alert('O início do ciclo não pode ser depois da data da prova.'); return; } r.startDate = rf.start; }
-    const dist = parseFloat(rf.dist); if (!isNaN(dist) && dist > 0) r.distKm = dist;
-    const lr = parseFloat(rf.long); if (!isNaN(lr) && lr > 0) r.longRunTargetKm = lr;
-    const pk = parseFloat(rf.peak); if (!isNaN(pk) && pk > 0) r.peakKmTarget = pk;
-    r.updatedAt = new Date().toISOString(); S.race = r; setEditRace(false); commit(); toast('Meta atualizada');
-  };
   const archive = () => { if (confirm('Arquivar "' + (race.name || 'a prova') + '" com resumo automático? Ele vai para Ciclos anteriores e o app fica sem ciclo ativo (comece o próximo em Configurações).')) { E.archiveCycle(race); getState().race = null; commit(); toast('Ciclo arquivado'); } };
 
   const stDot: Record<string, string> = { done: 'ok', adapted: 'ciano', missed: 'alerta', planned: 'neutro' };
   return (<>
     <PageHead title={noEmoji(race.name || 'Ciclo de prova')} sub={(E.RACE_TYPES[E.raceTypeOf(race)] || {}).label || 'Prova'} back={href('mais')}
-      right={<button className="iconbtn" aria-label="Editar meta da prova" aria-pressed={editRace} onClick={() => setEditRace(!editRace)}><IconSettings size={22} stroke={1.75} /></button>} />
+      right={<a className="iconbtn" aria-label="Editar ciclo" href={href('mais', 'ciclo')}><IconSettings size={22} stroke={1.75} /></a>} />
     <Card>
       <span className="cap">Missão · {noEmoji(race.name || 'Prova')}</span>
       <div className="row" style={{ alignItems: 'baseline', gap: 8 }}><span className="big" style={{ fontSize: 48, lineHeight: '52px', color: 'var(--magenta)' }}>{blk ? (blk.days >= 0 ? blk.days : 0) : '—'}</span><span className="lead">{blk && blk.days < 0 ? 'prova encerrada' : 'dias'}</span></div>
       <span className="apoio muted">{blk ? blk.wkToGo + ' semanas · ' : ''}<b>{dateBR(race.date)}</b> · {km(race.distKm)} km</span>
-      <div className="row wrap" style={{ gap: 6 }}><span className="badge ciano">{race.goal === 'finish' ? 'Terminar bem' : (race.goal || '—')}</span>{race.goal === 'finish' ? <span className="badge neutro">por zonas de FC</span> : null}</div>
+      <div className="row wrap" style={{ gap: 6 }}><span className="badge ciano">{race.goal === 'time' && race.targetSec ? 'Tempo-alvo ' + metaTxt(race.targetSec) : race.goal === 'finish' || !race.goal ? 'Terminar bem' : race.goal}</span>{race.goal !== 'time' ? <span className="badge neutro">por zonas de FC</span> : null}{race.strategy ? <span className="badge neutro">{race.strategy === 'negativa' ? 'segunda metade mais rápida' : 'esforço constante'}</span> : null}{race.startTime ? <span className="badge neutro">largada {race.startTime}</span> : null}</div>
+      <a className="item-row opcao-link" href={href('mais', race.course ? 'percurso' : 'ciclo')}><IconRoute size={20} stroke={1.75} color="var(--ciano)" aria-hidden="true" /><span className="grow">{race.course ? 'Percurso: ' + FONTE_ROTULO[race.course.fonte].toLowerCase() + ' · D+ ' + resumo(race.course).dMais + ' m' : 'Sem percurso: adicione em Editar ciclo'}</span><span className="link">{race.course ? 'Ver' : 'Editar'}</span></a>
     </Card>
     {blk && blk.days < 0 ? (
       <Card className="alert" style={{ flexDirection: 'column' }}><b>Ciclo encerrado</b>
         <p className="apoio">{race.name || 'A prova'} foi há {Math.abs(blk.days)} dia{Math.abs(blk.days) === 1 ? '' : 's'}. Arquive o ciclo para guardar o resumo (volume, longão, EF início↔fim, forma, adesão) e começar o próximo em Configurações › Novo ciclo.</p>
         <button type="button" className="btn" style={{ alignSelf: 'flex-start' }} onClick={archive}><IconArchive size={18} stroke={1.75} aria-hidden="true" />Arquivar ciclo com resumo</button></Card>
-    ) : null}
-    {editRace ? (
-      <Card>
-        <CardH title="Editar meta da prova" />
-        <div className="form-grid g3">
-          {([['name', 'Nome da prova', 'text'], ['start', 'Início do ciclo (1ª semana)', 'date'], ['date', 'Data da prova', 'date'], ['dist', 'Distância (km)', 'number'], ['long', 'Meta de longão (km)', 'number'], ['peak', 'Pico de volume (km/sem)', 'number']] as const).map(([k, l, t]) => (
-            <div key={k} className="field"><label htmlFor={'mr_' + k}>{l}</label><input id={'mr_' + k} type={t} value={(rf as any)[k]} onChange={(e) => setRf({ ...rf, [k]: e.target.value })} /></div>
-          ))}
-        </div>
-        <p className="apoio muted">Objetivo: <b>terminar bem</b>, treinando por zonas de FC (sem tempo-alvo).</p>
-        <div className="row"><button type="button" className="btn" onClick={saveRace}>Salvar</button><button type="button" className="btn quiet" onClick={() => setEditRace(false)}>Cancelar</button></div>
-      </Card>
     ) : null}
     {blk && phase ? (
       <Card>
