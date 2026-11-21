@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Mapa de calor</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500&amp;display=swap">
+<style>
+body{margin:0;background:#0d0f1a}
+a{color:#22d3ee;text-decoration:none}a:hover{color:#a5f3fc}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; height: 844px; overflow: hidden; background: #0d0f1a; color: #f2f2f7; font-family: Outfit, system-ui, sans-serif; font-variant-numeric: tabular-nums">
+
+  <svg width="390" height="844" viewBox="0 0 390 844" role="img" aria-label="Mapa de calor de {{modNome}}: as ruas mais percorridas ficam mais fortes, perto da sua região de largada" style="position: absolute; inset: 0">
+    <g style="opacity: {{baseOpacity}}"><path d="M-39 67 L11 72 M11 72 L62 77 M62 77 L112 82 M112 82 L162 87 M162 87 L213 92 M213 92 L263 97 M263 97 L314 102 M314 102 L364 107 M364 107 L414 112 M-35 129 L16 134 M16 134 L66 139 M66 139 L116 144 M116 144 L167 149 M167 149 L217 154 M217 154 L268 159 M268 159 L318 164 M318 164 L368 169 M368 169 L419 174 M-30 191 L20 197 M20 197 L71 202 M71 202 L121 207 M121 207 L171 212 M171 212 L222 217 M222 217 L272 222 M272 222 L322 227 M322 227 L373 232 M373 232 L423 237 M-26 254 L25 259 M25 259 L75 264 M75 264 L125 269 M125 269 L176 274 M176 274 L226 279 M226 279 L276 284 M276 284 L327 289 M327 289 L377 294 M377 294 L427 299 M-21 316 L29 321 M29 321 L79 326 M79 326 L130 331 M130 331 L180 336 M180 336 L230 342 M230 342 L281 347 M281 347 L331 352 M331 352 L381 357 M381 357 L432 362 M-17 379 L33 384 M33 384 L84 389 M84 389 L134 394 M134 394 L184 399 M184 399 L235 404 M235 404 L285 409 M285 409 L335 414 M335 414 L386 419 M386 419 L436 424 M-13 441 L38 446 M38 446 L88 451 M88 451 L138 456 M138 456 L189 461 M189 461 L239 466 M239 466 L289 471 M289 471 L340 476 M340 476 L390 482 M390 482 L440 487 M-8 504 L42 509 M42 509 L92 514 M92 514 L143 519 M143 519 L193 524 M193 524 L243 529 M243 529 L294 534 M294 534 L344 539 M344 539 L394 544 M394 544 L445 549 M-4 566 L46 571 M46 571 L97 576 M97 576 L147 581 M147 581 L197 586 M197 586 L248 591 M248 591 L298 596 M298 596 L348 601 M348 601 L399 606 M399 606 L449 611 M0 629 L51 634 M51 634 L101 639 M101 639 L151 644 M151 644 L202 649 M202 649 L252 654 M252 654 L303 659 M303 659 L353 664 M353 664 L403 669 M403 669 L454 674 M5 691 L55 696 M55 696 L105 701 M105 701 L156 706 M156 706 L206 711 M206 711 L257 716 M257 716 L307 721 M307 721 L357 726 M357 726 L408 731 M408 731 L458 736 M9 753 L59 758 M59 758 L110 763 M110 763 L160 769 M160 769 L211 774 M211 774 L261 779 M261 779 L311 784 M311 784 L362 789 M362 789 L412 794 M412 794 L462 799 M14 816 L64 821 M64 821 L114 826 M114 826 L165 831 M165 831 L215 836 M215 836 L265 841 M265 841 L316 846 M316 846 L366 851 M366 851 L416 856 M416 856 L467 861 M-39 67 L-35 129 M-35 129 L-30 191 M-30 191 L-26 254 M-26 254 L-21 316 M-21 316 L-17 379 M-17 379 L-13 441 M-13 441 L-8 504 M-8 504 L-4 566 M-4 566 L0 629 M0 629 L5 691 M5 691 L9 753 M9 753 L14 816 M11 72 L16 134 M16 134 L20 197 M20 197 L25 259 M25 259 L29 321 M29 321 L33 384 M33 384 L38 446 M38 446 L42 509 M42 509 L46 571 M46 571 L51 634 M51 634 L55 696 M55 696 L59 758 M59 758 L64 821 M62 77 L66 139 M66 139 L71 202 M71 202 L75 264 M75 264 L79 326 M79 326 L84 389 M84 389 L88 451 M88 451 L92 514 M92 514 L97 576 M97 576 L101 639 M101 639 L105 701 M105 701 L110 763 M110 763 L114 826 M112 82 L116 144 M116 144 L121 207 M121 207 L125 269 M125 269 L130 331 M130 331 L134 394 M134 394 L138 456 M138 456 L143 519 M143 519 L147 581 M147 581 L151 644 M151 644 L156 706 M156 706 L160 769 M160 769 L165 831 M162 87 L167 149 M167 149 L171 212 M171 212 L176 274 M176 274 L180 336 M180 336 L184 399 M184 399 L189 461 M189 461 L193 524 M193 524 L197 586 M197 586 L202 649 M202 649 L206 711 M206 711 L211 774 M211 774 L215 836 M213 92 L217 154 M217 154 L222 217 M222 217 L226 279 M226 279 L230 342 M230 342 L235 404 M235 404 L239 466 M239 466 L243 529 M243 529 L248 591 M248 591 L252 654 M252 654 L257 716 M257 716 L261 779 M261 779 L265 841 M263 97 L268 159 M268 159 L272 222 M272 222 L276 284 M276 284 L281 347 M281 347 L285 409 M285 409 L289 471 M289 471 L294 534 M294 534 L298 596 M298 596 L303 659 M303 659 L307 721 M307 721 L311 784 M311 784 L316 846 M314 102 L318 164 M318 164 L322 227 M322 227 L327 289 M327 289 L331 352 M331 352 L335 414 M335 414 L340 476 M340 476 L344 539 M344 539 L348 601 M348 601 L353 664 M353 664 L357 726 M357 726 L362 789 M362 789 L366 851 M364 107 L368 169 M368 169 L373 232 M373 232 L377 294 M377 294 L381 357 M381 357 L386 419 M386 419 L390 482 M390 482 L394 544 M394 544 L399 606 M399 606 L403 669 M403 669 L408 731 M408 731 L412 794 M412 794 L416 856 M414 112 L419 174 M419 174 L423 237 M423 237 L427 299 M427 299 L432 362 M432 362 L436 424 M436 424 L440 487 M440 487 L445 549 M445 549 L449 611 M449 611 L454 674 M454 674 L458 736 M458 736 L462 799 M462 799 L467 861" stroke="#1a1f2c" stroke-width="6" fill="none" stroke-linecap="round"/><path d="M30 110 L33 165 L35 220 L37 275 L38 330 L38 385 L37 440 L36 495 L34 550 L31 605 L28 660 L26 715 L24 770 L23 825" stroke="#1d2433" stroke-width="10" fill="none" stroke-linecap="round"/></g>
+    <g style="display: {{showRun}}"><path d="M121 207 L171 212 M171 212 L222 217 M222 217 L272 222 M272 222 L322 227 M75 264 L125 269 M125 269 L176 274 M176 274 L226 279 M226 279 L276 284 M276 284 L327 289 M327 289 L377 294 M377 294 L427 299 M-21 316 L29 321 M29 321 L79 326 M79 326 L130 331 M130 331 L180 336 M230 342 L281 347 M281 347 L331 352 M331 352 L381 357 M381 357 L432 362 M-17 379 L33 384 M386 419 L436 424 M-13 441 L38 446 M0 629 L51 634 M5 691 L55 696 M307 721 L357 726 M357 726 L408 731 M408 731 L458 736 M9 753 L59 758 M59 758 L110 763 M211 774 L261 779 M261 779 L311 784 M311 784 L362 789 M362 789 L412 794 M64 821 L114 826 M114 826 L165 831 M165 831 L215 836 M215 836 L265 841 M316 846 L366 851 M366 851 L416 856 M-21 316 L-17 379 M-17 379 L-13 441 M-13 441 L-8 504 M-8 504 L-4 566 M-4 566 L0 629 M5 691 L9 753 M9 753 L14 816 M25 259 L29 321 M29 321 L33 384 M33 384 L38 446 M55 696 L59 758 M59 758 L64 821 M71 202 L75 264 M75 264 L79 326 M84 389 L88 451 M110 763 L114 826 M121 207 L125 269 M125 269 L130 331 M156 706 L160 769 M160 769 L165 831 M211 774 L215 836 M222 217 L226 279 M276 284 L281 347 M311 784 L316 846 M322 227 L327 289 M327 289 L331 352 M331 352 L335 414 M357 726 L362 789 M362 789 L366 851 M381 357 L386 419 M408 731 L412 794 M427 299 L432 362 M432 362 L436 424 M436 424 L440 487 M440 487 L445 549 M449 611 L454 674 M454 674 L458 736 M458 736 L462 799 M462 799 L467 861" stroke="#22d3ee" stroke-opacity="0.35" stroke-width="2" fill="none" stroke-linecap="round"/><path d="M33 384 L84 389 M84 389 L134 394 M134 394 L184 399 M235 404 L285 409 M285 409 L335 414 M335 414 L386 419 M38 446 L88 451 M88 451 L138 456 M340 476 L390 482 M-4 566 L46 571 M348 601 L399 606 M399 606 L449 611 M51 634 L101 639 M353 664 L403 669 M55 696 L105 701 M257 716 L307 721 M110 763 L160 769 M160 769 L211 774 M38 446 L42 509 M42 509 L46 571 M46 571 L51 634 M51 634 L55 696 M88 451 L92 514 M92 514 L97 576 M101 639 L105 701 M130 331 L134 394 M134 394 L138 456 M167 149 L171 212 M202 649 L206 711 M206 711 L211 774 M230 342 L235 404 M281 347 L285 409 M285 409 L289 471 M303 659 L307 721 M335 414 L340 476 M340 476 L344 539 M348 601 L353 664 M353 664 L357 726 M386 419 L390 482 M390 482 L394 544 M394 544 L399 606 M399 606 L403 669" stroke="#22d3ee" stroke-opacity="0.75" stroke-width="2.5" fill="none" stroke-linecap="round"/><path d="M289 471 L340 476 M294 534 L344 539 M394 544 L445 549 M97 576 L147 581 M101 639 L151 644 M151 644 L202 649 M252 654 L303 659 M303 659 L353 664 M105 701 L156 706 M156 706 L206 711 M206 711 L257 716 M97 576 L101 639 M147 581 L151 644 M151 644 L156 706 M162 87 L167 149 M176 274 L180 336 M184 399 L189 461 M239 466 L243 529 M289 471 L294 534 M294 534 L298 596 M298 596 L303 659 M344 539 L348 601" stroke="#8b7cf6" stroke-opacity="0.95" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M189 461 L239 466 M239 466 L289 471 M143 519 L193 524 M193 524 L243 529 M243 529 L294 534 M147 581 L197 586 M197 586 L248 591 M248 591 L298 596 M202 649 L252 654 M143 519 L147 581 M180 336 L184 399 M193 524 L197 586 M197 586 L202 649 M243 529 L248 591 M248 591 L252 654" stroke="#c24fc8" stroke-opacity="1" stroke-width="3.5" fill="none" stroke-linecap="round"/><path d="M189 461 L193 524 M30 110 L33 165 L35 220 L37 275 L38 330 L38 385 L37 440 L36 495 L34 550 L31 605 L28 660 L26 715 L24 770 L23 825" stroke="#e0337f" stroke-opacity="1" stroke-width="4" fill="none" stroke-linecap="round"/><path d="M193 524 L243 529" stroke="#f2f2f7" stroke-width="9" stroke-linecap="round" fill="none" stroke-opacity="0.9"/><path d="M193 524 L243 529" stroke="#e0337f" stroke-width="4" stroke-linecap="round" fill="none"/></g>
+    <g style="display: {{showBike}}"><path d="M11 72 L62 77 M62 77 L112 82 M314 102 L364 107 M364 107 L414 112 M-35 129 L16 134 M16 134 L66 139 M318 164 L368 169 M-30 191 L20 197 M121 207 L171 212 M171 212 L222 217 M222 217 L272 222 M322 227 L373 232 M373 232 L423 237 M-21 316 L29 321 M29 321 L79 326 M230 342 L281 347 M331 352 L381 357 M-17 379 L33 384 M33 384 L84 389 M42 509 L92 514 M399 606 L449 611 M101 639 L151 644 M5 691 L55 696 M206 711 L257 716 M257 716 L307 721 M408 731 L458 736 M64 821 L114 826 M165 831 L215 836 M265 841 L316 846 M366 851 L416 856 M-30 191 L-26 254 M-26 254 L-21 316 M-17 379 L-13 441 M-8 504 L-4 566 M-4 566 L0 629 M5 691 L9 753 M9 753 L14 816 M11 72 L16 134 M20 197 L25 259 M29 321 L33 384 M42 509 L46 571 M55 696 L59 758 M59 758 L64 821 M62 77 L66 139 M66 139 L71 202 M71 202 L75 264 M79 326 L84 389 M110 763 L114 826 M116 144 L121 207 M121 207 L125 269 M130 331 L134 394 M162 87 L167 149 M171 212 L176 274 M180 336 L184 399 M213 92 L217 154 M226 279 L230 342 M263 97 L268 159 M268 159 L272 222 M307 721 L311 784 M364 107 L368 169 M368 169 L373 232 M373 232 L377 294 M386 419 L390 482 M403 669 L408 731 M408 731 L412 794 M412 794 L416 856 M414 112 L419 174 M423 237 L427 299 M427 299 L432 362 M432 362 L436 424" stroke="#22d3ee" stroke-opacity="0.35" stroke-width="2" fill="none" stroke-linecap="round"/><path d="M130 331 L180 336 M281 347 L331 352 M184 399 L235 404 M235 404 L285 409 M285 409 L335 414 M335 414 L386 419 M-13 441 L38 446 M38 446 L88 451 M138 456 L189 461 M239 466 L289 471 M289 471 L340 476 M390 482 L440 487 M193 524 L243 529 M394 544 L445 549 M-4 566 L46 571 M46 571 L97 576 M248 591 L298 596 M298 596 L348 601 M0 629 L51 634 M151 644 L202 649 M202 649 L252 654 M252 654 L303 659 M303 659 L353 664 M55 696 L105 701 M105 701 L156 706 M156 706 L206 711 M-13 441 L-8 504 M92 514 L97 576 M97 576 L101 639 M105 701 L110 763 M134 394 L138 456 M143 519 L147 581 M147 581 L151 644 M151 644 L156 706 M156 706 L160 769 M184 399 L189 461 M239 466 L243 529 M243 529 L248 591 M248 591 L252 654 M257 716 L261 779 M281 347 L285 409 M285 409 L289 471 M289 471 L294 534 M294 534 L298 596 M298 596 L303 659 M303 659 L307 721 M390 482 L394 544 M394 544 L399 606 M440 487 L445 549 M449 611 L454 674 M454 674 L458 736" stroke="#22d3ee" stroke-opacity="0.75" stroke-width="2.5" fill="none" stroke-linecap="round"/><path d="M276 284 L327 289 M143 519 L193 524 M197 586 L248 591 M9 753 L59 758 M110 763 L160 769 M211 774 L261 779 M362 789 L412 794 M189 461 L193 524 M193 524 L197 586 M197 586 L202 649 M206 711 L211 774 M211 774 L215 836 M314 102 L318 164 M322 227 L327 289 M340 476 L344 539 M353 664 L357 726" stroke="#8b7cf6" stroke-opacity="0.95" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M-26 254 L25 259 M75 264 L125 269 M125 269 L176 274 M176 274 L226 279 M226 279 L276 284 M327 289 L377 294 M377 294 L427 299 M59 758 L110 763 M160 769 L211 774 M261 779 L311 784 M311 784 L362 789 M412 794 L462 799 M202 649 L206 711 M318 164 L322 227 M327 289 L331 352 M331 352 L335 414 M335 414 L340 476 M344 539 L348 601 M348 601 L353 664 M357 726 L362 789 M362 789 L366 851 M30 110 L33 165 L35 220 L37 275 L38 330 L38 385 L37 440 L36 495 L34 550 L31 605 L28 660 L26 715 L24 770 L23 825" stroke="#c24fc8" stroke-opacity="1" stroke-width="3.5" fill="none" stroke-linecap="round"/><path d="M25 259 L75 264" stroke="#e0337f" stroke-opacity="1" stroke-width="4" fill="none" stroke-linecap="round"/></g>
+  </svg>
+
+  <div style="position: absolute; top: 52px; left: 12px; right: 12px; display: flex; align-items: center; gap: 4px; background: rgba(13, 15, 26, 0.86); border: 1px solid #2a3042; border-radius: 14px; padding: 4px">
+    <a href="#" aria-label="Voltar para Progresso" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; color: #f2f2f7">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l14 0"/><path d="M5 12l6 6"/><path d="M5 12l6 -6"/></svg>
+    </a>
+    <h1 style="margin: 0; flex-grow: 1; font-size: 16px; line-height: 20px; font-weight: 500">Mapa de calor</h1>
+    <span style="display: inline-flex; align-items: center; gap: 6px; margin-right: 8px; padding: 4px 10px; border: 1px solid #2a3042; border-radius: 999px; font-size: 12px; line-height: 16px; color: #a3a9b8">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11v-4a4 4 0 1 1 8 0v4"/></svg>
+      Só você vê
+    </span>
+  </div>
+
+  <div style="position: absolute; top: 112px; left: 12px; right: 12px; display: flex; align-items: center; gap: 8px">
+    <div role="radiogroup" aria-label="Modalidade" style="display: flex; background: rgba(13, 15, 26, 0.86); border: 1px solid #2a3042; border-radius: 999px; padding: 3px">
+      <sc-for list="{{mods}}" as="m" hint-placeholder-count="2">
+        <button role="radio" aria-checked="{{m.on}}" onClick="{{m.pick}}" style="border: none; border-radius: 999px; padding: 8px 14px; background: {{m.bg}}; color: {{m.fg}}; font-family: Outfit, system-ui, sans-serif; font-size: 13px; line-height: 16px">{{m.label}}</button>
+      </sc-for>
+    </div>
+    <button aria-haspopup="menu" style="display: inline-flex; align-items: center; gap: 4px; min-height: 40px; padding: 0 12px; background: rgba(13, 15, 26, 0.86); border: 1px solid #2a3042; border-radius: 999px; color: #f2f2f7; font-family: Outfit, system-ui, sans-serif; font-size: 13px">12 meses
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6l6 -6"/></svg>
+    </button>
+    <button onClick="{{toggleFundo}}" aria-pressed="{{fundoOn}}" aria-label="Mostrar as ruas no fundo" style="margin-left: auto; width: 44px; height: 44px; border-radius: 999px; background: rgba(13, 15, 26, 0.86); border: 1px solid {{fundoBorda}}; color: {{fundoCor}}; display: flex; align-items: center; justify-content: center">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4l-8 4l8 4l8 -4l-8 -4"/><path d="M4 12l8 4l8 -4"/><path d="M4 16l8 4l8 -4"/></svg>
+    </button>
+  </div>
+
+  <div aria-label="Legenda" style="position: absolute; left: 12px; bottom: 296px; display: flex; align-items: center; gap: 6px; background: rgba(13, 15, 26, 0.86); border: 1px solid #2a3042; border-radius: 10px; padding: 6px 10px; font-size: 11px; line-height: 14px; color: #a3a9b8">
+    <span>1 vez</span>
+    <span style="display: inline-block; width: 16px; height: 4px; border-radius: 2px; background: rgba(34, 211, 238, 0.4)"></span>
+    <span style="display: inline-block; width: 16px; height: 4px; border-radius: 2px; background: #22d3ee"></span>
+    <span style="display: inline-block; width: 16px; height: 5px; border-radius: 2px; background: #8b7cf6"></span>
+    <span style="display: inline-block; width: 16px; height: 5px; border-radius: 2px; background: #c24fc8"></span>
+    <span style="display: inline-block; width: 16px; height: 6px; border-radius: 2px; background: #e0337f"></span>
+    <span>20 vezes ou mais</span>
+  </div>
+
+  <section aria-label="Resumo do mapa" style="position: absolute; left: 0; right: 0; bottom: 0; height: 284px; box-sizing: border-box; background: #161a26; border-radius: 22px 22px 0 0; padding: 8px 16px 26px; display: flex; flex-direction: column; gap: 12px">
+    <div style="width: 36px; height: 4px; border-radius: 2px; background: #2a3042; align-self: center"></div>
+    <div style="display: flex; flex-direction: column; gap: 2px">
+      <h2 style="margin: 0; font-size: 20px; line-height: 26px; font-weight: 500">{{resumo}}</h2>
+      <span style="font-size: 13px; line-height: 18px; color: #a3a9b8">{{resumoSub}}</span>
+    </div>
+    <sc-if value="{{isRun}}" hint-placeholder-val="{{ true }}">
+      <div style="background: #1f2433; border-radius: 12px; padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; font-size: 13px; line-height: 18px">
+        <div style="display: flex; justify-content: space-between; gap: 8px">
+          <span style="font-weight: 500">Rua selecionada · 0,4 km</span>
+          <span style="color: #e0337f">27 passagens</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; color: #a3a9b8"><span>19 nov · Rodagem</span><span>6,09 km</span></div>
+        <div style="display: flex; justify-content: space-between; color: #a3a9b8"><span>17 nov · Rodagem</span><span>5,28 km</span></div>
+        <a href="#" style="min-height: 32px; display: flex; align-items: center">Ver os 27 treinos</a>
+      </div>
+    </sc-if>
+    <sc-if value="{{isBike}}" hint-placeholder-val="{{ false }}">
+      <div style="background: #1f2433; border-radius: 12px; padding: 12px; font-size: 13px; line-height: 18px; color: #a3a9b8">Toque numa rua para ver os pedais que passaram por ela.</div>
+    </sc-if>
+    <a href="#" style="display: flex; align-items: center; gap: 8px; min-height: 36px; font-size: 13px; line-height: 18px">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 9v4"/><path d="M12 16h.01"/><circle cx="12" cy="12" r="9"/></svg>
+      {{semTrajeto}}
+    </a>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { mod: 'run', fundo: true };
+  }
+  renderVals() {
+    const s = this.state;
+    const run = s.mod === 'run';
+    const mods = [['run', 'Corrida'], ['bike', 'Pedal']].map(([id, label]) => ({
+      label, on: s.mod === id ? 'true' : 'false',
+      bg: s.mod === id ? '#22d3ee' : 'transparent',
+      fg: s.mod === id ? '#0d0f1a' : '#f2f2f7',
+      pick: () => this.setState({ mod: id })
+    }));
+    return {
+      mods,
+      modNome: run ? 'corrida' : 'pedal',
+      showRun: run ? 'inline' : 'none',
+      showBike: run ? 'none' : 'inline',
+      isRun: run, isBike: !run,
+      baseOpacity: s.fundo ? 1 : 0,
+      fundoOn: s.fundo ? 'true' : 'false',
+      fundoBorda: s.fundo ? '#22d3ee' : '#2a3042',
+      fundoCor: s.fundo ? '#22d3ee' : '#f2f2f7',
+      toggleFundo: () => this.setState({ fundo: !this.state.fundo }),
+      resumo: run ? '86 corridas · 142 km de ruas diferentes' : '31 pedais · 388 km de ruas diferentes',
+      resumoSub: run ? 'Últimos 12 meses' : 'Últimos 12 meses · separado da corrida',
+      semTrajeto: run ? '4 corridas sem trajeto ficaram de fora · Buscar trajetos antigos' : '2 pedais sem trajeto ficaram de fora · Buscar trajetos antigos'
+    };
+  }
+}
+</script>
+</body>
+</html>
