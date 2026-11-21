@@ -623,3 +623,22 @@ ol.passos li.total { border-bottom: 0; justify-content: space-between; color: va
 .tv-replay .seg button::after { top: -6px; bottom: -6px; }
 .tv-handle { height: 44px; }
 a.link-kpi { display: inline-flex; align-items: center; min-height: 44px; color: var(--ciano-forte); font-size: 13px; line-height: 18px; text-decoration: none; align-self: flex-start; }
+
+/* ---- Equipamentos (Fase 5 · Etapa 2) ---- */
+.eq-card { gap: 10px; }
+.eq-card.atencao { border: 1px solid var(--atencao); }
+.eq-nome { font-size: 16px; line-height: 22px; font-weight: 500; }
+.eq-km { font-size: 28px; line-height: 32px; font-weight: 500; }
+.eq-km.sm { font-size: 22px; line-height: 26px; }
+.eq-barra { height: 8px; border-radius: 4px; background: var(--linha); overflow: hidden; }
+.eq-barra i { display: block; height: 100%; border-radius: 4px; background: var(--ciano); }
+.eq-barra i.atencao { background: var(--atencao); }
+.eq-est { display: inline-flex; align-items: center; gap: 6px; color: var(--atencao); font-size: 13px; line-height: 18px; }
+.eq-pe { border-top: 1px solid var(--linha); padding-top: 4px; }
+.link-btn { display: inline-flex; align-items: center; gap: 4px; min-height: 44px; padding: 0 6px; border: 0; background: transparent; color: var(--ciano-forte); font: inherit; font-size: 14px; cursor: pointer; }
+.link-btn:focus-visible { outline: 2px solid var(--ciano); outline-offset: 2px; }
+.eq-bike { padding-top: 4px; padding-bottom: 4px; gap: 0; }
+.eq-peca { display: flex; flex-direction: column; gap: 6px; padding: 12px 0; border-bottom: 1px solid var(--linha); }
+.eq-peca:last-child { border-bottom: 0; }
+.eq-aviso { gap: 10px; border: 1px solid var(--atencao); }
+.eq-campo { gap: 8px; }

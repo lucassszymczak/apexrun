@@ -134,4 +134,13 @@ LEITURA_DOCS.push(
     fonte: 'Regra do app, aprovada em 21/11/2026 (docs/fase3-formulas.md, item 5).',
   },
 );
+LEITURA_DOCS.push(
+  {
+    key: 'km-equipamento', name: 'Km do equipamento', cat: 'Rotina', conf: 'Alta (soma das distâncias salvas)',
+    desc: 'Os km atuais que você informou mais a distância das corridas com o tênis (ou dos pedais desde a troca, na bike). Aviso a partir de 90% do limite; no limite, card no Hoje.',
+    formula: 'tênis = km atuais (no cadastro) + soma da distância das corridas salvas com ele depois do cadastro (esteira conta)\npneus e corrente = soma da distância dos pedais salvos com a bike desde a última troca\naviso: a partir de 90% do limite (barra âmbar e linha no Completar)\nno limite: card no Hoje, até aposentar o par ou aumentar o limite\nbike: sem limite e sem aviso\ntreino sem distância soma 0; treino sem equipamento não conta',
+    fields: 'Distância de cada treino e o equipamento escolhido no Completar.',
+    fonte: 'Regra do app, aprovada em 21/11/2026 (docs/fase5-formulas.md, item 5).',
+  },
+);
 export const leituraDoc = (k: string): Doc | null => LEITURA_DOCS.find((d) => d.key === k || d.name === k) || null;

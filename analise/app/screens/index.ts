@@ -23,3 +23,4 @@ export { ConfigTreino, AmanhaCard } from './Amanha';
 export { Consistencia } from './Consistencia';
 export { MapaCalor } from './MapaCalor';
 export { Segmentos } from './Segmentos';
+export { Equipamentos } from './Equipamentos';

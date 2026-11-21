@@ -104,6 +104,8 @@ export function extrasOf(s: any): Record<string, any> {
     privacy: s && s.privacy ? s.privacy : null, // Etapa 3 (campo novo, opcional)
     garminActivityId: s && s.garminActivityId ? String(s.garminActivityId) : null, // Fase 2 (origem Garmin)
     leitura: s && s.leitura ? s.leitura : null, // Fase 2 (leitura do treino)
+    gearId: s && s.gearId ? s.gearId : null, // Fase 5 (equipamento)
+    dorRegioes: s && s.dorRegioes ? s.dorRegioes : null, // Fase 5 (mapa do corpo)
   };
 }
 
@@ -172,6 +174,9 @@ export function buildWorkout(f: FormVals, extras: Record<string, any>, editingId
   if (extras.privacy) w.privacy = extras.privacy;
   if (extras.garminActivityId) w.garminActivityId = extras.garminActivityId;
   if (extras.leitura) w.leitura = extras.leitura;
+  // Fase 5: equipamento e regiões de dor (campos novos e opcionais; só existem se definidos)
+  if (extras.gearId) w.gearId = extras.gearId;
+  if (extras.dorRegioes && extras.dorRegioes.length) w.dorRegioes = extras.dorRegioes;
   return { w };
 }
 
