@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Treino · replay com fantasma</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500&amp;display=swap">
+<style>
+body{margin:0;background:#0d0f1a}
+a{color:#22d3ee;text-decoration:none}a:hover{color:#a5f3fc}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; height: 844px; overflow: hidden; background: #0d0f1a; color: #f2f2f7; font-family: Outfit, system-ui, sans-serif; font-variant-numeric: tabular-nums">
+
+  <svg width="390" height="460" viewBox="0 0 390 460" role="img" aria-label="Replay do treino no mapa{{ariaFantasma}}" style="position: absolute; top: 0; left: 0">
+    <path d="M0 150 L390 330 M0 250 L390 120 M120 0 L60 460 M300 0 L250 460 M0 380 L390 300" stroke="#1a1f2c" stroke-width="7" fill="none"/>
+    <polyline points="60,380 90,330 130,300 180,280 230,250 280,220 320,190 340,160 320,140 280,150 240,170 200,190 160,215 120,245 90,290 70,340 60,380" fill="none" stroke="#2a3042" stroke-width="9" stroke-linejoin="round"/>
+    <polyline points="60,380 90,330 130,300 180,280 230,250 280,220 320,190 340,160 320,140 280,150 240,170 200,190 160,215 120,245 90,290 70,340 60,380" fill="none" stroke="#22d3ee" stroke-width="3" stroke-linejoin="round" stroke-opacity="0.55"/>
+    <circle cx="60" cy="380" r="7" fill="#f2f2f7" stroke="#0d0f1a" stroke-width="3"/>
+    <g style="display: {{ghostDisplay}}">
+      <circle cx="{{gx}}" cy="{{gy}}" r="9" fill="rgba(242, 242, 247, 0.18)" stroke="#f2f2f7" stroke-width="2" stroke-dasharray="3 2"/>
+    </g>
+    <circle cx="{{yx}}" cy="{{yy}}" r="8" fill="#22d3ee" stroke="#0d0f1a" stroke-width="3"/>
+  </svg>
+
+  <div style="position: absolute; top: 52px; left: 12px; right: 12px; display: flex; align-items: center; gap: 4px; background: rgba(13, 15, 26, 0.86); border: 1px solid #2a3042; border-radius: 14px; padding: 4px">
+    <a href="TreinoSegmentos.dc.html" aria-label="Voltar" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; color: #f2f2f7">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l14 0"/><path d="M5 12l6 6"/><path d="M5 12l6 -6"/></svg>
+    </a>
+    <div style="display: flex; flex-direction: column; flex-grow: 1; min-width: 0">
+      <h1 style="margin: 0; font-size: 16px; line-height: 20px; font-weight: 500">Rodagem</h1>
+      <span style="font-size: 11px; line-height: 14px; color: #a3a9b8">19 nov · 6,09 km</span>
+    </div>
+  </div>
+
+  <sc-if value="{{temFantasma}}" hint-placeholder-val="{{ true }}">
+    <div aria-live="polite" style="position: absolute; top: 112px; left: 12px; display: flex; align-items: center; gap: 8px; background: rgba(13, 15, 26, 0.86); border: 1px solid #2a3042; border-radius: 999px; padding: 8px 14px; font-size: 14px; line-height: 18px">
+      <span style="width: 10px; height: 10px; border-radius: 50%; background: {{gapCor}}"></span>
+      <span style="color: {{gapCor}}">{{gapTexto}}</span>
+    </div>
+  </sc-if>
+
+  <div style="position: absolute; left: 0; right: 0; top: 444px; bottom: 0; background: #161a26; border-radius: 22px 22px 0 0; padding: 8px 16px 26px; display: flex; flex-direction: column; gap: 14px">
+    <div style="width: 36px; height: 4px; border-radius: 2px; background: #2a3042; align-self: center"></div>
+
+    <div style="display: flex; align-items: center; gap: 12px">
+      <button onClick="{{togglePlay}}" aria-label="{{playLabel}}" style="width: 48px; height: 48px; flex-shrink: 0; border-radius: 50%; border: none; background: #22d3ee; color: #0d0f1a; display: flex; align-items: center; justify-content: center">
+        <sc-if value="{{playing}}" hint-placeholder-val="{{ false }}">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>
+        </sc-if>
+        <sc-if value="{{paused}}" hint-placeholder-val="{{ true }}">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4v16l13 -8z"/></svg>
+        </sc-if>
+      </button>
+      <div style="display: flex; flex-direction: column; gap: 2px; flex-grow: 1; min-width: 0">
+        <input type="range" min="0" max="1000" step="1" value="{{tVal}}" onChange="{{scrub}}" aria-label="Posição do replay" style="width: 100%; accent-color: #22d3ee; margin: 0">
+        <div style="display: flex; justify-content: space-between; font-size: 11px; line-height: 14px; color: #a3a9b8"><span>km {{km}}</span><span>{{tempo}} / 36:32</span></div>
+      </div>
+    </div>
+
+    <button onClick="{{abrir}}" aria-haspopup="dialog" style="display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 0 14px; border: 1px solid {{chipBorda}}; border-radius: 12px; background: #1f2433; color: #f2f2f7; font-family: Outfit, system-ui, sans-serif; text-align: left">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 11a7 7 0 0 1 14 0v7a1.78 1.78 0 0 1 -3.1 1.4a1.65 1.65 0 0 0 -2.6 0a1.65 1.65 0 0 1 -2.6 0a1.65 1.65 0 0 0 -2.6 0a1.78 1.78 0 0 1 -3.1 -1.4v-7"/><path d="M10 10l.01 0"/><path d="M14 10l.01 0"/></svg>
+      <span style="display: flex; flex-direction: column; flex-grow: 1">
+        <span style="font-size: 15px; line-height: 20px">Fantasma: {{fantasmaNome}}</span>
+        <span style="font-size: 12px; line-height: 16px; color: #a3a9b8">{{fantasmaSub}}</span>
+      </span>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22d3ee" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6l6 -6"/></svg>
+    </button>
+
+    <div style="display: flex; gap: 16px; font-size: 12px; line-height: 16px; color: #a3a9b8">
+      <span style="display: inline-flex; align-items: center; gap: 6px"><span style="width: 10px; height: 10px; border-radius: 50%; background: #22d3ee"></span>você (19 nov)</span>
+      <sc-if value="{{temFantasma}}" hint-placeholder-val="{{ true }}">
+        <span style="display: inline-flex; align-items: center; gap: 6px"><span style="width: 10px; height: 10px; border-radius: 50%; border: 1.5px dashed #f2f2f7"></span>fantasma ({{fantasmaData}})</span>
+      </sc-if>
+    </div>
+  </div>
+
+  <sc-if value="{{sheet}}" hint-placeholder-val="{{ false }}">
+    <div style="position: absolute; inset: 0; background: rgba(13, 15, 26, 0.6)"></div>
+    <div role="dialog" aria-label="Escolher o fantasma" style="position: absolute; left: 0; right: 0; bottom: 0; background: #161a26; border-radius: 22px 22px 0 0; border-top: 1px solid #2a3042; padding: 8px 16px 30px; display: flex; flex-direction: column; gap: 4px">
+      <div style="width: 36px; height: 4px; border-radius: 2px; background: #2a3042; align-self: center; margin-bottom: 8px"></div>
+      <h2 style="margin: 0 0 2px; font-size: 18px; line-height: 24px; font-weight: 500">Correr contra</h2>
+      <span style="font-size: 13px; line-height: 18px; color: #a3a9b8; margin-bottom: 8px">Treinos que fizeram o mesmo percurso</span>
+      <div role="radiogroup" aria-label="Fantasma" style="display: flex; flex-direction: column">
+        <sc-for list="{{opcoes}}" as="o" hint-placeholder-count="5">
+          <button role="radio" aria-checked="{{o.on}}" onClick="{{o.pick}}" style="display: flex; align-items: center; gap: 12px; min-height: 52px; padding: 0 4px; border: none; border-top: 1px solid #2a3042; background: transparent; color: #f2f2f7; font-family: Outfit, system-ui, sans-serif; text-align: left">
+            <span style="width: 20px; height: 20px; flex-shrink: 0; border-radius: 50%; border: 2px solid {{o.ring}}; display: flex; align-items: center; justify-content: center"><span style="width: 10px; height: 10px; border-radius: 50%; background: {{o.dot}}"></span></span>
+            <span style="display: flex; flex-direction: column; flex-grow: 1"><span style="font-size: 15px; line-height: 20px">{{o.nome}}</span><span style="font-size: 12px; line-height: 16px; color: #a3a9b8">{{o.sub}}</span></span>
+          </button>
+        </sc-for>
+      </div>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { t: 0.42, playing: false, ghost: 'melhor', sheet: false };
+    this.pts = [[60,380],[90,330],[130,300],[180,280],[230,250],[280,220],[320,190],[340,160],[320,140],[280,150],[240,170],[200,190],[160,215],[120,245],[90,290],[70,340],[60,380]];
+    this.cum = [0];
+    for (let i = 1; i < this.pts.length; i++) {
+      const a = this.pts[i - 1], b = this.pts[i];
+      this.cum.push(this.cum[i - 1] + Math.hypot(b[0] - a[0], b[1] - a[1]));
+    }
+    this.Tyou = 2192;
+    this.fantasmas = {
+      melhor: { nome: 'Seu melhor', data: '02 nov', T: 2148, sub: '02 nov · 35:48' },
+      recente: { nome: 'Mais recente', data: '12 nov', T: 2225, sub: '12 nov · 37:05' },
+      o26: { nome: '26 out', data: '26 out', T: 2218, sub: '36:58' },
+      o09: { nome: '09 out', data: '09 out', T: 2260, sub: '37:40' }
+    };
+  }
+  componentWillUnmount() { if (this.timer) clearInterval(this.timer); }
+  stop() { if (this.timer) { clearInterval(this.timer); this.timer = null; } }
+  pos(f) {
+    const total = this.cum[this.cum.length - 1], d = Math.max(0, Math.min(1, f)) * total;
+    let i = 1;
+    while (i < this.cum.length - 1 && this.cum[i] < d) i++;
+    const seg = this.cum[i] - this.cum[i - 1] || 1, k = Math.max(0, Math.min(1, (d - this.cum[i - 1]) / seg));
+    const a = this.pts[i - 1], b = this.pts[i];
+    return [a[0] + (b[0] - a[0]) * k, a[1] + (b[1] - a[1]) * k];
+  }
+  mmss(s) { s = Math.round(s); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); }
+  renderVals() {
+    const s = this.state;
+    const g = s.ghost ? this.fantasmas[s.ghost] : null;
+    const tau = s.t * this.Tyou;
+    const [yx, yy] = this.pos(s.t);
+    let gx = 0, gy = 0, gapTexto = '', gapCor = '#a3a9b8';
+    if (g) {
+      const fg = Math.min(1, tau / g.T);
+      [gx, gy] = this.pos(fg);
+      const diff = Math.round(s.t * (this.Tyou - g.T));
+      if (s.t >= 1) {
+        gapTexto = diff > 0 ? 'Você terminou ' + diff + ' s atrás' : (diff < 0 ? 'Você terminou ' + (-diff) + ' s à frente' : 'Empate');
+      } else if (diff > 0) gapTexto = 'Fantasma ' + diff + ' s à frente';
+      else if (diff < 0) gapTexto = 'Você ' + (-diff) + ' s à frente';
+      else gapTexto = 'Empatados';
+      gapCor = diff > 0 ? '#fbbf24' : '#34d399';
+    }
+    const ops = [['', 'Sem fantasma', 'Só o seu replay']].concat(Object.keys(this.fantasmas).map((k) => [k, this.fantasmas[k].nome, this.fantasmas[k].sub]));
+    const opcoes = ops.map(([id, nome, sub]) => {
+      const on = (s.ghost || '') === id;
+      return {
+        nome, sub, on: on ? 'true' : 'false',
+        ring: on ? '#22d3ee' : '#80879a', dot: on ? '#22d3ee' : 'transparent',
+        pick: () => this.setState({ ghost: id || null, sheet: false })
+      };
+    });
+    return {
+      yx: yx.toFixed(1), yy: yy.toFixed(1), gx: gx.toFixed(1), gy: gy.toFixed(1),
+      ghostDisplay: g ? 'inline' : 'none',
+      ariaFantasma: g ? ', com o fantasma de ' + g.data : '',
+      temFantasma: !!g, gapTexto, gapCor,
+      fantasmaNome: g ? g.nome : 'nenhum',
+      fantasmaSub: g ? g.sub : 'Toque para escolher contra qual treino correr',
+      fantasmaData: g ? g.data : '',
+      chipBorda: g ? '#22d3ee' : '#2a3042',
+      sheet: s.sheet, opcoes,
+      abrir: () => { this.stop(); this.setState({ sheet: true, playing: false }); },
+      tVal: Math.round(s.t * 1000),
+      km: (s.t * 6.09).toFixed(2).replace('.', ','),
+      tempo: this.mmss(tau),
+      playing: s.playing, paused: !s.playing,
+      playLabel: s.playing ? 'Pausar replay' : 'Reproduzir replay',
+      togglePlay: () => {
+        if (this.state.playing) { this.stop(); this.setState({ playing: false }); return; }
+        const start = this.state.t >= 1 ? 0 : this.state.t;
+        this.setState({ playing: true, t: start });
+        this.timer = setInterval(() => {
+          const nt = Math.min(1, this.state.t + 0.004);
+          if (nt >= 1) { this.stop(); this.setState({ t: 1, playing: false }); }
+          else this.setState({ t: nt });
+        }, 40);
+      },
+      scrub: (e) => { this.stop(); this.setState({ playing: false, t: Number(e.target.value) / 1000 }); }
+    };
+  }
+}
+</script>
+</body>
+</html>

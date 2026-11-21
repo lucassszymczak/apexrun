@@ -3,7 +3,8 @@
 App pessoal de análise de treinos (corrida e bike agora; natação depois), usado no celular e no computador. É publicado no GitHub Pages em `/apexrun/analise/`.
 - **Fase 1 (publicada):** reconstruiu a página única antiga como app em `analise/app/`, com a nova identidade, mapa do trajeto, replay, fotos, privacidade e cards de compartilhamento.
 - **Fase 2 (publicada):** treinos do Garmin entrando sozinhos, trajeto nos dois aparelhos e a leitura do treino (história, vento, deriva, tiros, melhores esforços e custo da subida). Roteiro em `docs/roteiro-fase2.md`; telas em `design/telas-fase2/`.
-- **Fase 4 · Planejamento:** percurso da prova, plano de prova km a km, simulador de meta e melhor horário para correr amanhã. Roteiro em `docs/roteiro-fase4.md`; telas em `design/telas-fase4/`. A Fase 3 (evolução) vem depois, por decisão do Lucas.
+- **Fase 4 · Planejamento (publicada):** percurso da prova, plano de prova km a km, simulador de meta e melhor horário para correr amanhã. Roteiro em `docs/roteiro-fase4.md`; telas em `design/telas-fase4/`.
+- **Fase 3 · Evolução:** mapa de calor, segmentos encontrados pelo app, replay com fantasma e consistência por semanas. Roteiro em `docs/roteiro-fase3.md`; telas em `design/telas-fase3/`.
 
 Fale com o Lucas em português do Brasil, de forma curta. Ele não é desenvolvedor: explique decisões técnicas em uma linha, sem jargão.
 
@@ -25,7 +26,7 @@ Fale com o Lucas em português do Brasil, de forma curta. Ele não é desenvolve
 
 ## Cálculos novos (a partir da Fase 2)
 
-- Só entram depois que o Lucas aprova a fórmula por escrito (`docs/fase2-formulas.md`, `docs/fase4-formulas.md`), com fonte publicada, limiares, confiança e os casos em que o item não aparece.
+- Só entram depois que o Lucas aprova a fórmula por escrito (`docs/fase2-formulas.md`, `docs/fase4-formulas.md`, `docs/fase3-formulas.md`), com fonte publicada, limiares, confiança e os casos em que o item não aparece.
 - Fórmulas já aprovadas são reaproveitadas por importação, nunca copiadas (por exemplo, `correcaoHadley` de `leitura.mjs` e `gradeCostMult` e `riegel` do `engine.mjs`).
 - Previsões ("tempo realista", "melhor horário") sempre mostram faixa ou confiança e a frase "estimativa, não garantia". Nada de prever ganho de treino.
 - Ficam em módulos novos e puros em `analise/` (por exemplo `laps.mjs`, `efforts.mjs`, `leitura.mjs`, `wind.mjs`), com testes `node`. Eles importam do `engine.mjs` o que precisam; não copiam nem alteram fórmulas existentes.
@@ -47,6 +48,11 @@ Fale com o Lucas em português do Brasil, de forma curta. Ele não é desenvolve
   - `course`: fonte, confiança, partes, distância gravada × oficial e o perfil leve (até 30 KB);
   - a janela de treino fica em `athlete`;
   - o ponto escolhido à mão para a previsão fica só no aparelho, fora da sincronização.
+- Fase 3 (campos opcionais e aditivos):
+  - catálogo de segmentos: id, modalidade, nome (renomeável), forma, distância, ganho e versão da regra que o detectou;
+  - passagens de cada treino em `leitura.segmentos`: tempo, tempo ajustado (só corrida), FC e precisão;
+  - meta semanal em horas em `athlete`;
+  - o mapa de calor é calculado no aparelho a partir dos trajetos e não tem dado próprio sincronizado.
 - Servidores que recebem dado pessoal, e só estes:
   - o Supabase (sync opcional, trajeto leve e a chave do Garmin criptografada);
   - o Open-Meteo (clima, vento e previsão, por coordenada e horário);
@@ -196,6 +202,30 @@ Contrastes do tema claro: `#0E7490` sobre branco 5,4:1 e sobre `#EEF0F5` 4,7:1; 
   - chuva em `--atencao`, escrita embaixo da hora.
 - **Confiança da fonte:** ícone e palavra (alta ou moderada em `--ok`, baixa em `--atencao`).
 
+### Componentes da Fase 3
+
+- **Mapa de calor:**
+  - frequência na rampa das zonas: 1–2 vezes `--ciano` a 35%, 3–5 `--ciano`, 6–10 `--zona-3`, 11–19 `--zona-4`, 20 ou mais `--zona-5`, com a linha mais grossa quanto maior a faixa;
+  - legenda "1 vez … 20 vezes ou mais";
+  - chip fixo "Só você vê" com cadeado;
+  - a rua tocada ganha um contorno `--texto`.
+- **Card de segmento:**
+  - desenho do trecho em `--ciano` sobre `--superficie-2`;
+  - nome, distância · ganho · passagens, e o melhor tempo (e o ajustado, na corrida);
+  - tendência com seta e palavra: mais rápido em `--ok`, mais lento em `--atencao`, estável em `--texto-2`.
+- **"Seu melhor":** o mesmo selo do recorde pessoal (fundo `--violeta`, losango, texto `--on-violeta`). Os outros lugares aparecem em texto ("3º de 22").
+- **Evolução do segmento:** gráfico de linha do tempo ajustado, com "mais alto = mais rápido" escrito e o melhor marcado com o losango.
+- **Grade de consistência:** botões de 44 px, um por semana.
+  - Consistente: fundo `--ok` a 16%, borda e check em `--ok`.
+  - Parcial: borda e meio círculo em `--atencao`.
+  - Sem treino: borda `--linha` e traço `--texto-3`.
+  - Em andamento: borda tracejada e relógio em `--ciano`.
+  - Sempre com a legenda em palavras.
+- **Fantasma:**
+  - você em `--ciano` cheio; o fantasma em círculo tracejado `--texto` com fundo a 18%;
+  - a diferença em texto: "Fantasma 12 s à frente" em `--atencao`, "Você 8 s à frente" em `--ok`;
+  - o padrão é "Sem fantasma".
+
 ## Área segura do iPhone
 
 - `<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">`. Use `--safe-top`, `--safe-bottom`, `--safe-left` e `--safe-right` (`design/tokens.css`; valem `env(safe-area-inset-*)`). Nunca use o `env()` direto no componente.
@@ -239,4 +269,7 @@ Contrastes do tema claro: `#0E7490` sobre branco 5,4:1 e sobre `#EEF0F5` 4,7:1; 
 - Não chamar a API do Garmin pelo navegador, não guardar a chave no aparelho e não registrar a chave em log.
 - Não implementar cálculo novo sem a fórmula aprovada, nem copiar valores de exemplo das telas de design.
 - Não esticar nem cortar um percurso sem avisar, não aceitar altimetria digitada sem a fonte e não inventar clima: além de 16 dias, o plano usa o clima padrão.
+- Não mostrar o mapa de calor nem os segmentos em card, compartilhamento ou sincronização com outras pessoas: eles revelam onde o Lucas mora.
+- Não calcular "tempo ajustado" de pedal: as fórmulas de inclinação e clima do app são de corrida.
+- Não contar sequência de dias seguidos: a consistência é por semana, e o descanso conta a favor.
 - Não fazer commit ou push sem o Lucas pedir. Trabalhe em branch.
