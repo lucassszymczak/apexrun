@@ -4,7 +4,7 @@
 // alturas (celular) ou painel fixo (computador). Os números vêm dos mesmos blocos de
 // antes (treinoBlocks) — nada nas análises muda.
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
-import { IconChevronLeft, IconDotsVertical, IconPencil, IconTrash, IconPlayerPlayFilled, IconPlayerPauseFilled, IconFileUpload, IconMapOff, IconRoute, IconChevronUp, IconChevronDown, IconShare, IconPhotoPlus, IconMapPin } from '@tabler/icons-react';
+import { IconChevronLeft, IconDotsVertical, IconPencil, IconTrash, IconPlayerPlayFilled, IconPlayerPauseFilled, IconFileUpload, IconMapOff, IconRoute, IconChevronUp, IconChevronDown, IconShare, IconPhotoPlus, IconMapPin, IconGhost2, IconCheck } from '@tabler/icons-react';
 import * as E from '../../engine.mjs';
 import { useApex, toast } from '../store';
 import { href, go } from '../route';
@@ -22,6 +22,8 @@ import { treinoBlocks } from './Treino';
 import { HistoriaCard, TirosCard, EsforcosCard, SubidaCard, VentoChip, idxDoKm } from './Leitura';
 import { SegmentosDoTreino } from './Segmentos';
 import { passagensDeUm } from '../segmentos-app';
+import { useCandidatos, useTrackFantasma, paramsFantasma } from '../fantasma-app';
+import { diferenca, final as finalFant, textoDif } from '../../fantasma.mjs';
 import { delPhoto } from '../db';
 import { usePhotos, addPhotos, photoSummary, placeManually, moveToOffRoute, type PhotoView } from '../photos';
 import { privacyOf, privacyLabel } from '../privacy';
@@ -60,7 +62,8 @@ export function Treino({ id }: { id: string }) {
   const { tr, loading } = useTrack(id);
   const [mode, setMode] = useState<'ruas' | 'trajeto'>(() => (ruasFailed ? 'trajeto' : (a.mapaPadrao === 'trajeto' ? 'trajeto' : 'ruas')));
   const [color, setColor] = useState<ColorMode>(() => (['fc', 'pace', 'zona', 'grade'].includes(a.corPadrao) ? a.corPadrao : 'fc'));
-  const [t, setT] = useState(0);
+  const fp = useMemo(paramsFantasma, [id]);
+  const [t, setT] = useState(() => fp.v0 || 0);
   const [playing, setPlaying] = useState(false);
   const [replayAtivo, setReplayAtivo] = useState(false); // o play foi apertado (o mapa se preenche)
   const [speed, setSpeed] = useState<'1' | '2' | '4'>('1');
@@ -128,6 +131,24 @@ export function Treino({ id }: { id: string }) {
   const toggle = () => { if (!tr) return; if (!playing && t >= total) setT(0); if (!playing) setReplayAtivo(true); setPlaying(!playing); };
   const [destaque, setDestaque] = useState<{ a: number; b: number } | null>(null);
   useEffect(() => { if (tr && tr.hasGps && w) passagensDeUm(w).catch(() => {}); }, [tr, w && w.id]);
+  // ---------------- fantasma (Fase 3 · Etapa 5): padrão "Sem fantasma" ----------------
+  const [fantId, setFantId] = useState<string | null>(fp.id);
+  const [fantSheet, setFantSheet] = useState(false);
+  const cands = useCandidatos(w, !!(tr && tr.hasGps));
+  const trF = useTrackFantasma(fantId);
+  const wF = fantId ? st.workouts.find((x: any) => x.id === fantId) : null;
+  const seg = fantId === fp.id && fp.id ? fp : { v0: 0, f0: 0, v1: null, f1: null };
+  const fantPos = (() => {
+    if (!trF || !tr) return null;
+    const tg = Math.min(Math.max(0, t - seg.v0 + seg.f0), seg.f1 != null ? seg.f1 : duration(trF));
+    let i = idxAtTime(trF, tg); while (i > 0 && trF.lat[i] == null) i--; if (trF.lat[i] == null) return null;
+    return { lat: trF.lat[i] as number, lon: trF.lon[i] as number, label: 'Fantasma, treino de ' + dayMon(wF ? wF.date : '') };
+  })();
+  const fimF = !!tr && (seg.v1 != null ? t >= seg.v1 : t >= duration(tr));
+  const difF = trF && tr ? (fimF ? finalFant(tr, trF, seg) : t >= seg.v0 ? diferenca(tr, trF, t, seg) : null) : null;
+  const txtF = textoDif(difF, fimF);
+  // veio de "Comparar no replay" de um segmento: destaca a passagem
+  useEffect(() => { if (tr && fp.id && fp.v1 != null) setDestaque({ a: idxAtTime(tr, fp.v0), b: idxAtTime(tr, fp.v1) }); }, [tr]);
   const pickIdx = (i: number) => { if (!tr) return; setPlaying(false); setReplayAtivo(false); setT(tr.t[i]); };
   // tiros e melhores esforços: tocar destaca o trecho no mapa e no gráfico (tocar de novo tira)
   const pickTrecho = (a: number, b?: number) => { if (!tr) return; if (b == null || (destaque && destaque.a === a && destaque.b === b)) { setDestaque(null); pickIdx(a); return; } setDestaque({ a, b }); pickIdx(a); };
@@ -203,6 +224,17 @@ export function Treino({ id }: { id: string }) {
       {!rm ? <Seg value={speed} onChange={setSpeed} label="Velocidade do replay" options={[['1', '1×'], ['2', '2×'], ['4', '4×']]} /> : null}
     </div>
   ) : null;
+  const fantasmaUi = tr && tr.hasGps ? (
+    <div className="fant">
+      <button type="button" className={'fant-btn' + (fantId ? ' on' : '')} disabled={!cands || (!cands.length && !fantId)} aria-haspopup="dialog" onClick={() => setFantSheet(true)}>
+        <IconGhost2 size={18} stroke={1.75} aria-hidden="true" />{fantId ? 'Fantasma: ' + (((cands || []).find((c) => c.w.id === fantId) || ({} as any)).rotulo || (wF ? dayMon(wF.date) : '')) : !cands ? 'Procurando fantasmas…' : cands.length ? 'Sem fantasma' : 'Sem treinos parecidos'}
+      </button>
+      {fantId && wF ? (<>
+        <span className="fant-leg"><i className="voce" aria-hidden="true" />você ({dayMon(w.date)}) <i className="fan" aria-hidden="true" />fantasma ({dayMon(wF.date)})</span>
+        {txtF ? <span className={'fant-dif ' + txtF.tom} aria-live="polite">{txtF.t}</span> : trF ? null : <span className="fant-dif">Carregando o trajeto do fantasma…</span>}
+      </>) : null}
+    </div>
+  ) : null;
   const chart = tr ? <TrackChart tr={tr} cursor={cursor} onCursor={pickIdx} bike={bk} deriva={derivaI != null ? { i: derivaI, km: L.deriva.km } : null} destaque={destaque} /> : null;
 
   // ---------------- área do mapa ----------------
@@ -210,8 +242,8 @@ export function Treino({ id }: { id: string }) {
   if (loading) mapArea = <div className="trackmap" aria-busy="true" />;
   else if (tr && tr.hasGps && col) {
     mapArea = mode === 'ruas'
-      ? <Suspense fallback={<div className="trackmap" aria-busy="true" />}><RuasMap tr={tr} band={col.band} bandKey={corEf} palette={col.palette} marca={marca} destaque={destaque} ate={ate} cursor={cursor} onPick={pickIdx} photos={mapPhotos} onPhoto={setPhotoOpen} onFail={(why) => { ruasFailed = true; setMode('trajeto'); toast('Sem o mapa de ruas agora (' + why + '): mostrando só o trajeto.'); }} /></Suspense>
-      : <TrackSvg tr={tr} band={col.band} cursor={cursor} onPick={pickIdx} photos={mapPhotos} onPhoto={setPhotoOpen} palette={col.palette} marca={marca} destaque={destaque} ate={ate} />;
+      ? <Suspense fallback={<div className="trackmap" aria-busy="true" />}><RuasMap tr={tr} band={col.band} bandKey={corEf} palette={col.palette} marca={marca} destaque={destaque} ate={ate} fantasma={fantPos} cursor={cursor} onPick={pickIdx} photos={mapPhotos} onPhoto={setPhotoOpen} onFail={(why) => { ruasFailed = true; setMode('trajeto'); toast('Sem o mapa de ruas agora (' + why + '): mostrando só o trajeto.'); }} /></Suspense>
+      : <TrackSvg tr={tr} band={col.band} cursor={cursor} onPick={pickIdx} photos={mapPhotos} onPhoto={setPhotoOpen} palette={col.palette} marca={marca} destaque={destaque} ate={ate} fantasma={fantPos} />;
   } else if (noGps) {
     mapArea = (
       <div className="trackmap tv-empty">
@@ -277,6 +309,7 @@ export function Treino({ id }: { id: string }) {
     <div className="tv-actions only-desk">{share}<button type="button" className="iconbtn bordered" aria-label={'Privacidade deste treino: ' + privacyLabel(priv)} onClick={() => setPrivOpen(true)}><PrivacyIcon p={priv} /></button><button type="button" className="iconbtn bordered plain" aria-label="Mais opções do treino" aria-haspopup="dialog" onClick={() => setMenu(true)}><IconDotsVertical size={20} stroke={1.75} /></button></div>
     {legend}
     {replay}
+    {fantasmaUi ? <div className="only-mob">{fantasmaUi}</div> : null}
     {nums}
     {climaP}
     {deriva}
@@ -313,7 +346,7 @@ export function Treino({ id }: { id: string }) {
         {top}
         {controls}
         {popPhoto ? <div className="photo-pop" aria-hidden="true"><img src={popPhoto.url} alt="" /><span>{photoWhere(tr, popPhoto)}</span></div> : null}
-        <div className="tv-replaybar only-desk">{legend}{replay}</div>
+        <div className="tv-replaybar only-desk">{legend}{replay}{fantasmaUi}</div>
       </div>
       <aside className="tv-panel" ref={drawer} aria-label="Detalhes do treino">
         <button type="button" className="tv-handle only-mob" aria-label={snap === 'max' ? 'Recolher detalhes' : 'Expandir detalhes'}
@@ -330,6 +363,19 @@ export function Treino({ id }: { id: string }) {
           {!tr && w.garminActivityId && garminReady() ? <button type="button" className="btn quiet" disabled={!!busy} onClick={async () => { setBusy('Buscando no Garmin…'); try { const r = await buscarTrajetos([w.id]); toast(r && r.ok ? 'Trajeto adicionado. Nada nas análises mudou.' : 'Não deu para buscar agora. Tente de novo mais tarde.'); setMenu(false); } finally { setBusy(null); } }}><IconRoute {...IC} aria-hidden="true" />Buscar trajeto no Garmin</button> : null}
           <p className="hint">Reimportar acrescenta o trajeto (mapa e replay) de um treino antigo. RPE, notas, análises e números não mudam.</p>
           <button type="button" className="btn danger" onClick={() => { if (confirm('Excluir este treino?')) { deleteWorkout(w.id); setMenu(false); go('treinos'); } }}><IconTrash {...IC} aria-hidden="true" />Excluir</button>
+        </Sheet>
+      ) : null}
+      {fantSheet ? (
+        <Sheet title="Correr contra" onClose={() => setFantSheet(false)}>
+          <p className="apoio muted">Treinos que fizeram o mesmo percurso (80% em comum e distância até 10% diferente).</p>
+          <div className="fant-lista" role="radiogroup" aria-label="Fantasma">
+            {[{ w: null as any, rotulo: 'Sem fantasma' }, ...(cands || [])].map((c: any) => { const on = (c.w ? c.w.id : null) === fantId; return (
+              <button key={c.w ? c.w.id : 'nenhum'} type="button" role="radio" aria-checked={on} onClick={() => { setFantId(c.w ? c.w.id : null); setFantSheet(false); }}>
+                <span className="stack grow" style={{ gap: 0 }}><b>{c.rotulo || dayMon(c.w.date)}</b><span className="apoio muted tn">{c.w ? dayMon(c.w.date) + ' · ' + E.hms(c.w.durationSec) + ' · ' + dec(c.w.distKm, 2) + ' km' : 'Só o seu replay'}</span></span>
+                {on ? <IconCheck size={18} stroke={2} aria-hidden="true" color="var(--ciano)" /> : null}
+              </button>); })}
+          </div>
+          <Kpi doc="fantasma" className="link-kpi" label="Sobre o fantasma">Como o fantasma é escolhido</Kpi>
         </Sheet>
       ) : null}
       {privOpen ? <PrivacySheet value={priv} onClose={() => setPrivOpen(false)} onSave={(p) => setWorkoutPrivacy(w.id, p)} /> : null}

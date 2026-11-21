@@ -598,3 +598,22 @@ ol.passos li.total { border-bottom: 0; justify-content: space-between; color: va
 .seg-cols { display: grid; grid-template-columns: 380px minmax(0, 1fr); gap: 24px; align-items: start; }
 .seg-det { min-width: 0; }
 .btn.sm { min-height: 44px; padding: 0 14px; font-size: 13px; }
+
+/* ---- Fantasma (Fase 3 · Etapa 5) ---- */
+.mk.fant { width: 18px; height: 18px; border-radius: 50%; border: 2px dashed var(--texto); background: color-mix(in srgb, var(--texto) 18%, transparent); }
+.fant { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; }
+.fant-btn { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 12px; border-radius: var(--radius-pill); border: 1px solid var(--linha); background: transparent; color: var(--texto); font: inherit; font-size: 13px; cursor: pointer; }
+.fant-btn.on { border-color: var(--ciano-forte); color: var(--ciano-forte); }
+.fant-btn:disabled { color: var(--texto-2); cursor: default; }
+.fant-btn:focus-visible { outline: 2px solid var(--ciano); outline-offset: 2px; }
+.fant-leg { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; line-height: 14px; color: var(--texto-2); }
+.fant-leg i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; }
+.fant-leg i.voce { background: var(--ciano); }
+.fant-leg i.fan { border: 1.5px dashed var(--texto); background: color-mix(in srgb, var(--texto) 18%, transparent); margin-left: 6px; }
+.fant-dif { font-size: 13px; line-height: 18px; font-weight: 500; color: var(--texto-2); font-variant-numeric: tabular-nums; }
+.fant-dif.ok { color: var(--ok); } .fant-dif.atencao { color: var(--atencao); }
+.fant-lista { display: flex; flex-direction: column; }
+.fant-lista button { display: flex; align-items: center; gap: 12px; min-height: 56px; padding: 8px 4px; border: 0; border-bottom: 1px solid var(--linha); background: transparent; color: var(--texto); font: inherit; text-align: left; cursor: pointer; }
+.fant-lista button[aria-checked="true"] b { color: var(--ciano-forte); }
+.fant-lista button:focus-visible { outline: 2px solid var(--ciano); outline-offset: 2px; }
+@media (min-width: 1024px) { .tv-ctl-colors { bottom: 176px; } }

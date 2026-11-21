@@ -125,4 +125,13 @@ LEITURA_DOCS.push(
     fonte: 'Regra do app, aprovada em 21/11/2026 (docs/fase3-formulas.md, item 4).',
   },
 );
+LEITURA_DOCS.push(
+  {
+    key: 'fantasma', name: 'Fantasma', cat: 'Evolução', conf: 'Alta (trajeto completo) · Moderada (versão leve)',
+    desc: 'Um treino seu anterior no mesmo percurso (80% em comum e distância até 10% diferente), que anda junto no replay. A diferença é medida na mesma distância.',
+    formula: 'candidato: mesma modalidade; pelo menos 80% do seu percurso no corredor de 25 m do dele E 80% do dele no seu; distância até 10% diferente\n"Seu melhor" = o menor tempo · "Mais recente" = a data mais próxima · os outros por data\ndiferença no seu km X = o seu tempo no km X − o tempo dele no km X (positivo = o fantasma à frente)\nno fim: a diferença na menor das duas distâncias\nno mapa, o fantasma anda no relógio do treino dele\nnum segmento, os dois começam juntos no início da passagem',
+    fields: 'Trajetos com GPS dos dois treinos neste aparelho. O padrão é "Sem fantasma"; a escolha não é gravada.',
+    fonte: 'Regra do app, aprovada em 21/11/2026 (docs/fase3-formulas.md, item 5).',
+  },
+);
 export const leituraDoc = (k: string): Doc | null => LEITURA_DOCS.find((d) => d.key === k || d.name === k) || null;

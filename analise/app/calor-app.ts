@@ -14,6 +14,7 @@ export type Calor = { chave?: string; ag: Agregado; resumo: ReturnType<typeof re
 // onTrackChange limpa a entrada)
 const cache = new Map<string, PorTreino | null>();
 onTrackChange((id) => cache.delete(id));
+export async function celulasDe(id: string): Promise<string[] | null> { const x = await doId(id); return x ? x.cells : null; }
 async function doId(id: string): Promise<PorTreino | null> {
   if (cache.has(id)) return cache.get(id)!;
   const tr = await getTrack(id);
