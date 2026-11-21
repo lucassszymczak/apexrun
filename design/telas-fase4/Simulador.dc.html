@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Simulador de meta</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500&amp;display=swap">
+<style>
+body{margin:0;background:#0d0f1a}
+a{color:#22d3ee;text-decoration:none}a:hover{color:#a5f3fc}
+</style>
+</helmet>
+<div style="width: 390px; height: 1200px; overflow: hidden; box-sizing: border-box; background: #0d0f1a; color: #f2f2f7; font-family: Outfit, system-ui, sans-serif; font-variant-numeric: tabular-nums; padding: 56px 16px 34px; display: flex; flex-direction: column; gap: 22px">
+
+  <header style="display: flex; align-items: center; gap: 4px">
+    <a href="EditarCiclo.dc.html" aria-label="Voltar" style="width: 44px; height: 44px; margin-left: -10px; display: flex; align-items: center; justify-content: center; color: #f2f2f7">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l14 0"/><path d="M5 12l6 6"/><path d="M5 12l6 -6"/></svg>
+    </a>
+    <div style="display: flex; flex-direction: column">
+      <h1 style="margin: 0; font-size: 20px; line-height: 26px; font-weight: 500">Simulador de meta</h1>
+      <span style="font-size: 13px; line-height: 18px; color: #a3a9b8">Maratona · 42,195 km</span>
+    </div>
+  </header>
+
+  <section aria-live="polite" style="display: flex; flex-direction: column; gap: 14px">
+    <h2 style="margin: 0; font-size: 24px; line-height: 30px; font-weight: 500">Hoje, seu tempo realista é de {{lo}} a {{hi}}.</h2>
+    <svg width="358" height="78" viewBox="0 0 358 78" role="img" aria-label="Faixa realista de {{lo}} a {{hi}}; sua meta é {{alvo}}" style="display: block">
+      <text x="{{alvoTx}}" y="12" text-anchor="middle" font-family="Outfit, system-ui, sans-serif" font-size="12" fill="#f2f2f7">meta {{alvo}}</text>
+      <rect x="16" y="30" width="326" height="4" rx="2" fill="#2a3042"/>
+      <rect x="{{bandX}}" y="22" width="{{bandW}}" height="20" rx="4" fill="#22d3ee" fill-opacity="0.22" stroke="#22d3ee" stroke-width="1.5"/>
+      <line x1="{{alvoX}}" x2="{{alvoX}}" y1="16" y2="48" stroke="#f2f2f7" stroke-width="2"/>
+      <g font-family="Outfit, system-ui, sans-serif" font-size="11" fill="#a3a9b8" text-anchor="middle">
+        <line x1="16" x2="16" y1="50" y2="56" stroke="#80879a"/><text x="16" y="70">5h00</text>
+        <line x1="124.7" x2="124.7" y1="50" y2="56" stroke="#80879a"/><text x="124.7" y="70">5h30</text>
+        <line x1="233.3" x2="233.3" y1="50" y2="56" stroke="#80879a"/><text x="233.3" y="70">6h00</text>
+        <line x1="342" x2="342" y1="50" y2="56" stroke="#80879a"/><text x="342" y="70">6h30</text>
+      </g>
+    </svg>
+    <div style="display: flex; gap: 8px; align-items: flex-start; font-size: 14px; line-height: 20px">
+      <sc-if value="{{abaixo}}" hint-placeholder-val="{{ true }}">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink: 0; margin-top: 1px"><path d="M12 9v4"/><path d="M12 16h.01"/><circle cx="12" cy="12" r="9"/></svg>
+      </sc-if>
+      <sc-if value="{{dentro}}" hint-placeholder-val="{{ false }}">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink: 0; margin-top: 1px"><path d="M5 12l5 5l10 -10"/></svg>
+      </sc-if>
+      <span>{{veredito}}</span>
+    </div>
+  </section>
+
+  <section aria-labelledby="h-meta" style="display: flex; flex-direction: column; gap: 10px">
+    <h3 id="h-meta" style="margin: 0; font-size: 16px; line-height: 22px; font-weight: 500">Tempo-alvo</h3>
+    <div style="display: flex; align-items: center; gap: 12px">
+      <button onClick="{{menos}}" aria-label="Diminuir 5 minutos" style="width: 44px; height: 44px; border: 1px solid #2a3042; border-radius: 12px; background: #161a26; color: #f2f2f7; display: flex; align-items: center; justify-content: center">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 12l14 0"/></svg>
+      </button>
+      <div style="flex-grow: 1; display: flex; flex-direction: column; align-items: center">
+        <span style="font-size: 32px; line-height: 38px; font-weight: 500">{{alvo}}</span>
+        <span style="font-size: 13px; line-height: 18px; color: #a3a9b8">pace médio {{paceAlvo}}/km</span>
+      </div>
+      <button onClick="{{mais}}" aria-label="Aumentar 5 minutos" style="width: 44px; height: 44px; border: 1px solid #2a3042; border-radius: 12px; background: #161a26; color: #f2f2f7; display: flex; align-items: center; justify-content: center">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5l0 14"/><path d="M5 12l14 0"/></svg>
+      </button>
+    </div>
+  </section>
+
+  <section aria-labelledby="h-clima" style="display: flex; flex-direction: column; gap: 8px">
+    <h3 id="h-clima" style="margin: 0; font-size: 16px; line-height: 22px; font-weight: 500">Clima no dia</h3>
+    <div role="radiogroup" aria-label="Clima no dia" style="display: flex; background: #161a26; border: 1px solid #2a3042; border-radius: 999px; padding: 3px">
+      <sc-for list="{{climas}}" as="c" hint-placeholder-count="3">
+        <button role="radio" aria-checked="{{c.on}}" aria-disabled="{{c.offTxt}}" onClick="{{c.pick}}" style="flex: 1; min-height: 40px; border: none; border-radius: 999px; background: {{c.bg}}; color: {{c.fg}}; font-family: Outfit, system-ui, sans-serif; font-size: 13px">{{c.label}}</button>
+      </sc-for>
+    </div>
+    <span style="font-size: 12px; line-height: 16px; color: #a3a9b8">A previsão abre 16 dias antes da prova.</span>
+  </section>
+
+  <section aria-labelledby="h-perc" style="display: flex; flex-direction: column; gap: 8px">
+    <h3 id="h-perc" style="margin: 0; font-size: 16px; line-height: 22px; font-weight: 500">Percurso</h3>
+    <div role="radiogroup" aria-label="Percurso" style="display: flex; background: #161a26; border: 1px solid #2a3042; border-radius: 999px; padding: 3px">
+      <sc-for list="{{percursos}}" as="p" hint-placeholder-count="2">
+        <button role="radio" aria-checked="{{p.on}}" onClick="{{p.pick}}" style="flex: 1; min-height: 40px; border: none; border-radius: 999px; background: {{p.bg}}; color: {{p.fg}}; font-family: Outfit, system-ui, sans-serif; font-size: 13px">{{p.label}}</button>
+      </sc-for>
+    </div>
+  </section>
+
+  <section aria-labelledby="h-como" style="display: flex; flex-direction: column">
+    <h3 id="h-como" style="margin: 0 0 6px; font-size: 16px; line-height: 22px; font-weight: 500">Como chegamos a essa faixa</h3>
+    <div style="display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-top: 1px solid #2a3042; font-size: 14px; line-height: 20px">
+      <span>Riegel pela Meia de Floripa<br><span style="font-size: 12px; color: #a3a9b8">21,20 km em 2:42:03</span></span><span>5h36</span>
+    </div>
+    <div style="display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-top: 1px solid #2a3042; font-size: 14px; line-height: 20px">
+      <span>Percurso ({{percNome}})</span><span>{{percVal}}</span>
+    </div>
+    <div style="display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-top: 1px solid #2a3042; font-size: 14px; line-height: 20px">
+      <span>Clima ({{climaNome}})</span><span>{{climaVal}}</span>
+    </div>
+    <div style="display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-top: 1px solid #2a3042; border-bottom: 1px solid #2a3042; font-size: 14px; line-height: 20px">
+      <span>Correção para maratona<br><span style="font-size: 12px; color: #a3a9b8">Riegel costuma ser otimista em provas longas</span></span><span>0 a +15 min</span>
+    </div>
+  </section>
+
+  <div style="margin-top: auto; display: flex; flex-direction: column; gap: 8px">
+    <a href="EditarCiclo.dc.html" style="height: 48px; border-radius: 12px; background: #e8459a; color: #0d0f1a; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 500">Usar {{alvo}} como meta</a>
+    <span style="font-size: 12px; line-height: 16px; color: #a3a9b8; text-align: center">Estimativa, não garantia. O simulador não prevê ganho de treino.</span>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1200}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { alvo: 330, clima: 'padrao', perc: 'real' };
+  }
+  hm(min) { const h = Math.floor(min / 60), m = Math.round(min % 60); return h + 'h' + String(m).padStart(2, '0'); }
+  x(min) { return 16 + (Math.max(300, Math.min(390, min)) - 300) / 90 * 326; }
+  renderVals() {
+    const s = this.state;
+    const percAdd = s.perc === 'real' ? 4 : 0;
+    const climaAdd = s.clima === 'quente' ? 10 : 0;
+    const lo = 336 + percAdd + climaAdd;
+    const hi = lo + 15;
+    const paceSec = Math.round(s.alvo * 60 / 42.195);
+    let veredito;
+    if (s.alvo < lo) veredito = 'Sua meta está ' + (lo - s.alvo) + ' min abaixo da faixa realista. Dá para tentar, com risco de quebrar no fim.';
+    else if (s.alvo <= hi) veredito = 'Sua meta está dentro da faixa realista.';
+    else veredito = 'Sua meta está ' + (s.alvo - hi) + ' min acima da faixa: folgada.';
+    const climas = [['padrao', 'Padrão', false], ['quente', 'Quente e úmido', false], ['previsao', 'Previsão', true]].map(([id, label, off]) => ({
+      label, on: s.clima === id ? 'true' : 'false', offTxt: off ? 'true' : 'false',
+      bg: s.clima === id ? '#22d3ee' : 'transparent',
+      fg: off ? '#80879a' : (s.clima === id ? '#0d0f1a' : '#f2f2f7'),
+      pick: () => { if (!off) this.setState({ clima: id }); }
+    }));
+    const percursos = [['real', 'Real (D+ 106 m)'], ['plano', 'Plano']].map(([id, label]) => ({
+      label, on: s.perc === id ? 'true' : 'false',
+      bg: s.perc === id ? '#22d3ee' : 'transparent',
+      fg: s.perc === id ? '#0d0f1a' : '#f2f2f7',
+      pick: () => this.setState({ perc: id })
+    }));
+    return {
+      lo: this.hm(lo), hi: this.hm(hi), alvo: this.hm(s.alvo),
+      paceAlvo: Math.floor(paceSec / 60) + ':' + String(paceSec % 60).padStart(2, '0'),
+      bandX: this.x(lo).toFixed(1), bandW: (this.x(hi) - this.x(lo)).toFixed(1),
+      alvoX: this.x(s.alvo).toFixed(1), alvoTx: Math.max(40, Math.min(318, this.x(s.alvo))).toFixed(1),
+      abaixo: s.alvo < lo, dentro: s.alvo >= lo,
+      veredito,
+      climas, percursos,
+      percNome: s.perc === 'real' ? 'real, D+ 106 m' : 'plano',
+      percVal: percAdd ? '+' + percAdd + ' min' : '0',
+      climaNome: s.clima === 'quente' ? 'quente e úmido' : 'padrão',
+      climaVal: climaAdd ? '+' + climaAdd + ' min' : '0',
+      menos: () => this.setState({ alvo: Math.max(270, this.state.alvo - 5) }),
+      mais: () => this.setState({ alvo: Math.min(390, this.state.alvo + 5) })
+    };
+  }
+}
+</script>
+</body>
+</html>

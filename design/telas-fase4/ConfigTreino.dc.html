@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Configurações › Treino</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500&amp;display=swap">
+<style>
+body{margin:0;background:#0d0f1a}
+a{color:#22d3ee;text-decoration:none}a:hover{color:#a5f3fc}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; overflow: hidden; box-sizing: border-box; background: #0d0f1a; color: #f2f2f7; font-family: Outfit, system-ui, sans-serif; font-variant-numeric: tabular-nums; padding: 56px 16px 34px; display: flex; flex-direction: column; gap: 24px">
+
+  <header style="display: flex; align-items: center; gap: 4px">
+    <a href="HojeAmanha.dc.html" aria-label="Voltar para Configurações" style="width: 44px; height: 44px; margin-left: -10px; display: flex; align-items: center; justify-content: center; color: #f2f2f7">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l14 0"/><path d="M5 12l6 6"/><path d="M5 12l6 -6"/></svg>
+    </a>
+    <div style="display: flex; flex-direction: column">
+      <span style="font-size: 13px; line-height: 18px; color: #a3a9b8">Configurações</span>
+      <h1 style="margin: 0; font-size: 20px; line-height: 26px; font-weight: 500">Treino</h1>
+    </div>
+  </header>
+
+  <fieldset style="margin: 0; padding: 0; border: none; display: flex; flex-direction: column; gap: 10px">
+    <legend style="padding: 0 0 10px; font-size: 16px; line-height: 22px; font-weight: 500">Janela de horário</legend>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px">
+      <div style="display: flex; flex-direction: column; gap: 6px">
+        <label for="de" style="font-size: 13px; line-height: 18px; color: #a3a9b8">Das</label>
+        <input id="de" type="text" value="05:00" style="height: 44px; box-sizing: border-box; padding: 0 12px; background: #1f2433; border: 1px solid #2a3042; border-radius: 8px; color: #f2f2f7; font-family: Outfit, system-ui, sans-serif; font-size: 16px">
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 6px">
+        <label for="ate" style="font-size: 13px; line-height: 18px; color: #a3a9b8">Até</label>
+        <input id="ate" type="text" value="10:00" style="height: 44px; box-sizing: border-box; padding: 0 12px; background: #1f2433; border: 1px solid #2a3042; border-radius: 8px; color: #f2f2f7; font-family: Outfit, system-ui, sans-serif; font-size: 16px">
+      </div>
+    </div>
+    <span style="font-size: 12px; line-height: 16px; color: #a3a9b8">O card "Amanhã cedo" procura o melhor horário dentro dessa janela.</span>
+  </fieldset>
+
+  <fieldset style="margin: 0; padding: 0; border: none; display: flex; flex-direction: column; gap: 10px">
+    <legend style="padding: 0 0 10px; font-size: 16px; line-height: 22px; font-weight: 500">Local da previsão</legend>
+    <div role="radiogroup" aria-label="Local da previsão" style="display: flex; background: #161a26; border: 1px solid #2a3042; border-radius: 999px; padding: 3px">
+      <button role="radio" aria-checked="true" style="flex: 1; min-height: 40px; border: none; border-radius: 999px; background: #22d3ee; color: #0d0f1a; font-family: Outfit, system-ui, sans-serif; font-size: 14px; font-weight: 500">Automático</button>
+      <button role="radio" aria-checked="false" style="flex: 1; min-height: 40px; border: none; border-radius: 999px; background: transparent; color: #f2f2f7; font-family: Outfit, system-ui, sans-serif; font-size: 14px">Escolher no mapa</button>
+    </div>
+    <span style="font-size: 13px; line-height: 18px; color: #a3a9b8">Usa o ponto de onde a maioria dos seus últimos 10 treinos começou.</span>
+  </fieldset>
+
+  <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 0; border-top: 1px solid #2a3042; border-bottom: 1px solid #2a3042">
+    <label for="mostrar" style="display: flex; flex-direction: column; gap: 2px">
+      <span style="font-size: 15px; line-height: 20px">Mostrar "Amanhã cedo" no Hoje</span>
+      <span style="font-size: 13px; line-height: 18px; color: #a3a9b8">Do meio-dia à meia-noite</span>
+    </label>
+    <input id="mostrar" type="checkbox" role="switch" checked style="width: 44px; height: 26px; accent-color: #22d3ee">
+  </div>
+
+  <div style="display: flex; gap: 8px; align-items: flex-start; font-size: 13px; line-height: 18px; color: #a3a9b8">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22d3ee" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink: 0; margin-top: 1px"><path d="M12 3a12 12 0 0 0 8.5 3a12 12 0 0 1 -8.5 15a12 12 0 0 1 -8.5 -15a12 12 0 0 0 8.5 -3"/></svg>
+    <span>A previsão envia ao Open-Meteo só a coordenada e o horário, como já acontece com o clima dos treinos.</span>
+  </div>
+
+  <button style="margin-top: auto; height: 48px; border: none; border-radius: 12px; background: #e8459a; color: #0d0f1a; font-family: Outfit, system-ui, sans-serif; font-size: 16px; font-weight: 500">Salvar</button>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

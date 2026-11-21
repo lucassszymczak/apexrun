@@ -2,7 +2,8 @@
 
 App pessoal de análise de treinos (corrida e bike agora; natação depois), usado no celular e no computador. É publicado no GitHub Pages em `/apexrun/analise/`.
 - **Fase 1 (publicada):** reconstruiu a página única antiga como app em `analise/app/`, com a nova identidade, mapa do trajeto, replay, fotos, privacidade e cards de compartilhamento.
-- **Fase 2:** treinos do Garmin entrando sozinhos, trajeto nos dois aparelhos e a leitura do treino (história, vento, deriva, tiros, melhores esforços e custo da subida). Roteiro em `docs/roteiro-fase2.md`; telas em `design/telas-fase2/`.
+- **Fase 2 (publicada):** treinos do Garmin entrando sozinhos, trajeto nos dois aparelhos e a leitura do treino (história, vento, deriva, tiros, melhores esforços e custo da subida). Roteiro em `docs/roteiro-fase2.md`; telas em `design/telas-fase2/`.
+- **Fase 4 · Planejamento:** percurso da prova, plano de prova km a km, simulador de meta e melhor horário para correr amanhã. Roteiro em `docs/roteiro-fase4.md`; telas em `design/telas-fase4/`. A Fase 3 (evolução) vem depois, por decisão do Lucas.
 
 Fale com o Lucas em português do Brasil, de forma curta. Ele não é desenvolvedor: explique decisões técnicas em uma linha, sem jargão.
 
@@ -24,7 +25,9 @@ Fale com o Lucas em português do Brasil, de forma curta. Ele não é desenvolve
 
 ## Cálculos novos (a partir da Fase 2)
 
-- Só entram depois que o Lucas aprova a fórmula por escrito (`docs/fase2-formulas.md`), com fonte publicada, limiares, confiança e os casos em que o item não aparece.
+- Só entram depois que o Lucas aprova a fórmula por escrito (`docs/fase2-formulas.md`, `docs/fase4-formulas.md`), com fonte publicada, limiares, confiança e os casos em que o item não aparece.
+- Fórmulas já aprovadas são reaproveitadas por importação, nunca copiadas (por exemplo, `correcaoHadley` de `leitura.mjs` e `gradeCostMult` e `riegel` do `engine.mjs`).
+- Previsões ("tempo realista", "melhor horário") sempre mostram faixa ou confiança e a frase "estimativa, não garantia". Nada de prever ganho de treino.
 - Ficam em módulos novos e puros em `analise/` (por exemplo `laps.mjs`, `efforts.mjs`, `leitura.mjs`, `wind.mjs`), com testes `node`. Eles importam do `engine.mjs` o que precisam; não copiam nem alteram fórmulas existentes.
 - São calculados uma vez, com o trajeto completo (1 Hz), e gravados no treino no campo opcional `leitura`, com a versão da fórmula (`leitura.v`). O outro aparelho só exibe.
 - Cada um tem verbete no Livro de fórmulas, selo de confiança e Folha do KPI.
@@ -39,9 +42,14 @@ Fale com o Lucas em português do Brasil, de forma curta. Ele não é desenvolve
 - Dados pesados (trajeto completo, séries por segundo, miniaturas de fotos) ficam no IndexedDB, por id do treino.
 - Desde a Fase 2, uma versão leve do trajeto e das séries (até 30 KB por meia maratona) sincroniza pela tabela `analise_tracks`, com o mesmo código de sincronização. Fotos nunca sincronizam.
 - Treinos que chegam do Garmin ficam numa fila no IndexedDB ("Para completar") e só entram em `apex.analise.v1` quando o Lucas salva. O campo opcional `garminActivityId` identifica a origem.
+- Fase 4 (campos opcionais e aditivos):
+  - no ciclo (`race`): `goal` ganha o valor `"time"` (além de `"finish"`), e entram `targetSec`, `strategy` (`"constante"` ou `"negativa"`), `startTime` e `course`;
+  - `course`: fonte, confiança, partes, distância gravada × oficial e o perfil leve (até 30 KB);
+  - a janela de treino fica em `athlete`;
+  - o ponto escolhido à mão para a previsão fica só no aparelho, fora da sincronização.
 - Servidores que recebem dado pessoal, e só estes:
   - o Supabase (sync opcional, trajeto leve e a chave do Garmin criptografada);
-  - o Open-Meteo (clima e vento, por coordenada e horário);
+  - o Open-Meteo (clima, vento e previsão, por coordenada e horário);
   - a API pessoal do Garmin, chamada só pela função `garmin`.
 - Nunca faça commit de backups ou arquivos .FIT do Lucas: use `fixtures/privado/`, que fica no `.gitignore`. Respostas da API do Garmin usadas em teste são sintéticas.
 
@@ -164,6 +172,30 @@ Contrastes do tema claro: `#0E7490` sobre branco 5,4:1 e sobre `#EEF0F5` 4,7:1; 
 - **Início da deriva:** linha vertical e faixa em `--atencao` a 10% no gráfico, e um marcador circular em `--atencao` no mapa.
 - **Status do Garmin:** "Conectado" com ponto `--ok`, "Sincronizado há X min" e "chave vence em dd/mm/aaaa". Vencimento próximo em `--atencao`; chave vencida em `--alerta`, com "Renovar chave".
 
+### Componentes da Fase 4
+
+- **Perfil do percurso:**
+  - altimetria em área `--superficie-2` com linha `--texto-3`;
+  - trecho mais duro em faixa `--atencao` a 12%;
+  - linhas tracejadas em `--texto` na meia e no km 30.
+- **Pace alvo:** linha em degraus `--ciano`, mais alto = mais rápido, com linhas de referência rotuladas (7:30, 8:00…).
+- **Passagens:** 3 cards (Meia, km 30, Chegada); a chegada em `--magenta`.
+- **Blocos de 5 km:** sanfona com `<button aria-expanded>` e chevron `--ciano`. O km em subida tem o pace em `--atencao`, e a inclinação aparece escrita ao lado.
+- **Imagem 9:16 do plano** (1080×1920):
+  - fundo `--noite`;
+  - os 34% de cima ficam livres (relógio da tela de bloqueio) e os 12% de baixo também (botões do iPhone);
+  - tabela de blocos com números grandes;
+  - símbolo e nome da marca no pé.
+- **Faixa do simulador:**
+  - régua de tempo com a faixa realista em `--ciano` a 22% com borda `--ciano`;
+  - marcador da meta em `--texto`;
+  - veredito com ícone e palavra (`--atencao` abaixo da faixa, `--ok` dentro ou acima).
+- **Melhor horário:**
+  - barras do custo do clima, começando no zero;
+  - a melhor hora com contorno e rótulo `--ciano`;
+  - chuva em `--atencao`, escrita embaixo da hora.
+- **Confiança da fonte:** ícone e palavra (alta ou moderada em `--ok`, baixa em `--atencao`).
+
 ## Área segura do iPhone
 
 - `<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">`. Use `--safe-top`, `--safe-bottom`, `--safe-left` e `--safe-right` (`design/tokens.css`; valem `env(safe-area-inset-*)`). Nunca use o `env()` direto no componente.
@@ -206,4 +238,5 @@ Contrastes do tema claro: `#0E7490` sobre branco 5,4:1 e sobre `#EEF0F5` 4,7:1; 
 - Não editar o `engine.mjs` à mão nem copiar fórmulas dele para outros módulos.
 - Não chamar a API do Garmin pelo navegador, não guardar a chave no aparelho e não registrar a chave em log.
 - Não implementar cálculo novo sem a fórmula aprovada, nem copiar valores de exemplo das telas de design.
+- Não esticar nem cortar um percurso sem avisar, não aceitar altimetria digitada sem a fonte e não inventar clima: além de 16 dias, o plano usa o clima padrão.
 - Não fazer commit ou push sem o Lucas pedir. Trabalhe em branch.
