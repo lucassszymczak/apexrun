@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Progresso › Corpo</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500&amp;display=swap">
+<style>
+body{margin:0;background:#0d0f1a}
+a{color:#22d3ee;text-decoration:none}a:hover{color:#a5f3fc}
+</style>
+</helmet>
+<div style="width: 390px; height: 1000px; overflow: hidden; box-sizing: border-box; background: #0d0f1a; color: #f2f2f7; font-family: Outfit, system-ui, sans-serif; font-variant-numeric: tabular-nums; padding: 56px 16px 34px; display: flex; flex-direction: column; gap: 14px">
+
+  <header style="display: flex; align-items: center; gap: 4px">
+    <a href="#" aria-label="Voltar para Progresso" style="width: 44px; height: 44px; margin-left: -10px; display: flex; align-items: center; justify-content: center; color: #f2f2f7">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l14 0"/><path d="M5 12l6 6"/><path d="M5 12l6 -6"/></svg>
+    </a>
+    <div style="display: flex; flex-direction: column">
+      <h1 style="margin: 0; font-size: 20px; line-height: 26px; font-weight: 500">Corpo</h1>
+      <span style="font-size: 13px; line-height: 18px; color: #a3a9b8">Últimos 90 dias · 34 treinos registrados</span>
+    </div>
+  </header>
+
+  <h2 style="margin: 0; font-size: 22px; line-height: 28px; font-weight: 500">A canela esquerda foi a que mais doeu: 9 de 34 treinos.</h2>
+
+  <div style="position: relative; width: 340px; height: 410px; margin: 0 auto">
+    <svg width="340" height="410" viewBox="0 0 340 410" aria-hidden="true" style="position: absolute; inset: 0">
+      <g fill="#1f2433" stroke="#2a3042" stroke-width="1">
+        <circle cx="85" cy="26" r="17"/><rect x="79" y="42" width="12" height="12"/><rect x="55" y="52" width="60" height="108" rx="14"/><rect x="57" y="152" width="56" height="40" rx="10"/>
+        <rect x="37" y="56" width="15" height="100" rx="7"/><rect x="35" y="152" width="13" height="58" rx="6"/><rect x="118" y="56" width="15" height="100" rx="7"/><rect x="122" y="152" width="13" height="58" rx="6"/>
+        <rect x="58" y="188" width="25" height="92" rx="10"/><rect x="87" y="188" width="25" height="92" rx="10"/><rect x="59" y="278" width="23" height="26" rx="8"/><rect x="88" y="278" width="23" height="26" rx="8"/>
+        <rect x="60" y="302" width="21" height="64" rx="8"/><rect x="89" y="302" width="21" height="64" rx="8"/><rect x="57" y="364" width="26" height="18" rx="6"/><rect x="87" y="364" width="26" height="18" rx="6"/>
+        <circle cx="255" cy="26" r="17"/><rect x="249" y="42" width="12" height="12"/><rect x="225" y="52" width="60" height="108" rx="14"/><rect x="227" y="152" width="56" height="40" rx="10"/>
+        <rect x="207" y="56" width="15" height="100" rx="7"/><rect x="205" y="152" width="13" height="58" rx="6"/><rect x="288" y="56" width="15" height="100" rx="7"/><rect x="292" y="152" width="13" height="58" rx="6"/>
+        <rect x="228" y="188" width="25" height="92" rx="10"/><rect x="257" y="188" width="25" height="92" rx="10"/><rect x="229" y="278" width="23" height="26" rx="8"/><rect x="258" y="278" width="23" height="26" rx="8"/>
+        <rect x="230" y="302" width="21" height="64" rx="8"/><rect x="259" y="302" width="21" height="64" rx="8"/><rect x="227" y="364" width="26" height="18" rx="6"/><rect x="257" y="364" width="26" height="18" rx="6"/>
+      </g>
+      <g font-family="Outfit, system-ui, sans-serif" font-size="11" fill="#a3a9b8" text-anchor="middle">
+        <text x="85" y="404">Frente</text><text x="255" y="404">Costas</text>
+        <text x="18" y="240">D</text><text x="152" y="240">E</text><text x="188" y="240">E</text><text x="322" y="240">D</text>
+      </g>
+    </svg>
+    <sc-for list="{{regioes}}" as="g" hint-placeholder-count="5">
+      <button onClick="{{g.pick}}" aria-pressed="{{g.sel}}" aria-label="{{g.aria}}" style="position: absolute; left: {{g.x}}px; top: {{g.y}}px; width: {{g.w}}px; height: {{g.h}}px; padding: 0; border-radius: 7px; border: {{g.borda}}; background: {{g.bg}}; color: #0d0f1a; font-family: Outfit, system-ui, sans-serif; font-size: 11px; font-weight: 500; display: flex; align-items: center; justify-content: center">{{g.num}}</button>
+    </sc-for>
+  </div>
+  <div style="display: flex; gap: 12px; justify-content: center; font-size: 12px; color: #a3a9b8">
+    <span style="display: inline-flex; align-items: center; gap: 4px"><span style="width: 12px; height: 12px; border-radius: 3px; background: rgba(251, 191, 36, 0.35)"></span>1–2 vezes</span>
+    <span style="display: inline-flex; align-items: center; gap: 4px"><span style="width: 12px; height: 12px; border-radius: 3px; background: rgba(251, 191, 36, 0.7)"></span>3–5</span>
+    <span style="display: inline-flex; align-items: center; gap: 4px"><span style="width: 12px; height: 12px; border-radius: 3px; background: #fbbf24"></span>6 ou mais</span>
+  </div>
+
+  <section aria-live="polite" aria-label="Região selecionada" style="background: #161a26; border-radius: 16px; padding: 14px; display: flex; flex-direction: column; gap: 10px">
+    <div style="display: flex; justify-content: space-between; align-items: baseline">
+      <h3 style="margin: 0; font-size: 16px; line-height: 22px; font-weight: 500">{{sel.nome}}</h3>
+      <span style="font-size: 13px; color: #a3a9b8">{{sel.vezes}}</span>
+    </div>
+    <svg width="330" height="70" viewBox="0 0 330 70" role="img" aria-label="{{sel.aria}}" style="display: block">
+      <line x1="0" x2="330" y1="60" y2="60" stroke="#2a3042"/>
+      <line x1="0" x2="330" y1="10" y2="10" stroke="#2a3042" stroke-dasharray="2 4"/>
+      <text x="0" y="8" font-family="Outfit, system-ui, sans-serif" font-size="10" fill="#80879a">10</text>
+      <text x="0" y="56" font-family="Outfit, system-ui, sans-serif" font-size="10" fill="#80879a">0</text>
+      <polyline points="{{sel.linha}}" fill="none" stroke="#fbbf24" stroke-width="1.75"/>
+    </svg>
+    <div style="display: flex; flex-direction: column">
+      <sc-for list="{{sel.ultimos}}" as="u" hint-placeholder-count="3">
+        <div style="display: flex; justify-content: space-between; padding: 6px 0; border-top: 1px solid #2a3042; font-size: 13px"><span style="color: #a3a9b8">{{u.d}}</span><span>dor {{u.v}}</span></div>
+      </sc-for>
+    </div>
+  </section>
+  <span style="font-size: 12px; line-height: 16px; color: #a3a9b8">Registros só dos dias de treino. O app mostra o padrão; não faz diagnóstico.</span>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1000}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { sel: 'canela_e' };
+    this.R = {
+      canela_e: { nome: 'Canela esquerda', x: 89, y: 304, w: 21, h: 60, hist: [['26 ago', 4], ['02 set', 3], ['14 set', 3], ['28 set', 2], ['12 out', 3], ['26 out', 2], ['02 nov', 2], ['13 nov', 3], ['19 nov', 3]] },
+      panturrilha_d: { nome: 'Panturrilha direita', x: 259, y: 304, w: 21, h: 60, hist: [['05 out', 2], ['19 out', 3], ['26 out', 2], ['09 nov', 2]] },
+      lombar: { nome: 'Lombar', x: 233, y: 128, w: 44, h: 28, hist: [['21 set', 2], ['12 out', 1], ['02 nov', 2]] },
+      joelho_e: { nome: 'Joelho esquerdo', x: 88, y: 280, w: 23, h: 22, hist: [['14 set', 2], ['28 set', 1]] },
+      pe_d: { nome: 'Tornozelo e pé direito', x: 58, y: 366, w: 24, h: 16, hist: [['13 nov', 2]] }
+    };
+  }
+  renderVals() {
+    const s = this.state;
+    const cor = (n) => n >= 6 ? '#fbbf24' : (n >= 3 ? 'rgba(251, 191, 36, 0.7)' : 'rgba(251, 191, 36, 0.35)');
+    const regioes = Object.keys(this.R).map((id) => {
+      const r = this.R[id], n = r.hist.length, sel = s.sel === id;
+      return {
+        x: r.x, y: r.y, w: r.w, h: r.h, sel: sel ? 'true' : 'false',
+        aria: r.nome + ': dor em ' + n + (n === 1 ? ' treino' : ' treinos'),
+        bg: cor(n), num: r.h >= 22 ? String(n) : '',
+        borda: sel ? '2px solid #22d3ee' : '1px solid #0d0f1a',
+        pick: () => this.setState({ sel: id })
+      };
+    });
+    const r = this.R[s.sel];
+    const n = r.hist.length;
+    const step = n > 1 ? 300 / (n - 1) : 0;
+    const linha = r.hist.map(([d, v], i) => (20 + i * step).toFixed(1) + ',' + (60 - v * 5).toFixed(1)).join(' ');
+    return {
+      regioes,
+      sel: {
+        nome: r.nome,
+        vezes: n + (n === 1 ? ' treino' : ' treinos') + ' com dor',
+        aria: 'Intensidade da dor em ' + r.nome + ' ao longo do tempo, de ' + r.hist[0][0] + ' a ' + r.hist[n - 1][0],
+        linha,
+        ultimos: r.hist.slice(-3).reverse().map(([d, v]) => ({ d, v }))
+      }
+    };
+  }
+}
+</script>
+</body>
+</html>
