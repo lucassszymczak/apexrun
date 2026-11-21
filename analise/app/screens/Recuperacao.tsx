@@ -82,7 +82,7 @@ export function Recuperacao() {
       <h2 className="section-title">Diário</h2>
       <Card style={{ padding: 0 }}>
         <div className="tbl-wrap"><table>
-          <thead><tr><th>Data</th><th className="n">Sono</th><th className="n">FC rep</th><th className="n">HRV</th><th className="n">VO₂</th><th>Ânimo / nota</th><th><span className="sr-only">Ações</span></th></tr></thead>
+          <thead><tr><th scope="col">Data</th><th scope="col" className="n">Sono</th><th scope="col" className="n">FC rep</th><th scope="col" className="n">HRV</th><th scope="col" className="n">VO₂</th><th scope="col">Ânimo / nota</th><th scope="col"><span className="sr-only">Ações</span></th></tr></thead>
           <tbody>{daily.slice().reverse().map((e: any) => (
             <tr key={e.date}><td>{dayMon(e.date)}</td><td className="n">{e.sleepH != null ? dec(e.sleepH, String(e.sleepH).includes('.') ? 1 : 0) + ' h' : '—'}</td><td className="n">{e.restingHR || '—'}</td><td className="n">{e.hrv || '—'}</td><td className="n">{e.vo2 ? String(e.vo2).replace('.', ',') : '—'}</td>
               <td>{e.mood ? e.mood + ' de 5' : (e.note ? e.note : '—')}</td>

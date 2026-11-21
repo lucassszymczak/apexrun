@@ -47,6 +47,15 @@ console.log('\n== tiros (itens 4 e 5) ==');
   ok('voltas por distância (decisão do Lucas): "5 × 400 m"', r && r.rotulo === '5 × 400 m', r && r.rotulo);
 }
 {
+  // voltas MANUAIS (lap_trigger manual): 4 × ~3 min rápidos alternando ~2 min lentos
+  const laps = [{ n: 1, t: 900, d: 2400, gatilho: 'manual' }];
+  for (let k = 0; k < 4; k++) { laps.push({ n: laps.length + 1, t: 180 + k * 3, d: 760 + k * 40, hr: 168, gatilho: 'manual' }); laps.push({ n: laps.length + 1, t: 120, d: 300, gatilho: 'manual' }); }
+  laps.push({ n: laps.length + 1, t: 600, d: 1500, gatilho: 'manual' });
+  const r = tirosDeVoltas(laps);
+  ok('voltas manuais: 4 tiros, origem "voltas manuais"', r && r.tiros.length === 4 && r.origem === 'voltas manuais', r && r.origem + ' · ' + r.rotulo);
+  ok('voltas manuais: a tabela bate com as voltas (±1 s, ±1 m)', r && r.tiros.every((x, k) => near(x.t, 180 + k * 3, 1) && near(x.d, 760 + k * 40, 1)));
+}
+{
   // km automático: 21 voltas de 1 km parecidas + resto → não é tiro
   const laps = Array.from({ length: 21 }, (_, k) => ({ n: k + 1, t: 450 + (k % 3) * 5, d: 1000, gatilho: 'distance' }));
   laps.push({ n: 22, t: 60, d: 208, gatilho: 'session_end' });
@@ -124,7 +133,28 @@ console.log('\n== clima padrão (item 1), deriva (item 3), vento (item 2), hist�
   const lp = [{ n: 1, t: 600, d: 2000, hr: 140, gatilho: 'time', intensidade: null, inicio: 0 }];
   ok('voltas guardadas voltam ao formato de entrada', voltasParaLaps(computeLeitura({ w: dW, tr: null, laps: lp, wind: null }).voltas)[0].d === 2000);
   ok('trocar origem: "nenhum" tira os tiros', tirosPorOrigem('nenhum', lp, null) == null);
+  const semGps = track(new Array(600).fill(3)); semGps.hasGps = false;
+  ok('sem GPS: o vento não aparece (nem o modo, nem o chip)', ventoDoTreino(semGps, { kmh: 18, de: 0 }) == null && ventoDoTreino(track(new Array(600).fill(3), { gps: true }), null) == null);
   ok('sem GPS (esteira): sem esforços nem vento', !computeLeitura({ w: { ...dW, indoor: true }, tr: null, laps: [], wind: null }).esforcos);
+}
+
+// ---------------- .FIT estruturado gravado de verdade (sintético) ----------------
+console.log('\n== .FIT estruturado sintético (lap.intensity + workout_step) ==');
+{
+  const { Encoder, Profile } = await import('@garmin/fitsdk');
+  const enc = new Encoder(), st = new Date('2026-11-10T09:00:00Z');
+  enc.onMesg(Profile.MesgNum.FILE_ID, { manufacturer: 'development', product: 1, timeCreated: st, type: 'activity' });
+  enc.onMesg(Profile.MesgNum.WORKOUT_STEP, { messageIndex: 0, intensity: 'warmup' });
+  enc.onMesg(Profile.MesgNum.WORKOUT_STEP, { messageIndex: 1, intensity: 'active', targetType: 'speed', customTargetValueLow: 3450, customTargetValueHigh: 3600 }); // m/s × 1000 (o leitor devolve customTargetSpeed*)
+  enc.onMesg(Profile.MesgNum.WORKOUT_STEP, { messageIndex: 2, intensity: 'recovery' });
+  const plano = [['warmup', 0, 600, 1500]]; for (let k = 0; k < 5; k++) plano.push(['active', 1, 230 + k, 800], ['recovery', 2, 120, 250]);
+  let t = 0;
+  for (const [it, step, dur, d] of plano) { enc.onMesg(Profile.MesgNum.LAP, { timestamp: new Date(st.getTime() + (t + dur) * 1000), startTime: new Date(st.getTime() + t * 1000), totalTimerTime: dur, totalElapsedTime: dur, totalDistance: d, intensity: it, wktStepIndex: step, lapTrigger: 'manual' }); t += dur; }
+  const m = new (await import('@garmin/fitsdk')).Decoder((await import('@garmin/fitsdk')).Stream.fromByteArray(new Uint8Array(enc.close()))).read().messages;
+  const laps = lapsFromMessages(m), r = tirosDoTreino(laps, null);
+  ok('.FIT estruturado: 5 tiros "ativos", rótulo "5 × 800 m"', r && r.origem === 'estruturado' && r.rotulo === '5 × 800 m', r && r.rotulo);
+  ok('.FIT estruturado: tabela = voltas do relógio (±1 s, ±1 m)', r && r.tiros.every((x, k) => near(x.t, 230 + k, 1) && near(x.d, 800, 1)));
+  ok('.FIT estruturado: faixa alvo vem do workout_step', r && r.tiros[0].alvo && near(r.tiros[0].alvo.vMin, 3.45, 0.01) && near(r.tiros[0].alvo.vMax, 3.6, 0.01));
 }
 
 // ---------------- .FIT reais do Lucas (se existirem) ----------------

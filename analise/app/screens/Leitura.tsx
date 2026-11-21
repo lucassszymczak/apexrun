@@ -93,12 +93,15 @@ function SecH({ tema, titulo, icon }: { tema: string; titulo: string; icon?: any
   </div>);
 }
 
+// índice do trajeto no instante t (segundos desde a largada)
+function idxT(tr: Track, t: number): number | null { for (let i = 0; i < tr.t.length; i++) if (tr.t[i] >= t) return i; return tr.t.length ? tr.t.length - 1 : null; }
+
 // ---------------- 4 e 5. tiros ----------------
 const CONF_ORIGEM: Record<string, string> = { estruturado: 'Alta', 'voltas manuais': 'Moderada', 'voltas do relógio': 'Moderada', 'detecção automática': 'Baixa' };
 function alvoPace(t: any): [number, number] | null { return t.alvo ? [1000 / t.alvo.vMax, 1000 / t.alvo.vMin] : null; }
 function foraDoAlvo(t: any): boolean { const r = alvoPace(t); return !!(r && t.paceSkm != null && (t.paceSkm < r[0] - 0.5 || t.paceSkm > r[1] + 0.5)); }
 
-export function TirosCard({ w, tr, onPick }: { w: any; tr: Track | null; onPick?: (i: number) => void }) {
+export function TirosCard({ w, tr, onPick }: { w: any; tr: Track | null; onPick?: (i: number, fim?: number) => void }) {
   const T = w.leitura && w.leitura.tiros;
   const [trocar, setTrocar] = useState<{ k: string; rotulo: string | null }[] | null>(null);
   const escolhida = w.leitura && w.leitura.origem;
@@ -125,7 +128,8 @@ export function TirosCard({ w, tr, onPick }: { w: any; tr: Track | null; onPick?
   const Y = (p: number) => Tp + ((p - y0) / (y1 - y0 || 1)) * (H - Tp - B); // pace menor (mais rápido) fica em cima
   const faixa = alvos.length ? [Math.min(...alvos.map((x) => x[0])), Math.max(...alvos.map((x) => x[1]))] : null;
   const ticks = [lo, (lo + hi) / 2, hi];
-  const idxDe = (t: any) => (tr && t.inicio != null ? (() => { const rel = t.inicio - tr.start; let b = 0; for (let i = 0; i < tr.t.length; i++) { if (tr.t[i] >= rel) { b = i; break; } } return b; })() : null);
+  const idxDe = (t: any) => (tr && t.inicio != null ? idxT(tr, t.inicio - tr.start) : null);
+  const fimDe = (t: any) => (tr && t.inicio != null ? idxT(tr, t.inicio - tr.start + t.t) : undefined);
   const origem = T.origem as string;
   const abrirTrocar = async () => setTrocar(await opcoesOrigem(w));
   return (
@@ -143,11 +147,11 @@ export function TirosCard({ w, tr, onPick }: { w: any; tr: Track | null; onPick?
       <p className="hint">{faixa ? 'Faixa clara = alvo do treino (' + pc(faixa[0]) + ' a ' + pc(faixa[1]) + '/km). ' : 'Sem alvo no relógio: sem faixa. '}Mais alto é mais rápido.</p>
       <div className="tbl-wrap">
         <table>
-          <thead><tr><th>#</th><th className="n">Tempo</th><th className="n">Pace</th><th className="n">FC</th><th className="n">Recup.</th></tr></thead>
+          <thead><tr><th scope="col">#</th><th scope="col" className="n">Tempo</th><th scope="col" className="n">Pace</th><th scope="col" className="n">FC</th><th scope="col" className="n">Recup.</th></tr></thead>
           <tbody>
             {tiros.map((t, k) => { const ii = idxDe(t); return (
               <tr key={k} className={fora[k] ? 'fora' : undefined}>
-                <td>{onPick && ii != null ? <button type="button" className="link" onClick={() => onPick(ii)} aria-label={'Ver o ' + (k + 1) + 'º tiro no mapa'}>{k + 1}</button> : k + 1}{fora[k] ? <span style={{ color: 'var(--atencao)' }}> · fora do alvo</span> : null}</td>
+                <td>{onPick && ii != null ? <button type="button" className="link" onClick={() => onPick(ii, fimDe(t) ?? undefined)} aria-label={'Destacar o ' + (k + 1) + 'º tiro no mapa e no gráfico'}>{k + 1}</button> : k + 1}{fora[k] ? <span style={{ color: 'var(--atencao)' }}> · fora do alvo</span> : null}</td>
                 <td className="n">{tempo(t.t)}</td><td className="n">{pc(t.paceSkm)}</td><td className="n">{t.hr || '—'}</td><td className="n">{t.recT ? tempo(t.recT) : '—'}</td>
               </tr>); })}
           </tbody>
@@ -184,26 +188,28 @@ export function SeloEsforco({ tipo }: { tipo: 'pr' | 'ciclo' }) {
     ? <span className="selo pr"><svg width="8" height="8" viewBox="0 0 8 8" aria-hidden="true"><path d="M4 0 8 4 4 8 0 4Z" fill="currentColor" /></svg>Recorde pessoal</span>
     : <span className="selo ciclo">Melhor do ciclo</span>;
 }
-export function EsforcosCard({ w, st, tr, onPick }: { w: any; st: any; tr: Track | null; onPick?: (i: number) => void }) {
+export function EsforcosCard({ w, st, tr, onPick }: { w: any; st: any; tr: Track | null; onPick?: (i: number, fim?: number) => void }) {
+  const [todos, setTodos] = useState(false);
   const e = w.leitura && w.leitura.esforcos;
   if (!e) return null;
   const s = selos(w, st.workouts, st.race && st.race.startDate ? st.race.startDate : null);
   const ks = DISTANCIAS.map(String).filter((k) => e[k]);
   const comSelo = ks.filter((k) => s[k]);
-  const lista = [...comSelo, ...ks.filter((k) => !s[k])].slice(0, 4).sort((a, b) => +a - +b);
+  const lista = (todos ? ks.slice() : [...comSelo, ...ks.filter((k) => !s[k])].slice(0, 4)).sort((a, b) => +a - +b);
   const pr = ks.filter((k) => s[k] === 'pr').sort((a, b) => +b - +a)[0];
   const ci = ks.filter((k) => s[k] === 'ciclo').sort((a, b) => +b - +a)[0];
   const titulo = pr ? 'Novo recorde nos ' + ROTULO[pr] : ci ? 'Melhor do ciclo nos ' + ROTULO[ci] : 'Seus trechos mais rápidos';
   const comparados = st.workouts.filter((o: any) => o.leitura && o.leitura.esforcos).length;
-  const idx = (t: number) => { if (!tr) return null; for (let i = 0; i < tr.t.length; i++) if (tr.t[i] >= t) return i; return null; };
+  const idx = (t: number) => (tr ? idxT(tr, t) : null);
   return (
     <Card>
       <SecH tema="Melhores esforços" titulo={titulo} icon={<IconTrophy size={14} stroke={1.75} aria-hidden="true" />} />
       <ul className="esforcos">
         {lista.map((k) => { const x = e[k], i = idx(x.ini); const p = x.t / (+k / 1000); const body = (<>
           <span className="d">{ROTULO[k]}</span><span className="t tn">{tempo(x.t)}</span><span className="p tn muted">{pc(p)}/km</span>{s[k] ? <SeloEsforco tipo={s[k]} /> : <span />}
-        </>); return <li key={k}>{onPick && i != null ? <button type="button" onClick={() => onPick(i)} aria-label={ROTULO[k] + ' em ' + tempo(x.t) + (s[k] === 'pr' ? ', recorde pessoal' : s[k] === 'ciclo' ? ', melhor do ciclo' : '') + '. Ver no mapa'}>{body}</button> : <div>{body}</div>}</li>; })}
+        </>); return <li key={k}>{onPick && i != null ? <button type="button" onClick={() => onPick(i, idx(x.fim) ?? undefined)} aria-label={ROTULO[k] + ' em ' + tempo(x.t) + (s[k] === 'pr' ? ', recorde pessoal' : s[k] === 'ciclo' ? ', melhor do ciclo' : '') + '. Destacar no mapa'}>{body}</button> : <div>{body}</div>}</li>; })}
       </ul>
+      {ks.length > 4 ? <button type="button" className="link" onClick={() => setTodos(!todos)} aria-expanded={todos}>{todos ? 'Ver menos' : 'Ver todos (' + ks.length + ')'}</button> : null}
       <div className="row between wrap" style={{ alignItems: 'center' }}>
         <p className="hint" style={{ margin: 0 }}>Compara com o ciclo atual e com {comparados} treino{comparados === 1 ? '' : 's'} com trajeto.</p>
         <Kpi doc="melhor-esforco" className="link-kpi" label="Sobre o melhor esforço">O que é</Kpi>
@@ -234,7 +240,7 @@ export function SubidaCard({ w }: { w: any }) {
       </div>
       <div className="tbl-wrap">
         <table>
-          <thead><tr><th>Faixa</th><th className="n">Tempo</th><th className="n">Real</th><th className="n">GAP</th><th className="n">FC</th></tr></thead>
+          <thead><tr><th scope="col">Faixa</th><th scope="col" className="n">Tempo</th><th scope="col" className="n">Real</th><th scope="col" className="n">GAP</th><th scope="col" className="n">FC</th></tr></thead>
           <tbody>
             {S.faixas.map((f: any, k: number) => (
               <tr key={k}>
@@ -311,7 +317,8 @@ export function EsforcosProgresso({ runs, todas, recorte, st }: { runs: any[]; t
             {pr ? <SeloEsforco tipo="pr" /> : doCiclo ? <SeloEsforco tipo="ciclo" /> : <span />}
           </a></li>; })}
       </ul>
-    ) : <p className="apoio muted">Os melhores esforços saem do trajeto completo de cada treino.</p>}
+    ) : null}
+    <p className="hint">Só entram treinos com o trajeto salvo neste aparelho ou calculados em outro.</p>
     {falta.comTrajeto ? <button type="button" className="btn" disabled={busy} onClick={calcular}>{busy ? 'Calculando…' : 'Calcular a leitura de ' + falta.comTrajeto + ' treino' + (falta.comTrajeto === 1 ? '' : 's') + ' com trajeto'}</button> : null}
     {falta.semTrajeto ? (garminReady()
       ? <button type="button" className="btn quiet" disabled={busy || gs.rodando} onClick={buscar}>{gs.rodando ? 'Buscando ' + gs.feito + ' de ' + gs.total + '…' : 'Buscar trajeto de ' + falta.semTrajeto + ' treino' + (falta.semTrajeto === 1 ? '' : 's') + ' no Garmin'}</button>

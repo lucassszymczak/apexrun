@@ -6,7 +6,7 @@ import * as E from '../../engine.mjs';
 
 const W = 360;
 
-export function TrackChart({ tr, cursor, onCursor, height = 120, bike, label = 'Pace, FC e elevação ao longo do treino', deriva }: { tr: Track; cursor: number | null; onCursor: (i: number) => void; height?: number; bike?: boolean; label?: string; deriva?: { i: number; km: number } | null }) {
+export function TrackChart({ tr, cursor, onCursor, height = 120, bike, label = 'Pace, FC e elevação ao longo do treino', deriva, destaque }: { tr: Track; cursor: number | null; onCursor: (i: number) => void; height?: number; bike?: boolean; label?: string; deriva?: { i: number; km: number } | null; destaque?: { a: number; b: number } | null }) {
   const H = height;
   const data = useMemo(() => {
     const n = tr.t.length, step = Math.max(1, Math.floor(n / 600));
@@ -60,6 +60,7 @@ export function TrackChart({ tr, cursor, onCursor, height = 120, bike, label = '
         onPointerDown={(e) => { (e.currentTarget as Element).setPointerCapture(e.pointerId); pickAt(e.clientX, e.currentTarget); }}
         onPointerMove={(e) => { if (e.buttons || e.pointerType === 'touch') pickAt(e.clientX, e.currentTarget); }}>
         {area ? <path d={area} fill="var(--superficie-2)" /> : null}
+        {destaque ? (() => { const xa = X(data.useDist ? (tr.dist[destaque.a] ?? 0) : tr.t[destaque.a]), xb = X(data.useDist ? (tr.dist[destaque.b] ?? 0) : tr.t[destaque.b]); return <rect x={xa} y={0} width={Math.max(2, xb - xa)} height={H} fill="var(--ciano)" fillOpacity={0.18} aria-hidden="true" />; })() : null}
         {deriva ? (() => { const dx = X(data.useDist ? (tr.dist[deriva.i] ?? 0) : tr.t[deriva.i]); return <g aria-hidden="true"><rect x={dx} y={0} width={Math.max(0, W - dx)} height={H} fill="var(--atencao)" fillOpacity={0.1} /><line x1={dx} x2={dx} y1={0} y2={H} stroke="var(--atencao)" strokeWidth={1.5} vectorEffect="non-scaling-stroke" /></g>; })() : null}
         <path d={line(data.hr, data.rh, 4, H * 0.62)} fill="none" stroke="var(--ciano)" strokeWidth={1.6} vectorEffect="non-scaling-stroke" />
         <path d={line(data.spd, data.rs, 4, H * 0.62)} fill="none" stroke="var(--magenta)" strokeWidth={1.6} vectorEffect="non-scaling-stroke" />

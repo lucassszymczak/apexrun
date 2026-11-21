@@ -2,8 +2,8 @@
 // recoloridas pelos tokens (--noite, --superficie, --superficie-2). Carregado só aqui
 // (import dinâmico). Sem rede ou com erro no estilo, avisa e a tela volta ao "Só trajeto".
 import { useEffect, useRef } from 'react';
-import { type Track, coloredRuns, kmMarks, PALETTE } from '../track';
-import { nearestGps } from './TrackSvg';
+import { type Track, coloredRuns, cortaRuns, kmMarks, PALETTE } from '../track';
+import { nearestGps, trechoIdx } from './TrackSvg';
 import { describeRoute } from './describe';
 
 const STYLE = { dark: 'https://tiles.openfreemap.org/styles/dark', light: 'https://tiles.openfreemap.org/styles/positron' };
@@ -28,11 +28,15 @@ function photoEl(p: MapPhoto, onPhoto?: (id: string) => void) {
   return b;
 }
 
-export function RuasMap({ tr, band, bandKey, cursor, onPick, onFail, photos, onPhoto, palette = PALETTE, marca }: { tr: Track; band: (i: number) => number | null; bandKey: string; cursor: number | null; onPick: (i: number) => void; onFail: (why: string) => void; photos?: MapPhoto[]; onPhoto?: (id: string) => void; palette?: string[]; marca?: { i: number; label: string } | null }) {
+export function RuasMap({ tr, band, bandKey, cursor, onPick, onFail, photos, onPhoto, palette = PALETTE, marca, destaque, ate = null }: { tr: Track; band: (i: number) => number | null; bandKey: string; cursor: number | null; onPick: (i: number) => void; onFail: (why: string) => void; photos?: MapPhoto[]; onPhoto?: (id: string) => void; palette?: string[]; marca?: { i: number; label: string } | null; destaque?: { a: number; b: number } | null; ate?: number | null }) {
   const box = useRef<HTMLDivElement>(null);
   const S = useRef<{ map: any; ml: any; cursor: any; marks: any[]; photos: any[]; ready: boolean } | null>(null);
   const photosRef = useRef<MapPhoto[]>(photos || []);
   photosRef.current = photos || [];
+  const ateRef = useRef<number | null>(ate);
+  ateRef.current = ate;
+  const destRef = useRef(destaque || null);
+  destRef.current = destaque || null;
   const marcaRef = useRef(marca || null);
   marcaRef.current = marca || null;
 
@@ -78,9 +82,14 @@ export function RuasMap({ tr, band, bandKey, cursor, onPick, onFail, photos, onP
           } catch { /* camada sem a propriedade */ }
         }
         map.addSource('rota', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
+        map.addSource('base', { type: 'geojson', data: { type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: tr.draw.filter((i) => tr.lat[i] != null).map((i) => [tr.lon[i], tr.lat[i]]) } } });
+        map.addLayer({ id: 'base-borda', type: 'line', source: 'base', layout: { 'line-join': 'round', 'line-cap': 'round' }, paint: { 'line-color': cssVar('--noite'), 'line-width': 8 } });
+        map.addLayer({ id: 'base', type: 'line', source: 'base', layout: { 'line-join': 'round', 'line-cap': 'round' }, paint: { 'line-color': cssVar('--linha'), 'line-width': 4.5 } });
+        map.addSource('dest', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
+        map.addLayer({ id: 'dest', type: 'line', source: 'dest', layout: { 'line-join': 'round', 'line-cap': 'round' }, paint: { 'line-color': cssVar('--ciano'), 'line-opacity': 0.45, 'line-width': 14 } });
         map.addLayer({ id: 'rota-borda', type: 'line', source: 'rota', layout: { 'line-join': 'round', 'line-cap': 'round' }, paint: { 'line-color': cssVar('--noite'), 'line-width': 8 } });
         map.addLayer({ id: 'rota', type: 'line', source: 'rota', layout: { 'line-join': 'round', 'line-cap': 'round' }, paint: { 'line-color': ['get', 'cor'], 'line-width': 4.5 } });
-        draw(); drawMarks(); drawPhotos();
+        draw(); drawMarks(); drawPhotos(); drawDest();
         map.on('zoomend', drawMarks);
         map.on('click', (e: any) => {
           // ponto com GPS mais perto do toque (até ~40 px)
@@ -98,9 +107,14 @@ export function RuasMap({ tr, band, bandKey, cursor, onPick, onFail, photos, onP
 
   function draw() {
     const s = S.current; if (!s || !s.ready) return;
-    const runs = coloredRuns(tr, band);
+    const runs = cortaRuns(coloredRuns(tr, band), ateRef.current);
     const features = runs.map((r) => ({ type: 'Feature', properties: { cor: resolve(r.band == null ? 'var(--texto-3)' : palette[r.band]) }, geometry: { type: 'LineString', coordinates: r.idx.map((i) => [tr.lon[i], tr.lat[i]]) } }));
     s.map.getSource('rota').setData({ type: 'FeatureCollection', features });
+  }
+  function drawDest() {
+    const s = S.current; if (!s || !s.ready) return;
+    const d = destRef.current;
+    s.map.getSource('dest').setData({ type: 'FeatureCollection', features: d ? [{ type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: trechoIdx(tr, d.a, d.b).map((i) => [tr.lon[i], tr.lat[i]]) } }] : [] });
   }
   function drawMarks() {
     const s = S.current; if (!s || !s.ready) return;
@@ -119,8 +133,9 @@ export function RuasMap({ tr, band, bandKey, cursor, onPick, onFail, photos, onP
   }
   useEffect(() => { drawPhotos(); }, [(photos || []).map((p) => p.id + ':' + p.i).join(',')]);
   // recolore quando muda o modo de cor
-  useEffect(() => { draw(); }, [bandKey]);
+  useEffect(() => { draw(); }, [bandKey, ate]);
   useEffect(() => { drawMarks(); }, [marca ? marca.i : -1]);
+  useEffect(() => { drawDest(); }, [destaque ? destaque.a + ':' + destaque.b : '']);
   // ponto do replay
   useEffect(() => {
     const s = S.current; if (!s || !s.ready) return;

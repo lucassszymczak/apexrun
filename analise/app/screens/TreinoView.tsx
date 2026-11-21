@@ -60,6 +60,7 @@ export function Treino({ id }: { id: string }) {
   const [color, setColor] = useState<ColorMode>(() => (['fc', 'pace', 'zona', 'grade'].includes(a.corPadrao) ? a.corPadrao : 'fc'));
   const [t, setT] = useState(0);
   const [playing, setPlaying] = useState(false);
+  const [replayAtivo, setReplayAtivo] = useState(false); // o play foi apertado (o mapa se preenche)
   const [speed, setSpeed] = useState<'1' | '2' | '4'>('1');
   const [snap, setSnap] = useState<Snap>('min');
   const [menu, setMenu] = useState(false);
@@ -78,6 +79,13 @@ export function Treino({ id }: { id: string }) {
 
   const total = tr ? duration(tr) : 0;
   const cursor = tr ? idxAtTime(tr, t) : null;
+  // replay em andamento (tocando, ou parado no meio): o trajeto vai se preenchendo atrás do
+  // corredor. No começo (0:00, parado) e no fim, o trajeto aparece inteiro.
+  const emReplay = !!tr && replayAtivo && t < total;
+  const ateRaw = emReplay && cursor != null ? cursor : null;
+  // no mapa de ruas, redesenha a cada ~0,5% do trajeto (suave sem pesar)
+  const passo = tr ? Math.max(1, Math.floor(tr.t.length / 200)) : 1;
+  const ate = ateRaw == null ? null : Math.floor(ateRaw / passo) * passo;
   const L = (w && w.leitura) || {};
   const temVento = !!(L.vento && !L.vento.fraco);
   const corEf: ColorMode = color === 'vento' && !temVento ? 'fc' : color;
@@ -115,8 +123,11 @@ export function Treino({ id }: { id: string }) {
     };
     window.addEventListener('keydown', onKey); return () => window.removeEventListener('keydown', onKey);
   });
-  const toggle = () => { if (!tr) return; if (!playing && t >= total) setT(0); setPlaying(!playing); };
-  const pickIdx = (i: number) => { if (!tr) return; setPlaying(false); setT(tr.t[i]); };
+  const toggle = () => { if (!tr) return; if (!playing && t >= total) setT(0); if (!playing) setReplayAtivo(true); setPlaying(!playing); };
+  const [destaque, setDestaque] = useState<{ a: number; b: number } | null>(null);
+  const pickIdx = (i: number) => { if (!tr) return; setPlaying(false); setReplayAtivo(false); setT(tr.t[i]); };
+  // tiros e melhores esforços: tocar destaca o trecho no mapa e no gráfico (tocar de novo tira)
+  const pickTrecho = (a: number, b?: number) => { if (!tr) return; if (b == null || (destaque && destaque.a === a && destaque.b === b)) { setDestaque(null); pickIdx(a); return; } setDestaque({ a, b }); pickIdx(a); };
 
   if (!w) return (<div className="main-pad"><Card><Empty>Treino não encontrado. Ele pode ter sido excluído em outro aparelho.</Empty></Card><a className="btn" href={href('treinos')}>Voltar aos treinos</a></div>);
   const bk = E.isBike(w);
@@ -189,15 +200,15 @@ export function Treino({ id }: { id: string }) {
       {!rm ? <Seg value={speed} onChange={setSpeed} label="Velocidade do replay" options={[['1', '1×'], ['2', '2×'], ['4', '4×']]} /> : null}
     </div>
   ) : null;
-  const chart = tr ? <TrackChart tr={tr} cursor={cursor} onCursor={pickIdx} bike={bk} deriva={derivaI != null ? { i: derivaI, km: L.deriva.km } : null} /> : null;
+  const chart = tr ? <TrackChart tr={tr} cursor={cursor} onCursor={pickIdx} bike={bk} deriva={derivaI != null ? { i: derivaI, km: L.deriva.km } : null} destaque={destaque} /> : null;
 
   // ---------------- área do mapa ----------------
   let mapArea: any;
   if (loading) mapArea = <div className="trackmap" aria-busy="true" />;
   else if (tr && tr.hasGps && col) {
     mapArea = mode === 'ruas'
-      ? <Suspense fallback={<div className="trackmap" aria-busy="true" />}><RuasMap tr={tr} band={col.band} bandKey={corEf} palette={col.palette} marca={marca} cursor={cursor} onPick={pickIdx} photos={mapPhotos} onPhoto={setPhotoOpen} onFail={(why) => { ruasFailed = true; setMode('trajeto'); toast('Sem o mapa de ruas agora (' + why + '): mostrando só o trajeto.'); }} /></Suspense>
-      : <TrackSvg tr={tr} band={col.band} cursor={cursor} onPick={pickIdx} photos={mapPhotos} onPhoto={setPhotoOpen} palette={col.palette} marca={marca} />;
+      ? <Suspense fallback={<div className="trackmap" aria-busy="true" />}><RuasMap tr={tr} band={col.band} bandKey={corEf} palette={col.palette} marca={marca} destaque={destaque} ate={ate} cursor={cursor} onPick={pickIdx} photos={mapPhotos} onPhoto={setPhotoOpen} onFail={(why) => { ruasFailed = true; setMode('trajeto'); toast('Sem o mapa de ruas agora (' + why + '): mostrando só o trajeto.'); }} /></Suspense>
+      : <TrackSvg tr={tr} band={col.band} cursor={cursor} onPick={pickIdx} photos={mapPhotos} onPhoto={setPhotoOpen} palette={col.palette} marca={marca} destaque={destaque} ate={ate} />;
   } else if (noGps) {
     mapArea = (
       <div className="trackmap tv-empty">
@@ -267,15 +278,14 @@ export function Treino({ id }: { id: string }) {
     {climaP}
     {deriva}
     {derivaIni}
-    {tr && tr.hasGps ? chart : null}
     <HistoriaCard w={w} st={st} />
+    {tr && tr.hasGps ? chart : null}
     <div className="only-mob tv-share-mob">{share}</div>
-    <TirosCard w={w} tr={tr} onPick={pickIdx} />
-    <EsforcosCard w={w} st={st} tr={tr} onPick={pickIdx} />
-    <SubidaCard w={w} />
+    <TirosCard w={w} tr={tr} onPick={pickTrecho} />
+    <EsforcosCard w={w} st={st} tr={tr} onPick={pickTrecho} />
     {B.splits}
     {fotos}
-    <div className="tv-blocks">{B.hero}{B.motor}{B.resist}{B.mec}{B.carga}{B.hidr}{B.percep}{B.cond}{B.quality}</div>
+    <div className="tv-blocks">{B.hero}{B.motor}{B.resist}{B.mec}<SubidaCard w={w} />{B.carga}{B.hidr}{B.percep}{B.cond}{B.quality}</div>
   </>);
 
   // gaveta: arrastar o puxador ou tocar nele (recolhida → média → expandida)

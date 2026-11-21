@@ -432,3 +432,5 @@ tr.fora td { color: var(--atencao); }
 @media (min-width: 1024px) { .tv-vento { right: 72px; } }
 .tv-legend.tres i { flex: 1; }
 .esforcos li > a { display: grid; grid-template-columns: 64px 1fr auto; gap: 12px; align-items: center; min-height: 52px; border-bottom: 1px solid var(--linha); color: var(--texto); padding: 6px 0; }
+/* gaveta toda aberta (celular): o mapa vira uma faixa estreita; os controles dele saem de cena */
+@media (max-width: 1023px) { .tv.snap-max .tv-ctl-colors, .tv.snap-max .tv-ctl-top, .tv.snap-max .tv-vento, .tv.snap-max .mapzoom { display: none; } }

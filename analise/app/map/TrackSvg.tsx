@@ -4,12 +4,12 @@
 // mapa; botões +/− e roda do mouse dão zoom.
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { IconPlus, IconMinus, IconFocusCentered } from '@tabler/icons-react';
-import { type Track, coloredRuns, kmMarks, PALETTE, totalDist } from '../track';
+import { type Track, coloredRuns, cortaRuns, kmMarks, PALETTE, totalDist } from '../track';
 import { describeRoute } from './describe';
 
 const R = 6371000;
 
-export function TrackSvg({ tr, band, cursor, onPick, photos, onPhoto, palette = PALETTE, marca }: { tr: Track; band: (i: number) => number | null; cursor: number | null; onPick: (i: number) => void; photos?: { i: number; id: string; url: string; label: string }[]; onPhoto?: (id: string) => void; palette?: string[]; marca?: { i: number; label: string } | null }) {
+export function TrackSvg({ tr, band, cursor, onPick, photos, onPhoto, palette = PALETTE, marca, destaque, ate = null }: { tr: Track; band: (i: number) => number | null; cursor: number | null; onPick: (i: number) => void; photos?: { i: number; id: string; url: string; label: string }[]; onPhoto?: (id: string) => void; palette?: string[]; marca?: { i: number; label: string } | null; destaque?: { a: number; b: number } | null; ate?: number | null }) {
   const box = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState({ w: 390, h: 400 });
   const [zoom, setZoom] = useState(1);
@@ -49,7 +49,8 @@ export function TrackSvg({ tr, band, cursor, onPick, photos, onPhoto, palette = 
   const pxPerM = size.w / vw;
   const unit = 1 / pxPerM; // 1 px em metros (traços com espessura constante na tela)
 
-  const runs = useMemo(() => coloredRuns(tr, band), [tr, band]);
+  const todas = useMemo(() => coloredRuns(tr, band), [tr, band]);
+  const runs = useMemo(() => cortaRuns(todas, ate), [todas, ate]);
   const every = pxPerM * 1000 >= 48 ? 1 : 5;
   const marks = useMemo(() => kmMarks(tr, every), [tr, every]);
   const first = tr.draw[0], last = tr.draw[tr.draw.length - 1];
@@ -79,6 +80,7 @@ export function TrackSvg({ tr, band, cursor, onPick, photos, onPhoto, palette = 
         onPointerUp={(e) => { const d = drag.current; drag.current = null; if (d && !d.moved) { const [x, y] = toWorld(e); pick(x, y); } }}>
         <rect x={vb[0]} y={vb[1]} width={vb[2]} height={vb[3]} fill="var(--noite)" />
         <polyline points={pts(tr.draw)} fill="none" stroke="var(--linha)" strokeWidth={9 * unit} strokeLinejoin="round" strokeLinecap="round" />
+        {destaque ? <polyline points={pts(trechoIdx(tr, destaque.a, destaque.b))} fill="none" stroke="var(--ciano)" strokeOpacity={0.45} strokeWidth={14 * unit} strokeLinejoin="round" strokeLinecap="round" aria-hidden="true" /> : null}
         {runs.map((r, k) => <polyline key={k} points={pts(r.idx)} fill="none" stroke={r.band == null ? 'var(--texto-3)' : palette[r.band]} strokeWidth={4.5 * unit} strokeLinejoin="round" strokeLinecap="round" />)}
         {marks.map((m) => { const [x, y] = proj.P(nearestGps(tr, m.i)); return (
           <g key={m.km} aria-hidden="true">
@@ -112,4 +114,12 @@ export function nearestGps(tr: Track, i: number): number {
     if (i + k < tr.lat.length && tr.lat[i + k] != null) return i + k;
   }
   return tr.draw[0];
+}
+
+// índices com GPS do trecho [a, b], usando o traçado simplificado + as pontas
+export function trechoIdx(tr: Track, a: number, b: number): number[] {
+  const out = [nearestGps(tr, a)];
+  for (const i of tr.draw) if (i > a && i < b) out.push(i);
+  out.push(nearestGps(tr, b));
+  return out;
 }

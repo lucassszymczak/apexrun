@@ -40,7 +40,7 @@ export function treinoBlocks(w: any, st: any) {
         <LineChart label="Pace por km" series={[{ name: 'pace', points: pts }]} yfmt={(x) => E.paceStr(x)} reverseY />
         <div className="tbl-wrap">
           <table>
-            <thead><tr><th>Km</th><th className="n">Pace</th><th className="n">GAP</th><th className="n">FC</th><th className="n">Δ elev.</th></tr></thead>
+            <thead><tr><th scope="col">Km</th><th scope="col" className="n">Pace</th><th scope="col" className="n">GAP</th><th scope="col" className="n">FC</th><th scope="col" className="n">Δ elev.</th></tr></thead>
             <tbody>
               {w.splits.map((s: any, i: number) => {
                 const gp = E.computeGap({ distKm: s.distKm || 1, durationSec: s.timeSec, gainM: s.elevDeltaM > 0 ? s.elevDeltaM : 0, lossM: s.elevDeltaM < 0 ? -s.elevDeltaM : 0 }).gapPace;
@@ -81,6 +81,7 @@ export function treinoBlocks(w: any, st: any) {
           <div>
             {dc != null ? <KV k="Decoupling" doc="decoupling" band={dc < 5 ? 'abaixo de 5%: base sólida' : dc > 8 ? 'acima de 8%: investigar' : 'entre 5 e 8%: limítrofe'}
               v={<span style={{ color: toneColor(dc < 5 ? 'good' : dc <= 8 ? 'warn' : 'crit') }}>{signed(dc, 1)}%</span>} /> : null}
+            {w.leitura && w.leitura.deriva && w.leitura.deriva.km ? <KV k="Início da deriva" doc="inicio-deriva" v={'km ' + w.leitura.deriva.km} band="a eficiência caiu 5% abaixo do começo do treino e não voltou" /> : null}
             {pac ? <KV k="Pacing" doc="pacing" v={(PAC[pac.label] || pac.label) + (pac.closer ? ' · closer' : '')} /> : null}
             {stab ? <KV k="Estabilidade (CV do GAP)" doc="pace stability" v={dec(stab.cvPct, 1) + '%'} /> : null}
           </div>
