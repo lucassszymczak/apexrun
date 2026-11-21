@@ -17,3 +17,4 @@ export { Compartilhar } from './Compartilhar';
 export { Garmin } from './Garmin';
 export { Completar } from './ParaCompletar';
 export { EditarCiclo, Percurso } from './Ciclo';
+export { PlanoProva } from './PlanoProva';

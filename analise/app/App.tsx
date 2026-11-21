@@ -22,7 +22,7 @@ function Screen() {
     case 'editar': return S.TreinoForm ? <S.TreinoForm id={r.arg} /> : <Stub title="Editar treino" />;
     case 'progresso': return S.Progresso ? <S.Progresso sys={r.arg} /> : <Stub title="Progresso" />;
     case 'mais': {
-      const m: Record<string, any> = { maratona: S.Maratona, relatorio: S.Relatorio, recuperacao: S.Recuperacao, forca: S.Forca, livro: S.Livro, config: S.Config, garmin: S.Garmin, ciclo: S.EditarCiclo, percurso: S.Percurso };
+      const m: Record<string, any> = { maratona: S.Maratona, relatorio: S.Relatorio, recuperacao: S.Recuperacao, forca: S.Forca, livro: S.Livro, config: S.Config, garmin: S.Garmin, ciclo: S.EditarCiclo, percurso: S.Percurso, plano: S.PlanoProva };
       if (!r.arg) return S.Mais ? <S.Mais /> : <Stub title="Mais" />;
       const C = m[r.arg];
       return C ? <C sub={r.parts[2] || null} /> : <Stub title="Mais" />;

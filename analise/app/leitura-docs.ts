@@ -53,4 +53,35 @@ export const LEITURA_DOCS: Doc[] = [
     fonte: 'Regras e limiares do app (deriva 5 e 8%, prontidão, TSB).',
   },
 ];
+const CAT4 = 'Plano de prova';
+LEITURA_DOCS.push(
+  {
+    key: 'pace-alvo', name: 'Pace alvo por km', cat: CAT4, conf: 'A do percurso',
+    desc: 'Em que pace correr cada km para fechar no tempo-alvo com o mesmo esforço na subida e no plano. Na subida, cada 1% pesa 3,5%; na descida, cada 1% alivia 1,5% (a mesma regra do GAP do app).',
+    formula: 'pace do km = P × gradeCostMult(inclinação do km)\nP é o pace no plano, escolhido para a soma dos km dar o tempo-alvo\ninclinação do km: altitude a cada 100 m, suavizada em 500 m',
+    fields: 'Tempo-alvo do ciclo e, se houver, o percurso. Sem percurso, o pace é o mesmo do início ao fim.',
+    fonte: 'Modelo de GAP do motor (Minetti, A. E. et al., J Appl Physiol 93, 2002).',
+  },
+  {
+    key: 'segunda-metade', name: 'Segunda metade mais rápida', cat: CAT4, conf: 'Moderada',
+    desc: 'Começa mais contido e acelera depois da metade, no mesmo tempo final: cada km da 1ª metade fica 1% mais lento que o plano constante, e cada km da 2ª, 1% mais rápido.',
+    formula: '1ª metade: pace × 1,01 · 2ª metade: pace × 0,99\ndepois, tudo é ajustado junto para fechar no tempo-alvo',
+    fields: 'Estratégia escolhida em Editar ciclo.',
+    fonte: 'Díaz, J. J. et al., Eur J Sport Sci 18(6), 2018 e 19(10), 2019; March, D. S. et al., J Strength Cond Res 25(2), 2011. O valor de 1% é decisão do Lucas, não vem de estudo.',
+  },
+  {
+    key: 'clima-plano', name: 'Clima no plano', cat: CAT4, conf: 'Baixa a Moderada',
+    desc: 'Quanto o calor e a umidade do dia da prova pesam no pace. Faltando 16 dias ou menos, cada km recebe a correção da hora em que você estará nele. Antes disso, o plano usa o clima padrão.',
+    formula: 'correção da hora = regra temperatura + orvalho (0 em clima padrão)\npace do km = pace do plano × (1 + correção da hora)\nmais de 16 dias antes, sem previsão ou sem local: clima padrão',
+    fields: 'Previsão do Open-Meteo para o local de largada do percurso e o horário da largada.',
+    fonte: 'Regra de Mark Hadley; Ely, M. R. et al., Med Sci Sports Exerc 39(3), 2007.',
+  },
+  {
+    key: 'tempo-realista', name: 'Tempo realista', cat: CAT4, conf: 'Moderada (âncora de prova ou teste) · Baixa (treino comum)',
+    desc: 'Que tempo é honesto esperar hoje, numa faixa. Parte da projeção de Riegel do seu melhor esforço e soma o percurso e o clima. Na maratona, a ponta lenta soma 20 min. Estimativa, não garantia: o app não prevê ganho de treino.',
+    formula: 'Riegel: tempo = tempo da âncora × (distância ÷ distância da âncora)^1,06\nmaratona (30 km ou mais): de Riegel a Riegel + 20 min\nabaixo de 30 km: Riegel ± 2,5%\n× (1 + custo do percurso) × (1 + correção do clima)\n"Terminar bem": o plano usa a ponta lenta',
+    fields: 'A âncora do card "Estimativa de prova" (prova ou teste mais recente; sem eles, o treino mais recente).',
+    fonte: 'Riegel, P. S., American Scientist 69, 1981; Vickers, A. J. e Vertosick, E. A., BMC Sports Sci Med Rehabil 8:26, 2016 (Riegel erra para menos na maratona de amadores: metade termina 10 min ou mais acima, um quarto 20 min ou mais).',
+  },
+);
 export const leituraDoc = (k: string): Doc | null => LEITURA_DOCS.find((d) => d.key === k || d.name === k) || null;
