@@ -20,6 +20,8 @@ import { TrackSvg } from '../map/TrackSvg';
 import { TrackChart } from '../map/TrackChart';
 import { treinoBlocks } from './Treino';
 import { HistoriaCard, TirosCard, EsforcosCard, SubidaCard, VentoChip, idxDoKm } from './Leitura';
+import { SegmentosDoTreino } from './Segmentos';
+import { passagensDeUm } from '../segmentos-app';
 import { delPhoto } from '../db';
 import { usePhotos, addPhotos, photoSummary, placeManually, moveToOffRoute, type PhotoView } from '../photos';
 import { privacyOf, privacyLabel } from '../privacy';
@@ -125,6 +127,7 @@ export function Treino({ id }: { id: string }) {
   });
   const toggle = () => { if (!tr) return; if (!playing && t >= total) setT(0); if (!playing) setReplayAtivo(true); setPlaying(!playing); };
   const [destaque, setDestaque] = useState<{ a: number; b: number } | null>(null);
+  useEffect(() => { if (tr && tr.hasGps && w) passagensDeUm(w).catch(() => {}); }, [tr, w && w.id]);
   const pickIdx = (i: number) => { if (!tr) return; setPlaying(false); setReplayAtivo(false); setT(tr.t[i]); };
   // tiros e melhores esforços: tocar destaca o trecho no mapa e no gráfico (tocar de novo tira)
   const pickTrecho = (a: number, b?: number) => { if (!tr) return; if (b == null || (destaque && destaque.a === a && destaque.b === b)) { setDestaque(null); pickIdx(a); return; } setDestaque({ a, b }); pickIdx(a); };
@@ -283,6 +286,7 @@ export function Treino({ id }: { id: string }) {
     <div className="only-mob tv-share-mob">{share}</div>
     <TirosCard w={w} tr={tr} onPick={pickTrecho} />
     <EsforcosCard w={w} st={st} tr={tr} onPick={pickTrecho} />
+    <SegmentosDoTreino w={w} st={st} onPick={pickTrecho} idxAt={tr && tr.hasGps ? (x: number) => idxAtTime(tr, x) : null} />
     {B.splits}
     {fotos}
     <div className="tv-blocks">{B.hero}{B.motor}{B.resist}{B.mec}<SubidaCard w={w} />{B.carga}{B.hidr}{B.percep}{B.cond}{B.quality}</div>

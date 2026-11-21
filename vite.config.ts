@@ -55,6 +55,8 @@ function analiseAssets(): Plugin {
       };
       walk(entry.fileName);
       for (const n of Object.keys(bundle)) if (/^assets\/outfit-.*\.woff2$/.test(n)) files.add(n);
+      // Web Workers do app (ex.: detecção de segmentos) também abrem sem internet
+      for (const n of Object.keys(bundle)) if (/^assets\/[a-z-]*worker-[^/]*\.js$/.test(n)) files.add(n);
       const list = ['./', ...ANALISE_ASSETS.map((f) => './' + f), ...[...files].sort().map((f) => '../' + f)];
       const version = createHash('sha256').update(list.join('\n') + readFileSync(new URL('./analise/pwa/sw-template.js', import.meta.url).pathname, 'utf8')).digest('hex').slice(0, 12);
       const sw = readFileSync(new URL('./analise/pwa/sw-template.js', import.meta.url).pathname, 'utf8')

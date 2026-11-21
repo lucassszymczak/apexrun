@@ -1,0 +1,22 @@
+/* eslint-disable */
+export declare const SEG_V: number, MIN_M: number, MIN_PASSAGENS: number, MAX_SEG: number, TENDENCIA_PCT: number;
+export type Forma = { lat: number[]; lon: number[] };
+export type Segmento = { id: string; modal: 'corrida' | 'pedal'; nome: string; renomeado?: boolean; distM: number; ganhoM: number | null; forma: Forma; v: number };
+export type Passagem = { id: string; ini: number; t: number; tAj?: number; clima?: number | null; fc: number | null; prec: 1 | 5; d?: number; dz?: number };
+export type Tendencia = { estado: 'rapido' | 'lento' | 'estavel' | 'poucas'; pct?: number; difS?: number; desde?: string; n: number };
+export declare function perto(a: string, b: string): boolean;
+export declare function distM(la1: number, lo1: number, la2: number, lo2: number): number;
+export declare function seqComPontos(lat: (number | null)[], lon: (number | null)[]): { cells: string[]; pts: number[] };
+export declare function casaPassagens(C: string[], W: string[]): { p: number; q: number }[];
+export declare function detecta(treinos: { id: string; lat: (number | null)[]; lon: (number | null)[] }[]): any;
+export declare function compr(f: Forma): number;
+export declare function formaDe(lat: (number | null)[], lon: (number | null)[], a: number, b: number): Forma | null;
+export declare function idDe(modal: string, forma: Forma): string;
+export declare function terreno(distM: number, ganhoM: number | null): string;
+export declare function nomesAutomaticos(segs: { distM: number; ganhoM: number | null }[]): string[];
+export declare function medePassagem(tr: any, forma: Forma, a: number, b: number, o?: { corrida?: boolean; weather?: any }): Omit<Passagem, 'id'> | null;
+export declare function tendencia<T extends { date: string; t: number; tAj?: number | null }>(p: T[], corrida?: boolean): Tendencia;
+export declare function ranking<T extends { date: string; t: number; tAj?: number | null }>(p: T[], corrida?: boolean): T[];
+export declare function celulasDaForma(f: Forma): string[];
+export declare function passagensDoTreino(tr: any, segs: Segmento[], o?: { corrida?: boolean; weather?: any }): Passagem[];
+export declare function calculaSegmentos(treinos: { w: any; tr: any }[], modal: 'corrida' | 'pedal', anterior?: Segmento[]): { lista: Segmento[]; passagens: Map<string, Passagem[]> };
