@@ -102,7 +102,7 @@ function Motor({ c }: { c: any }) {
         <CardH title={'Teste do Motor — ' + dd(lastMt.date)} right={<Conf level={lastMt.weather && lastMt.weather.inStandard ? 'alta' : 'média'} />} />
         {lastMt.weather ? <p className="apoio muted">{Math.round(lastMt.weather.tempC)} °C · orvalho {lastMt.weather.dewC != null ? Math.round(lastMt.weather.dewC) + '°' : '—'} · {lastMt.weather.inStandard ? <b>clima padrão</b> : <b style={{ color: 'var(--atencao)' }}>fora do padrão</b>}{lastMt.weather.tags && lastMt.weather.tags.length ? ' · ' + lastMt.weather.tags.join(' · ') : ''}</p> : null}
         <div className="tbl-wrap"><table>
-          <thead><tr><th>Estágio</th><th className="n">Alvo FC</th><th className="n">Veloc.</th><th className="n">Pace</th><th className="n">FC real</th></tr></thead>
+          <thead><tr><th scope="col">Estágio</th><th scope="col" className="n">Alvo FC</th><th scope="col" className="n">Veloc.</th><th scope="col" className="n">Pace</th><th scope="col" className="n">FC real</th></tr></thead>
           <tbody>{mt.map((r: any, i: number) => <tr key={i}><td>{r.name}{r.flagged ? <span style={{ color: 'var(--alerta)' }}> · fora do alvo</span> : null}</td><td className="n">{r.targetHr != null ? r.targetHr + ' bpm' : '—'}</td><td className="n">{r.speed != null ? dec(r.speed, 2) + ' m/s' : '—'}</td><td className="n">{r.pace != null ? E.paceStr(r.pace) + '/km' : '—'}</td><td className="n">{r.hrMean != null ? r.hrMean + ' bpm' : '—'}</td></tr>)}</tbody>
         </table></div>
         {motorRuns.length > 1 && targetStages.length ? <LineChart label="Velocidade por estágio" series={targetStages.map((st: any) => ({ name: st.name, points: motorRuns.map((w: any) => { const r = E.motorTest(E.expandStream(w.stream), stages).filter((x: any) => x.name === st.name)[0]; return r && r.speed != null ? { label: dd(w.date), y: r.speed, extra: st.name + (r.flagged ? ' · fora do alvo' : '') } : null; }).filter(Boolean) })).filter((s: any) => s.points.length)} yfmt={(v) => dec(v, 2) + ' m/s'} /> : null}
@@ -150,7 +150,7 @@ function Resist({ c }: { c: any }) {
     <Card>
       <CardH title="Previsão de prova" right={<span className="badge neutro">Riegel</span>} />
       {anchor && preds ? (<>
-        <div className="tbl-wrap"><table><thead><tr><th>Distância</th><th className="n">Tempo</th><th className="n">Pace</th></tr></thead>
+        <div className="tbl-wrap"><table><thead><tr><th scope="col">Distância</th><th scope="col" className="n">Tempo</th><th scope="col" className="n">Pace</th></tr></thead>
           <tbody>{preds.map((p: any) => <tr key={p.name}><td>{p.name}</td><td className="n"><Kpi doc="race prediction" value={E.hms(p.timeSec)} band={E.paceStr(p.paceSec) + '/km'}>{E.hms(p.timeSec)}</Kpi></td><td className="n">{E.paceStr(p.paceSec)}/km</td></tr>)}</tbody></table></div>
         <p className="hint">Âncora: {noEmoji(anchor.notes || anchor.type)} ({dec(anchor.distKm, 2)} km em {E.hms(anchor.durationSec)}). Estimativa, não garantia — melhora com uma prova recente.</p>
       </>) : <p className="muted">Registre um teste ou prova para ancorar as projeções.</p>}
@@ -200,7 +200,7 @@ function Mec({ c }: { c: any }) {
         <CardH title="Perfil de inclinação · resíduo de FC por faixa" right={<span className="badge neutro">exploratório</span>} />
         <p className="apoio"><span className="badge ciano">{gp.label.replace('.', ',')}</span> <span className="muted tn">modelo FC = {gp.fit.a.toFixed(0)} + {dec(gp.fit.b, 1)}·v_GAP · R² {dec(gp.fit.r2, 2)} · {gp.nSessions} sessões fáceis</span></p>
         <BarChart label="Resíduo de FC por faixa de inclinação" bars={shown.map((r: any) => ({ label: r.band, y: r.residual, extra: (r.spm ? r.spm + ' spm · ' : '') + r.minutes + ' min', color: r.residual > 1 ? 'var(--alerta)' : r.residual < -1 ? 'var(--ok)' : 'var(--atencao)' }))} yfmt={(v) => signed(v, 1) + ' bpm'} zeroLine />
-        <div className="tbl-wrap"><table><thead><tr><th>Faixa</th><th className="n">Resíduo</th><th className="n">Cadência</th><th className="n">Passada</th><th className="n">Min</th></tr></thead>
+        <div className="tbl-wrap"><table><thead><tr><th scope="col">Faixa</th><th scope="col" className="n">Resíduo</th><th scope="col" className="n">Cadência</th><th scope="col" className="n">Passada</th><th scope="col" className="n">Min</th></tr></thead>
           <tbody>{shown.map((r: any) => <tr key={r.band}><td>{r.band}</td><td className="n" style={{ color: r.residual > 1 ? 'var(--alerta)' : r.residual < -1 ? 'var(--ok)' : undefined }}>{signed(r.residual, 1)} bpm</td><td className="n">{r.spm || '—'}</td><td className="n">{r.mPerStep != null ? dec(r.mPerStep, 3) + ' m' : '—'}</td><td className="n">{dec(r.minutes, 1)}</td></tr>)}</tbody></table></div>
         <p className="hint">Modelo pessoal FC ~ velocidade-GAP ajustado nas <b>amostras planas</b> (|inclinação| até 2%) das últimas 6 sessões fáceis. O resíduo é quanto sua FC real (defasada) fica <b>acima (+)</b> ou <b>abaixo (−)</b> do que o GAP prevê, por faixa de inclinação. <b>Exploratório</b> — nunca mexe nos coeficientes do GAP, só reporta. Faixas com menos de 3 min não aparecem.</p>
       </Card>
@@ -210,7 +210,7 @@ function Mec({ c }: { c: any }) {
         <CardH title="Custo de FC do morro" right={<span className="badge neutro">exploratório</span>} />
         <Kpi doc="fc-morro" value={(up != null ? signed(up, 0) : '—') + ' bpm'}><span className="big">{up != null ? signed(up, 0) : '—'}<small>bpm</small></span></Kpi>
         <Rich as="p" className="apoio muted" html={up == null ? 'sem subidas suficientes' : (Math.abs(up) < 1 ? 'subir custa <b>~o previsto</b> (GAP calibrado)' : 'subir custa <b>' + signed(up, 0) + ' bpm</b> acima do previsto pelo seu pace')} />
-        <div className="tbl-wrap"><table><thead><tr><th>Inclinação</th><th className="n">Resíduo FC</th><th className="n">Tempo</th></tr></thead>
+        <div className="tbl-wrap"><table><thead><tr><th scope="col">Inclinação</th><th scope="col" className="n">Resíduo FC</th><th scope="col" className="n">Tempo</th></tr></thead>
           <tbody>{hc.bands.filter((bd: any) => !(bd.min < 2 || bd.resid == null)).map((bd: any) => <tr key={bd.lab}><td>{bd.lab}</td><td className="n" style={{ color: bd.resid > 1 ? 'var(--atencao)' : bd.resid < -1 ? 'var(--ciano)' : undefined }}>{signed(bd.resid, 1)} bpm</td><td className="n">{Math.round(bd.min)} min</td></tr>)}</tbody></table></div>
         {read ? <Rich as="p" className="apoio" html={read} /> : null}
         <p className="hint">Análise exploratória de <b>{hc.nRuns} corrida(s)</b> fáceis com splits (FC + Δelev). Mede o <i>seu</i> desvio de FC vs. o que o pace prevê — <b>não</b> altera o GAP, nem a FC/zonas no TRIMP.</p>
@@ -300,7 +300,7 @@ function Carga({ c }: { c: any }) {
         <summary>Auditoria das sessões (.FIT)<span className="chev" aria-hidden="true">›</span></summary>
         <div className="body">
           <div className="tbl-wrap"><table>
-            <thead><tr><th>Data</th><th className="n">Válidos</th><th className="n">Excl.</th><th className="n">Defas.</th><th className="n">Mec.</th><th>Clima</th><th>Motivos</th></tr></thead>
+            <thead><tr><th scope="col">Data</th><th scope="col" className="n">Válidos</th><th scope="col" className="n">Excl.</th><th scope="col" className="n">Defas.</th><th scope="col" className="n">Mec.</th><th scope="col">Clima</th><th scope="col">Motivos</th></tr></thead>
             <tbody>{aud.slice(0, 16).map((w: any) => { const q = w.quality, mot = Object.keys(q.reasons || {});
               return <tr key={w.id}><td>{dd(w.date)}</td><td className="n">{dec(q.validMin, 1)} min</td><td className="n" style={{ color: q.excludedPct > 20 ? 'var(--alerta)' : undefined }}>{dec(q.excludedPct, 1)}%</td>
                 <td className="n">{w.hrLagSec != null ? w.hrLagSec + ' s' : '—'}{w.streamPruned ? ' (resumido)' : ''}</td>

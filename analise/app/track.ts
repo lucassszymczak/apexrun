@@ -1,5 +1,4 @@
 // TRAJETO do treino — extraído do .FIT na importação e guardado no IndexedDB por id.
-import { rumo, componente, classe } from '../wind.mjs';
 // - Pontos: posição em graus (o motor já converte semicírculos: fitNormRecords),
 //   tempo, FC, velocidade, altitude, distância e a INCLINAÇÃO SUAVIZADA do próprio
 //   motor (gradeSeries, a mesma usada nos KPIs por amostra).
@@ -7,6 +6,7 @@ import { rumo, componente, classe } from '../wind.mjs';
 //   cada ponto mantém o seu tempo, então o replay segue o relógio real do treino.
 // - Nada daqui altera um número das análises; é um dado novo e separado.
 import * as E from '../engine.mjs';
+import { rumo, componente, classe } from '../wind.mjs';
 
 export type Track = {
   id?: string;
@@ -182,6 +182,20 @@ export function coloredRuns(tr: Track, band: (i: number) => number | null): { ba
     const last = out[out.length - 1];
     if (last && last.band === z) last.idx.push(b);
     else out.push({ band: z, idx: [a, b] });
+  }
+  return out;
+}
+
+// Replay: só o trecho já percorrido (até o índice `ate`) fica colorido; o resto do trajeto
+// aparece apagado, como caminho a percorrer. `ate` null = trajeto inteiro (sem replay).
+export function cortaRuns(runs: { band: number | null; idx: number[] }[], ate: number | null): { band: number | null; idx: number[] }[] {
+  if (ate == null) return runs;
+  const out: { band: number | null; idx: number[] }[] = [];
+  for (const r of runs) {
+    if (r.idx[0] >= ate) break;
+    const idx = r.idx.filter((i) => i <= ate);
+    if (idx[idx.length - 1] < ate && r.idx.some((i) => i > ate)) idx.push(ate);
+    if (idx.length >= 2) out.push({ band: r.band, idx });
   }
   return out;
 }

@@ -390,7 +390,7 @@ export function Maratona() {
       <Card>
         <CardH title="Estimativa de prova" right={<span className="badge neutro">Riegel</span>} />
         {estAnchor ? (<>
-          <div className="tbl-wrap"><table><thead><tr><th>Trecho</th><th className="n">Tempo</th><th className="n">Pace</th></tr></thead>
+          <div className="tbl-wrap"><table><thead><tr><th scope="col">Trecho</th><th scope="col" className="n">Tempo</th><th scope="col" className="n">Pace</th></tr></thead>
             <tbody>{list.map((c) => { const t = E.riegel(estAnchor.distKm, estAnchor.durationSec, c.d); const isRace = Math.abs(c.d - race.distKm) < 0.3;
               return <tr key={c.lab} className={isRace ? 'best' : undefined}><td>{c.lab} <span className="muted">{km(c.d)} km</span>{isRace ? <span className="sr-only"> (sua prova)</span> : null}</td><td className="n"><Kpi doc="race prediction" value={E.hms(t)}>{E.hms(t)}</Kpi></td><td className="n">{E.paceStr(t / c.d)}/km</td></tr>; })}</tbody></table></div>
           <p className="hint">Projeção de Riegel a partir do seu melhor esforço {estAnchorCycle ? <b>deste ciclo</b> : 'recente (ainda sem teste/prova no ciclo)'} ({workoutTitle(estAnchor)} · {km(estAnchor.distKm)} km em {E.hms(estAnchor.durationSec)}). Estimativa, não garantia — o foco é <b>terminar bem</b>.</p>

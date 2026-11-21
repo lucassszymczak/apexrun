@@ -95,6 +95,26 @@ try {
   await M.page.getByRole('button', { name: 'Vento', exact: true }).click();
   const leg = await M.page.locator('.tv-legend').first().innerText();
   ok('modo de cor Vento com legenda "a favor … contra"', /a favor/.test(leg) && /contra/.test(leg), leg.replace(/\s+/g, ' '));
+  // replay: o trajeto se preenche atrás do corredor
+  await M.page.getByRole('button', { name: 'Só trajeto' }).click();
+  await M.page.getByRole('button', { name: 'FC', exact: true }).click();
+  const pts = () => M.page.evaluate(() => [...document.querySelectorAll('.trackmap svg polyline')].filter((p) => (p.getAttribute('stroke') || '') !== 'var(--linha)' && p.getAttribute('stroke-opacity') == null).reduce((n, p) => n + p.getAttribute('points').trim().split(/\s+/).length, 0));
+  const cheio = await pts();
+  await M.page.getByRole('button', { name: 'Reproduzir o trajeto' }).click();
+  await M.page.waitForTimeout(3500);
+  await M.page.getByRole('button', { name: 'Pausar o replay' }).click();
+  const meio = await pts();
+  if (SHOTS) await M.page.screenshot({ path: resolve(SHOTS, 'replay-390-meio.png') });
+  ok('replay: no meio, só o trecho percorrido está colorido', meio > 0 && meio < cheio * 0.8, meio + ' de ' + cheio + ' pontos');
+  await M.page.getByRole('button', { name: 'Reproduzir o trajeto' }).click();
+  await M.page.waitForTimeout(8000);
+  ok('replay: no fim, o trajeto inteiro volta colorido', (await pts()) === cheio);
+  await M.page.getByRole('button', { name: 'Ruas' }).click();
+  // tocar num tiro destaca o trecho no gráfico e no mapa (Só trajeto)
+  await M.page.getByRole('button', { name: 'Só trajeto' }).click();
+  await M.page.getByRole('button', { name: /Destacar o 3º tiro/ }).click();
+  ok('tocar num tiro destaca o trecho no mapa e no gráfico', await M.page.locator('.trackmap svg polyline[stroke-opacity="0.45"]').count() === 1 && await M.page.locator('.tv-panel svg[role="slider"] rect[fill="var(--ciano)"]').count() === 1);
+  await M.page.getByRole('button', { name: 'Ruas' }).click();
   // toque num número abre a Folha do KPI com o verbete novo
   await M.page.locator('.tv-vento .kpi').click();
   ok('Folha do KPI do vento com confiança Baixa e fonte', await M.page.locator('[role="dialog"] >> text=/confiança Baixa/').count() > 0 && await M.page.locator('[role="dialog"] >> text=/Pugh/').count() > 0);
@@ -131,7 +151,32 @@ try {
     ok('chip "A deriva começa no km 14" e faixa no gráfico', await M.page.locator('text=A deriva começa no km 14').count() === 1 && await M.page.locator('.tv-panel svg[role="slider"] rect').count() >= 1);
     await M.page.getByRole('button', { name: 'Só trajeto' }).click();
     ok('marcador da deriva no mapa', await M.page.locator('.trackmap svg g[aria-label="A deriva começa no km 14"]').count() === 1);
-    if (SHOTS) { await M.page.screenshot({ path: resolve(SHOTS, 'meia-390-mapa.png') }); }
+    if (SHOTS) {
+      await M.page.screenshot({ path: resolve(SHOTS, 'meia-390-mapa.png') });
+      await M.page.getByRole('button', { name: 'Reproduzir o trajeto' }).click();
+      await M.page.waitForTimeout(4500);
+      await M.page.getByRole('button', { name: 'Pausar o replay' }).click();
+      await M.page.screenshot({ path: resolve(SHOTS, 'replay-meia-390.png') });
+    }
+  }
+  if (fitMeia) {
+    console.log('\n== desempenho: leitura da Meia (trajeto 1 Hz) ==');
+    const medir = () => M.page.evaluate(async (bytes) => {
+      const SDK = await import('/node_modules/@garmin/fitsdk/src/index.js');
+      const { buildTrack } = await import('/analise/app/track.ts');
+      const { computeLeitura } = await import('/analise/leitura.mjs');
+      const { lapsFromMessages } = await import('/analise/laps.mjs');
+      const E = await import('/analise/engine.mjs');
+      const m = new SDK.Decoder(SDK.Stream.fromByteArray(new Uint8Array(bytes))).read().messages;
+      const w = { ...E.fitMessagesToWorkout(m), type: 'longão' }, tr = buildTrack(m), laps = lapsFromMessages(m);
+      computeLeitura({ w, tr, laps, wind: { kmh: 16, de: 10 }, athlete: {} });
+      const t0 = performance.now(); for (let i = 0; i < 5; i++) computeLeitura({ w, tr, laps, wind: { kmh: 16, de: 10 }, athlete: {} });
+      return { ms: (performance.now() - t0) / 5, pts: tr.t.length };
+    }, [...fitMeia]);
+    const r1 = await medir();
+    const cdp = await M.ctx.newCDPSession(M.page); await cdp.send('Emulation.setCPUThrottlingRate', { rate: 4 });
+    const r4 = await medir(); await cdp.send('Emulation.setCPUThrottlingRate', { rate: 1 });
+    ok('Meia: leitura em ≤ 300 ms (CPU 4× mais lenta, simulando celular)', r4.ms <= 300, r1.ms.toFixed(0) + ' ms normal · ' + r4.ms.toFixed(0) + ' ms a 4× · ' + r1.pts + ' pontos');
   }
   console.log('\n== Hoje, Progresso e Livro ==');
   await M.page.goto(`http://localhost:${PORT}/analise/#/hoje`);
