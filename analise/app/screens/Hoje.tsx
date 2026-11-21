@@ -12,6 +12,7 @@ import { dec, signed, km, dur, dayMon, todayLabel, readyTone, workoutTitle, noEm
 import { MiniRoute } from './parts';
 import { ParaCompletarCard } from './ParaCompletar';
 import { HistoriaCard } from './Leitura';
+import { AmanhaCard, PlanoLinha } from './Amanha';
 
 export function Hoje() {
   const { st } = useApex();
@@ -137,6 +138,7 @@ export function Hoje() {
       <span className="apoio muted"><b className="tn">{ccRuns.length}</b> corrida{ccRuns.length === 1 ? '' : 's'} e <b className="tn">{km(ccKm)} km</b> acumulados no ciclo</span>
     </Card>
   ) : null;
+  const planoLinha = race ? <PlanoLinha /> : null;
 
   const recov = cx.recov ? (
     <Card as="a" href={href('mais', 'recuperacao')} style={{ color: 'var(--texto)', textDecoration: 'none' }} className="only-desk">
@@ -163,7 +165,7 @@ export function Hoje() {
     ) : null}
     <div className="cols">
       <div className="col">{ready}<ParaCompletarCard />{coach}{plan}</div>
-      <div className="col">{lastCard}{lastRun ? <HistoriaCard w={lastRun} st={st} titulo={'Último treino · história · ' + dayMon(lastRun.date)} /> : null}{cycle}{recov}</div>
+      <div className="col">{lastCard}{lastRun ? <HistoriaCard w={lastRun} st={st} titulo={'Último treino · história · ' + dayMon(lastRun.date)} /> : null}<AmanhaCard />{cycle}{planoLinha}{recov}</div>
     </div>
   </>);
 }
