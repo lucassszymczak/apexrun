@@ -12,6 +12,8 @@ import { putPhoto, type PhotoRec } from '../db';
 import { preparePhoto, OFF_ROUTE_SEC } from '../photos';
 import { privacyOf, privacyLabel, type Privacy } from '../privacy';
 import { PrivacySheet, PrivacyIcon } from './Privacidade';
+import { CampoEquip } from './Equipamentos';
+import { padraoPara } from '../../equipamentos.mjs';
 import { RUN_TYPES, BIKE_TYPES, formFrom, extrasOf, buildWorkout, findDuplicate, commitWorkout, type FormVals } from '../actions';
 
 // decided: escolha feita na Conferência quando o arquivo coincide com um treino já salvo
@@ -31,6 +33,8 @@ export function TreinoForm({ id = null, prefill = null, fromFit = false, onCance
   const [err, setErr] = useState<string | null>(null);
   const [dup, setDup] = useState<{ w: any; match: any; same: boolean } | null>(null);
   const set = (k: string, v: string | boolean) => setF((o) => ({ ...o, [k]: v }));
+  // Fase 5: equipamento (treino salvo: o que já tinha; novo: o padrão da modalidade)
+  const [gear, setGear] = useState<string>(() => (w ? w.gearId || '' : (src && src.gearId) || padraoPara(String(formFrom(src).modal), st.athlete && st.athlete.equipamentos, st.workouts) || ''));
   // privacidade (vem do padrão) e fotos do percurso (Etapa 3)
   const [priv, setPriv] = useState<Privacy>(() => privacyOf(src, st.athlete));
   const [privTouched, setPrivTouched] = useState(false);
@@ -55,7 +59,9 @@ export function TreinoForm({ id = null, prefill = null, fromFit = false, onCance
 
   const save = () => {
     // treino novo: guarda a privacidade escolhida (o padrão, se não mexeu); edição: só se mudou ou já tinha
-    const ex = !w || privTouched || (w && w.privacy) ? { ...extras, privacy: priv } : extras;
+    const ex0 = !w || privTouched || (w && w.privacy) ? { ...extras, privacy: priv } : extras;
+    const gOk = gear && ((st.athlete && st.athlete.equipamentos) || []).some((e: any) => e.id === gear && (e.tipo === 'bike') === (f.modal === 'bike'));
+    const ex = { ...ex0, gearId: gOk ? gear : null };
     const r = buildWorkout(f, ex, w ? w.id : null);
     if ('error' in r) { setErr(r.error); return; }
     setErr(null);
@@ -116,12 +122,17 @@ export function TreinoForm({ id = null, prefill = null, fromFit = false, onCance
       <Card>
         <CardH title="Tipo de treino" />
         <div className="seg" role="group" aria-label="Modalidade" style={{ alignSelf: 'flex-start' }}>
-          {[['corrida', 'Corrida'], ['bike', 'Bike']].map(([k, l]) => <button key={k} type="button" aria-pressed={f.modal === k} onClick={() => { set('modal', k); set('type', k === 'bike' ? 'bike' : 'facil'); }}>{l}</button>)}
+          {[['corrida', 'Corrida'], ['bike', 'Bike']].map(([k, l]) => <button key={k} type="button" aria-pressed={f.modal === k} onClick={() => { set('modal', k); set('type', k === 'bike' ? 'bike' : 'facil'); setGear(padraoPara(k, st.athlete && st.athlete.equipamentos, st.workouts) || ''); }}>{l}</button>)}
         </div>
         <div className="row wrap" style={{ gap: 6 }} role="group" aria-label="Tipo">
           {types.map(([k, l]) => <button key={k} type="button" className="chip" aria-pressed={f.type === k} onClick={() => set('type', k)}>{l}</button>)}
         </div>
         {isBk ? <label className="switch"><span>Bike indoor (sem distância)</span><input type="checkbox" role="switch" checked={!!f.indoor} onChange={(e) => set('indoor', e.target.checked)} /></label> : null}
+      </Card>
+
+      <Card>
+        <h2 className="lead">Equipamento</h2>
+        <CampoEquip modal={f.modal as string} gear={gear} setGear={setGear} distKm={+String(f.dist || '').replace(',', '.') || 0} wid={w ? w.id : null} />
       </Card>
 
       <Card>

@@ -10,6 +10,7 @@ export const MAIS = [
   ['relatorio', 'Relatório semanal'],
   ['recuperacao', 'Recuperação'],
   ['forca', 'Força e canela'],
+  ['equipamentos', 'Equipamentos'],
   ['livro', 'Livro de fórmulas'],
   ['config', 'Configurações'],
 ] as const;
