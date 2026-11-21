@@ -70,6 +70,6 @@ export function Completar({ id }: { id: string }) {
     <TreinoForm key={it.id} prefill={it.w} track={it.track} fromFit hideResumo={false}
       step={'Do Garmin · ' + (E.isBike(it.w) ? 'pedal' : typeName(it.w.type).toLowerCase())}
       decided={{ choice: 'new' }} onCancel={() => go('hoje')}
-      onSaved={(wid) => { queueDel(it.id).then(() => go('treino', wid)); }} />
+      onSaved={(wid) => { queueDel(it.id).then(() => go('treino', wid, 'resumo')); }} />
   );
 }

@@ -3,7 +3,7 @@
 // linha do tempo). Novo, pedido no roteiro: "Foco atual" (IMP e cadência no ritmo de
 // referência), montado só com funções do motor. O Pace-GAP@145 saiu da interface a pedido
 // do Lucas (20/11): o motor ainda o calcula (dado salvo e sincronizado), mas não é exibido.
-import { IconUser, IconTarget, IconEngine, IconHeartbeat, IconShoe, IconChartBar, IconDroplet, IconMoon, IconTrophy, IconTimeline, IconChevronRight, IconAlertTriangle, IconCalendarCheck, IconFlame, IconLock, IconRoute } from '@tabler/icons-react';
+import { IconUser, IconTarget, IconEngine, IconHeartbeat, IconShoe, IconChartBar, IconDroplet, IconMoon, IconTrophy, IconTimeline, IconChevronRight, IconAlertTriangle, IconCalendarCheck, IconFlame, IconLock, IconRoute, IconBodyScan } from '@tabler/icons-react';
 import * as E from '../../engine.mjs';
 
 import { PeriodoSel } from './PeriodoSel';
@@ -177,6 +177,14 @@ export function Progresso({ sys }: { sys: string | null }) {
         <IconChevronRight size={18} stroke={1.75} className="faint" aria-hidden="true" />
       </div>
       <span className="apoio muted">{nSeg ? nSeg + (nSeg === 1 ? ' trecho que você repete' : ' trechos que você repete') + ', com o seu melhor e a tendência' : 'Trechos que você repete, encontrados pelo app'}</span>
+    </a>
+
+    <a className="card" href={href('progresso', 'corpo')} style={{ color: 'var(--texto)', textDecoration: 'none', gap: 6 }}>
+      <div className="row between">
+        <span className="row" style={{ gap: 8 }}><IconBodyScan size={20} stroke={1.75} color="var(--ciano)" aria-hidden="true" /><b className="lead" style={{ fontSize: 15 }}>Corpo</b></span>
+        <IconChevronRight size={18} stroke={1.75} className="faint" aria-hidden="true" />
+      </div>
+      <span className="apoio muted">Onde doeu nos dias de treino, pela frequência</span>
     </a>
 
     <a className="card" href={href('progresso', 'calor')} style={{ color: 'var(--texto)', textDecoration: 'none', gap: 6 }}>

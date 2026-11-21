@@ -24,3 +24,5 @@ export { Consistencia } from './Consistencia';
 export { MapaCalor } from './MapaCalor';
 export { Segmentos } from './Segmentos';
 export { Equipamentos } from './Equipamentos';
+export { Resumo } from './Resumo';
+export { ProgressoCorpo } from './Corpo';

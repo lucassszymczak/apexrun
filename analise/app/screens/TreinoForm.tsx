@@ -90,7 +90,8 @@ export function TreinoForm({ id = null, prefill = null, fromFit = false, onCance
     const r = buildWorkout(f, ex, w ? w.id : null);
     if ('error' in r) { setErr(r.error); return; }
     setErr(null);
-    const done = (wid: string) => { savePhotos(wid); return onSaved ? onSaved(wid) : go('treino', wid); };
+    // treino novo abre o resumo pós-treino (Fase 5); edição volta ao treino
+    const done = (wid: string) => { savePhotos(wid); return onSaved ? onSaved(wid) : (w ? go('treino', wid) : go('treino', wid, 'resumo')); };
     if (w) { commitWorkout(r.w, 'edit'); done(r.w.id); return; }
     if (decided) { commitWorkout(r.w, decided.choice, decided.matchId, track); done(r.w.id); return; }
     const d = findDuplicate(r.w);
@@ -100,7 +101,7 @@ export function TreinoForm({ id = null, prefill = null, fromFit = false, onCance
   const pick = (choice: 'replace' | 'keep' | 'cancel') => {
     const d = dup!; setDup(null);
     if (choice === 'cancel') return; // mantém o formulário aberto para ajustes
-    commitWorkout(d.w, choice, d.match.id, track); savePhotos(d.w.id); if (onSaved) onSaved(d.w.id); else go('treino', d.w.id);
+    commitWorkout(d.w, choice, d.match.id, track); savePhotos(d.w.id); if (onSaved) onSaved(d.w.id); else if (w) go('treino', d.w.id); else go('treino', d.w.id, 'resumo');
   };
 
   const inp = (k: string, props: Record<string, any> = {}) => (
