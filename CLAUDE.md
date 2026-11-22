@@ -61,8 +61,13 @@ Fale com o Lucas em português do Brasil, de forma curta. Ele não é desenvolve
   - a retrospectiva e os Stories são calculados na hora e não têm dado próprio.
 - Servidores que recebem dado pessoal, e só estes:
   - o Supabase (sync opcional, trajeto leve e a chave do Garmin criptografada);
-  - o Open-Meteo (clima, vento e previsão, por coordenada e horário);
+  - o Open-Meteo (clima, vento e previsão, por coordenada e horário; e a busca de cidades, só pelo nome, para a altitude de quem é novo);
   - a API pessoal do Garmin, chamada só pela função `garmin`.
+- **App para outras pessoas** (decisão do Lucas, 22/11/2026; `docs/app-para-outros.md`):
+  - quem abre o link num aparelho sem dados começa **vazio**, com o tour de boas-vindas (`screens/Tour.tsx`) e o perfil em branco (`perfil.ts`, `athlete.novo = true`). Nada dos dados de exemplo do Lucas;
+  - quem é novo não usa os servidores do Lucas: sem gerar código de sincronização e sem Garmin automático (o Garmin é só pelo .FIT). Só dá para conectar um código que já existe ("Já uso o app");
+  - para quem é novo, ficam fora "Força e canela", o Teste do Motor, o "Baseline 5K" e os dados de exemplo; as metas começam vazias e a cidade e o estado dão a altitude (busca de cidades do Open-Meteo);
+  - sem comunidade e sem login. "Quem vê" saiu da tela (o campo continua no dado).
 - Nunca faça commit de backups ou arquivos .FIT do Lucas: use `fixtures/privado/`, que fica no `.gitignore`. Respostas da API do Garmin usadas em teste são sintéticas.
 
 ## Garmin (chave pessoal)
@@ -281,7 +286,7 @@ Contrastes do tema claro: `#0E7490` sobre branco 5,4:1 e sobre `#EEF0F5` 4,7:1; 
 - Título é conclusão, não tema: "Deriva baixa: base sólida".
 - Números brasileiros: 21,20 km · 7:39/km · 2h42 · 167 bpm · +2,6%.
 - Sigla técnica sempre com explicação na Folha do KPI.
-- "Todos", na privacidade, significa os membros da comunidade do app, nunca a internet aberta.
+- Não há comunidade nem login: cada pessoa usa o app só no próprio aparelho.
 
 ## O que não fazer
 

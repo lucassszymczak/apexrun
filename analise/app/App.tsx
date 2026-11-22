@@ -4,6 +4,8 @@ import { Shell, PageHead } from './Shell';
 import { KpiProvider, Card } from './ui';
 import { Hoje } from './screens/Hoje';
 import * as S from './screens/index';
+import { useApex } from './store';
+import { tourPendente } from './perfil';
 
 function Stub({ title }: { title: string }): ReactNode {
   return (<><PageHead title={title} /><Card><p className="muted">Em construção.</p></Card></>);
@@ -11,6 +13,9 @@ function Stub({ title }: { title: string }): ReactNode {
 
 function Screen() {
   const r = useRoute();
+  const { st } = useApex();
+  // primeiro acesso: o tour de boas-vindas (a configuração fica aberta para "Já uso o app")
+  if (tourPendente(st) && !(r.name === 'mais' && r.arg === 'config')) return <S.Tour />;
   switch (r.name) {
     case 'hoje': return <Hoje />;
     case 'coach': return S.Coach ? <S.Coach /> : <Stub title="Leitura do Coach" />;

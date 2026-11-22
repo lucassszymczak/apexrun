@@ -50,7 +50,7 @@ function Motor({ c }: { c: any }) {
         <CardH title="Efficiency Factor · economia do motor" right={<Conf level="alta" />} />
         {latestEF != null ? <div><Kpi doc="efficiency" value={dec(latestEF * 1000, 1) + ' pts'} band={'EF ' + dec(latestEF, 4)}><span className="big">{dec(latestEF * 1000, 1)}<small>pts</small></span></Kpi>
           <div className="apoio muted tn">economia {efDelta != null ? signed(efDelta, 1) + '% vs. o 1º' : '—'} · EF {dec(latestEF, 4)}</div></div> : null}
-        <LineChart label="EF em pontos por rodagem fácil" series={[{ name: 'Pontos', points: pts }]} yfmt={(v) => dec(v * 1000, 1)} target={{ y: efTarget, label: 'meta ' + dec(efTarget * 1000, 1) + ' pts' }} />
+        <LineChart label="EF em pontos por rodagem fácil" series={[{ name: 'Pontos', points: pts }]} yfmt={(v) => dec(v * 1000, 1)} target={a.efBaseline ? { y: efTarget, label: 'meta ' + dec(efTarget * 1000, 1) + ' pts' } : null} />
         <p className="hint"><b>Pontos = o EF ×1000</b> (sem os zeros). Sobe = motor mais econômico. A régua é você mesmo: hoje vs. 6 semanas atrás.{trend ? ' Tendência ' + signed(trend.deltaPct, 1) + '%.' : ''}</p>
       </Card>
       {curEff ? (
@@ -115,7 +115,8 @@ function Motor({ c }: { c: any }) {
 // ======================= RESISTÊNCIA =======================
 function Resist({ c }: { c: any }) {
   const a = c.a, decPts = c.decPts, mechHist = c.mechHist, lagLow = c.lagLow;
-  const tgt = a.decouplingTarget || 7;
+  // meta vazia (quem é novo e não definiu): sem linha de alvo
+  const tgt = a.decouplingTarget || (a.novo ? null : 7);
   const last = decPts && decPts.length ? decPts[decPts.length - 1].y : null;
   let mechBlock = null;
   if (mechHist.length) {
@@ -141,7 +142,7 @@ function Resist({ c }: { c: any }) {
     <div className="cols">
       <Card>
         <CardH title="Decoupling · resistência aeróbica" right={<Conf level="alta" />} />
-        <BarChart label="Decoupling por treino" bars={decPts.map((p: any) => ({ label: p.label, y: p.y, extra: p.extra, color: toneColor(p.color) }))} yfmt={(v) => dec(v, 1) + '%'} threshold={{ y: tgt, label: 'seu alvo ' + tgt + '%' }} zeroLine />
+        <BarChart label="Decoupling por treino" bars={decPts.map((p: any) => ({ label: p.label, y: p.y, extra: p.extra, color: toneColor(p.color) }))} yfmt={(v) => dec(v, 1) + '%'} threshold={tgt ? { y: tgt, label: 'seu alvo ' + tgt + '%' } : null} zeroLine />
         {last != null ? <Scale min={0} max={12} val={Math.max(0, last)} valText={dec(last, 1) + '%'} segs={[{ to: 5, label: 'Sólido', c: 'var(--ok)' }, { to: 8, label: 'Limítrofe', c: 'var(--atencao)' }, { to: 12, label: 'Investigar', c: 'var(--alerta)' }]} /> : null}
         <p className="hint">Decoupling negativo nos longões = closer comprovado (fica mais eficiente na 2ª metade). Abaixo de 5% = base sólida; acima de 8% = investigar.</p>
       </Card>
@@ -177,8 +178,8 @@ function Mec({ c }: { c: any }) {
       <Card>
         <CardH title="Cadência" right={<Conf level="alta" />} />
         {latestCad ? <div><Kpi doc="cadência" value={Math.round(latestCad) + ' spm'}><span className="big">{Math.round(latestCad)}<small>spm</small></span></Kpi>
-          <div className="apoio muted">meta {a.cadenceTarget}{Math.round(latestCad) < a.cadenceTarget ? ' · faltam ' + (a.cadenceTarget - Math.round(latestCad)) : ' · na meta'}</div></div> : null}
-        <LineChart label="Cadência por treino" series={[{ name: 'Cadência', points: cadPts.map((p: any) => ({ label: p.label, y: p.y, extra: p.extra })) }]} yfmt={(v) => String(Math.round(v))} target={{ y: a.cadenceTarget, label: 'meta ' + a.cadenceTarget }} />
+          <div className="apoio muted">{a.cadenceTarget ? 'meta ' + a.cadenceTarget + (Math.round(latestCad) < a.cadenceTarget ? ' · faltam ' + (a.cadenceTarget - Math.round(latestCad)) : ' · na meta') : 'sem meta definida'}</div></div> : null}
+        <LineChart label="Cadência por treino" series={[{ name: 'Cadência', points: cadPts.map((p: any) => ({ label: p.label, y: p.y, extra: p.extra })) }]} yfmt={(v) => String(Math.round(v))} target={a.cadenceTarget ? { y: a.cadenceTarget, label: 'meta ' + a.cadenceTarget } : null} />
         <p className="hint">A alavanca de maior retorno: subir ~5% já traz ganho. Sinal de ouro: mesmo pace, cadência maior, FC menor.</p>
       </Card>
       <Card>

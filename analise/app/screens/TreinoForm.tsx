@@ -4,7 +4,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { IconCircleCheck, IconAlertTriangle, IconCloud, IconChevronLeft, IconPhotoPlus, IconX } from '@tabler/icons-react';
 import * as E from '../../engine.mjs';
-import { useApex } from '../store';
+import { useApex, getState } from '../store';
 import { href, go } from '../route';
 import { Card, CardH, Sheet, StateBadge } from '../ui';
 import { dec, dur, dayMon, typeName } from '../fmt';
@@ -16,6 +16,7 @@ import { CampoEquip } from './Equipamentos';
 import { DigaComoFoi, MapaCorpo, Pendencias, listaMarcadas, regsDe, listaDe, type Regs } from './Corpo';
 import { chave, type Leitura, type Pendente } from '../../fala.mjs';
 import { padraoPara } from '../../equipamentos.mjs';
+import { ehNovo } from '../perfil';
 import { RUN_TYPES, BIKE_TYPES, formFrom, extrasOf, buildWorkout, findDuplicate, commitWorkout, type FormVals } from '../actions';
 
 // decided: escolha feita na Conferência quando o arquivo coincide com um treino já salvo
@@ -77,7 +78,8 @@ export function TreinoForm({ id = null, prefill = null, fromFit = false, onCance
   const where = (p: PhotoRec) => (p.off || p.i == null ? 'fora do percurso' : track && track.dist[p.i] != null ? 'no km ' + (track.dist[p.i] / 1000).toFixed(1).replace('.', ',') : 'no trajeto');
   const savePhotos = (wid: string) => { pend.forEach(({ url, ...p }) => { URL.revokeObjectURL(url); putPhoto({ ...p, wid }).catch(() => {}); }); };
   const isBk = f.modal === 'bike';
-  const types = isBk ? BIKE_TYPES : RUN_TYPES;
+  // o Teste do Motor usa o protocolo de FC do dono do app: fica fora para quem é novo
+  const types = isBk ? BIKE_TYPES : RUN_TYPES.filter(([k]) => !(ehNovo(getState()) && k === 'teste_motor'));
   const back = onCancel ? undefined : w ? href('treino', w.id) : href('treinos');
 
   if (id && !w) return <Card><p className="muted">Treino não encontrado.</p></Card>;

@@ -5,6 +5,7 @@ import { useSyncExternalStore } from 'react';
 import * as E from '../engine.mjs';
 import { backupBeforeWrites, type BackupStatus } from './backup';
 import { fixStretchedSplits } from './fix-splits';
+import { estadoNovo } from './perfil';
 
 export type Workout = Record<string, any> & { id: string; date: string };
 export type ApexState = {
@@ -45,7 +46,9 @@ export async function boot(): Promise<void> {
   backupStatus = await backupBeforeWrites();
   E.setToast(toast);
   const st: ApexState = E.setState(E.load());
-  if (st.seeded) { E.save(); delete st.seeded; }
+  // Primeiro acesso (aparelho sem nenhum dado): começa vazio, sem os dados de exemplo do Lucas,
+  // com o perfil em branco e o tour de boas-vindas (docs/app-para-outros.md).
+  if (st.seeded) { Object.assign(st, estadoNovo()); delete st.seeded; E.save(); }
   try { if (E.linkSleepToWorkouts() > 0) E.save(); } catch { /* como no app antigo */ }
   // Correção dos splits esticados pela regra antiga (decisão do Lucas, 20/11). Roda depois do
   // backup automático (a cópia original fica guardada) e só uma vez por treino (idempotente).

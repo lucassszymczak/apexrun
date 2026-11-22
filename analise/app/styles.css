@@ -711,3 +711,28 @@ input.pela-fala { outline: none; border-color: var(--ciano-forte) !important; }
 .retro-prev { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; }
 .retro-prev img { width: 120px; height: auto; aspect-ratio: 9 / 16; border-radius: 8px; border: 1px solid var(--linha); flex-shrink: 0; }
 .retro-prev:focus-visible { outline: 2px solid var(--ciano); outline-offset: 2px; }
+
+/* Tour de boas-vindas (app para outras pessoas) */
+.tour { max-width: 520px; margin: 0 auto; min-height: 100%; display: flex; flex-direction: column; gap: 16px; padding-top: calc(var(--safe-top) + 12px); padding-bottom: calc(var(--safe-bottom) + 24px); }
+.tour-top { display: flex; align-items: center; justify-content: space-between; min-height: 44px; }
+.tour-pular { min-height: 44px; padding: 0 4px; background: none; border: 0; font: inherit; color: var(--ciano-forte); cursor: pointer; }
+.tour-passo { display: flex; flex-direction: column; gap: 16px; }
+.tour-passo .btn-primary { margin-top: 8px; }
+.tour-nota { display: flex; gap: 8px; align-items: flex-start; color: var(--texto-2); }
+.tour-dono { align-self: center; min-height: 44px; display: inline-flex; align-items: center; }
+.tour-2col { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; }
+.tour-2col select { min-height: 44px; }
+.tour-lista { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; }
+.tour-lista li { display: flex; gap: 12px; align-items: flex-start; background: var(--superficie); border: 1px solid var(--linha); border-radius: 12px; padding: 16px; color: var(--texto); }
+.tour-lista li svg { color: var(--ciano); flex-shrink: 0; }
+.tour-lista b { font-weight: 500; }
+.tour-passos { margin: 0; padding-left: 22px; display: flex; flex-direction: column; gap: 8px; color: var(--texto); }
+.tour-passos b { font-weight: 500; }
+.tour-ok { width: 56px; height: 56px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; background: color-mix(in srgb, var(--ok) 16%, transparent); color: var(--ok); border: 1px solid var(--ok); }
+.tour-dots { display: flex; gap: 8px; justify-content: center; margin-top: auto; padding-top: 16px; }
+.tour-dots i { width: 8px; height: 8px; border-radius: 50%; background: var(--linha); }
+.tour-dots i.on { background: var(--ciano); }
+/* Compartilhar o app */
+button.item-row { width: 100%; background: none; border: 0; font: inherit; color: inherit; cursor: pointer; padding-left: 0; padding-right: 0; }
+button.item-row:focus-visible { outline: 2px solid var(--ciano); outline-offset: 2px; }
+.app-link { font-size: 13px; padding: 8px 12px; border-radius: 8px; background: var(--superficie-2); color: var(--texto); overflow-wrap: anywhere; }

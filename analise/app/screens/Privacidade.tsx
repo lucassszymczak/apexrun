@@ -24,11 +24,6 @@ export function PrivacyFields({ value, onChange }: { value: Privacy; onChange: (
           <Seg value={String(value.raio) as '200' | '500' | '1000'} onChange={(v) => set('raio', +v)} label="Raio ocultado" options={[['200', '200 m'], ['500', '500 m'], ['1000', '1 km']]} />
         </div>
       ) : null}
-      <div className="field">
-        <span className="lab">Quem vê</span>
-        <Seg value={value.quemVe} onChange={(v) => set('quemVe', v)} label="Quem vê" options={[['eu', 'Só eu'], ['todos', 'Todos']]} />
-        <span className="help">“Todos” são os membros da comunidade do app (chega numa fase futura), nunca a internet aberta. Você sempre vê o treino completo.</span>
-      </div>
     </div>
   );
 }

@@ -5,7 +5,8 @@ import { IconDeviceWatch, IconEye, IconEyeOff, IconLock, IconRefresh, IconCircle
 import { href } from '../route';
 import { PageHead } from '../Shell';
 import { Card, CardH, IC } from '../ui';
-import { toast } from '../store';
+import { toast, getState } from '../store';
+import { ehNovo } from '../perfil';
 import { dayMon } from '../fmt';
 import { useGarminSync, useGarminQueue, runGarminSync, resumoTexto, garminLocal, RECENTE_DIAS, buscarTrajetos, semTrajetoGarmin, pausarGarmin } from '../garmin-sync';
 import { garminReady, garminStatus, garminConnect, garminSettings, garminDisconnect, sinceDate, diasParaVencer, VALIDADES, GarminError, type GarminStatus, type Desde } from '../garmin';
@@ -26,6 +27,19 @@ export function Garmin() {
   useEffect(() => { if (garminReady()) load(); }, []);
 
   const head = <PageHead title="Garmin" sub="Configurações" back={href('mais', 'config')} right={null} />;
+  // quem é novo traz os treinos pelo .FIT (a conexão automática passa pelo servidor do dono do app)
+  if (ehNovo(getState()) && !garminReady()) return (<>{head}
+    <Card><CardH icon={<IconDeviceWatch {...IC} />} title="Traga os treinos pelo arquivo .FIT" />
+      <p className="apoio">O relógio grava cada treino num arquivo .FIT. Você exporta do Garmin Connect e importa aqui; nada passa por outro servidor.</p>
+      <ol className="tour-passos">
+        <li>Abra <b>connect.garmin.com</b> no navegador e entre na sua conta.</li>
+        <li>Em <b>Atividades</b>, abra o treino.</li>
+        <li>Toque na engrenagem e escolha <b>Exportar original</b>. Vem um arquivo .zip.</li>
+        <li>No iPhone, toque no .zip no app Arquivos para abrir: dentro está o .FIT.</li>
+        <li>Toque em <b>Importar .FIT</b> e escolha o arquivo. Dá para escolher vários de uma vez.</li>
+      </ol>
+      <a className="btn-primary" href={href('importar')}>Importar .FIT</a></Card>
+  </>);
   if (!garminReady()) return (<>{head}
     <Card><CardH icon={<IconRefresh {...IC} />} title="Ligue a sincronização primeiro" />
       <p className="apoio muted">O Garmin usa o mesmo código de sincronização entre aparelhos. Ligue em Configurações › Sincronizar e volte aqui.</p>

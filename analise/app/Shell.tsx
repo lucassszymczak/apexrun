@@ -3,6 +3,7 @@ import { IconHome, IconRoute, IconTrendingUp, IconDots, IconPlus, IconChevronLef
 import { href, useRoute } from './route';
 import { Simbolo, IC } from './ui';
 import { useToasts, useApex } from './store';
+import { tourPendente, ehNovo } from './perfil';
 import { useGarminQueue, useGarminSync, haQuantoSync, garminLocal } from './garmin-sync';
 
 export const MAIS = [
@@ -14,6 +15,8 @@ export const MAIS = [
   ['livro', 'Livro de fórmulas'],
   ['config', 'Configurações'],
 ] as const;
+// telas que são só do dono do app (o protocolo de força e canela do Lucas)
+export const SO_DONO: string[] = ['forca'];
 
 function section(name: string): string {
   if (name === 'treino' || name === 'treinos' || name === 'editar' || name === 'compartilhar') return 'treinos';
@@ -32,8 +35,10 @@ export function Shell({ children }: { children: ReactNode }) {
   const fila = useGarminQueue();
   useGarminSync();
   const gl = garminLocal();
+  const { st } = useApex();
+  const tour = tourPendente(st) && !(r.name === 'mais' && r.arg === 'config');
   return (
-    <div className={'app' + ((r.name === 'treino' && r.parts[2] !== 'resumo') || (r.name === 'progresso' && r.arg === 'calor') ? ' immersive' : r.name === 'compartilhar' || r.name === 'completar' || (r.name === 'treino' && r.parts[2] === 'resumo') ? ' focus' : '') + (fila.length ? ' tem-fila' : '')}>
+    <div className={'app' + ((r.name === 'treino' && r.parts[2] !== 'resumo') || (r.name === 'progresso' && r.arg === 'calor') ? ' immersive' : tour || r.name === 'compartilhar' || r.name === 'completar' || (r.name === 'treino' && r.parts[2] === 'resumo') ? ' focus' : '') + (fila.length ? ' tem-fila' : '')}>
       <a href="#conteudo" className="sr-only">Pular para o conteúdo</a>
       <nav className="rail" aria-label="Navegação principal">
         <a className="logo" href={href('hoje')}><Simbolo size={30} /><span>Apex <em>Performance</em></span></a>
@@ -41,7 +46,7 @@ export function Shell({ children }: { children: ReactNode }) {
         <a className="item" href={href('treinos')} aria-current={cur('treinos')}><IconRoute {...IC} aria-hidden="true" />Treinos</a>
         <a className="item" href={href('progresso')} aria-current={cur('progresso')}><IconTrendingUp {...IC} aria-hidden="true" />Progresso</a>
         <span className="grp">Mais</span>
-        {MAIS.map(([k, l]) => <a key={k} className="item sm" href={href('mais', k)} aria-current={curMais(k)}>{l}</a>)}
+        {MAIS.filter(([k]) => !(ehNovo(st) && SO_DONO.includes(k))).map(([k, l]) => <a key={k} className="item sm" href={href('mais', k)} aria-current={curMais(k)}>{l}</a>)}
         <a className="btn-primary" href={href('importar')}><IconPlus size={18} stroke={2.25} aria-hidden="true" />Importar treino</a>
         {gl.status && gl.status.conectado ? <a className="rail-garmin" href={href('mais', 'garmin')}><span className="dot ok" aria-hidden="true" />Garmin{haQuantoSync(gl.lastRun) ? ' · ' + haQuantoSync(gl.lastRun) : ''}</a> : null}
       </nav>
