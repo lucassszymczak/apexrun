@@ -209,7 +209,7 @@ export function TreinoForm({ id = null, prefill = null, fromFit = false, onCance
         <Card>
           <div className="row between" style={{ alignItems: 'flex-start' }}>
             <div className="stack" style={{ gap: 2 }}><h2 className="lead">Fotos do percurso</h2><p className="apoio muted">{track ? 'Encaixadas no mapa pelo horário' : 'Sem trajeto: ficam em Fora do percurso'}</p></div>
-            <button type="button" className="btn" style={{ minHeight: 40 }} onClick={() => photoInput.current?.click()} disabled={reading}><IconPhotoPlus size={18} stroke={1.75} aria-hidden="true" />{reading ? 'Lendo…' : 'Adicionar'}</button>
+            <button type="button" className="btn" style={{ minHeight: 44 }} onClick={() => photoInput.current?.click()} disabled={reading}><IconPhotoPlus size={18} stroke={1.75} aria-hidden="true" />{reading ? 'Lendo…' : 'Adicionar'}</button>
           </div>
           <input ref={photoInput} type="file" accept="image/*" multiple className="sr-only" tabIndex={-1} aria-hidden="true" onChange={(e) => { addPend(e.target.files); e.target.value = ''; }} />
           {pend.length ? <div className="photos-row">{pend.map((p, k) => (
@@ -251,7 +251,7 @@ export function TreinoForm({ id = null, prefill = null, fromFit = false, onCance
       <Card className="priv-row">
         <PrivacyIcon p={priv} size={22} />
         <div className="stack grow" style={{ gap: 0 }}><span>Privacidade</span><span className="apoio muted">{privacyLabel(priv)}</span></div>
-        <button type="button" className="btn quiet" style={{ minHeight: 40 }} onClick={() => setPrivOpen(true)}>Alterar</button>
+        <button type="button" className="btn quiet" style={{ minHeight: 44 }} onClick={() => setPrivOpen(true)}>Alterar</button>
       </Card>
 
       {err ? <Card className="alert" role="alert"><IconAlertTriangle size={20} stroke={1.75} color="var(--alerta)" aria-hidden="true" /><span>{err}</span></Card> : null}
