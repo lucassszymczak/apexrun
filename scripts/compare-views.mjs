@@ -26,7 +26,14 @@ const gv = JSON.parse(readFileSync(resolve(gdir, scen + '.views.json'), 'utf8'))
 // texto sem gráficos (eixos de SVG mudam com o desenho); cai no texto completo se o golden for antigo
 const golden = gv.viewsNoCharts || gv.views;
 const payload = scen === 'sintetico' ? readFileSync(resolve(root, 'analise/golden/sintetico.state.json'), 'utf8')
-  : scen === 'backup' ? payloadFromFile(resolve(root, 'fixtures/privado/backup.json')) : null;
+  : scen === 'backup' ? payloadFromFile(resolve(root, 'fixtures/privado/backup.json')) : await seedPayload();
+// Cenário "seed": desde 22/11/2026 o app novo abre VAZIO num aparelho sem dados (app para outras
+// pessoas, aprovado pelo Lucas). Para comparar com o golden do app antigo, que abria com os dados de
+// exemplo, o cenário carrega esses mesmos dados de exemplo do motor antes de abrir.
+async function seedPayload() {
+  const E = await import('../analise/engine.mjs');
+  return JSON.stringify({ athlete: Object.assign({}, E.DEFAULT_ATHLETE), workouts: E.seedWorkouts(), daily: E.seedDaily(), deleted: [], race: E.defaultRace(), races: [], planWeeks: {}, updatedAt: null, lastSyncAt: null });
+}
 
 // tela antiga → rotas novas onde o conteúdo foi parar
 const MAP = {

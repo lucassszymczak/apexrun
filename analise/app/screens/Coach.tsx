@@ -92,7 +92,20 @@ export function coachReading(ws: any[], a: any, x: any) {
   if (!(shinAlert || pain) && x.latestCad && x.latestCad < a.cadenceTarget) acts.push({ p: 3, t: '<b>Mecânica:</b> mirar cadência ' + a.cadenceTarget + ' (~+5%) nos fáceis — poupa a tíbia e baixa a FC.' });
   acts.push({ p: 4, t: 'Manter a base: 2 fáceis + 1 longo + força 2×; programar a semana em Mais › <b>Ciclo de prova</b> e marcar os cumpridos.' });
   acts.sort((m, n) => m.p - n.p);
+  if (a.novo) return semCasoDoDono({ hl, sub, rows, acts: acts.slice(0, 5) }, a);
   return { hl, sub, rows, acts: acts.slice(0, 5) };
+}
+// Quem é novo: o texto do coach foi escrito para o caso do dono do app (a tíbia, o protocolo de
+// canela). Os números e as regras são os mesmos; só as menções ao caso dele saem, e a cadência
+// sem meta definida não cita meta.
+function semCasoDoDono(r: { hl: string; sub: string; rows: any[]; acts: any[] }, a: any) {
+  const t = (x: string) => String(x || '').replace(/ \(poupa a tíbia\)/g, '').replace(/a tíbia cobra/g, 'o corpo cobra').replace(/sobrecarga na tíbia/g, 'sobrecarga').replace(/Segurança · tíbia/g, 'Segurança');
+  const rows = r.rows.map((x) => {
+    const y = { ...x, lab: t(x.lab), read: t(x.read) };
+    if (x.doc === 'cadência' && !a.cadenceTarget) { y.dot = 'g'; y.read = 'Sem meta de cadência definida. Defina em Mais › Configurações, se quiser.'; }
+    return y;
+  });
+  return { hl: t(r.hl), sub: t(r.sub), rows, acts: r.acts.map((x) => ({ ...x, t: t(x.t) })) };
 }
 
 const DOT: Record<string, string> = { g: 'ok', w: 'atencao', c: 'alerta' };
@@ -106,7 +119,7 @@ export function Coach() {
   const cx = comTreinos(ws, () => E.coachContext(ws, a));
   const r = comTreinos(ws, () => coachReading(ws, a, cx));
   return (<>
-    <PageHead title="Leitura do Coach" sub="Prioridade em segurança (tíbia) e desempenho (motor, pace)" back={href('hoje')} right={<PeriodoSel soAtual />} />
+    <PageHead title="Leitura do Coach" sub={a.novo ? 'Prioridade em segurança e desempenho (motor, pace)' : 'Prioridade em segurança (tíbia) e desempenho (motor, pace)'} back={href('hoje')} right={<PeriodoSel soAtual />} />
     <Card>
       <CardH icon={<IconMessageCircle {...IC} />} title={r.hl} />
       <p className="muted">{r.sub}</p>

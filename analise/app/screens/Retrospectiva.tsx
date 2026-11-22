@@ -55,6 +55,8 @@ export function Retrospectiva() {
   const [gerando, setGerando] = useState(false);
   const prevRef = useRef<HTMLDivElement>(null);
   useEffect(() => () => { (prev || []).forEach((p) => URL.revokeObjectURL(p.url)); }, [prev]);
+  // a prévia nova recebe o foco assim que aparece (teclado e leitor de tela)
+  useEffect(() => { if (prev && prev.length) prevRef.current?.focus(); }, [prev]);
   if (!st.race || !R) return (<>
     <PageHead title="Retrospectiva" back={href('mais', 'maratona')} />
     <Card><Empty icon={<IconHistory size={32} stroke={1.75} />}>Sem ciclo de prova com início definido. Defina o início do ciclo em Editar ciclo.</Empty><a className="btn" href={href('mais', 'ciclo')}>Editar ciclo</a></Card>
@@ -70,7 +72,6 @@ export function Retrospectiva() {
       setArqs(a); setPrev(a.map((x) => ({ url: URL.createObjectURL(x.blob), alt: x.alt })));
       (window as any).__apexRetroMs = Math.round(performance.now() - t0);
       setMsg(a.length + (a.length === 1 ? ' card pronto.' : ' cards prontos.'));
-      setTimeout(() => prevRef.current?.focus(), 50);
     } catch { setMsg('Não consegui gerar os cards. Tente de novo.'); }
     setGerando(false);
   };

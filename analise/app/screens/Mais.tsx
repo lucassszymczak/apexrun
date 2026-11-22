@@ -1,9 +1,11 @@
 // MAIS (celular): lista dos destinos que no computador ficam no trilho lateral.
-import { IconDeviceWatch, IconFlag, IconReportAnalytics, IconMoon, IconBarbell, IconBook2, IconSettings, IconChevronRight, IconShoe } from '@tabler/icons-react';
+import { IconShare, IconDeviceWatch, IconFlag, IconReportAnalytics, IconMoon, IconBarbell, IconBook2, IconSettings, IconChevronRight, IconShoe } from '@tabler/icons-react';
 import { href } from '../route';
-import { useApex } from '../store';
+import { useApex, toast } from '../store';
+import { compartilharApp } from '../share/app-link';
 import { noEmoji } from '../fmt';
-import { PageHead } from '../Shell';
+import { PageHead, SO_DONO } from '../Shell';
+import { ehNovo } from '../perfil';
 import { Card } from '../ui';
 
 const ITEMS = [
@@ -20,18 +22,23 @@ const ITEMS = [
 export function Mais() {
   const { st } = useApex();
   // o subtítulo do ciclo mostra a prova atual (São Silvestre, meia, maratona…)
-  const sub = (k: string, s0: string) => (k === 'maratona' && st.race && st.race.name ? noEmoji(st.race.name) + ' · ' + s0.toLowerCase() : s0);
+  const novo = ehNovo(st);
+  const sub = (k: string, s0: string) => k === 'garmin' && novo ? 'Como trazer os treinos do relógio' : (k === 'maratona' && st.race && st.race.name ? noEmoji(st.race.name) + ' · ' + s0.toLowerCase() : s0);
   return (<>
     <PageHead title="Mais" />
     <Card style={{ paddingTop: 4, paddingBottom: 4 }}>
       <nav className="list" aria-label="Mais">
-        {ITEMS.map(([k, t, s, I]) => (
+        {ITEMS.filter(([k]) => !(novo && SO_DONO.includes(k))).map(([k, t, s, I]) => (
           <a key={k} className="item-row" href={href('mais', k)}>
             <I size={22} stroke={1.75} color="var(--ciano)" aria-hidden="true" />
             <div className="grow stack" style={{ gap: 0 }}><span className="t">{t}</span><span className="s">{sub(k, s)}</span></div>
             <IconChevronRight size={20} stroke={1.75} className="faint" aria-hidden="true" />
           </a>
         ))}
+        <button type="button" className="item-row" onClick={async () => { const r = await compartilharApp(); if (r === 'copied') toast('Link do app copiado'); }}>
+          <IconShare size={22} stroke={1.75} color="var(--ciano)" aria-hidden="true" />
+          <div className="grow stack" style={{ gap: 0, textAlign: 'left' }}><span className="t">Compartilhar o app</span><span className="s">Mande o link para alguém usar com os próprios treinos</span></div>
+        </button>
       </nav>
     </Card>
   </>);

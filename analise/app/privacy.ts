@@ -26,7 +26,8 @@ export function privacyOf(w: any, athlete: any): Privacy { return normPrivacy(w 
 
 export function privacyLabel(p: Privacy): string {
   const m = p.mapa === 'completo' ? 'Mapa completo' : p.mapa === 'nenhum' ? 'Sem mapa' : 'Oculta início e fim (' + (p.raio >= 1000 ? '1 km' : p.raio + ' m') + ')';
-  return m + ' · ' + (p.quemVe === 'eu' ? 'Só eu' : 'Todos');
+  // "Quem vê" saiu da tela em 22/11/2026 (sem comunidade); o campo continua no dado
+  return m;
 }
 
 // ---------------- o filtro ----------------

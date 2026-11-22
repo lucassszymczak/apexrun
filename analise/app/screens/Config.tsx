@@ -2,13 +2,15 @@
 // renderSyncCard, exportData e importData (app antigo), mais o download do backup
 // automático (IndexedDB) e a aparência automática. Mesmas regras de salvar e validar.
 import { useEffect, useRef, useState } from 'react';
-import { IconDeviceWatch, IconSunrise, IconChevronRight, IconUser, IconFlag, IconBike, IconPalette, IconRefresh, IconDatabase, IconDownload, IconUpload, IconCopy, IconTrash, IconRotate, IconMap } from '@tabler/icons-react';
+import { IconDeviceWatch, IconSunrise, IconChevronRight, IconUser, IconFlag, IconBike, IconPalette, IconRefresh, IconDatabase, IconDownload, IconUpload, IconCopy, IconTrash, IconRotate, IconMap, IconShare } from '@tabler/icons-react';
 import * as E from '../../engine.mjs';
+import { ehNovo, UFS, altitudeDaCidade } from '../perfil';
 import { useApex, commit, getState, toast, syncNow, syncJoin, useSyncStatus, backupStatus, refresh } from '../store';
 import { href, go } from '../route';
 import { PageHead } from '../Shell';
 import { Card, CardH, Seg, IC } from '../ui';
 import { themePref, setThemePref, type ThemePref } from '../theme';
+import { compartilharApp, linkDoApp } from '../share/app-link';
 import { listBackups, backupFileName, type BackupRow } from '../backup';
 import { dayMonYear } from '../fmt';
 import { defaultPrivacy, privacyLabel, type Privacy } from '../privacy';
@@ -28,12 +30,19 @@ function Field({ id, label, help, ...p }: { id: string; label: string; help?: st
 // ---------------- atleta ----------------
 function Atleta() {
   const a = getState().athlete;
-  const init = () => ({ name: a.name ?? '', city: a.city ?? '', age: a.age ?? '', weight: a.weight ?? '', fcRep: a.fcRep ?? '', fcMax: a.fcMax ?? '', vo2: a.vo2 ?? '', cad: a.cadenceTarget ?? '', efb: a.efBaseline ?? '', efg: a.efGainPct ?? '', dec: a.decouplingTarget ?? '', wk: a.weeklyTargetKm ?? '', ses: a.sessionsTarget ?? '', cycle: a.cycleName ?? '', alert: a.alert ?? '', fcProv: !!a.fcMaxProv, showBl: !!a.showBaseline5k });
+  const novo = ehNovo(getState());
+  const [cid0, uf0] = String(a.city || '').split('/');
+  const init = () => ({ name: a.name ?? '', city: a.city ?? '', cidade: novo ? (cid0 || '') : '', uf: novo && UFS.includes(uf0) ? uf0 : '', age: a.age ?? '', weight: a.weight ?? '', fcRep: a.fcRep ?? '', fcMax: a.fcMax ?? '', vo2: a.vo2 ?? '', cad: a.cadenceTarget ?? '', efb: a.efBaseline ?? '', efg: a.efGainPct ?? '', dec: a.decouplingTarget ?? '', wk: a.weeklyTargetKm ?? '', ses: a.sessionsTarget ?? '', cycle: a.cycleName ?? '', alert: a.alert ?? '', fcProv: !!a.fcMaxProv, showBl: !!a.showBaseline5k });
   const [f, setF] = useState(init);
   const s = (k: string) => (e: any) => setF({ ...f, [k]: e.target.type === 'checkbox' ? e.target.checked : e.target.value });
   const save = () => {
     const A = getState().athlete;
-    A.name = String(f.name).trim() || 'Atleta'; A.city = String(f.city).trim();
+    A.name = String(f.name).trim() || 'Atleta';
+    if (novo) {
+      // cidade e estado de quem é novo: a altitude da cidade entra no ajuste de clima
+      const c = String(f.cidade).trim(), nova = c && f.uf ? c + '/' + f.uf : '';
+      if (nova !== (A.city || '')) { A.city = nova || null; A.baseAltM = null; if (nova) altitudeDaCidade(c, f.uf).then((alt) => { const B = getState().athlete; if (B.city === nova) { B.baseAltM = alt; commit(); } }); }
+    } else A.city = String(f.city).trim();
     A.age = +f.age || A.age; A.weight = +f.weight || A.weight;
     A.fcRep = +f.fcRep || A.fcRep; A.fcMax = +f.fcMax || A.fcMax;
     A.vo2 = +f.vo2 || A.vo2; A.cadenceTarget = +f.cad || A.cadenceTarget;
@@ -49,7 +58,10 @@ function Atleta() {
       <p className="apoio muted">Estes valores calibram TRIMP, zonas, GAP, metas e o score. Ajuste conforme seus testes.</p>
       <div className="form-grid g3">
         <Field id="c_name" label="Nome" value={f.name} onChange={s('name')} />
-        <Field id="c_city" label="Cidade" value={f.city} onChange={s('city')} />
+        {novo ? (<>
+          <Field id="c_city" label="Cidade" value={f.cidade} onChange={s('cidade')} />
+          <div className="field"><label htmlFor="c_uf">Estado</label><select id="c_uf" value={f.uf} onChange={s('uf')}><option value="">—</option>{UFS.map((u) => <option key={u} value={u}>{u}</option>)}</select></div>
+        </>) : <Field id="c_city" label="Cidade" value={f.city} onChange={s('city')} />}
         <Field id="c_age" label="Idade" help="anos" type="number" value={f.age} onChange={s('age')} />
         <Field id="c_weight" label="Peso" help="kg" type="number" value={f.weight} onChange={s('weight')} />
         <Field id="c_fcrep" label="FC de repouso" help="bpm" type="number" value={f.fcRep} onChange={s('fcRep')} />
@@ -65,7 +77,7 @@ function Atleta() {
       </div>
       <div className="field"><label htmlFor="c_alert">Alerta / status atual <span className="faint">· aparece no topo do Hoje</span></label><textarea id="c_alert" value={f.alert} onChange={s('alert')} /></div>
       <label className="switch"><span>FCmáx ainda provisória (aguardando teste de campo)</span><input type="checkbox" role="switch" checked={f.fcProv} onChange={s('fcProv')} /></label>
-      <label className="switch"><span>Mostrar o "Baseline 5K" no painel</span><input type="checkbox" role="switch" checked={f.showBl} onChange={s('showBl')} /></label>
+      {novo ? null : <label className="switch"><span>Mostrar o "Baseline 5K" no painel</span><input type="checkbox" role="switch" checked={f.showBl} onChange={s('showBl')} /></label>}
       <button type="button" className="btn-primary" onClick={save}>Salvar configuração</button>
     </Card>
   );
@@ -168,7 +180,7 @@ function GarminLink() {
     </a>
     <a className="card item-row" href={href('mais', 'garmin')} style={{ flexDirection: 'row', textDecoration: 'none', color: 'inherit' }}>
       <IconDeviceWatch {...IC} color="var(--ciano)" aria-hidden="true" />
-      <div className="grow stack" style={{ gap: 0 }}><span className="t">Garmin</span><span className="s">Treinos do relógio entrando sozinhos</span></div>
+      <div className="grow stack" style={{ gap: 0 }}><span className="t">Garmin</span><span className="s">{ehNovo(getState()) ? 'Como trazer os treinos do relógio' : 'Treinos do relógio entrando sozinhos'}</span></div>
       <IconChevronRight size={20} stroke={1.75} className="faint" aria-hidden="true" />
     </a>
   </>);
@@ -206,6 +218,24 @@ function Sync() {
   const st = getState();
   const label = s.state === 'syncing' ? 'sincronizando…' : s.state === 'ok' ? 'sincronizado' + (st.lastSyncAt ? ' · ' + new Date(st.lastSyncAt).toLocaleString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '') : s.state === 'err' ? (s.msg || 'falha') : '';
   const badge = label ? <span className={'badge ' + (s.state === 'ok' ? 'ok' : s.state === 'err' ? 'alerta' : 'neutro')} role="status">{label}</span> : null;
+  if (!E.syncEnabled() && ehNovo(st)) {
+    // quem é novo não usa os servidores do dono do app: só dá para conectar um código que já existe
+    const join0 = () => {
+      const c = E.normalizeSyncCode(code); if (!/^apex-/.test(c)) { alert('Código inválido. Ele tem o formato apex-xxxx-xxxx-xxxx.'); return; }
+      if (st.workouts && st.workouts.length) { if (!confirm('Conectar vai substituir os dados deste aparelho pelos do código. Continuar?')) return; }
+      syncJoin(c).then(() => toast('Conectado — dados sincronizados')).catch((e) => { alert('Não deu para conectar: ' + e.message); refresh(); });
+    };
+    return (
+      <Card>
+        <CardH icon={<IconRefresh {...IC} />} title="Seus dados" />
+        <p className="apoio muted">Seus treinos ficam só neste aparelho. Para levar para outro aparelho, use <b>Exportar JSON</b> aqui e <b>Importar JSON</b> no outro.</p>
+        <details className="acc"><summary>Já uso o app com um código de sincronização</summary>
+          <div className="body"><div className="field"><label htmlFor="sync_code">Código</label>
+            <div className="row"><input id="sync_code" placeholder="apex-xxxx-xxxx-xxxx" value={code} onChange={(e) => setCode(e.target.value)} autoCapitalize="none" autoCorrect="off" spellCheck={false} />
+              <button type="button" className="btn quiet" onClick={join0}>Conectar</button></div></div></div></details>
+      </Card>
+    );
+  }
   if (!E.sbReady()) return (<Card><CardH icon={<IconRefresh {...IC} />} title="Sincronizar entre aparelhos" />
     <p className="apoio muted">A sincronização em nuvem funciona na <b>versão publicada</b> (o link do GitHub Pages). Nesta cópia local, use <b>Exportar/Importar JSON</b> para levar os dados.</p></Card>);
   if (!E.syncEnabled()) {
@@ -277,7 +307,7 @@ function Dados() {
   return (
     <Card>
       <CardH icon={<IconDatabase {...IC} />} title="Dados" />
-      <p className="apoio muted">Tudo fica neste aparelho. Exporte para guardar uma cópia — ou ligue a sincronização para os dados aparecerem no celular e no computador.</p>
+      <p className="apoio muted">Tudo fica neste aparelho. Exporte para guardar uma cópia{ehNovo(getState()) ? '.' : ' — ou ligue a sincronização para os dados aparecerem no celular e no computador.'}</p>
       <div className="row wrap">
         <button type="button" className="btn" onClick={exportData}><IconDownload size={18} stroke={1.75} aria-hidden="true" />Exportar JSON</button>
         <button type="button" className="btn quiet" onClick={() => fileRef.current?.click()}><IconUpload size={18} stroke={1.75} aria-hidden="true" />Importar JSON</button>
@@ -304,10 +334,22 @@ function Dados() {
       ) : null}
       <hr className="divider" />
       <div className="row wrap">
-        <button type="button" className="btn quiet" onClick={reseed}><IconRotate size={18} stroke={1.75} aria-hidden="true" />Restaurar dados de exemplo</button>
+        {ehNovo(getState()) ? null : <button type="button" className="btn quiet" onClick={reseed}><IconRotate size={18} stroke={1.75} aria-hidden="true" />Restaurar dados de exemplo</button>}
         <button type="button" className="btn danger" onClick={wipe}><IconTrash size={18} stroke={1.75} aria-hidden="true" />Apagar todos os treinos</button>
       </div>
-      <p className="hint">A versão anterior do app continua disponível em <a href="../analise-v1/">/analise-v1/</a> até o fim da Fase 1, com os mesmos dados.</p>
+      {ehNovo(getState()) ? null : <p className="hint">A versão anterior do app continua disponível em <a href="../analise-v1/">/analise-v1/</a> até o fim da Fase 1, com os mesmos dados.</p>}
+    </Card>
+  );
+}
+
+// ---------------- compartilhar o app ----------------
+function CompartilharApp() {
+  return (
+    <Card>
+      <CardH icon={<IconShare {...IC} />} title="Compartilhar o app" />
+      <p className="apoio muted">Mande o link para alguém usar o app com os próprios treinos. Vai só o endereço: nenhum treino ou dado seu. Cada pessoa começa com o app vazio, no próprio aparelho.</p>
+      <code className="tn app-link">{linkDoApp()}</code>
+      <button type="button" className="btn" style={{ alignSelf: 'flex-start' }} onClick={async () => { const r = await compartilharApp(); if (r === 'copied') toast('Link do app copiado'); }}><IconShare size={18} stroke={1.75} aria-hidden="true" />Compartilhar o link</button>
     </Card>
   );
 }
@@ -318,7 +360,7 @@ export function Config() {
     <PageHead title="Configurações" back={href('mais')} right={null} />
     <div className="cols">
       <div className="col"><Atleta /><ZonasBike /></div>
-      <div className="col"><NovoCiclo /><GarminLink /><Mapa /><PrivacidadePadrao /><Aparencia /><Sync /><Dados /></div>
+      <div className="col"><NovoCiclo /><GarminLink /><Mapa /><PrivacidadePadrao /><Aparencia /><Sync /><CompartilharApp /><Dados /></div>
     </div>
   </>);
 }

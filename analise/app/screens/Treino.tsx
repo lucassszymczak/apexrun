@@ -95,7 +95,7 @@ export function treinoBlocks(w: any, st: any) {
         <CardH icon={<IconShoe {...IC} />} title="Mecânica e ritmo" />
         {w.cadence || (hp && hp.effVsModel != null) || w.gainM ? (<>
           <div>
-            {w.cadence ? <KV k="Cadência" doc="cadência" v={w.cadence + ' spm' + (w.cadence >= a.cadenceTarget ? ' · na meta' : ' · meta ' + a.cadenceTarget)} /> : null}
+            {w.cadence ? <KV k="Cadência" doc="cadência" v={w.cadence + ' spm' + (!a.cadenceTarget ? '' : w.cadence >= a.cadenceTarget ? ' · na meta' : ' · meta ' + a.cadenceTarget)} /> : null}
             {hp && hp.effVsModel != null ? <KV k="Subida" doc="hill" v={(hp.effVsModel * 100).toFixed(0) + '% do modelo · ' + hp.gainM + ' m' + (hp.hrExtra != null ? ' · +' + hp.hrExtra + ' bpm' : '')} />
               : w.gainM ? <KV k="Elevação" v={'D+ ' + Math.round(w.gainM) + ' m' + (w.lossM ? ' · D− ' + Math.round(w.lossM) + ' m' : '')} /> : null}
           </div>
