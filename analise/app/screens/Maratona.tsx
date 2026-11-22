@@ -1,7 +1,7 @@
 // MARATONA / CICLO (Mais). Porta de renderMaratona + mBuildForm/mHarvest + OCR + ciclos
 // anteriores (app antigo). Mesmos cálculos; ação principal: lançar os treinos da semana.
 import { useEffect, useState } from 'react';
-import { IconSettings, IconChevronLeft, IconChevronRight, IconPlus, IconCheck, IconPencil, IconTrash, IconCamera, IconClipboardText, IconArchive, IconCopy, IconDownload, IconFlag, IconRoute } from '@tabler/icons-react';
+import { IconSettings, IconChevronLeft, IconChevronRight, IconPlus, IconCheck, IconPencil, IconTrash, IconCamera, IconClipboardText, IconArchive, IconCopy, IconDownload, IconFlag, IconRoute, IconHistory } from '@tabler/icons-react';
 import { FONTE_ROTULO, resumo } from '../course';
 import { metaTxt } from './Ciclo';
 import { useFaixaHoje } from './Simulador';
@@ -261,6 +261,7 @@ export function Maratona() {
       <span className="apoio muted">{blk ? blk.wkToGo + ' semanas · ' : ''}<b>{dateBR(race.date)}</b> · {km(race.distKm)} km</span>
       <div className="row wrap" style={{ gap: 6 }}><span className="badge ciano">{race.goal === 'time' && race.targetSec ? 'Tempo-alvo ' + metaTxt(race.targetSec) : race.goal === 'finish' || !race.goal ? 'Terminar bem' : race.goal}</span>{race.goal !== 'time' ? <span className="badge neutro">por zonas de FC</span> : null}{race.strategy ? <span className="badge neutro">{race.strategy === 'negativa' ? 'segunda metade mais rápida' : 'esforço constante'}</span> : null}{race.startTime ? <span className="badge neutro">largada {race.startTime}</span> : null}</div>
       <a className="item-row opcao-link" href={href('mais', race.course ? 'percurso' : 'ciclo')}><IconRoute size={20} stroke={1.75} color="var(--ciano)" aria-hidden="true" /><span className="grow">{race.course ? 'Percurso: ' + FONTE_ROTULO[race.course.fonte].toLowerCase() + ' · D+ ' + resumo(race.course).dMais + ' m' : 'Sem percurso: adicione em Editar ciclo'}</span><span className="link">{race.course ? 'Ver' : 'Editar'}</span></a>
+      <a className="item-row opcao-link" href={href('mais', 'retrospectiva')}><IconHistory size={20} stroke={1.75} color="var(--ciano)" aria-hidden="true" /><span className="grow">{blk && blk.days < 0 ? 'Retrospectiva do ciclo' : 'Retrospectiva até agora'}</span><span className="link">Ver</span></a>
       <a className="btn" href={href('mais', 'plano')} style={{ alignSelf: 'flex-start' }}>Ver plano de prova</a>
     </Card>
     {blk && blk.days < 0 ? (
