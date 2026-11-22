@@ -14,6 +14,7 @@ import { ParaCompletarCard } from './ParaCompletar';
 import { HistoriaCard } from './Leitura';
 import { AmanhaCard, PlanoLinha } from './Amanha';
 import { AvisoEquipCard } from './Equipamentos';
+import { RetroCardHoje } from './Retrospectiva';
 
 export function Hoje() {
   const { st } = useApex();
@@ -165,7 +166,7 @@ export function Hoje() {
       </Card>
     ) : null}
     <div className="cols">
-      <div className="col"><AvisoEquipCard />{ready}<ParaCompletarCard />{coach}{plan}</div>
+      <div className="col"><RetroCardHoje /><AvisoEquipCard />{ready}<ParaCompletarCard />{coach}{plan}</div>
       <div className="col">{lastCard}{lastRun ? <HistoriaCard w={lastRun} st={st} titulo={'Último treino · história · ' + dayMon(lastRun.date)} /> : null}<AmanhaCard />{cycle}{planoLinha}{recov}</div>
     </div>
   </>);

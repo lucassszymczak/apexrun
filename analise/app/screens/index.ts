@@ -26,3 +26,4 @@ export { Segmentos } from './Segmentos';
 export { Equipamentos } from './Equipamentos';
 export { Resumo } from './Resumo';
 export { ProgressoCorpo } from './Corpo';
+export { Retrospectiva, RetroCardHoje } from './Retrospectiva';

@@ -175,4 +175,11 @@ LEITURA_DOCS.push(
     fonte: 'Contagem simples dos seus registros; sem fórmula nova.',
   },
 );
+LEITURA_DOCS.push({
+  key: 'retrospectiva', name: 'Retrospectiva do ciclo', cat: 'Rotina', conf: 'A de cada número citado',
+  desc: 'Retrospectiva: volume, consistência, recordes, a prova (plano × real), segmentos que mais melhoraram e o tênis do ciclo. Blocos sem dado não aparecem.',
+  formula: 'ciclo: do início do ciclo à data da prova; a versão "até agora" usa hoje como fim\nvolume: km de corrida e horas de treino (corrida + pedal), barras de km por semana desde o zero\nconsistência: semanas consistentes e a maior sequência (regra da Fase 3; a semana em andamento fica de fora)\nrecordes: recordes pessoais feitos no ciclo que ainda valem (selos da Fase 2) e o longão mais longo\na prova: o treino do tipo Prova na data (1 dia de folga); com tempo-alvo, plano × real nas passagens (o real sai do trajeto, ou dos splits)\nsegmentos: os 2 que mais melhoraram (tendência "mais rápido" da Fase 3); ficam fora dos Stories\ntênis: km de cada tênis nas corridas do ciclo\nStories: um card por bloco, no máximo 6, sem mapa',
+  fields: 'Os treinos do ciclo, o ciclo de prova, o plano da Fase 4, os segmentos e os equipamentos.',
+  fonte: 'Regra do app, aprovada em 21/11/2026 (docs/fase5-formulas.md, item 6).',
+});
 export const leituraDoc = (k: string): Doc | null => LEITURA_DOCS.find((d) => d.key === k || d.name === k) || null;

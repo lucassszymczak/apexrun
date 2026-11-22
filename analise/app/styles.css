@@ -694,3 +694,20 @@ input.pela-fala { outline: none; border-color: var(--ciano-forte) !important; }
 .corpo-ult a { display: flex; justify-content: space-between; min-height: 44px; align-items: center; border-top: 1px solid var(--linha); color: var(--texto-2); text-decoration: none; }
 .corpo-rodape { position: sticky; bottom: calc(64px + var(--safe-bottom)); background: var(--noite); padding: 8px 0; margin: 0; font-size: 13px; line-height: 18px; color: var(--texto-2); border-top: 1px solid var(--linha); }
 @media (min-width: 1024px) { .corpo-rodape { bottom: 0; } }
+
+/* Fase 5 · Retrospectiva */
+.retro-b .cap, .retro-capa .cap { text-transform: uppercase; }
+.retro-barras { display: flex; align-items: flex-end; gap: 4px; height: 120px; border-bottom: 1px solid var(--linha); }
+.retro-barras span { flex: 1; background: var(--superficie-2); border-radius: 3px 3px 0 0; min-width: 3px; }
+.retro-barras span.on { background: var(--ciano); }
+.retro-sem .csw { cursor: default; }
+.retro-lista { list-style: none; margin: 0; padding: 0; }
+.retro-lista a { display: flex; align-items: center; gap: 10px; min-height: 44px; border-top: 1px solid var(--linha); color: var(--texto); text-decoration: none; }
+.retro-lista li:first-child a { border-top: 0; }
+.retro-lista b { font-weight: 500; }
+.retro-lista a:focus-visible { outline: 2px solid var(--ciano); outline-offset: 2px; }
+.retro-tbl tr.cheg td { color: var(--magenta); font-weight: 500; }
+.retro-gerar { align-items: stretch; }
+.retro-prev { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; }
+.retro-prev img { width: 120px; height: auto; aspect-ratio: 9 / 16; border-radius: 8px; border: 1px solid var(--linha); flex-shrink: 0; }
+.retro-prev:focus-visible { outline: 2px solid var(--ciano); outline-offset: 2px; }
