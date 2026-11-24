@@ -5,12 +5,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { IconPlus, IconMinus, IconFocusCentered } from '@tabler/icons-react';
 import { type Track, coloredRuns, cortaRuns, kmMarks, PALETTE, totalDist } from '../track';
-import { rumo } from './rumo';
 import { describeRoute } from './describe';
 
 const R = 6371000;
 
-export function TrackSvg({ tr, band, cursor, onPick, photos, onPhoto, palette = PALETTE, marca, destaque, ate = null, fantasma = null, corredor = false, bike = false }: { corredor?: boolean; bike?: boolean; fantasma?: { lat: number; lon: number; label: string } | null; tr: Track; band: (i: number) => number | null; cursor: number | null; onPick: (i: number) => void; photos?: { i: number; id: string; url: string; label: string }[]; onPhoto?: (id: string) => void; palette?: string[]; marca?: { i: number; label: string } | null; destaque?: { a: number; b: number } | null; ate?: number | null }) {
+export function TrackSvg({ tr, band, cursor, onPick, photos, onPhoto, palette = PALETTE, marca, destaque, ate = null, fantasma = null }: { fantasma?: { lat: number; lon: number; label: string } | null; tr: Track; band: (i: number) => number | null; cursor: number | null; onPick: (i: number) => void; photos?: { i: number; id: string; url: string; label: string }[]; onPhoto?: (id: string) => void; palette?: string[]; marca?: { i: number; label: string } | null; destaque?: { a: number; b: number } | null; ate?: number | null }) {
   const box = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState({ w: 390, h: 400 });
   const [zoom, setZoom] = useState(1);
@@ -100,15 +99,7 @@ export function TrackSvg({ tr, band, cursor, onPick, photos, onPhoto, palette = 
         {(() => { const [x, y] = proj.P(first); return <circle cx={x} cy={y} r={7 * unit} fill="var(--texto)" stroke="var(--noite)" strokeWidth={2.5 * unit} aria-hidden="true" />; })()}
         {marca && (ate == null || marca.i <= ate) ? (() => { const [x, y] = proj.P(nearestGps(tr, marca.i)); return <g role="img" aria-label={marca.label}><circle cx={x} cy={y} r={9 * unit} fill="var(--noite)" stroke="var(--atencao)" strokeWidth={3 * unit} /><circle cx={x} cy={y} r={3.5 * unit} fill="var(--atencao)" /></g>; })() : null}
         {fantasma ? (() => { const [x, y] = proj.PL(fantasma.lat, fantasma.lon); return <g role="img" aria-label={fantasma.label}><circle cx={x} cy={y} r={9 * unit} fill="var(--texto)" fillOpacity={0.18} stroke="var(--texto)" strokeWidth={2 * unit} strokeDasharray={`${3 * unit} ${2.5 * unit}`} /></g>; })() : null}
-        {cur && !corredor ? <circle cx={cur[0]} cy={cur[1]} r={8 * unit} fill="var(--ciano)" stroke="var(--noite)" strokeWidth={3 * unit} aria-hidden="true" /> : null}
-        {cur && corredor ? (() => { const r = rumo(tr, cursor!); const flip = r != null && r > 180; const s0 = 16 * unit; return (
-          <g aria-hidden="true" className="svg-corredor">
-            <circle cx={cur[0]} cy={cur[1]} r={s0} fill="var(--ciano)" stroke="var(--noite)" strokeWidth={3 * unit} />
-            <g transform={`translate(${cur[0]} ${cur[1]}) scale(${(flip ? -1 : 1) * unit * 0.95} ${unit * 0.95}) translate(-12 -12)`} fill="none" stroke="var(--on-ciano)" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-              {bike ? <><circle cx={5} cy={18} r={3} /><circle cx={19} cy={18} r={3} /><path d="M12 19l0 -4l-3 -3l5 -4l2 3l3 0" /><circle cx={17} cy={5} r={1} /></>
-                : <><circle cx={13} cy={4} r={1} /><path d="M4 17l5 1l.75 -1.5" /><path d="M15 21l0 -4l-4 -3l1 -6" /><path d="M7 12l0 -3l5 -1l3 3l3 1" /></>}
-            </g>
-          </g>); })() : null}
+        {cur ? <circle cx={cur[0]} cy={cur[1]} r={8 * unit} fill="var(--ciano)" stroke="var(--noite)" strokeWidth={3 * unit} aria-hidden="true" /> : null}
       </svg>
       <div className="mapzoom" role="group" aria-label="Zoom do trajeto">
         <button type="button" onClick={() => setZoom(Math.min(16, zoom * 1.6))} aria-label="Aproximar"><IconPlus size={18} stroke={1.75} /></button>

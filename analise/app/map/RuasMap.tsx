@@ -35,16 +35,6 @@ function markerEl(cls: string, text?: string, label?: string) {
   return el;
 }
 
-// cursor "corredor": o ícone de corrida (ou de pedal) num círculo ciano
-const RUN_SVG = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 4m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"/><path d="M4 17l5 1l.75 -1.5"/><path d="M15 21l0 -4l-4 -3l1 -6"/><path d="M7 12l0 -3l5 -1l3 3l3 1"/></svg>';
-const BIKE_SVG = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 18m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0"/><path d="M19 18m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0"/><path d="M12 19l0 -4l-3 -3l5 -4l2 3l3 0"/><path d="M17 5m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"/></svg>';
-export function corredorEl(bike: boolean) {
-  const el = document.createElement('div');
-  el.className = 'mk corredor'; el.setAttribute('aria-hidden', 'true');
-  el.innerHTML = '<span class="corredor-ic">' + (bike ? BIKE_SVG : RUN_SVG) + '</span>';
-  return el;
-}
-
 export type MapPhoto = { id: string; i: number; url: string; label: string };
 function photoEl(p: MapPhoto, onPhoto?: (id: string) => void) {
   const b = document.createElement('button');
@@ -54,7 +44,7 @@ function photoEl(p: MapPhoto, onPhoto?: (id: string) => void) {
   return b;
 }
 
-export function RuasMap({ tr, band, bandKey, cursor, onPick, onFail, photos, onPhoto, palette = PALETTE, marca, destaque, ate = null, fantasma = null, vista = 'cima', corredor = false, bike = false }: { vista?: 'cima' | 'terceira'; corredor?: boolean; bike?: boolean; fantasma?: { lat: number; lon: number; label: string } | null; tr: Track; band: (i: number) => number | null; bandKey: string; cursor: number | null; onPick: (i: number) => void; onFail: (why: string) => void; photos?: MapPhoto[]; onPhoto?: (id: string) => void; palette?: string[]; marca?: { i: number; label: string } | null; destaque?: { a: number; b: number } | null; ate?: number | null }) {
+export function RuasMap({ tr, band, bandKey, cursor, onPick, onFail, photos, onPhoto, palette = PALETTE, marca, destaque, ate = null, fantasma = null, vista = 'cima' }: { vista?: 'cima' | 'terceira'; fantasma?: { lat: number; lon: number; label: string } | null; tr: Track; band: (i: number) => number | null; bandKey: string; cursor: number | null; onPick: (i: number) => void; onFail: (why: string) => void; photos?: MapPhoto[]; onPhoto?: (id: string) => void; palette?: string[]; marca?: { i: number; label: string } | null; destaque?: { a: number; b: number } | null; ate?: number | null }) {
   const box = useRef<HTMLDivElement>(null);
   const S = useRef<{ map: any; ml: any; cursor: any; marks: any[]; photos: any[]; ready: boolean; fant?: any } | null>(null);
   const photosRef = useRef<MapPhoto[]>(photos || []);
@@ -165,19 +155,13 @@ export function RuasMap({ tr, band, bandKey, cursor, onPick, onFail, photos, onP
     if (!s.fant) s.fant = new s.ml.Marker({ element: markerEl('fant', undefined, fantasma.label) }).setLngLat([fantasma.lon, fantasma.lat]).addTo(s.map);
     else s.fant.setLngLat([fantasma.lon, fantasma.lat]);
   }, [fantasma ? fantasma.lat.toFixed(6) + ',' + fantasma.lon.toFixed(6) : '']);
-  // ponto do replay (ponto ou corredor)
-  const curTipo = useRef<string>('');
+  // ponto do replay
   useEffect(() => {
     const s = S.current; if (!s || !s.ready) return;
-    const tipo = corredor ? (bike ? 'bike' : 'run') : 'ponto';
-    if (s.cursor && curTipo.current !== tipo) { s.cursor.remove(); s.cursor = null; }
     if (cursor == null || tr.lat[cursor] == null) { if (s.cursor) { s.cursor.remove(); s.cursor = null; } return; }
-    if (!s.cursor) { s.cursor = new s.ml.Marker({ element: corredor ? corredorEl(bike) : markerEl('cur') }).setLngLat([tr.lon[cursor], tr.lat[cursor]]).addTo(s.map); curTipo.current = tipo; }
+    if (!s.cursor) s.cursor = new s.ml.Marker({ element: markerEl('cur') }).setLngLat([tr.lon[cursor], tr.lat[cursor]]).addTo(s.map);
     else s.cursor.setLngLat([tr.lon[cursor], tr.lat[cursor]]);
-    // de cima, o corredor olha para o lado em que está indo (leste ou oeste)
-    if (corredor && vista === 'cima') { const r = rumo(tr, cursor); s.cursor.getElement().classList.toggle('oeste', r != null && r > 180); }
-    else if (corredor) s.cursor.getElement().classList.remove('oeste');
-  }, [cursor, corredor, bike, vista]);
+  }, [cursor]);
   // vista em 3ª pessoa: a câmera fica atrás de quem treina, inclinada, e acompanha o cursor
   const camRumo = useRef<number | null>(null);
   useEffect(() => {
