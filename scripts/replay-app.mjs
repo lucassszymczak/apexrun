@@ -117,28 +117,12 @@ try {
     const brg = ((cam.bearing % 360) + 360) % 360;
     ok('3ª pessoa: câmera inclinada (60°) e virada para onde o corredor vai (leste, ~90°)', Math.round(cam.pitch) === 60 && Math.abs(brg - 90) < 12, 'inclinação ' + cam.pitch.toFixed(0) + '°, rumo ' + brg.toFixed(0) + '°');
     ok('a câmera acompanha o cursor (centro no trajeto, zoom 17)', Math.round(cam.zoom) === 17 && Math.abs(cam.lat - LAT) < 0.003, cam.lat.toFixed(4) + ', ' + cam.lon.toFixed(4));
-    ok('o boneco 3D (desenho com contorno) aparece no mapa de ruas', await P.locator('.mk.corredor3d canvas').count() === 1 && await P.locator('.mk.corredor').count() === 0);
-    // fluidez: replay tocando com o processador 4× mais lento (celular mais simples)
-    const cdp = await ctx2.newCDPSession(P);
-    await cdp.send('Emulation.setCPUThrottlingRate', { rate: 4 });
-    await P.getByRole('button', { name: 'Reproduzir o trajeto' }).first().click(); await P.waitForTimeout(3000);
-    const m3 = await P.evaluate(() => window.__apex3d);
-    const fps = await P.evaluate(() => new Promise((res) => { const ts = []; const f = (t) => { ts.push(t); if (ts.length < 60) requestAnimationFrame(f); else { const d = ts.slice(1).map((x, i) => x - ts[i]).sort((a, b) => a - b); res(d[d.length >> 1]); } }; requestAnimationFrame(f); }));
-    await P.getByRole('button', { name: /Pausar/ }).first().click();
-    await cdp.send('Emulation.setCPUThrottlingRate', { rate: 1 });
-    ok('boneco 3D com o processador 4× mais lento: desenho abaixo de 12 ms, sem cair para o ícone plano', m3 && m3.ms < 12 && !m3.lento && await P.locator('.mk.corredor3d').count() === 1, m3 ? m3.ms.toFixed(1) + ' ms por quadro do boneco, quadro da tela ' + fps.toFixed(1) + ' ms' : 'sem medida');
-    const q0 = await P.evaluate(() => window.__apex3d.quadros); await P.waitForTimeout(600);
-    ok('pausado, o boneco não fica redesenhando à toa', (await P.evaluate(() => window.__apex3d.quadros)) === q0);
+    ok('o corredor aparece no mapa de ruas', await P.locator('.mk.corredor').count() === 1);
     if (process.env.SHOTS) await P.screenshot({ path: resolve(process.env.SHOTS, 'replay-3a-pessoa.png') });
     await P.locator('[aria-label="Vista do replay"]:visible button', { hasText: 'De cima' }).click(); await P.waitForTimeout(400);
     const cima = await P.evaluate(() => { const m = window.__apexMapa; return { pitch: m.getPitch(), bearing: m.getBearing() }; });
     ok('"De cima" volta a câmera reta, com o norte para cima', cima.pitch === 0 && Math.abs(cima.bearing) < 0.5, JSON.stringify(cima));
     if (process.env.SHOTS) await P.screenshot({ path: resolve(process.env.SHOTS, 'replay-de-cima.png') });
-  }
-  if (temRuas) {
-    await P.emulateMedia({ reducedMotion: 'reduce' }); await P.reload(); await P.waitForFunction(() => { const m = window.__apexMapa; return !!(m && m.loaded && m.loaded()); }, null, { timeout: 25000 });
-    await P.waitForSelector('.mk.corredor3d canvas', { timeout: 10000 }).catch(() => {});
-    ok('com "Reduzir movimento": sem play, o boneco aparece parado', await P.locator('.tv-play').count() === 0 && await P.locator('.mk.corredor3d canvas').count() === 1);
   }
   ok('sem erros no mapa de ruas', !err2.length, err2.join(' | '));
 } catch (e) { fail++; console.log('  ✗ erro: ' + e.message); }
