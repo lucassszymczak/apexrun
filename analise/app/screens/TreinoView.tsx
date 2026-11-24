@@ -259,7 +259,7 @@ export function Treino({ id }: { id: string }) {
   if (loading) mapArea = <div className="trackmap" aria-busy="true" />;
   else if (tr && tr.hasGps && col) {
     mapArea = mode === 'ruas'
-      ? <Suspense fallback={<div className="trackmap" aria-busy="true" />}><RuasMap tr={tr} vista={vista} corredor={corredor} bike={bk} band={col.band} bandKey={corEf} palette={col.palette} marca={marca} destaque={destaque} ate={ate} fantasma={fantPos} cursor={cursor} onPick={pickIdx} photos={mapPhotos} onPhoto={setPhotoOpen} onFail={(why) => { ruasFailed = true; setMode('trajeto'); setVistaS('cima'); toast('Sem o mapa de ruas agora (' + why + '): mostrando só o trajeto.'); }} /></Suspense>
+      ? <Suspense fallback={<div className="trackmap" aria-busy="true" />}><RuasMap tr={tr} vista={vista} corredor={corredor} bike={bk} animando={playing && !rm} band={col.band} bandKey={corEf} palette={col.palette} marca={marca} destaque={destaque} ate={ate} fantasma={fantPos} cursor={cursor} onPick={pickIdx} photos={mapPhotos} onPhoto={setPhotoOpen} onFail={(why) => { ruasFailed = true; setMode('trajeto'); setVistaS('cima'); toast('Sem o mapa de ruas agora (' + why + '): mostrando só o trajeto.'); }} /></Suspense>
       : <TrackSvg tr={tr} corredor={corredor} bike={bk} band={col.band} cursor={cursor} onPick={pickIdx} photos={mapPhotos} onPhoto={setPhotoOpen} palette={col.palette} marca={marca} destaque={destaque} ate={ate} fantasma={fantPos} />;
   } else if (noGps) {
     mapArea = (
