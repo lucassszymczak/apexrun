@@ -746,5 +746,3 @@ button.item-row:focus-visible { outline: 2px solid var(--ciano); outline-offset:
 .mk.corredor { width: 34px; height: 34px; border-radius: 50%; background: var(--ciano); border: 3px solid var(--noite); color: var(--on-ciano); display: flex; align-items: center; justify-content: center; }
 .mk.corredor .corredor-ic { display: inline-flex; }
 .mk.corredor.oeste .corredor-ic { transform: scaleX(-1); }
-.mk.corredor3d { width: 136px; height: 136px; pointer-events: none; }
-.mk.corredor3d canvas { display: block; }
