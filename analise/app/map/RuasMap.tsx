@@ -1,7 +1,7 @@
 // "RUAS": MapLibre + estilo do OpenFreeMap (gratuito, sem chave), com água, terra e ruas
 // recoloridas pelos tokens (--noite, --superficie, --superficie-2). Carregado só aqui
 // (import dinâmico). Sem rede ou com erro no estilo, avisa e a tela volta ao "Só trajeto".
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { type Track, coloredRuns, cortaRuns, kmMarks, PALETTE } from '../track';
 import { nearestGps, trechoIdx } from './TrackSvg';
 import { rumo } from './rumo';
@@ -54,9 +54,10 @@ function photoEl(p: MapPhoto, onPhoto?: (id: string) => void) {
   return b;
 }
 
-export function RuasMap({ tr, band, bandKey, cursor, onPick, onFail, photos, onPhoto, palette = PALETTE, marca, destaque, ate = null, fantasma = null, vista = 'cima', corredor = false, bike = false }: { vista?: 'cima' | 'terceira'; corredor?: boolean; bike?: boolean; fantasma?: { lat: number; lon: number; label: string } | null; tr: Track; band: (i: number) => number | null; bandKey: string; cursor: number | null; onPick: (i: number) => void; onFail: (why: string) => void; photos?: MapPhoto[]; onPhoto?: (id: string) => void; palette?: string[]; marca?: { i: number; label: string } | null; destaque?: { a: number; b: number } | null; ate?: number | null }) {
+export function RuasMap({ tr, band, bandKey, cursor, onPick, onFail, photos, onPhoto, palette = PALETTE, marca, destaque, ate = null, fantasma = null, vista = 'cima', corredor = false, bike = false, animando = false }: { vista?: 'cima' | 'terceira'; corredor?: boolean; bike?: boolean; animando?: boolean; fantasma?: { lat: number; lon: number; label: string } | null; tr: Track; band: (i: number) => number | null; bandKey: string; cursor: number | null; onPick: (i: number) => void; onFail: (why: string) => void; photos?: MapPhoto[]; onPhoto?: (id: string) => void; palette?: string[]; marca?: { i: number; label: string } | null; destaque?: { a: number; b: number } | null; ate?: number | null }) {
   const box = useRef<HTMLDivElement>(null);
   const S = useRef<{ map: any; ml: any; cursor: any; marks: any[]; photos: any[]; ready: boolean; fant?: any } | null>(null);
+  const [pronto, setPronto] = useState(false); // o mapa terminou de carregar (o cursor aparece já em 0:00)
   const photosRef = useRef<MapPhoto[]>(photos || []);
   photosRef.current = photos || [];
   const ateRef = useRef<number | null>(ate);
@@ -95,7 +96,7 @@ export function RuasMap({ tr, band, bandKey, cursor, onPick, onFail, photos, onP
       map.on('error', (e: any) => { if (S.current && !S.current.ready) { clearTimeout(timer); onFail('o mapa de ruas não carregou' + (e && e.error && e.error.status ? ' (' + e.error.status + ')' : '')); } });
       map.on('load', () => {
         if (!S.current) return;
-        S.current.ready = true; clearTimeout(timer);
+        S.current.ready = true; clearTimeout(timer); setPronto(true);
         recolore(map);
         map.addSource('rota', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
         map.addSource('base', { type: 'geojson', data: { type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: tr.draw.filter((i) => tr.lat[i] != null).map((i) => [tr.lon[i], tr.lat[i]]) } } });
@@ -165,19 +166,63 @@ export function RuasMap({ tr, band, bandKey, cursor, onPick, onFail, photos, onP
     if (!s.fant) s.fant = new s.ml.Marker({ element: markerEl('fant', undefined, fantasma.label) }).setLngLat([fantasma.lon, fantasma.lat]).addTo(s.map);
     else s.fant.setLngLat([fantasma.lon, fantasma.lat]);
   }, [fantasma ? fantasma.lat.toFixed(6) + ',' + fantasma.lon.toFixed(6) : '']);
-  // ponto do replay (ponto ou corredor)
+  // boneco 3D (estilo desenho com contorno): carregado só quando o "Corredor" é ligado
+  const b3 = useRef<{ b: any; el: HTMLDivElement } | null>(null);
+  const [b3ok, setB3ok] = useState(false);
+  const [b3lento, setB3lento] = useState(false);
+  useEffect(() => {
+    if (!corredor) return;
+    let vivo = true;
+    import('./boneco3d').then((m) => {
+      if (!vivo) return;
+      try {
+        const b = new m.Boneco3D(bike ? 'bike' : 'corrida');
+        const el = document.createElement('div'); el.className = 'mk corredor3d'; el.setAttribute('aria-hidden', 'true'); el.appendChild(b.canvas);
+        b3.current = { b, el }; setB3ok(true);
+      } catch { setB3ok(false); } // sem WebGL: fica o ícone plano
+    }).catch(() => { /* sem a biblioteca: ícone plano */ });
+    return () => { vivo = false; if (b3.current) { try { b3.current.b.libera(); } catch { /* */ } b3.current = null; } setB3ok(false); };
+  }, [corredor, bike]);
+  const usa3d = corredor && b3ok && !b3lento;
+  function desenha3d(dt = 0) {
+    const s = S.current, x = b3.current; if (!s || !s.ready || !x || !usa3d || cursor == null) return;
+    if (dt) x.b.avanca(dt);
+    const r = rumo(tr, cursor); x.b.desenha(((r ?? 0) - s.map.getBearing() + 360) % 360, s.map.getPitch());
+    if (s.cursor && curTipo.current === '3d') s.cursor.setOffset([-x.b.pes[0], -x.b.pes[1]]);
+    if (x.b.lento) setB3lento(true); // aparelho lento: volta ao ícone plano
+  }
+  const desenha3dRef = useRef(desenha3d); desenha3dRef.current = desenha3d;
+  // ponto do replay (ponto, ícone plano do corredor ou boneco 3D)
   const curTipo = useRef<string>('');
   useEffect(() => {
     const s = S.current; if (!s || !s.ready) return;
-    const tipo = corredor ? (bike ? 'bike' : 'run') : 'ponto';
+    const tipo = corredor ? (usa3d ? '3d' : bike ? 'bike' : 'run') : 'ponto';
     if (s.cursor && curTipo.current !== tipo) { s.cursor.remove(); s.cursor = null; }
     if (cursor == null || tr.lat[cursor] == null) { if (s.cursor) { s.cursor.remove(); s.cursor = null; } return; }
-    if (!s.cursor) { s.cursor = new s.ml.Marker({ element: corredor ? corredorEl(bike) : markerEl('cur') }).setLngLat([tr.lon[cursor], tr.lat[cursor]]).addTo(s.map); curTipo.current = tipo; }
-    else s.cursor.setLngLat([tr.lon[cursor], tr.lat[cursor]]);
-    // de cima, o corredor olha para o lado em que está indo (leste ou oeste)
-    if (corredor && vista === 'cima') { const r = rumo(tr, cursor); s.cursor.getElement().classList.toggle('oeste', r != null && r > 180); }
+    if (!s.cursor) {
+      const el = tipo === '3d' ? b3.current!.el : corredor ? corredorEl(bike) : markerEl('cur');
+      // o boneco 3D fica com os pés no ponto do trajeto
+      s.cursor = new s.ml.Marker({ element: el }).setLngLat([tr.lon[cursor], tr.lat[cursor]]).addTo(s.map); curTipo.current = tipo;
+    } else s.cursor.setLngLat([tr.lon[cursor], tr.lat[cursor]]);
+    if (tipo === '3d') { curTipo.current = '3d'; desenha3d(); }
+    // de cima, o ícone plano olha para o lado em que está indo (leste ou oeste)
+    else if (corredor && vista === 'cima') { const r = rumo(tr, cursor); s.cursor.getElement().classList.toggle('oeste', r != null && r > 180); }
     else if (corredor) s.cursor.getElement().classList.remove('oeste');
-  }, [cursor, corredor, bike, vista]);
+  }, [cursor, corredor, bike, vista, usa3d, pronto]);
+  // o boneco acompanha o giro e a inclinação do mapa
+  useEffect(() => {
+    const s = S.current; if (!s || !s.ready || !usa3d) return;
+    const f = () => desenha3dRef.current();
+    s.map.on('move', f); return () => { s.map.off('move', f); };
+  }, [usa3d, pronto]);
+  // passada/pedalada animada enquanto o replay toca (parado ou com "Reduzir movimento": imóvel)
+  useEffect(() => {
+    if (!usa3d || !animando) return;
+    let raf = 0, last = performance.now();
+    const step = (now: number) => { desenha3dRef.current(Math.min(0.1, (now - last) / 1000)); last = now; raf = requestAnimationFrame(step); };
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, [usa3d, animando]);
   // vista em 3ª pessoa: a câmera fica atrás de quem treina, inclinada, e acompanha o cursor
   const camRumo = useRef<number | null>(null);
   useEffect(() => {
@@ -189,7 +234,7 @@ export function RuasMap({ tr, band, bandKey, cursor, onPick, onFail, photos, onP
     // corredor um pouco abaixo do meio da tela, com o caminho à frente visível (acima da gaveta)
     const top = Math.round((s.map.getContainer().clientHeight || 600) * 0.12);
     s.map.jumpTo({ center: [tr.lon[cursor], tr.lat[cursor]], bearing: camRumo.current ?? 0, pitch: 60, zoom: 17, padding: { top, bottom: 0, left: 0, right: 0 } });
-  }, [cursor, vista]);
+  }, [cursor, vista, pronto]);
   // ao voltar para "de cima", a câmera volta a mostrar o trajeto inteiro, sem inclinação
   const vistaAnt = useRef(vista);
   useEffect(() => {
