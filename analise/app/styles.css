@@ -736,13 +736,7 @@ input.pela-fala { outline: none; border-color: var(--ciano-forte) !important; }
 button.item-row { width: 100%; background: none; border: 0; font: inherit; color: inherit; cursor: pointer; padding-left: 0; padding-right: 0; }
 button.item-row:focus-visible { outline: 2px solid var(--ciano); outline-offset: 2px; }
 .app-link { font-size: 13px; padding: 8px 12px; border-radius: 8px; background: var(--superficie-2); color: var(--texto); overflow-wrap: anywhere; }
-/* Replay: cursor "corredor" e vista em 3ª pessoa (24/11/2026) */
+/* Replay: vista em 3ª pessoa (24/11/2026) */
 .tv-vista { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-.tv-vista .chip { min-height: 32px; position: relative; }
-.tv-vista .chip::after { content: ''; position: absolute; left: 0; right: 0; top: -6px; bottom: -6px; }
-.tv-vista .chip[aria-pressed="true"] { border-color: var(--ciano-forte); color: var(--ciano-forte); background: var(--superficie-2); }
 .tv-vista .seg button { min-height: 32px; padding: 0 10px; position: relative; }
 .tv-vista .seg button::after { content: ''; position: absolute; left: 0; right: 0; top: -6px; bottom: -6px; }
-.mk.corredor { width: 34px; height: 34px; border-radius: 50%; background: var(--ciano); border: 3px solid var(--noite); color: var(--on-ciano); display: flex; align-items: center; justify-content: center; }
-.mk.corredor .corredor-ic { display: inline-flex; }
-.mk.corredor.oeste .corredor-ic { transform: scaleX(-1); }

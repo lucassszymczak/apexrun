@@ -4,7 +4,7 @@
 // alturas (celular) ou painel fixo (computador). Os números vêm dos mesmos blocos de
 // antes (treinoBlocks) — nada nas análises muda.
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
-import { IconChevronLeft, IconDotsVertical, IconPencil, IconTrash, IconPlayerPlayFilled, IconPlayerPauseFilled, IconFileUpload, IconMapOff, IconRoute, IconChevronUp, IconChevronDown, IconShare, IconPhotoPlus, IconMapPin, IconGhost2, IconCheck, IconRun, IconBike } from '@tabler/icons-react';
+import { IconChevronLeft, IconDotsVertical, IconPencil, IconTrash, IconPlayerPlayFilled, IconPlayerPauseFilled, IconFileUpload, IconMapOff, IconRoute, IconChevronUp, IconChevronDown, IconShare, IconPhotoPlus, IconMapPin, IconGhost2, IconCheck } from '@tabler/icons-react';
 import * as E from '../../engine.mjs';
 import { useApex, toast, getState, commit } from '../store';
 import { href, go } from '../route';
@@ -67,10 +67,8 @@ export function Treino({ id }: { id: string }) {
   const [playing, setPlaying] = useState(false);
   const [replayAtivo, setReplayAtivo] = useState(false); // o play foi apertado (o mapa se preenche)
   const [speed, setSpeed] = useState<'1' | '2' | '4'>('1');
-  // cursor e vista do replay (24/11/2026): guardados no perfil, como o padrão do mapa
-  const [corredor, setCorredorS] = useState<boolean>(() => !!a.replayCorredor);
+  // vista do replay (24/11/2026): guardada no perfil, como o padrão do mapa
   const [vista, setVistaS] = useState<'cima' | 'terceira'>(() => (a.replayVista === 'terceira' && !ruasFailed ? 'terceira' : 'cima'));
-  const setCorredor = (v: boolean) => { setCorredorS(v); const A = getState().athlete; A.replayCorredor = v; A.updatedAt = new Date().toISOString(); commit(); };
   const setVista = (v: 'cima' | 'terceira') => {
     if (v === 'terceira' && mode !== 'ruas') { if (ruasFailed) { toast('A 3ª pessoa precisa do mapa de ruas, que não carregou agora.'); return; } setMode('ruas'); }
     setVistaS(v); const A = getState().athlete; A.replayVista = v; A.updatedAt = new Date().toISOString(); commit();
@@ -237,7 +235,6 @@ export function Treino({ id }: { id: string }) {
   ) : null;
   const vistaUi = tr && tr.hasGps ? (
     <div className="tv-vista">
-      <button type="button" className="chip" aria-pressed={corredor} onClick={() => setCorredor(!corredor)}>{bk ? <IconBike size={16} stroke={1.75} aria-hidden="true" /> : <IconRun size={16} stroke={1.75} aria-hidden="true" />}{bk ? 'Ciclista' : 'Corredor'}</button>
       <Seg value={vista} onChange={setVista} label="Vista do replay" options={[['cima', 'De cima'], ['terceira', '3ª pessoa']]} />
     </div>
   ) : null;
@@ -259,8 +256,8 @@ export function Treino({ id }: { id: string }) {
   if (loading) mapArea = <div className="trackmap" aria-busy="true" />;
   else if (tr && tr.hasGps && col) {
     mapArea = mode === 'ruas'
-      ? <Suspense fallback={<div className="trackmap" aria-busy="true" />}><RuasMap tr={tr} vista={vista} corredor={corredor} bike={bk} band={col.band} bandKey={corEf} palette={col.palette} marca={marca} destaque={destaque} ate={ate} fantasma={fantPos} cursor={cursor} onPick={pickIdx} photos={mapPhotos} onPhoto={setPhotoOpen} onFail={(why) => { ruasFailed = true; setMode('trajeto'); setVistaS('cima'); toast('Sem o mapa de ruas agora (' + why + '): mostrando só o trajeto.'); }} /></Suspense>
-      : <TrackSvg tr={tr} corredor={corredor} bike={bk} band={col.band} cursor={cursor} onPick={pickIdx} photos={mapPhotos} onPhoto={setPhotoOpen} palette={col.palette} marca={marca} destaque={destaque} ate={ate} fantasma={fantPos} />;
+      ? <Suspense fallback={<div className="trackmap" aria-busy="true" />}><RuasMap tr={tr} vista={vista} band={col.band} bandKey={corEf} palette={col.palette} marca={marca} destaque={destaque} ate={ate} fantasma={fantPos} cursor={cursor} onPick={pickIdx} photos={mapPhotos} onPhoto={setPhotoOpen} onFail={(why) => { ruasFailed = true; setMode('trajeto'); setVistaS('cima'); toast('Sem o mapa de ruas agora (' + why + '): mostrando só o trajeto.'); }} /></Suspense>
+      : <TrackSvg tr={tr} band={col.band} cursor={cursor} onPick={pickIdx} photos={mapPhotos} onPhoto={setPhotoOpen} palette={col.palette} marca={marca} destaque={destaque} ate={ate} fantasma={fantPos} />;
   } else if (noGps) {
     mapArea = (
       <div className="trackmap tv-empty">

@@ -1,4 +1,4 @@
-// Rumo do trajeto num ponto (para o cursor "corredor" e a câmera em 3ª pessoa do replay).
+// Rumo do trajeto num ponto (para a câmera em 3ª pessoa do replay).
 // Só desenho: nenhum número do treino usa isto.
 import type { Track } from '../track';
 

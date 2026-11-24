@@ -1,6 +1,7 @@
 // Replay do mapa (decisão do Lucas, 24/11/2026) num Chromium real, no "Só trajeto" (sem rede):
 // 1× = 5 s por km (2× e 4× proporcionais); cada marco de km (e o início da deriva) só aparece
-// depois que o cursor completa aquele km; parado no início e no fim, todos aparecem.
+// depois que o cursor completa aquele km; parado no início e no fim, todos aparecem; vista de
+// cima ou em 3ª pessoa (câmera inclinada no mapa de ruas), com o ponto de sempre como cursor.
 // Trajeto SINTÉTICO num lugar fictício. Uso: node scripts/replay-app.mjs
 import { spawn } from 'node:child_process';
 import { readFileSync } from 'node:fs';
@@ -86,12 +87,9 @@ try {
   const t1 = Date.now(); await page.waitForTimeout(4000);
   const [v4] = await valor(page); const s4 = (Date.now() - t1) / 1000;
   ok('2× anda o dobro (10 s para os 4 km)', Math.abs(v4 / mx - s4 / (ESP / 2)) < 0.1, (v4 / mx * 100).toFixed(0) + '% em ' + s4.toFixed(1) + ' s');
-  console.log('\n== cursor "corredor" no Só trajeto ==');
+  console.log('\n== cursor e vista no Só trajeto ==');
   await page.goto(url('treino/' + w.id)); await page.waitForSelector('.trackmap svg'); await page.waitForTimeout(400);
-  const chipC = page.locator('.tv-vista:visible .chip', { hasText: 'Corredor' });
-  await chipC.click();
-  ok('"Corredor" troca o ponto pelo corredor', await page.locator('.trackmap svg .svg-corredor').count() === 1 && (await chipC.getAttribute('aria-pressed')) === 'true');
-  ok('a escolha fica guardada no perfil', await page.evaluate(() => JSON.parse(localStorage.getItem('apex.analise.v1')).athlete.replayCorredor === true));
+  ok('o cursor é o ponto de sempre, sem opção de "Corredor"', await page.locator('.tv-vista:visible .chip').count() === 0 && await page.locator('.trackmap svg circle[fill="var(--ciano)"]').count() >= 1);
   await page.locator('[aria-label="Vista do replay"]:visible button', { hasText: '3ª pessoa' }).click(); await page.waitForTimeout(300);
   ok('sem o mapa de ruas (sem internet), a 3ª pessoa avisa e a vista continua de cima', /precisa do mapa de ruas/.test(await page.locator('.toasts').innerText()) && (await page.locator('[aria-label="Vista do replay"]:visible button', { hasText: 'De cima' }).getAttribute('aria-pressed')) === 'true');
   ok('sem erros', !errors.length, errors.join(' | '));
@@ -109,7 +107,6 @@ try {
   if (!temRuas) { ok('mapa de ruas carregou (precisa de tiles.openfreemap.org)', false); }
   else {
     await P.locator('[aria-label="Vista do replay"]:visible button', { hasText: '3ª pessoa' }).click();
-    await P.locator('.tv-vista:visible .chip', { hasText: 'Corredor' }).click();
     await P.getByRole('button', { name: 'Reproduzir o trajeto' }).first().click(); await P.waitForTimeout(2500);
     await P.getByRole('button', { name: /Pausar/ }).first().click(); await P.waitForTimeout(300);
     const cam = await P.evaluate(() => { const m = window.__apexMapa; const c = m.getCenter(); return { pitch: m.getPitch(), bearing: m.getBearing(), zoom: m.getZoom(), lat: c.lat, lon: c.lng }; });
@@ -117,7 +114,7 @@ try {
     const brg = ((cam.bearing % 360) + 360) % 360;
     ok('3ª pessoa: câmera inclinada (60°) e virada para onde o corredor vai (leste, ~90°)', Math.round(cam.pitch) === 60 && Math.abs(brg - 90) < 12, 'inclinação ' + cam.pitch.toFixed(0) + '°, rumo ' + brg.toFixed(0) + '°');
     ok('a câmera acompanha o cursor (centro no trajeto, zoom 17)', Math.round(cam.zoom) === 17 && Math.abs(cam.lat - LAT) < 0.003, cam.lat.toFixed(4) + ', ' + cam.lon.toFixed(4));
-    ok('o corredor aparece no mapa de ruas', await P.locator('.mk.corredor').count() === 1);
+    ok('no mapa de ruas, o cursor é o ponto de sempre', await P.locator('.mk.cur').count() === 1 && await P.locator('.mk.corredor').count() === 0);
     if (process.env.SHOTS) await P.screenshot({ path: resolve(process.env.SHOTS, 'replay-3a-pessoa.png') });
     await P.locator('[aria-label="Vista do replay"]:visible button', { hasText: 'De cima' }).click(); await P.waitForTimeout(400);
     const cima = await P.evaluate(() => { const m = window.__apexMapa; return { pitch: m.getPitch(), bearing: m.getBearing() }; });
