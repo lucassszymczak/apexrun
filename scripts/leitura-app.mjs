@@ -107,7 +107,9 @@ try {
   if (SHOTS) await M.page.screenshot({ path: resolve(SHOTS, 'replay-390-meio.png') });
   ok('replay: no meio, só o trecho percorrido está colorido', meio > 0 && meio < cheio * 0.8, meio + ' de ' + cheio + ' pontos');
   await M.page.getByRole('button', { name: 'Reproduzir o trajeto' }).click();
-  await M.page.waitForTimeout(8000);
+  // replay em 5 s por km (decisão do Lucas, 24/11/2026): espera o fim de verdade, não um tempo fixo
+  await M.page.waitForFunction(() => { const el = document.querySelector('.tv-panel input[type="range"]'); return el && +el.value >= +el.max; }, null, { timeout: 120000, polling: 200 });
+  await M.page.waitForTimeout(300);
   ok('replay: no fim, o trajeto inteiro volta colorido', (await pts()) === cheio);
   await M.page.getByRole('button', { name: 'Ruas' }).click();
   // tocar num tiro destaca o trecho no gráfico e no mapa (Só trajeto)

@@ -1,9 +1,10 @@
 // "RUAS": MapLibre + estilo do OpenFreeMap (gratuito, sem chave), com água, terra e ruas
 // recoloridas pelos tokens (--noite, --superficie, --superficie-2). Carregado só aqui
 // (import dinâmico). Sem rede ou com erro no estilo, avisa e a tela volta ao "Só trajeto".
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { type Track, coloredRuns, cortaRuns, kmMarks, PALETTE } from '../track';
 import { nearestGps, trechoIdx } from './TrackSvg';
+import { rumo } from './rumo';
 import { describeRoute } from './describe';
 
 export const STYLE = { dark: 'https://tiles.openfreemap.org/styles/dark', light: 'https://tiles.openfreemap.org/styles/positron' };
@@ -34,6 +35,16 @@ function markerEl(cls: string, text?: string, label?: string) {
   return el;
 }
 
+// cursor "corredor": o ícone de corrida (ou de pedal) num círculo ciano
+const RUN_SVG = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 4m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"/><path d="M4 17l5 1l.75 -1.5"/><path d="M15 21l0 -4l-4 -3l1 -6"/><path d="M7 12l0 -3l5 -1l3 3l3 1"/></svg>';
+const BIKE_SVG = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 18m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0"/><path d="M19 18m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0"/><path d="M12 19l0 -4l-3 -3l5 -4l2 3l3 0"/><path d="M17 5m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"/></svg>';
+export function corredorEl(bike: boolean) {
+  const el = document.createElement('div');
+  el.className = 'mk corredor'; el.setAttribute('aria-hidden', 'true');
+  el.innerHTML = '<span class="corredor-ic">' + (bike ? BIKE_SVG : RUN_SVG) + '</span>';
+  return el;
+}
+
 export type MapPhoto = { id: string; i: number; url: string; label: string };
 function photoEl(p: MapPhoto, onPhoto?: (id: string) => void) {
   const b = document.createElement('button');
@@ -43,7 +54,7 @@ function photoEl(p: MapPhoto, onPhoto?: (id: string) => void) {
   return b;
 }
 
-export function RuasMap({ tr, band, bandKey, cursor, onPick, onFail, photos, onPhoto, palette = PALETTE, marca, destaque, ate = null, fantasma = null }: { fantasma?: { lat: number; lon: number; label: string } | null; tr: Track; band: (i: number) => number | null; bandKey: string; cursor: number | null; onPick: (i: number) => void; onFail: (why: string) => void; photos?: MapPhoto[]; onPhoto?: (id: string) => void; palette?: string[]; marca?: { i: number; label: string } | null; destaque?: { a: number; b: number } | null; ate?: number | null }) {
+export function RuasMap({ tr, band, bandKey, cursor, onPick, onFail, photos, onPhoto, palette = PALETTE, marca, destaque, ate = null, fantasma = null, vista = 'cima', corredor = false, bike = false }: { vista?: 'cima' | 'terceira'; corredor?: boolean; bike?: boolean; fantasma?: { lat: number; lon: number; label: string } | null; tr: Track; band: (i: number) => number | null; bandKey: string; cursor: number | null; onPick: (i: number) => void; onFail: (why: string) => void; photos?: MapPhoto[]; onPhoto?: (id: string) => void; palette?: string[]; marca?: { i: number; label: string } | null; destaque?: { a: number; b: number } | null; ate?: number | null }) {
   const box = useRef<HTMLDivElement>(null);
   const S = useRef<{ map: any; ml: any; cursor: any; marks: any[]; photos: any[]; ready: boolean; fant?: any } | null>(null);
   const photosRef = useRef<MapPhoto[]>(photos || []);
@@ -76,6 +87,7 @@ export function RuasMap({ tr, band, bandKey, cursor, onPick, onFail, photos, onP
       const MLx = ml.AttributionControl ? ml : ml.default;
       map.addControl(new MLx.AttributionControl({ compact: true }), 'top-right');
       S.current = { map, ml: ml.Marker ? ml : ml.default, cursor: null, marks: [], photos: [], ready: false };
+      (window as any).__apexMapa = map; // para os testes conferirem a câmera do replay
       // a área do mapa muda com a gaveta (celular): o mapa acompanha
       ro = new ResizeObserver(() => { try { map.resize(); } catch { /* */ } });
       ro.observe(box.current);
@@ -124,11 +136,13 @@ export function RuasMap({ tr, band, bandKey, cursor, onPick, onFail, photos, onP
     const s = S.current; if (!s || !s.ready) return;
     s.marks.forEach((m) => m.remove()); s.marks = [];
     const every = s.map.getZoom() >= 14 ? 1 : 5;
-    for (const k of kmMarks(tr, every)) { const i = nearestGps(tr, k.i); s.marks.push(new s.ml.Marker({ element: markerEl('km', String(k.km)) }).setLngLat([tr.lon[i], tr.lat[i]]).addTo(s.map)); }
+    // no replay, cada marco só aparece depois que o cursor completa aquele km
+    const ateM = ateRef.current;
+    for (const k of kmMarks(tr, every).filter((m) => ateM == null || m.i <= ateM)) { const i = nearestGps(tr, k.i); s.marks.push(new s.ml.Marker({ element: markerEl('km', String(k.km)) }).setLngLat([tr.lon[i], tr.lat[i]]).addTo(s.map)); }
     const a = tr.draw[0], b = tr.draw[tr.draw.length - 1];
     s.marks.push(new s.ml.Marker({ element: markerEl('fim', undefined, 'Chegada') }).setLngLat([tr.lon[b], tr.lat[b]]).addTo(s.map));
     s.marks.push(new s.ml.Marker({ element: markerEl('ini', undefined, 'Largada') }).setLngLat([tr.lon[a], tr.lat[a]]).addTo(s.map));
-    if (marcaRef.current) { const i = nearestGps(tr, marcaRef.current.i); s.marks.push(new s.ml.Marker({ element: markerEl('deriva', undefined, marcaRef.current.label) }).setLngLat([tr.lon[i], tr.lat[i]]).addTo(s.map)); }
+    if (marcaRef.current && (ateM == null || marcaRef.current.i <= ateM)) { const i = nearestGps(tr, marcaRef.current.i); s.marks.push(new s.ml.Marker({ element: markerEl('deriva', undefined, marcaRef.current.label) }).setLngLat([tr.lon[i], tr.lat[i]]).addTo(s.map)); }
   }
   function drawPhotos() {
     const s = S.current; if (!s || !s.ready) return;
@@ -138,6 +152,10 @@ export function RuasMap({ tr, band, bandKey, cursor, onPick, onFail, photos, onP
   useEffect(() => { drawPhotos(); }, [(photos || []).map((p) => p.id + ':' + p.i).join(',')]);
   // recolore quando muda o modo de cor
   useEffect(() => { draw(); }, [bandKey, ate]);
+  // marcos acompanham o cursor: redesenha só quando muda o número de km completados
+  const kms1 = useMemo(() => kmMarks(tr, 1), [tr]);
+  const kmFeitos = ate == null ? -1 : kms1.filter((m) => m.i <= ate).length;
+  useEffect(() => { drawMarks(); }, [kmFeitos, marca && ate != null && marca.i <= ate]);
   useEffect(() => { drawMarks(); }, [marca ? marca.i : -1]);
   useEffect(() => { drawDest(); }, [destaque ? destaque.a + ':' + destaque.b : '']);
   // fantasma (Fase 3): círculo tracejado que anda no relógio do treino dele
@@ -147,13 +165,43 @@ export function RuasMap({ tr, band, bandKey, cursor, onPick, onFail, photos, onP
     if (!s.fant) s.fant = new s.ml.Marker({ element: markerEl('fant', undefined, fantasma.label) }).setLngLat([fantasma.lon, fantasma.lat]).addTo(s.map);
     else s.fant.setLngLat([fantasma.lon, fantasma.lat]);
   }, [fantasma ? fantasma.lat.toFixed(6) + ',' + fantasma.lon.toFixed(6) : '']);
-  // ponto do replay
+  // ponto do replay (ponto ou corredor)
+  const curTipo = useRef<string>('');
   useEffect(() => {
     const s = S.current; if (!s || !s.ready) return;
+    const tipo = corredor ? (bike ? 'bike' : 'run') : 'ponto';
+    if (s.cursor && curTipo.current !== tipo) { s.cursor.remove(); s.cursor = null; }
     if (cursor == null || tr.lat[cursor] == null) { if (s.cursor) { s.cursor.remove(); s.cursor = null; } return; }
-    if (!s.cursor) s.cursor = new s.ml.Marker({ element: markerEl('cur') }).setLngLat([tr.lon[cursor], tr.lat[cursor]]).addTo(s.map);
+    if (!s.cursor) { s.cursor = new s.ml.Marker({ element: corredor ? corredorEl(bike) : markerEl('cur') }).setLngLat([tr.lon[cursor], tr.lat[cursor]]).addTo(s.map); curTipo.current = tipo; }
     else s.cursor.setLngLat([tr.lon[cursor], tr.lat[cursor]]);
-  }, [cursor]);
+    // de cima, o corredor olha para o lado em que está indo (leste ou oeste)
+    if (corredor && vista === 'cima') { const r = rumo(tr, cursor); s.cursor.getElement().classList.toggle('oeste', r != null && r > 180); }
+    else if (corredor) s.cursor.getElement().classList.remove('oeste');
+  }, [cursor, corredor, bike, vista]);
+  // vista em 3ª pessoa: a câmera fica atrás de quem treina, inclinada, e acompanha o cursor
+  const camRumo = useRef<number | null>(null);
+  useEffect(() => {
+    const s = S.current; if (!s || !s.ready) return;
+    if (vista !== 'terceira' || cursor == null || tr.lat[cursor] == null) return;
+    const r = rumo(tr, cursor, 25);
+    // suaviza a virada da câmera (curvas fechadas e ruído do GPS)
+    if (r != null) { const c = camRumo.current; if (c == null) camRumo.current = r; else { const d = ((r - c + 540) % 360) - 180; camRumo.current = (c + d * 0.15 + 360) % 360; } }
+    // corredor um pouco abaixo do meio da tela, com o caminho à frente visível (acima da gaveta)
+    const top = Math.round((s.map.getContainer().clientHeight || 600) * 0.12);
+    s.map.jumpTo({ center: [tr.lon[cursor], tr.lat[cursor]], bearing: camRumo.current ?? 0, pitch: 60, zoom: 17, padding: { top, bottom: 0, left: 0, right: 0 } });
+  }, [cursor, vista]);
+  // ao voltar para "de cima", a câmera volta a mostrar o trajeto inteiro, sem inclinação
+  const vistaAnt = useRef(vista);
+  useEffect(() => {
+    const s = S.current; if (!s || !s.ready) { vistaAnt.current = vista; return; }
+    if (vistaAnt.current === 'terceira' && vista === 'cima') {
+      camRumo.current = null;
+      const lats = tr.draw.map((i) => tr.lat[i]!).filter((x) => x != null), lons = tr.draw.map((i) => tr.lon[i]!).filter((x) => x != null);
+      s.map.jumpTo({ pitch: 0, bearing: 0, padding: { top: 0, bottom: 0, left: 0, right: 0 } });
+      s.map.fitBounds([[Math.min(...lons), Math.min(...lats)], [Math.max(...lons), Math.max(...lats)]], { padding: window.innerWidth >= 1024 ? { top: 140, bottom: 210, left: 48, right: 72 } : { top: 140, bottom: 72, left: 32, right: 32 }, animate: false });
+    }
+    vistaAnt.current = vista;
+  }, [vista]);
 
   // o CSS do MapLibre põe position:relative no contêiner do mapa — por isso um wrapper
   return <div className="trackmap ruas"><div ref={box} style={{ width: '100%', height: '100%' }} /></div>;

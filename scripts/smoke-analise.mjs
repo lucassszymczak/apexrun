@@ -147,9 +147,11 @@ try {
   const max = +(await slider.getAttribute('max'));
   await page.getByRole('button', { name: 'Reproduzir o trajeto' }).first().click();
   const t0 = Date.now();
-  await page.waitForFunction((m) => { const el = document.querySelector('.tv-panel input[type="range"]'); return el && +el.value >= m; }, max, { timeout: 20000, polling: 100 });
+  await page.waitForFunction((m) => { const el = document.querySelector('.tv-panel input[type="range"]'); return el && +el.value >= m; }, max, { timeout: 60000, polling: 100 });
   const secs = (Date.now() - t0) / 1000;
-  ok('critério 6 · o play percorre o trajeto inteiro em ~10 s (1×)', secs > 8 && secs < 12.5, secs.toFixed(1) + ' s');
+  // decisão do Lucas (24/11/2026): 1× = 5 s por km (antes, o treino inteiro em ~10 s). Circuito de ~6,0 km → ~30 s
+  const esp = 5 * (2.86 * 2100) / 1000;
+  ok('critério 6 · o play percorre o trajeto inteiro em 5 s por km (1×)', secs > esp * 0.85 && secs < esp * 1.2, secs.toFixed(1) + ' s (esperado ~' + esp.toFixed(0) + ' s)');
   const curPos = () => page.evaluate(() => { const c = [...document.querySelectorAll('.trackmap > svg > circle')].find((x) => x.getAttribute('fill') === 'var(--ciano)'); return c ? c.getAttribute('cx') + ',' + c.getAttribute('cy') : null; });
   const chart = page.locator('.tv-panel svg[role="slider"]');
   const bb = await chart.boundingBox();
