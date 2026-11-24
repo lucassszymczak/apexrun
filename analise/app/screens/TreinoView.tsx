@@ -1,12 +1,12 @@
 // TREINO — "o treino num olhar: onde, quanto e como foi" (design/telas/Treino e TreinoDesktop).
 // Mapa em tela cheia (Ruas = MapLibre/OpenFreeMap; Só trajeto = SVG offline), cores por
-// FC/Pace/Zona/Inclinação, marcos de km, largada/chegada, replay (~10 s), gaveta de 3
+// FC/Pace/Zona/Inclinação, marcos de km, largada/chegada, replay (5 s por km em 1×), gaveta de 3
 // alturas (celular) ou painel fixo (computador). Os números vêm dos mesmos blocos de
 // antes (treinoBlocks) — nada nas análises muda.
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
-import { IconChevronLeft, IconDotsVertical, IconPencil, IconTrash, IconPlayerPlayFilled, IconPlayerPauseFilled, IconFileUpload, IconMapOff, IconRoute, IconChevronUp, IconChevronDown, IconShare, IconPhotoPlus, IconMapPin, IconGhost2, IconCheck } from '@tabler/icons-react';
+import { IconChevronLeft, IconDotsVertical, IconPencil, IconTrash, IconPlayerPlayFilled, IconPlayerPauseFilled, IconFileUpload, IconMapOff, IconRoute, IconChevronUp, IconChevronDown, IconShare, IconPhotoPlus, IconMapPin, IconGhost2, IconCheck, IconRun, IconBike } from '@tabler/icons-react';
 import * as E from '../../engine.mjs';
-import { useApex, toast } from '../store';
+import { useApex, toast, getState, commit } from '../store';
 import { href, go } from '../route';
 import { Card, Kpi, Sheet, Seg, Empty, IC } from '../ui';
 import { dec, signed, pace, dayMon, workoutTitle, noEmoji, dur as hShort } from '../fmt';
@@ -15,7 +15,7 @@ import { getTrack, onTrackChange } from '../db';
 import { fetchRemoteTrack } from '../track-sync';
 import { buscarTrajetos } from '../garmin-sync';
 import { garminReady } from '../garmin';
-import { type Track, type ColorMode, colorer, duration, idxAtTime, PALETTE } from '../track';
+import { type Track, type ColorMode, colorer, duration, idxAtTime, totalDist, PALETTE } from '../track';
 import { TrackSvg } from '../map/TrackSvg';
 import { TrackChart } from '../map/TrackChart';
 import { treinoBlocks } from './Treino';
@@ -67,6 +67,14 @@ export function Treino({ id }: { id: string }) {
   const [playing, setPlaying] = useState(false);
   const [replayAtivo, setReplayAtivo] = useState(false); // o play foi apertado (o mapa se preenche)
   const [speed, setSpeed] = useState<'1' | '2' | '4'>('1');
+  // cursor e vista do replay (24/11/2026): guardados no perfil, como o padrão do mapa
+  const [corredor, setCorredorS] = useState<boolean>(() => !!a.replayCorredor);
+  const [vista, setVistaS] = useState<'cima' | 'terceira'>(() => (a.replayVista === 'terceira' && !ruasFailed ? 'terceira' : 'cima'));
+  const setCorredor = (v: boolean) => { setCorredorS(v); const A = getState().athlete; A.replayCorredor = v; A.updatedAt = new Date().toISOString(); commit(); };
+  const setVista = (v: 'cima' | 'terceira') => {
+    if (v === 'terceira' && mode !== 'ruas') { if (ruasFailed) { toast('A 3ª pessoa precisa do mapa de ruas, que não carregou agora.'); return; } setMode('ruas'); }
+    setVistaS(v); const A = getState().athlete; A.replayVista = v; A.updatedAt = new Date().toISOString(); commit();
+  };
   const [snap, setSnap] = useState<Snap>('min');
   const [menu, setMenu] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
@@ -98,18 +106,21 @@ export function Treino({ id }: { id: string }) {
   const derivaI = tr && L.deriva && L.deriva.km ? idxDoKm(tr, L.deriva.km) : null;
   const marca = derivaI != null ? { i: derivaI, label: 'A deriva começa no km ' + L.deriva.km } : null;
 
-  // replay: o treino inteiro em ~10 s (1×); a barra e o relógio mostram o tempo real
+  // replay: 5 s por km em 1× (decisão do Lucas, 24/11/2026; antes, o treino inteiro em ~10 s).
+  // Sem distância (pedal indoor), 10 s. 2× e 4× são o dobro e o quádruplo. A barra e o relógio
+  // mostram o tempo real.
+  const replaySeg = tr ? Math.max(10, 5 * totalDist(tr) / 1000) : 10;
   useEffect(() => {
     if (!playing || !tr) return;
     let raf = 0, last = performance.now();
     const step = (now: number) => {
       const dt = (now - last) / 1000; last = now;
-      setT((x) => { const nx = x + (dt * total / 10) * +speed; if (nx >= total) { setPlaying(false); return total; } return nx; });
+      setT((x) => { const nx = x + (dt * total / replaySeg) * +speed; if (nx >= total) { setPlaying(false); return total; } return nx; });
       raf = requestAnimationFrame(step);
     };
     raf = requestAnimationFrame(step);
     return () => cancelAnimationFrame(raf);
-  }, [playing, speed, tr, total]);
+  }, [playing, speed, tr, total, replaySeg]);
   // fotos "saltam" quando o ponto do replay passa por elas
   useEffect(() => {
     const a0 = prevT.current; prevT.current = t;
@@ -224,6 +235,12 @@ export function Treino({ id }: { id: string }) {
       {!rm ? <Seg value={speed} onChange={setSpeed} label="Velocidade do replay" options={[['1', '1×'], ['2', '2×'], ['4', '4×']]} /> : null}
     </div>
   ) : null;
+  const vistaUi = tr && tr.hasGps ? (
+    <div className="tv-vista">
+      <button type="button" className="chip" aria-pressed={corredor} onClick={() => setCorredor(!corredor)}>{bk ? <IconBike size={16} stroke={1.75} aria-hidden="true" /> : <IconRun size={16} stroke={1.75} aria-hidden="true" />}{bk ? 'Ciclista' : 'Corredor'}</button>
+      <Seg value={vista} onChange={setVista} label="Vista do replay" options={[['cima', 'De cima'], ['terceira', '3ª pessoa']]} />
+    </div>
+  ) : null;
   const fantasmaUi = tr && tr.hasGps ? (
     <div className="fant">
       <button type="button" className={'fant-btn' + (fantId ? ' on' : '')} disabled={!cands || (!cands.length && !fantId)} aria-haspopup="dialog" onClick={() => setFantSheet(true)}>
@@ -242,8 +259,8 @@ export function Treino({ id }: { id: string }) {
   if (loading) mapArea = <div className="trackmap" aria-busy="true" />;
   else if (tr && tr.hasGps && col) {
     mapArea = mode === 'ruas'
-      ? <Suspense fallback={<div className="trackmap" aria-busy="true" />}><RuasMap tr={tr} band={col.band} bandKey={corEf} palette={col.palette} marca={marca} destaque={destaque} ate={ate} fantasma={fantPos} cursor={cursor} onPick={pickIdx} photos={mapPhotos} onPhoto={setPhotoOpen} onFail={(why) => { ruasFailed = true; setMode('trajeto'); toast('Sem o mapa de ruas agora (' + why + '): mostrando só o trajeto.'); }} /></Suspense>
-      : <TrackSvg tr={tr} band={col.band} cursor={cursor} onPick={pickIdx} photos={mapPhotos} onPhoto={setPhotoOpen} palette={col.palette} marca={marca} destaque={destaque} ate={ate} fantasma={fantPos} />;
+      ? <Suspense fallback={<div className="trackmap" aria-busy="true" />}><RuasMap tr={tr} vista={vista} corredor={corredor} bike={bk} band={col.band} bandKey={corEf} palette={col.palette} marca={marca} destaque={destaque} ate={ate} fantasma={fantPos} cursor={cursor} onPick={pickIdx} photos={mapPhotos} onPhoto={setPhotoOpen} onFail={(why) => { ruasFailed = true; setMode('trajeto'); setVistaS('cima'); toast('Sem o mapa de ruas agora (' + why + '): mostrando só o trajeto.'); }} /></Suspense>
+      : <TrackSvg tr={tr} corredor={corredor} bike={bk} band={col.band} cursor={cursor} onPick={pickIdx} photos={mapPhotos} onPhoto={setPhotoOpen} palette={col.palette} marca={marca} destaque={destaque} ate={ate} fantasma={fantPos} />;
   } else if (noGps) {
     mapArea = (
       <div className="trackmap tv-empty">
@@ -268,7 +285,7 @@ export function Treino({ id }: { id: string }) {
   const controls = tr && tr.hasGps ? (<>
     <div className="tv-ctl-top">
       <div className="seg on-map" role="group" aria-label="Fundo do mapa">
-        {([['ruas', 'Ruas'], ['trajeto', 'Só trajeto']] as const).map(([k, l]) => <button key={k} type="button" aria-pressed={mode === k} onClick={() => setMode(k)}>{l}</button>)}
+        {([['ruas', 'Ruas'], ['trajeto', 'Só trajeto']] as const).map(([k, l]) => <button key={k} type="button" aria-pressed={mode === k} onClick={() => { setMode(k); if (k === 'trajeto') setVistaS('cima'); }}>{l}</button>)}
       </div>
     </div>
     <div className="tv-ctl-colors" role="group" aria-label="Cor do trajeto">
@@ -309,6 +326,7 @@ export function Treino({ id }: { id: string }) {
     <div className="tv-actions only-desk">{share}<button type="button" className="iconbtn bordered" aria-label={'Privacidade deste treino: ' + privacyLabel(priv)} onClick={() => setPrivOpen(true)}><PrivacyIcon p={priv} /></button><button type="button" className="iconbtn bordered plain" aria-label="Mais opções do treino" aria-haspopup="dialog" onClick={() => setMenu(true)}><IconDotsVertical size={20} stroke={1.75} /></button></div>
     {legend}
     {replay}
+    {vistaUi ? <div className="only-mob">{vistaUi}</div> : null}
     {fantasmaUi ? <div className="only-mob">{fantasmaUi}</div> : null}
     {nums}
     {climaP}
@@ -346,7 +364,7 @@ export function Treino({ id }: { id: string }) {
         {top}
         {controls}
         {popPhoto ? <div className="photo-pop" aria-hidden="true"><img src={popPhoto.url} alt="" /><span>{photoWhere(tr, popPhoto)}</span></div> : null}
-        <div className="tv-replaybar only-desk">{legend}{replay}{fantasmaUi}</div>
+        <div className="tv-replaybar only-desk">{legend}{replay}{vistaUi}{fantasmaUi}</div>
       </div>
       <aside className="tv-panel" ref={drawer} aria-label="Detalhes do treino">
         <button type="button" className="tv-handle only-mob" aria-label={snap === 'max' ? 'Recolher detalhes' : 'Expandir detalhes'}
