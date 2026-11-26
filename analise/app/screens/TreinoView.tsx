@@ -16,6 +16,8 @@ import { fetchRemoteTrack } from '../track-sync';
 import { buscarTrajetos } from '../garmin-sync';
 import { garminReady } from '../garmin';
 import { type Track, type ColorMode, colorer, duration, idxAtTime, totalDist, PALETTE } from '../track';
+import { pose as poseBoneco, coresDoTema, RITMO } from '../map/boneco';
+import { rumo } from '../map/rumo';
 import { TrackSvg } from '../map/TrackSvg';
 import { TrackChart } from '../map/TrackChart';
 import { treinoBlocks } from './Treino';
@@ -108,17 +110,35 @@ export function Treino({ id }: { id: string }) {
   // Sem distância (pedal indoor), 10 s. 2× e 4× são o dobro e o quádruplo. A barra e o relógio
   // mostram o tempo real.
   const replaySeg = tr ? Math.max(10, 5 * totalDist(tr) / 1000) : 10;
+  // boneco (26/11/2026): fase da passada/pedalada no relógio, e a comemoração ao chegar ao fim
+  const faseRef = useRef(0);
+  const [comemoraIni, setComemoraIni] = useState<number | null>(null);
+  const [comemora, setComemora] = useState<number | null>(null);
   useEffect(() => {
     if (!playing || !tr) return;
     let raf = 0, last = performance.now();
+    const ritmo = w && E.isBike(w) ? RITMO.bike : RITMO.corrida;
+    setComemoraIni(null); setComemora(null);
     const step = (now: number) => {
       const dt = (now - last) / 1000; last = now;
-      setT((x) => { const nx = x + (dt * total / replaySeg) * +speed; if (nx >= total) { setPlaying(false); return total; } return nx; });
+      faseRef.current = (faseRef.current + dt * ritmo) % 1;
+      setT((x) => { const nx = x + (dt * total / replaySeg) * +speed; if (nx >= total) { setPlaying(false); setComemoraIni(performance.now()); return total; } return nx; });
       raf = requestAnimationFrame(step);
     };
     raf = requestAnimationFrame(step);
     return () => cancelAnimationFrame(raf);
   }, [playing, speed, tr, total, replaySeg]);
+  // comemoração: ~3,5 s (com "Reduzir movimento", já de braços para cima, sem animar)
+  useEffect(() => {
+    if (comemoraIni == null) return;
+    if (rm) { setComemora(1); return; }
+    let raf = 0;
+    const step = (now: number) => { const c = Math.min(1, (now - comemoraIni) / 3500); setComemora(c); if (c < 1) raf = requestAnimationFrame(step); };
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, [comemoraIni]);
+  // mexeu no cursor depois da chegada: o boneco volta a ficar em pé, de lado
+  useEffect(() => { if (comemora != null && t < total - 0.5) { setComemoraIni(null); setComemora(null); } else if (rm && comemora == null && total > 0 && t >= total - 0.5) setComemora(1); }, [t]);
   // fotos "saltam" quando o ponto do replay passa por elas
   useEffect(() => {
     const a0 = prevT.current; prevT.current = t;
@@ -164,6 +184,12 @@ export function Treino({ id }: { id: string }) {
 
   if (!w) return (<div className="main-pad"><Card><Empty>Treino não encontrado. Ele pode ter sido excluído em outro aparelho.</Empty></Card><a className="btn" href={href('treinos')}>Voltar aos treinos</a></div>);
   const bk = E.isBike(w);
+  // pose: correndo (desacelera nos últimos 60 m), parado no meio, ou comemorando no fim
+  const faltaM = tr && cursor != null && tr.dist[cursor] != null ? totalDist(tr) - (tr.dist[cursor] as number) : 1e9;
+  // para onde ele anda na tela: em 3ª pessoa a câmera vai atrás dele (sempre para dentro da tela);
+  // de cima, o mapa fica com o norte para cima e a direção na tela é o próprio rumo
+  const rumoTela = mode === 'ruas' && vista === 'terceira' ? 0 : tr && cursor != null ? rumo(tr, cursor, 15) : null;
+  const boneco = poseBoneco(coresDoTema(), { bike: bk, fase: playing ? faseRef.current : 0.3, amp: playing ? 0.35 + 0.65 * Math.min(1, faltaM / 60) : 0.45, comemora, rumoTela });
   const B = treinoBlocks(w, st);
   const sub = [dayMon(w.date), w.temp != null ? Math.round(w.temp) + ' °C' : null, w.terrain ? noEmoji(w.terrain) : null].filter(Boolean).join(' · ');
   const g0 = !bk && w.distKm ? E.computeGap(w) : null;
@@ -256,8 +282,8 @@ export function Treino({ id }: { id: string }) {
   if (loading) mapArea = <div className="trackmap" aria-busy="true" />;
   else if (tr && tr.hasGps && col) {
     mapArea = mode === 'ruas'
-      ? <Suspense fallback={<div className="trackmap" aria-busy="true" />}><RuasMap tr={tr} vista={vista} band={col.band} bandKey={corEf} palette={col.palette} marca={marca} destaque={destaque} ate={ate} fantasma={fantPos} cursor={cursor} onPick={pickIdx} photos={mapPhotos} onPhoto={setPhotoOpen} onFail={(why) => { ruasFailed = true; setMode('trajeto'); setVistaS('cima'); toast('Sem o mapa de ruas agora (' + why + '): mostrando só o trajeto.'); }} /></Suspense>
-      : <TrackSvg tr={tr} band={col.band} cursor={cursor} onPick={pickIdx} photos={mapPhotos} onPhoto={setPhotoOpen} palette={col.palette} marca={marca} destaque={destaque} ate={ate} fantasma={fantPos} />;
+      ? <Suspense fallback={<div className="trackmap" aria-busy="true" />}><RuasMap tr={tr} vista={vista} boneco={boneco} band={col.band} bandKey={corEf} palette={col.palette} marca={marca} destaque={destaque} ate={ate} fantasma={fantPos} cursor={cursor} onPick={pickIdx} photos={mapPhotos} onPhoto={setPhotoOpen} onFail={(why) => { ruasFailed = true; setMode('trajeto'); setVistaS('cima'); toast('Sem o mapa de ruas agora (' + why + '): mostrando só o trajeto.'); }} /></Suspense>
+      : <TrackSvg tr={tr} boneco={boneco} band={col.band} cursor={cursor} onPick={pickIdx} photos={mapPhotos} onPhoto={setPhotoOpen} palette={col.palette} marca={marca} destaque={destaque} ate={ate} fantasma={fantPos} />;
   } else if (noGps) {
     mapArea = (
       <div className="trackmap tv-empty">

@@ -135,7 +135,8 @@ try {
   ok('trajeto colorido desenhado', nSeg >= 2, nSeg - 1 + ' trecho(s) de cor');
   const nKm = await page.locator('.trackmap > svg g text').count();
   ok('marcos de km desenhados', nKm >= 5, nKm + ' marcos');
-  ok('largada e chegada desenhadas', await page.locator('.trackmap > svg > circle').count() >= 2);
+  // (26/11/2026) o cursor virou o boneco: a largada é o círculo cheio e a chegada, o alvo (anel + centro)
+  ok('largada e chegada desenhadas', await page.locator('.trackmap > svg > circle[fill="var(--texto)"]').count() === 1 && await page.locator('.trackmap > svg > g[aria-hidden="true"] > circle[stroke-width] + circle[fill="var(--texto)"]').count() >= 1);
   // critério 7: os 4 modos de cor mudam a legenda
   const legend = async () => page.locator('.tv-panel .tv-legend .sr-only').innerText();
   const L = {};
@@ -152,7 +153,7 @@ try {
   // decisão do Lucas (24/11/2026): 1× = 5 s por km (antes, o treino inteiro em ~10 s). Circuito de ~6,0 km → ~30 s
   const esp = 5 * (2.86 * 2100) / 1000;
   ok('critério 6 · o play percorre o trajeto inteiro em 5 s por km (1×)', secs > esp * 0.85 && secs < esp * 1.2, secs.toFixed(1) + ' s (esperado ~' + esp.toFixed(0) + ' s)');
-  const curPos = () => page.evaluate(() => { const c = [...document.querySelectorAll('.trackmap > svg > circle')].find((x) => x.getAttribute('fill') === 'var(--ciano)'); return c ? c.getAttribute('cx') + ',' + c.getAttribute('cy') : null; });
+  const curPos = () => page.evaluate(() => { const c = document.querySelector('.trackmap > svg > .svg-boneco'); return c ? c.getAttribute('transform') : null; }); // o cursor é o boneco (26/11/2026)
   const chart = page.locator('.tv-panel svg[role="slider"]');
   const bb = await chart.boundingBox();
   const posBefore = await curPos();
@@ -161,7 +162,7 @@ try {
   const v30 = +(await slider.inputValue());
   ok('arrastar/tocar no gráfico move o ponto no mapa', posBefore !== posAfter && v30 > max * 0.2 && v30 < max * 0.4, Math.round(v30 / max * 100) + '% do treino');
   // toca num ponto do trajeto (a ~70% do circuito) → o cursor do gráfico vai para lá
-  const tap = await page.evaluate(() => { const svg = document.querySelector('.trackmap > svg'); const pl = svg.querySelectorAll('polyline'); const pts = [...pl].slice(1).flatMap((p) => p.getAttribute('points').trim().split(' ')); const vis = (k) => { const [x, y] = pts[k].split(',').map(Number); const pt = svg.createSVGPoint(); pt.x = x; pt.y = y; const q = pt.matrixTransform(svg.getScreenCTM()); const el = document.elementFromPoint(q.x, q.y); return el && el.closest('.trackmap') ? { x: q.x, y: q.y, k } : null; };
+  const tap = await page.evaluate(() => { const svg = document.querySelector('.trackmap > svg'); const pl = svg.querySelectorAll('polyline:not(.svg-boneco polyline)'); const pts = [...pl].slice(1).flatMap((p) => p.getAttribute('points').trim().split(' ')); const vis = (k) => { const [x, y] = pts[k].split(',').map(Number); const pt = svg.createSVGPoint(); pt.x = x; pt.y = y; const q = pt.matrixTransform(svg.getScreenCTM()); const el = document.elementFromPoint(q.x, q.y); return el && el.closest('.trackmap') ? { x: q.x, y: q.y, k } : null; };
     for (let k = Math.floor(pts.length * 0.6); k < Math.floor(pts.length * 0.9); k++) { const r = vis(k); if (r) return { ...r, frac: k / pts.length }; } return null; });
   await page.mouse.click(tap.x, tap.y);
   const vTap = +(await slider.inputValue());

@@ -740,3 +740,11 @@ button.item-row:focus-visible { outline: 2px solid var(--ciano); outline-offset:
 .tv-vista { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .tv-vista .seg button { min-height: 32px; padding: 0 10px; position: relative; }
 .tv-vista .seg button::after { content: ''; position: absolute; left: 0; right: 0; top: -6px; bottom: -6px; }
+/* Boneco do replay (26/11/2026) */
+.mk.boneco { width: 64px; height: 66px; pointer-events: none; }
+.mk.boneco svg { display: block; overflow: visible; }
+.share-video video { width: 214px; height: 380px; border-radius: var(--radius-lg); border: 1px solid var(--linha); background: var(--noite); display: block; }
+.share-video-vazio { width: 214px; height: 380px; border-radius: var(--radius-lg); border: 1px solid var(--linha); background: var(--superficie); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 16px; text-align: center; color: var(--texto-2); font-size: 13px; line-height: 18px; }
+.share-video-vazio progress { width: 100%; accent-color: var(--ciano); }
+@media (min-width: 1024px) { .share-video video, .share-video-vazio { width: 360px; height: 640px; } }
+.svg-boneco { pointer-events: none; }

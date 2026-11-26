@@ -1,7 +1,8 @@
 // Replay do mapa (decisão do Lucas, 24/11/2026) num Chromium real, no "Só trajeto" (sem rede):
 // 1× = 5 s por km (2× e 4× proporcionais); cada marco de km (e o início da deriva) só aparece
 // depois que o cursor completa aquele km; parado no início e no fim, todos aparecem; vista de
-// cima ou em 3ª pessoa (câmera inclinada no mapa de ruas), com o ponto de sempre como cursor.
+// cima ou em 3ª pessoa (câmera inclinada no mapa de ruas); o cursor é o boneco (26/11/2026):
+// corredor (ou ciclista na bike) que comemora de frente, braços em V, quando o replay chega ao fim.
 // Trajeto SINTÉTICO num lugar fictício. Uso: node scripts/replay-app.mjs
 import { spawn } from 'node:child_process';
 import { readFileSync } from 'node:fs';
@@ -79,6 +80,9 @@ try {
   await page.waitForTimeout(400);
   const mf = await marcos(page);
   ok('no fim, todos os marcos aparecem de novo', mf.length === todos.length, mf.join(','));
+  await page.waitForTimeout(3800);
+  ok('na chegada, o boneco vira de frente e comemora', await page.locator('.trackmap .svg-boneco [data-pose="comemora"]').count() === 1);
+  if (process.env.SHOTS) await page.screenshot({ path: resolve(process.env.SHOTS, 'replay-comemora.png') });
 
   console.log('\n== 2× ==');
   await page.goto(url('treino/' + w.id)); await page.waitForSelector('.trackmap svg'); await page.waitForTimeout(400);
@@ -89,10 +93,35 @@ try {
   ok('2× anda o dobro (10 s para os 4 km)', Math.abs(v4 / mx - s4 / (ESP / 2)) < 0.1, (v4 / mx * 100).toFixed(0) + '% em ' + s4.toFixed(1) + ' s');
   console.log('\n== cursor e vista no Só trajeto ==');
   await page.goto(url('treino/' + w.id)); await page.waitForSelector('.trackmap svg'); await page.waitForTimeout(400);
-  ok('o cursor é o ponto de sempre, sem opção de "Corredor"', await page.locator('.tv-vista:visible .chip').count() === 0 && await page.locator('.trackmap svg circle[fill="var(--ciano)"]').count() >= 1);
+  ok('o cursor é o boneco do corredor (no lugar do ponto)', await page.locator('.trackmap .svg-boneco [data-pose]').count() === 1);
+  await page.getByRole('button', { name: 'Reproduzir o trajeto' }).first().click(); await page.waitForTimeout(1200);
+  ok('durante o replay, o boneco corre', await page.locator('.trackmap .svg-boneco [data-pose="corre"]').count() === 1);
+  // (26/11/2026) sempre virado para onde anda: o circuito vai para leste (direita), norte (sobe), oeste e sul
+  const vistaEm = async (frac) => { await page.getByRole('button', { name: /Pausar/ }).first().click().catch(() => {}); const rg = page.locator('.tv-panel input[type="range"]').first(); const mx = +(await rg.getAttribute('max')); await rg.fill(String(Math.round(mx * frac))); await page.waitForTimeout(150); return page.locator('.trackmap .svg-boneco [data-vista]').getAttribute('data-vista'); };
+  const vs = [await vistaEm(0.15), await vistaEm(0.4), await vistaEm(0.65), await vistaEm(0.92)];
+  ok('de cima, ele corre virado para onde vai: direita de lado, subindo de costas, esquerda espelhado, descendo de frente', vs.join(',') === 'lado,eixo,lado-esq,eixo', vs.join(','));
+  await page.getByRole('button', { name: 'Reproduzir o trajeto' }).first().click(); await page.waitForTimeout(300);
+  if (process.env.SHOTS) await page.screenshot({ path: resolve(process.env.SHOTS, 'replay-boneco-so-trajeto.png') });
+  await page.getByRole('button', { name: /Pausar/ }).first().click();
   await page.locator('[aria-label="Vista do replay"]:visible button', { hasText: '3ª pessoa' }).click(); await page.waitForTimeout(300);
   ok('sem o mapa de ruas (sem internet), a 3ª pessoa avisa e a vista continua de cima', /precisa do mapa de ruas/.test(await page.locator('.toasts').innerText()) && (await page.locator('[aria-label="Vista do replay"]:visible button', { hasText: 'De cima' }).getAttribute('aria-pressed')) === 'true');
   ok('sem erros', !errors.length, errors.join(' | '));
+
+  console.log('\n== bike e movimento reduzido ==');
+  const wb = st.workouts.filter((x) => x.modal === 'bike').sort((a, b) => b.date.localeCompare(a.date))[0];
+  if (wb) {
+    await page.evaluate((T) => new Promise((res, rej) => { const rq = indexedDB.open('apex-performance'); rq.onsuccess = () => { const tx = rq.result.transaction('tracks', 'readwrite'); tx.objectStore('tracks').put({ ...T, id: T.id }); tx.oncomplete = () => res(); tx.onerror = rej; }; }), { ...tr, id: wb.id });
+    await page.goto(url('treino/' + wb.id)); await page.waitForSelector('.trackmap svg'); await page.waitForTimeout(500);
+    ok('na bike, o boneco é o ciclista', await page.locator('.trackmap .svg-boneco [data-pose="pedala"]').count() === 1);
+    if (process.env.SHOTS) await page.screenshot({ path: resolve(process.env.SHOTS, 'replay-ciclista.png') });
+  } else ok('o seed tem um treino de bike', false);
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto(url('treino/' + w.id)); await page.reload(); await page.waitForSelector('.trackmap svg'); await page.waitForTimeout(400);
+  ok('com movimento reduzido, sem botão de play (replay manual)', await page.getByRole('button', { name: 'Reproduzir o trajeto' }).count() === 0);
+  const rg = page.locator('.tv-panel input[type="range"]').first();
+  await rg.focus(); await page.keyboard.press('End'); await page.waitForTimeout(300);
+  ok('com movimento reduzido, no fim o boneco já aparece comemorando (sem animação)', await page.locator('.trackmap .svg-boneco [data-pose="comemora"]').count() === 1);
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
 
   console.log('\n== 3ª pessoa no mapa de ruas (com internet para o mapa) ==');
   const ctx2 = await browser.newContext({ viewport: { width: 390, height: 844 }, timezoneId: GOLDEN_TZ, locale: 'pt-BR' });
@@ -114,7 +143,8 @@ try {
     const brg = ((cam.bearing % 360) + 360) % 360;
     ok('3ª pessoa: câmera inclinada (60°) e virada para onde o corredor vai (leste, ~90°)', Math.round(cam.pitch) === 60 && Math.abs(brg - 90) < 12, 'inclinação ' + cam.pitch.toFixed(0) + '°, rumo ' + brg.toFixed(0) + '°');
     ok('a câmera acompanha o cursor (centro no trajeto, zoom 17)', Math.round(cam.zoom) === 17 && Math.abs(cam.lat - LAT) < 0.003, cam.lat.toFixed(4) + ', ' + cam.lon.toFixed(4));
-    ok('no mapa de ruas, o cursor é o ponto de sempre', await P.locator('.mk.cur').count() === 1 && await P.locator('.mk.corredor').count() === 0);
+    ok('no mapa de ruas, o cursor é o boneco', await P.locator('.mk.boneco [data-pose]').count() === 1);
+    ok('em 3ª pessoa, com a câmera atrás, ele corre de costas (para dentro da tela)', (await P.locator('.mk.boneco [data-vista]').getAttribute('data-vista')) === 'eixo');
     if (process.env.SHOTS) await P.screenshot({ path: resolve(process.env.SHOTS, 'replay-3a-pessoa.png') });
     await P.locator('[aria-label="Vista do replay"]:visible button', { hasText: 'De cima' }).click(); await P.waitForTimeout(400);
     const cima = await P.evaluate(() => { const m = window.__apexMapa; return { pitch: m.getPitch(), bearing: m.getBearing() }; });
