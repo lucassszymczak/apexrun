@@ -162,7 +162,7 @@ export function RuasMap({ tr, band, bandKey, cursor, onPick, onFail, photos, onP
     if (cursor == null || tr.lat[cursor] == null) { if (s.cursor) { s.cursor.remove(); s.cursor = null; } return; }
     if (!s.cursor) {
       const el = document.createElement('div'); el.className = 'mk boneco'; el.setAttribute('aria-hidden', 'true');
-      el.innerHTML = '<svg viewBox="' + BONECO_VIEWBOX + '" width="64" height="66"></svg>';
+      el.innerHTML = '<svg viewBox="' + BONECO_VIEWBOX + '" width="38" height="39"></svg>';
       s.cursor = new s.ml.Marker({ element: el, anchor: 'bottom', offset: [0, 2] }).setLngLat([tr.lon[cursor], tr.lat[cursor]]).addTo(s.map);
     } else s.cursor.setLngLat([tr.lon[cursor], tr.lat[cursor]]);
     const svg = s.cursor.getElement().firstChild as SVGElement; if (svg && svg.innerHTML !== boneco) svg.innerHTML = boneco;
