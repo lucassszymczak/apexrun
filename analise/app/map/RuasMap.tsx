@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef } from 'react';
 import { type Track, coloredRuns, cortaRuns, kmMarks, PALETTE } from '../track';
 import { nearestGps, trechoIdx } from './TrackSvg';
 import { rumo } from './rumo';
+import { BONECO_VIEWBOX } from './boneco';
 import { describeRoute } from './describe';
 
 export const STYLE = { dark: 'https://tiles.openfreemap.org/styles/dark', light: 'https://tiles.openfreemap.org/styles/positron' };
@@ -44,7 +45,7 @@ function photoEl(p: MapPhoto, onPhoto?: (id: string) => void) {
   return b;
 }
 
-export function RuasMap({ tr, band, bandKey, cursor, onPick, onFail, photos, onPhoto, palette = PALETTE, marca, destaque, ate = null, fantasma = null, vista = 'cima' }: { vista?: 'cima' | 'terceira'; fantasma?: { lat: number; lon: number; label: string } | null; tr: Track; band: (i: number) => number | null; bandKey: string; cursor: number | null; onPick: (i: number) => void; onFail: (why: string) => void; photos?: MapPhoto[]; onPhoto?: (id: string) => void; palette?: string[]; marca?: { i: number; label: string } | null; destaque?: { a: number; b: number } | null; ate?: number | null }) {
+export function RuasMap({ tr, band, bandKey, cursor, onPick, onFail, photos, onPhoto, palette = PALETTE, marca, destaque, ate = null, fantasma = null, vista = 'cima', boneco = '' }: { vista?: 'cima' | 'terceira'; boneco?: string; fantasma?: { lat: number; lon: number; label: string } | null; tr: Track; band: (i: number) => number | null; bandKey: string; cursor: number | null; onPick: (i: number) => void; onFail: (why: string) => void; photos?: MapPhoto[]; onPhoto?: (id: string) => void; palette?: string[]; marca?: { i: number; label: string } | null; destaque?: { a: number; b: number } | null; ate?: number | null }) {
   const box = useRef<HTMLDivElement>(null);
   const S = useRef<{ map: any; ml: any; cursor: any; marks: any[]; photos: any[]; ready: boolean; fant?: any } | null>(null);
   const photosRef = useRef<MapPhoto[]>(photos || []);
@@ -155,13 +156,17 @@ export function RuasMap({ tr, band, bandKey, cursor, onPick, onFail, photos, onP
     if (!s.fant) s.fant = new s.ml.Marker({ element: markerEl('fant', undefined, fantasma.label) }).setLngLat([fantasma.lon, fantasma.lat]).addTo(s.map);
     else s.fant.setLngLat([fantasma.lon, fantasma.lat]);
   }, [fantasma ? fantasma.lat.toFixed(6) + ',' + fantasma.lon.toFixed(6) : '']);
-  // ponto do replay
+  // boneco do replay no lugar do ponto (corredor ou ciclista; ver map/boneco.ts)
   useEffect(() => {
     const s = S.current; if (!s || !s.ready) return;
     if (cursor == null || tr.lat[cursor] == null) { if (s.cursor) { s.cursor.remove(); s.cursor = null; } return; }
-    if (!s.cursor) s.cursor = new s.ml.Marker({ element: markerEl('cur') }).setLngLat([tr.lon[cursor], tr.lat[cursor]]).addTo(s.map);
-    else s.cursor.setLngLat([tr.lon[cursor], tr.lat[cursor]]);
-  }, [cursor]);
+    if (!s.cursor) {
+      const el = document.createElement('div'); el.className = 'mk boneco'; el.setAttribute('aria-hidden', 'true');
+      el.innerHTML = '<svg viewBox="' + BONECO_VIEWBOX + '" width="64" height="66"></svg>';
+      s.cursor = new s.ml.Marker({ element: el, anchor: 'bottom', offset: [0, 2] }).setLngLat([tr.lon[cursor], tr.lat[cursor]]).addTo(s.map);
+    } else s.cursor.setLngLat([tr.lon[cursor], tr.lat[cursor]]);
+    const svg = s.cursor.getElement().firstChild as SVGElement; if (svg && svg.innerHTML !== boneco) svg.innerHTML = boneco;
+  }, [cursor, boneco]);
   // vista em 3ª pessoa: a câmera fica atrás de quem treina, inclinada, e acompanha o cursor
   const camRumo = useRef<number | null>(null);
   useEffect(() => {

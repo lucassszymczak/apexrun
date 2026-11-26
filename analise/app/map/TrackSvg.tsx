@@ -9,7 +9,7 @@ import { describeRoute } from './describe';
 
 const R = 6371000;
 
-export function TrackSvg({ tr, band, cursor, onPick, photos, onPhoto, palette = PALETTE, marca, destaque, ate = null, fantasma = null }: { fantasma?: { lat: number; lon: number; label: string } | null; tr: Track; band: (i: number) => number | null; cursor: number | null; onPick: (i: number) => void; photos?: { i: number; id: string; url: string; label: string }[]; onPhoto?: (id: string) => void; palette?: string[]; marca?: { i: number; label: string } | null; destaque?: { a: number; b: number } | null; ate?: number | null }) {
+export function TrackSvg({ tr, band, cursor, onPick, photos, onPhoto, palette = PALETTE, marca, destaque, ate = null, fantasma = null, boneco = '' }: { boneco?: string; fantasma?: { lat: number; lon: number; label: string } | null; tr: Track; band: (i: number) => number | null; cursor: number | null; onPick: (i: number) => void; photos?: { i: number; id: string; url: string; label: string }[]; onPhoto?: (id: string) => void; palette?: string[]; marca?: { i: number; label: string } | null; destaque?: { a: number; b: number } | null; ate?: number | null }) {
   const box = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState({ w: 390, h: 400 });
   const [zoom, setZoom] = useState(1);
@@ -99,7 +99,8 @@ export function TrackSvg({ tr, band, cursor, onPick, photos, onPhoto, palette = 
         {(() => { const [x, y] = proj.P(first); return <circle cx={x} cy={y} r={7 * unit} fill="var(--texto)" stroke="var(--noite)" strokeWidth={2.5 * unit} aria-hidden="true" />; })()}
         {marca && (ate == null || marca.i <= ate) ? (() => { const [x, y] = proj.P(nearestGps(tr, marca.i)); return <g role="img" aria-label={marca.label}><circle cx={x} cy={y} r={9 * unit} fill="var(--noite)" stroke="var(--atencao)" strokeWidth={3 * unit} /><circle cx={x} cy={y} r={3.5 * unit} fill="var(--atencao)" /></g>; })() : null}
         {fantasma ? (() => { const [x, y] = proj.PL(fantasma.lat, fantasma.lon); return <g role="img" aria-label={fantasma.label}><circle cx={x} cy={y} r={9 * unit} fill="var(--texto)" fillOpacity={0.18} stroke="var(--texto)" strokeWidth={2 * unit} strokeDasharray={`${3 * unit} ${2.5 * unit}`} /></g>; })() : null}
-        {cur ? <circle cx={cur[0]} cy={cur[1]} r={8 * unit} fill="var(--ciano)" stroke="var(--noite)" strokeWidth={3 * unit} aria-hidden="true" /> : null}
+        {cur && boneco ? <g className="svg-boneco" aria-hidden="true" transform={`translate(${cur[0]} ${cur[1]}) scale(${unit * 1.05})`} dangerouslySetInnerHTML={{ __html: boneco }} /> : null}
+        {cur && !boneco ? <circle cx={cur[0]} cy={cur[1]} r={8 * unit} fill="var(--ciano)" stroke="var(--noite)" strokeWidth={3 * unit} aria-hidden="true" /> : null}
       </svg>
       <div className="mapzoom" role="group" aria-label="Zoom do trajeto">
         <button type="button" onClick={() => setZoom(Math.min(16, zoom * 1.6))} aria-label="Aproximar"><IconPlus size={18} stroke={1.75} /></button>
