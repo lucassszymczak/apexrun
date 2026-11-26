@@ -130,10 +130,10 @@ export async function gerarVideo(o: VideoOpts): Promise<Blob> {
       // direção na tela = rumo do trajeto − rumo da câmera (a câmera vai atrás e gira na chegada)
       const rumoTela = r != null ? r - ((camRumo ?? 0) + gira) : 0;
       const pz = pose(C, { bike: o.bike, fase, amp, comemora, rumoTela }); const vz = /data-vista="([a-z-]+)"/.exec(pz); if (vz) vistas[vz[1]] = (vistas[vz[1]] || 0) + 1;
-      const bon = await imagem('data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgCompleto(pz, 128)));
-      const pp = map.project([tr.lon[i], tr.lat[i]]); g.drawImage(bon as any, pp.x * 2 - 64, pp.y * 2 - 128, 128, 132);
+      const bon = await imagem('data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgCompleto(pz, 96)));
+      const pp = map.project([tr.lon[i], tr.lat[i]]); g.drawImage(bon as any, pp.x * 2 - 48, pp.y * 2 - 96, 96, 99);
       const rot = (comemora != null ? 'Chegada · ' : '') + kmTxt(m) + ' km'; // km de verdade do treino
-      g.font = F(500, 28); const rw = g.measureText(rot).width + 36; painel(pp.x * 2 + 50, pp.y * 2 - 150, rw, 56); g.fillStyle = T.texto; g.textBaseline = 'middle'; g.fillText(rot, pp.x * 2 + 68, pp.y * 2 - 121);
+      g.font = F(500, 28); const rw = g.measureText(rot).width + 36; painel(pp.x * 2 + 40, pp.y * 2 - 118, rw, 56); g.fillStyle = T.texto; g.textBaseline = 'middle'; g.fillText(rot, pp.x * 2 + 58, pp.y * 2 - 89);
       // marca e título (no alto, abaixo da área do Instagram)
       painel(32, 256, 660, 112);
       g.save(); g.translate(56, 280); g.scale(0.56, 0.56); g.fillStyle = T.magenta; g.fill(new Path2D(SYM.ida)); g.fillStyle = T.ciano; g.fill(new Path2D(SYM.volta)); g.fillStyle = T.violeta; g.fill(new Path2D(SYM.pico)); g.restore();

@@ -99,7 +99,7 @@ export function TrackSvg({ tr, band, cursor, onPick, photos, onPhoto, palette = 
         {(() => { const [x, y] = proj.P(first); return <circle cx={x} cy={y} r={7 * unit} fill="var(--texto)" stroke="var(--noite)" strokeWidth={2.5 * unit} aria-hidden="true" />; })()}
         {marca && (ate == null || marca.i <= ate) ? (() => { const [x, y] = proj.P(nearestGps(tr, marca.i)); return <g role="img" aria-label={marca.label}><circle cx={x} cy={y} r={9 * unit} fill="var(--noite)" stroke="var(--atencao)" strokeWidth={3 * unit} /><circle cx={x} cy={y} r={3.5 * unit} fill="var(--atencao)" /></g>; })() : null}
         {fantasma ? (() => { const [x, y] = proj.PL(fantasma.lat, fantasma.lon); return <g role="img" aria-label={fantasma.label}><circle cx={x} cy={y} r={9 * unit} fill="var(--texto)" fillOpacity={0.18} stroke="var(--texto)" strokeWidth={2 * unit} strokeDasharray={`${3 * unit} ${2.5 * unit}`} /></g>; })() : null}
-        {cur && boneco ? <g className="svg-boneco" aria-hidden="true" transform={`translate(${cur[0]} ${cur[1]}) scale(${unit * 1.05})`} dangerouslySetInnerHTML={{ __html: boneco }} /> : null}
+        {cur && boneco ? <g className="svg-boneco" aria-hidden="true" transform={`translate(${cur[0]} ${cur[1]}) scale(${unit * 0.62})`} dangerouslySetInnerHTML={{ __html: boneco }} /> : null}
         {cur && !boneco ? <circle cx={cur[0]} cy={cur[1]} r={8 * unit} fill="var(--ciano)" stroke="var(--noite)" strokeWidth={3 * unit} aria-hidden="true" /> : null}
       </svg>
       <div className="mapzoom" role="group" aria-label="Zoom do trajeto">
